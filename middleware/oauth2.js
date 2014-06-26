@@ -47,16 +47,14 @@ module.exports = function(UserModel, RefreshTokenModel, generateNewTokens) {
     */
    server.exchange(oauth2orize.exchange.refreshToken(function(client, refreshToken, scope, done) {
       // We can assume at this point that the client has already been authenticated by passport, so there's no need to do
-      // it again here.  Just proceed with finding the token and verifying it actually belongs to the client.
+      // it again here.  Just proceed with finding the token and verifying it actually belongs to the client (do so by
+      // doing a findOne on both the refresh token and the client ID, see https://github.com/ealeksandrov/NodeAPI/issues/2#issuecomment-47228835).
       log.debug("server.exchange(oauth2orize.exchange.refreshToken(" + JSON.stringify(client.clientId) + "," + refreshToken + "," + scope + "))");
-      RefreshTokenModel.findOne({ token : refreshToken }, function(err, localRefreshToken) {
+      RefreshTokenModel.findOne({ token : refreshToken, clientId: client.clientId }, function(err, localRefreshToken) {
          if (err) {
             return done(err);
          }
          if (!localRefreshToken) {
-            return done(null, false);
-         }
-         if (localRefreshToken.clientId !== client.clientId) {
             return done(null, false);
          }
 
