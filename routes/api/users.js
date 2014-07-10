@@ -17,7 +17,7 @@ module.exports = function(UserModel) {
                   // validate JSON (asynchronously)
                   jsonValidator.validate(userJson, UserSchema, function(err1) {
                      if (err1) {
-                        return res.jsendClientError(err1);
+                        return res.jsendClientError("Validation failure", err1);
                      }
 
                      // JSON is valid, so now see whether this username is already taken
@@ -30,27 +30,28 @@ module.exports = function(UserModel) {
 
                         if (user && user.id) {
                            log.debug("Username [" + userJson.username + "] already in use!");
-                           return res.jsendClientError("Username already in use.", 409);  // HTTP 409 Conflict
+                           return res.jsendClientError("Username already in use.", null, 409);  // HTTP 409 Conflict
                         }
                         else {
-                           UserModel.createUser({
-                                                   username : userJson.username,
-                                                   password : userJson.password,
-                                                   email : userJson.email
-                                                },
-                                                function(err3, newUser) {
-                                                   if (err3) {
-                                                      var message = "Error while trying to create user [" + userJson.username + "]";
-                                                      log.error(message + ": " + err3);
-                                                      return res.jsendServerError(message);
-                                                   }
-                                                   log.debug("Created new user: " + newUser.username);
+                           var newUser = {
+                              username : userJson.username,
+                              password : userJson.password,
+                              email : userJson.email
+                           };
+                           UserModel.create(newUser,
+                                            function(err3, result) {
+                                               if (err3) {
+                                                  var message = "Error while trying to create user [" + userJson.username + "]";
+                                                  log.error(message + ": " + err3);
+                                                  return res.jsendServerError(message);
+                                               }
+                                               log.debug("Created new user [" + newUser.username + "] with id [" + result.insertId + "] ");
 
-                                                   res.jsendSuccess({
-                                                                       username : newUser.username,
-                                                                       email : newUser.email
-                                                                    }, 201); // HTTP 201 Created
-                                                });
+                                               res.jsendSuccess({
+                                                                   username : newUser.username,
+                                                                   email : newUser.email
+                                                                }, 201); // HTTP 201 Created
+                                            });
 
                         }
                      });

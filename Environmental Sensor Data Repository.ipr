@@ -20,6 +20,23 @@
     </annotationProcessing>
   </component>
   <component name="CopyrightManager" default="" />
+  <component name="DataSourceManagerImpl" format="xml" hash="3246133046">
+    <data-source source="LOCAL" name="MySQL - esdr@localhost" uuid="a1a93e08-2069-498b-befe-f2b24560c574">
+      <driver-ref>mysql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://localhost:3306/esdr</jdbc-url>
+      <user-name>root</user-name>
+      <user-password>dfdadfcbdfd9dfd9dfdddfc5dfd8dfce</user-password>
+      <schema-pattern>esdr.*</schema-pattern>
+      <default-schemas>esdr.*</default-schemas>
+      <driver-properties>
+        <property name="zeroDateTimeBehavior" value="convertToNull" />
+        <property name="tinyInt1isBit" value="false" />
+      </driver-properties>
+      <libraries />
+    </data-source>
+  </component>
   <component name="DependencyValidationManager">
     <option name="SKIP_IMPORT_STATEMENTS" value="false" />
   </component>
@@ -61,7 +78,7 @@
   </component>
   <component name="JavaScriptLibraryMappings">
     <file url="file://$PROJECT_DIR$" libraries="{EnvironmentalSensorDataRepository node_modules}" />
-    <file url="PROJECT" libraries="{EnvironmentalSensorDataRepository node_modules, Node.js v0.10.28 Core Modules, mongoose-DefinitelyTyped, nconf-DefinitelyTyped}" />
+    <file url="PROJECT" libraries="{EnvironmentalSensorDataRepository node_modules, Node.js v0.10.28 Core Modules, mocha-DefinitelyTyped, mongoose-DefinitelyTyped, nconf-DefinitelyTyped, should-DefinitelyTyped}" />
     <includedPredefinedLibrary name="Node.js Globals" />
   </component>
   <component name="ProjectModuleManager">

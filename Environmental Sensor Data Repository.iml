@@ -8,6 +8,8 @@
     <orderEntry type="library" name="Node.js v0.10.28 Core Modules" level="application" />
     <orderEntry type="library" name="mongoose-DefinitelyTyped" level="project" />
     <orderEntry type="library" name="nconf-DefinitelyTyped" level="application" />
+    <orderEntry type="library" name="mocha-DefinitelyTyped" level="application" />
+    <orderEntry type="library" name="should-DefinitelyTyped" level="application" />
   </component>
 </module>
 

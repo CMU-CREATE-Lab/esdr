@@ -4,7 +4,7 @@ module.exports = {
    http404 : function(req, res, next) {
       log.error("In 404 error handler...");
       var statusCode = 404;
-      res.jsendClientError("Resource not found", statusCode);
+      res.jsendClientError("Resource not found", null, statusCode);
    },
 
    development : function(err, req, res, next) {

@@ -1,0 +1,14 @@
+{
+   "server" : {
+      "port" : 3001
+   },
+   "database" : {
+      "host" : "localhost",
+      "database" : "esdr_test",
+      "username" : "esdr",
+      "password" : "password",
+      "pool" : {
+         "connectionLimit" : 10
+      }
+   }
+}

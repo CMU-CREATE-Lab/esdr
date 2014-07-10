@@ -4,19 +4,16 @@ var ClientPasswordStrategy = require('passport-oauth2-client-password').Strategy
 var BearerStrategy = require('passport-http-bearer').Strategy;
 var log = require('log4js').getLogger();
 
-module.exports = function(ClientModel, UserModel, AccessTokenModel) {
+module.exports = function(ClientModel, UserModel, TokenModel) {
 
-   var authenticateClient = function(clientId, clientSecret, callback) {
-      log.debug("authenticateClient(" + clientId + ")) at " + new Date().getTime());
-      ClientModel.findByClientId(clientId, function(err, client) {
-         log.debug("   in callback for ClientModel.findByClientId(" + clientId + ")");
+   var authenticateClient = function(clientName, clientSecret, callback) {
+      log.debug("authenticateClient(" + clientName + ")) at " + new Date().getTime());
+      ClientModel.findByNameAndSecret(clientName, clientSecret, function(err, client) {
+         log.debug("   in callback for ClientModel.findByName(" + clientName + ")");
          if (err) {
             return callback(err);
          }
          if (!client) {
-            return callback(null, false);
-         }
-         if (client.clientSecret != clientSecret) {
             return callback(null, false);
          }
 
@@ -46,21 +43,12 @@ module.exports = function(ClientModel, UserModel, AccessTokenModel) {
    passport.use(new BearerStrategy(
          function(accessToken, done) {
             log.debug("in passport.use(new BearerStrategy(" + accessToken + "))");
-            AccessTokenModel.findOne({ token : accessToken }, function(err, token) {
+            TokenModel.validateAccessToken(accessToken, function(err, token, message) {
                if (err) {
                   return done(err);
                }
                if (!token) {
-                  return done(null, false);
-               }
-
-               if (token.isExpired()) {
-                  AccessTokenModel.remove({ token : accessToken }, function(err) {
-                     if (err) {
-                        return done(err);
-                     }
-                  });
-                  return done(null, false, { message : 'Token expired' });
+                  return done(null, false, { message : message });
                }
 
                UserModel.findById(token.userId, function(err, user) {
