@@ -3,4 +3,6 @@
 node_modules
 out
 
-config.json
+config-development.json
+config-production.json
+config-test.json

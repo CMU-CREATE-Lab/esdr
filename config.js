@@ -1,8 +1,8 @@
 var config = require('nconf');
 var log = require('log4js').getLogger();
 
-var nodeEnvironment = process.env.NODE_ENV;
-var configFile = (nodeEnvironment == "test") ? './config-test.json' : './config.json';
+var nodeEnvironment = process.env.NODE_ENV || "development";
+var configFile = './config-' + nodeEnvironment + '.json';
 log.info("Using config file: " + configFile);
 
 config.argv().env().file({ file : configFile });
