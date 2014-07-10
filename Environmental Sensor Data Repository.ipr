@@ -78,7 +78,7 @@
   </component>
   <component name="JavaScriptLibraryMappings">
     <file url="file://$PROJECT_DIR$" libraries="{EnvironmentalSensorDataRepository node_modules}" />
-    <file url="PROJECT" libraries="{EnvironmentalSensorDataRepository node_modules, Node.js v0.10.28 Core Modules, mocha-DefinitelyTyped, mongoose-DefinitelyTyped, nconf-DefinitelyTyped, should-DefinitelyTyped}" />
+    <file url="PROJECT" libraries="{EnvironmentalSensorDataRepository node_modules, Node.js v0.10.28 Core Modules, mocha-DefinitelyTyped, nconf-DefinitelyTyped, should-DefinitelyTyped}" />
     <includedPredefinedLibrary name="Node.js Globals" />
   </component>
   <component name="ProjectModuleManager">
@@ -102,18 +102,6 @@
       </properties>
       <CLASSES>
         <root url="file://$PROJECT_DIR$/node_modules" />
-      </CLASSES>
-      <JAVADOC />
-      <SOURCES />
-    </library>
-    <library name="mongoose-DefinitelyTyped" type="javaScript">
-      <properties>
-        <sourceFilesUrls>
-          <item url="file://$USER_HOME$/Library/Caches/IntelliJIdea13/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_mongoose_mongoose.d.ts" />
-        </sourceFilesUrls>
-      </properties>
-      <CLASSES>
-        <root url="file://$USER_HOME$/Library/Caches/IntelliJIdea13/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_mongoose_mongoose.d.ts" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />
