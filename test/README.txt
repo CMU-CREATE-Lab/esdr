@@ -8,7 +8,7 @@ To run these tests, do the following first:
 
 2) Run the server in test mode, like this:
 
-      NODE_ENV=test node app.js
+      NODE_ENV=test npm start
 
    In test mode, the server runs on port 3001, so make sure you don't have anything else
    running on that port.
