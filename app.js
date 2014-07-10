@@ -38,11 +38,9 @@ Database.create(function(err, db) {
 
       // configure the app
       try {
-         // middleware
+         // MIDDLEWARE -------------------------------------------------------------------------------------------------
          var oauthServer = require('./middleware/oauth2')(db.users, db.tokens);   // create and configure OAuth2 server
          var error_handlers = require('./middleware/error_handlers');
-
-         // MIDDLEWARE -------------------------------------------------------------------------------------------------
 
          // setup middleware
          app.use(favicon(path.join(__dirname, 'public/favicon.ico')));     // favicon serving
