@@ -32,6 +32,7 @@ module.exports = {
                   log.info("1) Ensuring the database exists.");
                   var conn = mysql.createConnection({
                                                        host : config.get("database:host"),
+                                                       port : config.get("database:port"),
                                                        user : config.get("database:username"),
                                                        password : config.get("database:password")
                                                     });
@@ -70,6 +71,7 @@ module.exports = {
                      pool = mysql.createPool({
                                                 connectionLimit : config.get("database:pool:connectionLimit"),
                                                 host : config.get("database:host"),
+                                                port : config.get("database:port"),
                                                 database : config.get("database:database"),
                                                 user : config.get("database:username"),
                                                 password : config.get("database:password")
