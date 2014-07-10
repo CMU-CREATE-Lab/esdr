@@ -1,0 +1,11 @@
+{
+   "database" : {
+      "host" : "localhost",
+      "database" : "esdr",
+      "username" : "esdr",
+      "password" : "password",
+      "pool" : {
+         "connectionLimit" : 10
+      }
+   }
+}
