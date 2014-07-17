@@ -18,7 +18,6 @@ module.exports = {
          return errors.length > 0
       };
 
-      var pool = null;
       var databaseHelper = null;
       var db = {
          users : null,
@@ -71,14 +70,14 @@ module.exports = {
                function(done) {
                   if (!hasErrors()) {
                      log.info("2) Creating the connection pool.");
-                     pool = mysql.createPool({
-                                                connectionLimit : config.get("database:pool:connectionLimit"),
-                                                host : config.get("database:host"),
-                                                port : config.get("database:port"),
-                                                database : config.get("database:database"),
-                                                user : config.get("database:username"),
-                                                password : config.get("database:password")
-                                             });
+                     var pool = mysql.createPool({
+                                                    connectionLimit : config.get("database:pool:connectionLimit"),
+                                                    host : config.get("database:host"),
+                                                    port : config.get("database:port"),
+                                                    database : config.get("database:database"),
+                                                    user : config.get("database:username"),
+                                                    password : config.get("database:password")
+                                                 });
                      databaseHelper = new DatabaseHelper(pool);
                   }
                   done();
@@ -130,7 +129,7 @@ module.exports = {
                function(done) {
                   if (!hasErrors()) {
                      log.info("5) Ensuring the Tokens table exists.");
-                     var tokens = new Tokens(databaseHelper, pool);
+                     var tokens = new Tokens(databaseHelper);
                      tokens.initialize(function(err) {
                         if (err) {
                            errors.push(err)
