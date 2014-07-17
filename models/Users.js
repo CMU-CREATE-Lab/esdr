@@ -1,6 +1,4 @@
 var bcrypt = require('bcrypt');
-var findOne = require('./db_utils').findOne;
-var executeQuery = require('./db_utils').executeQuery;
 var trimAndCopyPropertyIfNonEmpty = require('../lib/objectUtils').trimAndCopyPropertyIfNonEmpty;
 var JaySchema = require('jayschema');
 var jsonValidator = new JaySchema();
@@ -39,28 +37,18 @@ var JSON_SCHEMA = {
    "required" : ["email", "password"]
 };
 
-module.exports = function(pool) {
+module.exports = function(databaseHelper) {
 
    this.jsonSchema = JSON_SCHEMA;
 
    this.initialize = function(callback) {
-      pool.getConnection(function(err1, connection) {
-         if (err1) {
-            callback(err1);
+      databaseHelper.execute(CREATE_TABLE_QUERY, [], function(err) {
+         if (err) {
+            log.error("Error trying to create the Users table: " + err);
+            return callback(err);
          }
-         else {
-            connection.query(CREATE_TABLE_QUERY, function(err2) {
-               connection.release();
 
-               if (err2) {
-                  log.error("Error trying to create the Users table: " + err2);
-                  callback(err2);
-               }
-               else {
-                  callback(null, true);
-               }
-            });
-         }
+         return callback(null, true);
       });
    };
 
@@ -86,7 +74,7 @@ module.exports = function(pool) {
 
             // now that we have the hashed password, try to insert
             user.password = hashedPassword;
-            executeQuery(pool, "INSERT INTO Users SET ?", user, function(err3, result) {
+            databaseHelper.execute("INSERT INTO Users SET ?", user, function(err3, result) {
                if (err3) {
                   return callback(err3, {errorType : "database"});
                }
@@ -106,7 +94,7 @@ module.exports = function(pool) {
     * @param {function} callback function with signature <code>callback(err, user)</code>
     */
    this.findById = function(userId, callback) {
-      findUser(pool, "SELECT * FROM Users WHERE id=?", [userId], callback);
+      findUser("SELECT * FROM Users WHERE id=?", [userId], callback);
    };
 
    /**
@@ -118,7 +106,7 @@ module.exports = function(pool) {
     * @param {function} callback function with signature <code>callback(err, user)</code>
     */
    this.findByEmail = function(email, callback) {
-      findUser(pool, "SELECT * FROM Users WHERE email=?", [email], callback);
+      findUser("SELECT * FROM Users WHERE email=?", [email], callback);
    };
 
    /**
@@ -148,8 +136,8 @@ module.exports = function(pool) {
       return bcrypt.compareSync(clearTextPassword, user.password);
    };
 
-   var findUser = function(pool, query, params, callback) {
-      findOne(pool, query, params, function(err, user) {
+   var findUser = function(query, params, callback) {
+      databaseHelper.findOne(query, params, function(err, user) {
          if (err) {
             log.error("Error trying to find user: " + err);
             return callback(err);

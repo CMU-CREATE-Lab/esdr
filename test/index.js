@@ -694,6 +694,16 @@ describe("ESDR", function() {
 
    describe("Database", function() {
       describe("Clients", function() {
+         it("Should not be able to create the same client again", function(done) {
+            db.clients.create(testClient, function(err, result) {
+               (err != null).should.be.true;
+               (result != null).should.be.true;
+               result.should.have.property("errorType", "database");
+               err.should.have.property("code", "ER_DUP_ENTRY");
+               done();
+            });
+         });
+
          it("Should be able to find a client by name", function(done) {
             db.clients.findByName(testClient.clientName, function(err, client) {
                if (err) {
@@ -761,7 +771,7 @@ describe("ESDR", function() {
                (err != null).should.be.true;
                (result != null).should.be.true;
                result.should.have.property("errorType", "database");
-               err.should.have.property("code", "ER_DUP_ENTRY")
+               err.should.have.property("code", "ER_DUP_ENTRY");
                done();
             });
          });
@@ -859,5 +869,4 @@ describe("ESDR", function() {
          });
       });
    });
-
 });

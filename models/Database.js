@@ -1,6 +1,7 @@
 var mysql = require('mysql');
 var flow = require('nimble');
 
+var DatabaseHelper = require("./DatabaseHelper");
 var Users = require('./Users.js');
 var Clients = require('./Clients.js');
 var Tokens = require('./Tokens.js');
@@ -18,6 +19,7 @@ module.exports = {
       };
 
       var pool = null;
+      var databaseHelper = null;
       var db = {
          users : null,
          clients : null,
@@ -77,6 +79,7 @@ module.exports = {
                                                 user : config.get("database:username"),
                                                 password : config.get("database:password")
                                              });
+                     databaseHelper = new DatabaseHelper(pool);
                   }
                   done();
                },
@@ -85,7 +88,7 @@ module.exports = {
                function(done) {
                   if (!hasErrors()) {
                      log.info("3) Ensuring the Users table exists.");
-                     var users = new Users(pool);
+                     var users = new Users(databaseHelper);
                      users.initialize(function(err) {
                         if (err) {
                            errors.push(err)
@@ -106,7 +109,7 @@ module.exports = {
                function(done) {
                   if (!hasErrors()) {
                      log.info("4) Ensuring the Clients table exists.");
-                     var clients = new Clients(pool);
+                     var clients = new Clients(databaseHelper);
                      clients.initialize(function(err) {
                         if (err) {
                            errors.push(err)
@@ -127,7 +130,7 @@ module.exports = {
                function(done) {
                   if (!hasErrors()) {
                      log.info("5) Ensuring the Tokens table exists.");
-                     var tokens = new Tokens(pool);
+                     var tokens = new Tokens(databaseHelper, pool);
                      tokens.initialize(function(err) {
                         if (err) {
                            errors.push(err)

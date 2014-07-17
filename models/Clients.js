@@ -1,5 +1,3 @@
-var findOne = require('./db_utils').findOne;
-var executeQuery = require('./db_utils').executeQuery;
 var trimAndCopyPropertyIfNonEmpty = require('../lib/objectUtils').trimAndCopyPropertyIfNonEmpty;
 var JaySchema = require('jayschema');
 var jsonValidator = new JaySchema();
@@ -37,28 +35,18 @@ var JSON_SCHEMA = {
    "required" : ["displayName", "clientName", "clientSecret"]
 };
 
-module.exports = function(pool) {
+module.exports = function(databaseHelper) {
 
    this.jsonSchema = JSON_SCHEMA;
 
    this.initialize = function(callback) {
-      pool.getConnection(function(err1, connection) {
-         if (err1) {
-            callback(err1, null);
+      databaseHelper.execute(CREATE_TABLE_QUERY, [], function(err) {
+         if (err) {
+            log.error("Error trying to create the Clients table: " + err);
+            return callback(err);
          }
-         else {
-            connection.query(CREATE_TABLE_QUERY, function(err2) {
-               connection.release();
 
-               if (err2) {
-                  log.error("Error trying to create the Clients table: " + err2);
-                  callback(err2, null);
-               }
-               else {
-                  callback(null, true);
-               }
-            });
-         }
+         return callback(null, true);
       });
    };
 
@@ -77,7 +65,7 @@ module.exports = function(pool) {
          }
 
          // if validation was successful, then try to insert
-         executeQuery(pool, "INSERT INTO Clients SET ?", client, function(err2, result) {
+         databaseHelper.execute("INSERT INTO Clients SET ?", client, function(err2, result) {
             if (err2) {
                return callback(err2, {errorType : "database"});
             }
@@ -96,7 +84,7 @@ module.exports = function(pool) {
     * @param {function} callback function with signature <code>callback(err, client)</code>
     */
    this.findByName = function(clientName, callback) {
-      findClient(pool, "SELECT * FROM Clients WHERE clientName=?", [clientName], callback);
+      findClient("SELECT * FROM Clients WHERE clientName=?", [clientName], callback);
    };
 
    /**
@@ -109,11 +97,11 @@ module.exports = function(pool) {
     * @param {function} callback function with signature <code>callback(err, client)</code>
     */
    this.findByNameAndSecret = function(clientName, clientSecret, callback) {
-      findClient(pool, "SELECT * FROM Clients WHERE clientName=? and clientSecret=?", [clientName, clientSecret], callback);
+      findClient("SELECT * FROM Clients WHERE clientName=? and clientSecret=?", [clientName, clientSecret], callback);
    };
 
-   var findClient = function(pool, query, params, callback) {
-      findOne(pool, query, params, function(err, client) {
+   var findClient = function(query, params, callback) {
+      databaseHelper.findOne(query, params, function(err, client) {
          if (err) {
             log.error("Error trying to find client: " + err);
             return callback(err);
