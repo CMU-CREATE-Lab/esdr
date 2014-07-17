@@ -1,4 +1,3 @@
-var flow = require('nimble');
 var log = require('log4js').getLogger();
 
 module.exports = function(pool) {
