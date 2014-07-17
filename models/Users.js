@@ -1,20 +1,47 @@
 var bcrypt = require('bcrypt');
 var findOne = require('./db_utils').findOne;
 var executeQuery = require('./db_utils').executeQuery;
+var trimAndCopyPropertyIfNonEmpty = require('../lib/objectUtils').trimAndCopyPropertyIfNonEmpty;
+var JaySchema = require('jayschema');
+var jsonValidator = new JaySchema();
 var log = require('log4js').getLogger();
 
 var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Users` ( " +
                          "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
-                         "`username` varchar(255) NOT NULL, " +
-                         "`password` varchar(255) NOT NULL, " +
                          "`email` varchar(255) NOT NULL, " +
+                         "`password` varchar(255) NOT NULL, " +
+                         "`displayName` varchar(255) DEFAULT NULL, " +
                          "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
                          "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
                          "PRIMARY KEY (`id`), " +
-                         "UNIQUE KEY `unique_username` (`username`) " +
+                         "UNIQUE KEY `unique_email` (`email`) " +
                          ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
 
+var JSON_SCHEMA = {
+   "$schema" : "http://json-schema.org/draft-04/schema#",
+   "title" : "User",
+   "description" : "An ESDR user",
+   "type" : "object",
+   "properties" : {
+      "email" : {
+         "type" : "string",
+         "minLength" : 6,
+         "format" : "email"
+      },
+      "password" : {
+         "type" : "string",
+         "minLength" : 5
+      },
+      "displayName" : {
+         "type" : "string"
+      }
+   },
+   "required" : ["email", "password"]
+};
+
 module.exports = function(pool) {
+
+   this.jsonSchema = JSON_SCHEMA;
 
    this.initialize = function(callback) {
       pool.getConnection(function(err1, connection) {
@@ -38,25 +65,35 @@ module.exports = function(pool) {
    };
 
    this.create = function(userDetails, callback) {
-      bcrypt.hash(userDetails.password, 8, function(err1, hashedPassword) {
+      // first build a copy and trim some fields
+      var user = {
+         password : userDetails.password
+      };
+      trimAndCopyPropertyIfNonEmpty(userDetails, user, "email");
+      trimAndCopyPropertyIfNonEmpty(userDetails, user, "displayName");
+
+      // now validate
+      jsonValidator.validate(user, JSON_SCHEMA, function(err1) {
          if (err1) {
-            callback(err1);
+            return callback(err1, {errorType : "validation"});
          }
-         else {
-            var newUser = {
-               username : userDetails.username,
-               password : hashedPassword,
-               email : userDetails.email
-            };
-            executeQuery(pool, "INSERT INTO Users SET ?", newUser, function(err2, result) {
-               if (err2) {
-                  log.error("Error trying to create user [" + newUser.username + "]: " + err2);
-                  return callback(err2);
+
+         // if validation was successful, then hash the password
+         bcrypt.hash(user.password, 8, function(err2, hashedPassword) {
+            if (err2) {
+               return callback(err2);
+            }
+
+            // now that we have the hashed password, try to insert
+            user.password = hashedPassword;
+            executeQuery(pool, "INSERT INTO Users SET ?", user, function(err3, result) {
+               if (err3) {
+                  return callback(err3, {errorType : "database"});
                }
 
                return callback(null, {insertId : result.insertId});
             });
-         }
+         });
       });
    };
 
@@ -73,28 +110,28 @@ module.exports = function(pool) {
    };
 
    /**
-    * Tries to find the user with the given <code>username</code> and returns it to the given <code>callback</code>. If
+    * Tries to find the user with the given <code>email</code> and returns it to the given <code>callback</code>. If
     * successful, the user is returned as the 2nd argument to the <code>callback</code> function.  If unsuccessful,
     * <code>null</code> is returned to the callback.
     *
-    * @param {string} username username of the user to find.
+    * @param {string} email email of the user to find.
     * @param {function} callback function with signature <code>callback(err, user)</code>
     */
-   this.findByUsername = function(username, callback) {
-      findUser(pool, "SELECT * FROM Users WHERE username=?", [username], callback);
+   this.findByEmail = function(email, callback) {
+      findUser(pool, "SELECT * FROM Users WHERE email=?", [email], callback);
    };
 
    /**
-    * Tries to find the user with the given <code>username</code> and <code>clearTextPassword</code> and returns it to
+    * Tries to find the user with the given <code>email</code> and <code>clearTextPassword</code> and returns it to
     * the given <code>callback</code>. If successful, the user is returned as the 2nd argument to the
     * <code>callback</code> function.  If unsuccessful, <code>null</code> is returned to the callback.
     *
-    * @param {string} username username of the user to find.
+    * @param {string} email email of the user to find.
     * @param {string} clearTextPassword clear-text password of the user to find.
     * @param {function} callback function with signature <code>callback(err, user)</code>
     */
-   this.findByUsernameAndPassword = function(username, clearTextPassword, callback) {
-      this.findByUsername(username, function(err, user) {
+   this.findByEmailAndPassword = function(email, clearTextPassword, callback) {
+      this.findByEmail(email, function(err, user) {
          if (err) {
             return callback(err);
          }

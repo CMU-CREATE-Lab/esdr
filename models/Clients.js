@@ -1,10 +1,13 @@
 var findOne = require('./db_utils').findOne;
 var executeQuery = require('./db_utils').executeQuery;
+var trimAndCopyPropertyIfNonEmpty = require('../lib/objectUtils').trimAndCopyPropertyIfNonEmpty;
+var JaySchema = require('jayschema');
+var jsonValidator = new JaySchema();
 var log = require('log4js').getLogger();
 
 var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Clients` ( " +
                          "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
-                         "`prettyName` varchar(255) NOT NULL, " +
+                         "`displayName` varchar(255) NOT NULL, " +
                          "`clientName` varchar(255) NOT NULL, " +
                          "`clientSecret` varchar(255) NOT NULL, " +
                          "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
@@ -12,7 +15,31 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Clients` ( " +
                          "UNIQUE KEY `unique_clientName` (`clientName`) " +
                          ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
 
+var JSON_SCHEMA = {
+   "$schema" : "http://json-schema.org/draft-04/schema#",
+   "title" : "Client",
+   "description" : "An ESDR client",
+   "type" : "object",
+   "properties" : {
+      "displayName" : {
+         "type" : "string",
+         "minLength" : 4
+      },
+      "clientName" : {
+         "type" : "string",
+         "minLength" : 4
+      },
+      "clientSecret" : {
+         "type" : "string",
+         "minLength" : 10
+      }
+   },
+   "required" : ["displayName", "clientName", "clientSecret"]
+};
+
 module.exports = function(pool) {
+
+   this.jsonSchema = JSON_SCHEMA;
 
    this.initialize = function(callback) {
       pool.getConnection(function(err1, connection) {
@@ -36,18 +63,27 @@ module.exports = function(pool) {
    };
 
    this.create = function(clientDetails, callback) {
-      var newClient = {
-         prettyName : clientDetails.prettyName,
-         clientName : clientDetails.clientName,
+      // first build a copy and trim some fields
+      var client = {
          clientSecret : clientDetails.clientSecret
       };
-      executeQuery(pool, "INSERT INTO Clients SET ?", newClient, function(err, result) {
-         if (err) {
-            log.error("Error trying to create client [" + newClient.prettyName + "]: " + err);
-            return callback(err);
+      trimAndCopyPropertyIfNonEmpty(clientDetails, client, "displayName");
+      trimAndCopyPropertyIfNonEmpty(clientDetails, client, "clientName");
+
+      // now validate
+      jsonValidator.validate(client, JSON_SCHEMA, function(err1) {
+         if (err1) {
+            return callback(err1, {errorType : "validation"});
          }
 
-         return callback(null, {insertId : result.insertId});
+         // if validation was successful, then try to insert
+         executeQuery(pool, "INSERT INTO Clients SET ?", client, function(err2, result) {
+            if (err2) {
+               return callback(err2, {errorType : "database"});
+            }
+
+            return callback(null, {insertId : result.insertId});
+         });
       });
    };
 

@@ -12,12 +12,12 @@ module.exports = function(UserModel, TokenModel) {
     * for verification. If these values are validated, the application issues access and refresh tokens on behalf of the
     * user who authorized the code.
     */
-   server.exchange(oauth2orize.exchange.password(function(client, username, password, scope, done) {
-      log.debug("server.exchange(oauth2orize.exchange.password(" + JSON.stringify(client.clientName) + "," + username + "," + scope + "))");
+   server.exchange(oauth2orize.exchange.password(function(client, email, password, scope, done) {
+      log.debug("server.exchange(oauth2orize.exchange.password(" + JSON.stringify(client.clientName) + "," + email + "," + scope + "))");
 
       // We can assume at this point that the client has already been authenticated by passport, so there's no need to do
       // it again here.  Just proceed with authenticating the user and then generating the tokens if valid.
-      UserModel.findByUsernameAndPassword(username, password, function(err, user) {
+      UserModel.findByEmailAndPassword(email, password, function(err, user) {
          if (err) {
             return done(err);
          }

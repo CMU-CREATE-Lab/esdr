@@ -6,18 +6,25 @@ var config = require('../config');
 var flow = require('nimble');
 var log = require('log4js').getLogger();
 var Database = require("../models/Database");
-var UserSchema = require('../models/json-schemas').UserSchema;
-var ClientSchema = require('../models/json-schemas').ClientSchema;
 
 describe("ESDR", function() {
    var url = "http://localhost:3001";
-   var testUser = {
-      username : "test",
+   var testUser1 = {
+      email : "test@user.com",
       password : "password",
-      email : "test@user.com"
+      displayName : "Test User"
+   };
+   var testUser2 = {
+      email : "test2@user.com",
+      password : "password2"
+   };
+   var testUser3 = {
+      email : "test3@user.com",
+      password : "password3",
+      displayName : ""
    };
    var testClient = {
-      prettyName : "Test Client",
+      displayName : "Test Client",
       clientName : "test_client",
       clientSecret : "I've got a secret / I've been hiding / Under my skin"
    };
@@ -95,7 +102,7 @@ describe("ESDR", function() {
                           res.body.should.have.property('code', 201);
                           res.body.should.have.property('status', 'success');
                           res.body.should.have.property('data');
-                          res.body.data.should.have.property('prettyName', testClient.prettyName);
+                          res.body.data.should.have.property('displayName', testClient.displayName);
                           res.body.data.should.have.property('clientName', testClient.clientName);
                           done();
                        });
@@ -114,11 +121,15 @@ describe("ESDR", function() {
                           res.body.should.have.property('code', 400);
                           res.body.should.have.property('status', 'error');
                           res.body.should.have.property('data');
-                          res.body.data.should.have.length(1);
+                          res.body.data.should.have.length(2);
                           res.body.data[0].should.have.property('instanceContext', '#');
                           res.body.data[0].should.have.property('constraintName', 'required');
-                          res.body.data[0].should.have.property('constraintValue', ClientSchema.required);
+                          res.body.data[0].should.have.property('constraintValue', db.clients.jsonSchema.required);
                           res.body.data[0].should.have.property('constraintValue');
+                          res.body.data[1].should.have.property('instanceContext', '#/clientSecret');
+                          res.body.data[1].should.have.property('constraintName', 'type');
+                          res.body.data[1].should.have.property('constraintValue', 'string');
+                          res.body.data[1].should.have.property('constraintValue');
                           done();
                        });
          });
@@ -127,7 +138,7 @@ describe("ESDR", function() {
             request(url)
                   .post("/api/v1/clients")
                   .send({
-                           prettyName : "T",
+                           displayName : "T",
                            clientName : "test_client",
                            clientSecret : "I've got a secret / I've been hiding / Under my skin"
                         })
@@ -141,9 +152,9 @@ describe("ESDR", function() {
                           res.body.should.have.property('status', 'error');
                           res.body.should.have.property('data');
                           res.body.data.should.have.length(1);
-                          res.body.data[0].should.have.property('instanceContext', '#/prettyName');
+                          res.body.data[0].should.have.property('instanceContext', '#/displayName');
                           res.body.data[0].should.have.property('constraintName', 'minLength');
-                          res.body.data[0].should.have.property('constraintValue', ClientSchema.properties.prettyName.minLength);
+                          res.body.data[0].should.have.property('constraintValue', db.clients.jsonSchema.properties.displayName.minLength);
                           done();
                        });
          });
@@ -152,7 +163,7 @@ describe("ESDR", function() {
             request(url)
                   .post("/api/v1/clients")
                   .send({
-                           prettyName : "Test Client",
+                           displayName : "Test Client",
                            clientName : "t",
                            clientSecret : "I've got a secret / I've been hiding / Under my skin"
                         })
@@ -168,7 +179,7 @@ describe("ESDR", function() {
                           res.body.data.should.have.length(1);
                           res.body.data[0].should.have.property('instanceContext', '#/clientName');
                           res.body.data[0].should.have.property('constraintName', 'minLength');
-                          res.body.data[0].should.have.property('constraintValue', ClientSchema.properties.clientName.minLength);
+                          res.body.data[0].should.have.property('constraintValue', db.clients.jsonSchema.properties.clientName.minLength);
                           done();
                        });
          });
@@ -177,7 +188,7 @@ describe("ESDR", function() {
             request(url)
                   .post("/api/v1/clients")
                   .send({
-                           prettyName : "Test Client",
+                           displayName : "Test Client",
                            clientName : "test_client",
                            clientSecret : "I"
                         })
@@ -193,7 +204,7 @@ describe("ESDR", function() {
                           res.body.data.should.have.length(1);
                           res.body.data[0].should.have.property('instanceContext', '#/clientSecret');
                           res.body.data[0].should.have.property('constraintName', 'minLength');
-                          res.body.data[0].should.have.property('constraintValue', ClientSchema.properties.clientSecret.minLength);
+                          res.body.data[0].should.have.property('constraintValue', db.clients.jsonSchema.properties.clientSecret.minLength);
                           done();
                        });
          });
@@ -220,7 +231,7 @@ describe("ESDR", function() {
          it("Should be able to create a new user", function(done) {
             request(url)
                   .post("/api/v1/users")
-                  .send(testUser)
+                  .send(testUser1)
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -230,8 +241,46 @@ describe("ESDR", function() {
                           res.body.should.have.property('code', 201);
                           res.body.should.have.property('status', 'success');
                           res.body.should.have.property('data');
-                          res.body.data.should.have.property('username', testUser.username);
-                          res.body.data.should.have.property('email', testUser.email);
+                          res.body.data.should.have.property('email', testUser1.email);
+                          res.body.data.should.have.property('displayName', testUser1.displayName);
+                          done();
+                       });
+         });
+
+         it("Should be able to create a new user with no display name", function(done) {
+            request(url)
+                  .post("/api/v1/users")
+                  .send(testUser2)
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 201);
+                          res.body.should.have.property('code', 201);
+                          res.body.should.have.property('status', 'success');
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.property('email', testUser2.email);
+                          res.body.data.should.not.have.property('displayName');
+                          done();
+                       });
+         });
+
+         it("Should be able to create a new user with empty display name", function(done) {
+            request(url)
+                  .post("/api/v1/users")
+                  .send(testUser3)
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 201);
+                          res.body.should.have.property('code', 201);
+                          res.body.should.have.property('status', 'success');
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.property('email', testUser3.email);
+                          res.body.data.should.not.have.property('displayName', null);
                           done();
                        });
          });
@@ -249,72 +298,24 @@ describe("ESDR", function() {
                           res.body.should.have.property('code', 400);
                           res.body.should.have.property('status', 'error');
                           res.body.should.have.property('data');
-                          res.body.data.should.have.length(1);
+                          res.body.data.should.have.length(2);
                           res.body.data[0].should.have.property('instanceContext', '#');
                           res.body.data[0].should.have.property('constraintName', 'required');
-                          res.body.data[0].should.have.property('constraintValue', UserSchema.required);
-                          res.body.data[0].should.have.property('constraintValue');
+                          res.body.data[0].should.have.property('constraintValue', db.users.jsonSchema.required);
+                          res.body.data[1].should.have.property('instanceContext', '#/password');
+                          res.body.data[1].should.have.property('constraintName', 'type');
+                          res.body.data[1].should.have.property('constraintValue', "string");
                           done();
                        });
          });
 
-         it("Should fail to create a new user with a username that's too short", function(done) {
+         it("Should fail to create a new user with an email address that's too short", function(done) {
             request(url)
                   .post("/api/v1/users")
                   .send({
-                           username : "t",
-                           password : "password",
-                           email : "test@user.com"
-                        })
-                  .end(function(err, res) {
-                          if (err) {
-                             return done(err);
-                          }
-
-                          res.should.have.property('status', 400);
-                          res.body.should.have.property('code', 400);
-                          res.body.should.have.property('status', 'error');
-                          res.body.should.have.property('data');
-                          res.body.data.should.have.length(1);
-                          res.body.data[0].should.have.property('instanceContext', '#/username');
-                          res.body.data[0].should.have.property('constraintName', 'minLength');
-                          res.body.data[0].should.have.property('constraintValue', UserSchema.properties.username.minLength);
-                          done();
-                       });
-         });
-
-         it("Should fail to create a new user with a password that's too short", function(done) {
-            request(url)
-                  .post("/api/v1/users")
-                  .send({
-                           username : "test",
-                           password : "p",
-                           email : "test@user.com"
-                        })
-                  .end(function(err, res) {
-                          if (err) {
-                             return done(err);
-                          }
-
-                          res.should.have.property('status', 400);
-                          res.body.should.have.property('code', 400);
-                          res.body.should.have.property('status', 'error');
-                          res.body.should.have.property('data');
-                          res.body.data.should.have.length(1);
-                          res.body.data[0].should.have.property('instanceContext', '#/password');
-                          res.body.data[0].should.have.property('constraintName', 'minLength');
-                          res.body.data[0].should.have.property('constraintValue', UserSchema.properties.password.minLength);
-                          done();
-                       });
-         });
-
-         it("Should fail to create a new user with a email address that's too short", function(done) {
-            request(url)
-                  .post("/api/v1/users")
-                  .send({
-                           username : "test",
-                           password : "password",
-                           email : "t@t.c"
+                           email : "t@t.c",
+                           password : testUser1.password,
+                           displayName : testUser1.displayName
                         })
                   .end(function(err, res) {
                           if (err) {
@@ -328,7 +329,32 @@ describe("ESDR", function() {
                           res.body.data.should.have.length(1);
                           res.body.data[0].should.have.property('instanceContext', '#/email');
                           res.body.data[0].should.have.property('constraintName', 'minLength');
-                          res.body.data[0].should.have.property('constraintValue', UserSchema.properties.email.minLength);
+                          res.body.data[0].should.have.property('constraintValue', db.users.jsonSchema.properties.email.minLength);
+                          done();
+                       });
+         });
+
+         it("Should fail to create a new user with a password that's too short", function(done) {
+            request(url)
+                  .post("/api/v1/users")
+                  .send({
+                           email : testUser1.email,
+                           password : "p",
+                           displayName : testUser1.displayName
+                        })
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 400);
+                          res.body.should.have.property('code', 400);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.length(1);
+                          res.body.data[0].should.have.property('instanceContext', '#/password');
+                          res.body.data[0].should.have.property('constraintName', 'minLength');
+                          res.body.data[0].should.have.property('constraintValue', db.users.jsonSchema.properties.password.minLength);
                           done();
                        });
          });
@@ -337,9 +363,9 @@ describe("ESDR", function() {
             request(url)
                   .post("/api/v1/users")
                   .send({
-                           username : "test",
-                           password : "password",
-                           email : "not_a_real_email_address"
+                           email : "not_a_real_email_address",
+                           password : testUser1.password,
+                           displayName : testUser1.displayName
                         })
                   .end(function(err, res) {
                           if (err) {
@@ -359,10 +385,10 @@ describe("ESDR", function() {
                        });
          });
 
-         it("Should fail to create a new user with a username that's already in use", function(done) {
+         it("Should fail to create a new user with a email address that's already in use", function(done) {
             request(url)
                   .post("/api/v1/users")
-                  .send(testUser)
+                  .send(testUser1)
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -388,8 +414,8 @@ describe("ESDR", function() {
                         grant_type : "password",
                         client_id : testClient.clientName,
                         client_secret : testClient.clientSecret,
-                        username : testUser.username,
-                        password : testUser.password
+                        username : testUser1.email,
+                        password : testUser1.password
                      })
                .end(function(err, res) {
                        if (err) {
@@ -416,8 +442,8 @@ describe("ESDR", function() {
                         grant_type : "password",
                         client_id : "bogus",
                         client_secret : testClient.clientSecret,
-                        username : testUser.username,
-                        password : testUser.password
+                        username : testUser1.email,
+                        password : testUser1.password
                      })
                .end(function(err, res) {
                        if (err) {
@@ -437,8 +463,8 @@ describe("ESDR", function() {
                         grant_type : "password",
                         client_id : testClient.clientName,
                         client_secret : "bogus",
-                        username : testUser.username,
-                        password : testUser.password
+                        username : testUser1.email,
+                        password : testUser1.password
                      })
                .end(function(err, res) {
                        if (err) {
@@ -451,7 +477,7 @@ describe("ESDR", function() {
                     });
       });
 
-      it("Should not be able to request access and refresh tokens with an invalid username", function(done) {
+      it("Should not be able to request access and refresh tokens with an invalid email (username)", function(done) {
          request(url)
                .post("/oauth/token")
                .send({
@@ -459,7 +485,7 @@ describe("ESDR", function() {
                         client_id : testClient.clientName,
                         client_secret : testClient.clientSecret,
                         username : "bogus",
-                        password : testUser.password
+                        password : testUser1.password
                      })
                .end(function(err, res) {
                        if (err) {
@@ -472,14 +498,14 @@ describe("ESDR", function() {
                     });
       });
 
-      it("Should not be able to request access and refresh tokens with an invalid username", function(done) {
+      it("Should not be able to request access and refresh tokens with an invalid password", function(done) {
          request(url)
                .post("/oauth/token")
                .send({
                         grant_type : "password",
                         client_id : testClient.clientName,
                         client_secret : testClient.clientSecret,
-                        username : testUser.username,
+                        username : testUser1.email,
                         password : "bogus"
                      })
                .end(function(err, res) {
@@ -674,7 +700,7 @@ describe("ESDR", function() {
                   return done(err);
                }
                client.should.have.property("id");
-               client.should.have.property("prettyName", testClient.prettyName);
+               client.should.have.property("displayName", testClient.displayName);
                client.should.have.property("clientName", testClient.clientName);
                client.should.have.property("clientSecret", testClient.clientSecret);
                client.should.have.property("created");
@@ -688,7 +714,7 @@ describe("ESDR", function() {
                   return done(err);
                }
                client.should.have.property("id");
-               client.should.have.property("prettyName", testClient.prettyName);
+               client.should.have.property("displayName", testClient.displayName);
                client.should.have.property("clientName", testClient.clientName);
                client.should.have.property("clientSecret", testClient.clientSecret);
                client.should.have.property("created");
@@ -726,18 +752,29 @@ describe("ESDR", function() {
             });
          });
       });
+
       describe("Users", function() {
          var foundUser = null;
 
-         it("Should be able to find a user by username", function(done) {
-            db.users.findByUsername(testUser.username, function(err, user) {
+         it("Should not be able to create the same user again", function(done) {
+            db.users.create(testUser1, function(err, result) {
+               (err != null).should.be.true;
+               (result != null).should.be.true;
+               result.should.have.property("errorType", "database");
+               err.should.have.property("code", "ER_DUP_ENTRY")
+               done();
+            });
+         });
+
+         it("Should be able to find a user by email", function(done) {
+            db.users.findByEmail(testUser1.email, function(err, user) {
                if (err) {
                   return done(err);
                }
                user.should.have.property("id");
-               user.should.have.property("username", testUser.username);
+               user.should.have.property("email", testUser1.email);
                user.should.have.property("password");
-               user.should.have.property("email", testUser.email);
+               user.should.have.property("displayName", testUser1.displayName);
                user.should.have.property("created");
                user.should.have.property("modified");
 
@@ -761,15 +798,15 @@ describe("ESDR", function() {
             });
          });
 
-         it("Should be able to find a user by username and password", function(done) {
-            db.users.findByUsernameAndPassword(testUser.username, testUser.password, function(err, user) {
+         it("Should be able to find a user by email and password", function(done) {
+            db.users.findByEmailAndPassword(testUser1.email, testUser1.password, function(err, user) {
                if (err) {
                   return done(err);
                }
                user.should.have.property("id");
-               user.should.have.property("username", testUser.username);
+               user.should.have.property("email", testUser1.email);
                user.should.have.property("password");
-               user.should.have.property("email", testUser.email);
+               user.should.have.property("displayName", testUser1.displayName);
                user.should.have.property("created");
                user.should.have.property("modified");
 
@@ -777,8 +814,8 @@ describe("ESDR", function() {
             });
          });
 
-         it("Should not be able to find a user by a non-existent username", function(done) {
-            db.users.findByUsername("bogus", function(err, user) {
+         it("Should not be able to find a user by a non-existent email", function(done) {
+            db.users.findByEmail("bogus", function(err, user) {
                if (err) {
                   return done(err);
                }
@@ -799,8 +836,8 @@ describe("ESDR", function() {
             });
          });
 
-         it("Should not be able to find a user by username and password with a non-existent username", function(done) {
-            db.users.findByUsernameAndPassword("bogus", testUser.password, function(err, user) {
+         it("Should not be able to find a user by email and password with a non-existent email", function(done) {
+            db.users.findByEmailAndPassword("bogus", testUser1.password, function(err, user) {
                if (err) {
                   return done(err);
                }
@@ -810,8 +847,8 @@ describe("ESDR", function() {
             });
          });
 
-         it("Should not be able to find a user by username and password with an incorrect password", function(done) {
-            db.users.findByUsernameAndPassword(testUser.username, "bogus", function(err, user) {
+         it("Should not be able to find a user by email and password with an incorrect password", function(done) {
+            db.users.findByEmailAndPassword(testUser1.email, "bogus", function(err, user) {
                if (err) {
                   return done(err);
                }
