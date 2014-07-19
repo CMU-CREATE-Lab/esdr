@@ -152,13 +152,13 @@ describe("ESDR", function() {
                        });
          });
 
-         it("Should fail to create a new client with a pretty name that's too short", function(done) {
+         it("Should fail to create a new client with a display name that's too short", function(done) {
             agent(url)
                   .post("/api/v1/clients")
                   .send({
                            displayName : "T",
-                           clientName : "test_client",
-                           clientSecret : "I've got a secret / I've been hiding / Under my skin"
+                           clientName : testClient.clientName,
+                           clientSecret : testClient.clientSecret
                         })
                   .end(function(err, res) {
                           if (err) {
@@ -177,13 +177,38 @@ describe("ESDR", function() {
                        });
          });
 
+         it("Should fail to create a new client with a display name that's too long", function(done) {
+            agent(url)
+                  .post("/api/v1/clients")
+                  .send({
+                           displayName : "thisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstring",
+                           clientName : testClient.clientName,
+                           clientSecret : testClient.clientSecret
+                        })
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 400);
+                          res.body.should.have.property('code', 400);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.length(1);
+                          res.body.data[0].should.have.property('instanceContext', '#/displayName');
+                          res.body.data[0].should.have.property('constraintName', 'maxLength');
+                          res.body.data[0].should.have.property('constraintValue', db.clients.jsonSchema.properties.displayName.maxLength);
+                          done();
+                       });
+         });
+
          it("Should fail to create a new client with a client name that's too short", function(done) {
             agent(url)
                   .post("/api/v1/clients")
                   .send({
-                           displayName : "Test Client",
+                           displayName : testClient.displayName,
                            clientName : "t",
-                           clientSecret : "I've got a secret / I've been hiding / Under my skin"
+                           clientSecret : testClient.clientSecret
                         })
                   .end(function(err, res) {
                           if (err) {
@@ -202,12 +227,37 @@ describe("ESDR", function() {
                        });
          });
 
+         it("Should fail to create a new client with a client name that's too long", function(done) {
+            agent(url)
+                  .post("/api/v1/clients")
+                  .send({
+                           displayName : testClient.displayName,
+                           clientName : "thisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstring",
+                           clientSecret : testClient.clientSecret
+                        })
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 400);
+                          res.body.should.have.property('code', 400);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.length(1);
+                          res.body.data[0].should.have.property('instanceContext', '#/clientName');
+                          res.body.data[0].should.have.property('constraintName', 'maxLength');
+                          res.body.data[0].should.have.property('constraintValue', db.clients.jsonSchema.properties.clientName.maxLength);
+                          done();
+                       });
+         });
+
          it("Should fail to create a new client with a client secret that's too short", function(done) {
             agent(url)
                   .post("/api/v1/clients")
                   .send({
-                           displayName : "Test Client",
-                           clientName : "test_client",
+                           displayName : testClient.displayName,
+                           clientName : testClient.clientName,
                            clientSecret : "I"
                         })
                   .end(function(err, res) {
@@ -223,6 +273,31 @@ describe("ESDR", function() {
                           res.body.data[0].should.have.property('instanceContext', '#/clientSecret');
                           res.body.data[0].should.have.property('constraintName', 'minLength');
                           res.body.data[0].should.have.property('constraintValue', db.clients.jsonSchema.properties.clientSecret.minLength);
+                          done();
+                       });
+         });
+
+         it("Should fail to create a new client with a client secret that's too long", function(done) {
+            agent(url)
+                  .post("/api/v1/clients")
+                  .send({
+                           displayName : testClient.displayName,
+                           clientName : testClient.clientName,
+                           clientSecret : "thisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstring"
+                        })
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 400);
+                          res.body.should.have.property('code', 400);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.length(1);
+                          res.body.data[0].should.have.property('instanceContext', '#/clientSecret');
+                          res.body.data[0].should.have.property('constraintName', 'maxLength');
+                          res.body.data[0].should.have.property('constraintValue', db.clients.jsonSchema.properties.clientSecret.maxLength);
                           done();
                        });
          });
@@ -381,6 +456,31 @@ describe("ESDR", function() {
                        });
          });
 
+         it("Should fail to create a new user with an email address that's too long", function(done) {
+            agent(url)
+                  .post("/api/v1/users")
+                  .send({
+                           email : "thisisaverylongemailaddressthatismuchtoolongandsoitwillfailvalidation@domainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainname.com",
+                           password : testUser1.password,
+                           displayName : testUser1.displayName
+                        })
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 400);
+                          res.body.should.have.property('code', 400);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.length(1);
+                          res.body.data[0].should.have.property('instanceContext', '#/email');
+                          res.body.data[0].should.have.property('constraintName', 'maxLength');
+                          res.body.data[0].should.have.property('constraintValue', db.users.jsonSchema.properties.email.maxLength);
+                          done();
+                       });
+         });
+
          it("Should fail to create a new user with a password that's too short", function(done) {
             agent(url)
                   .post("/api/v1/users")
@@ -402,6 +502,56 @@ describe("ESDR", function() {
                           res.body.data[0].should.have.property('instanceContext', '#/password');
                           res.body.data[0].should.have.property('constraintName', 'minLength');
                           res.body.data[0].should.have.property('constraintValue', db.users.jsonSchema.properties.password.minLength);
+                          done();
+                       });
+         });
+
+         it("Should fail to create a new user with a password that's too long", function(done) {
+            agent(url)
+                  .post("/api/v1/users")
+                  .send({
+                           email : testUser1.email,
+                           password : "thisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstring",
+                           displayName : testUser1.displayName
+                        })
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 400);
+                          res.body.should.have.property('code', 400);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.length(1);
+                          res.body.data[0].should.have.property('instanceContext', '#/password');
+                          res.body.data[0].should.have.property('constraintName', 'maxLength');
+                          res.body.data[0].should.have.property('constraintValue', db.users.jsonSchema.properties.password.maxLength);
+                          done();
+                       });
+         });
+
+         it("Should fail to create a new user with a display name that's too long", function(done) {
+            agent(url)
+                  .post("/api/v1/users")
+                  .send({
+                           email : testUser1.email,
+                           password : testUser1.password,
+                           displayName : "thisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstring"
+                        })
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 400);
+                          res.body.should.have.property('code', 400);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.length(1);
+                          res.body.data[0].should.have.property('instanceContext', '#/displayName');
+                          res.body.data[0].should.have.property('constraintName', 'maxLength');
+                          res.body.data[0].should.have.property('constraintValue', db.users.jsonSchema.properties.displayName.maxLength);
                           done();
                        });
          });
@@ -919,25 +1069,6 @@ describe("ESDR", function() {
                err.should.have.property("code", "ER_DUP_ENTRY");
                done();
             });
-         });
-
-         it("Should not be able to create a user with an email that's too long", function(done) {
-            db.users.create({
-                               email : "thisisaverylongemailaddressthatismuchtoolongandsoitwillfailvalidation@domainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainname.com",
-                               password : testUser1.password,
-                               displayName : testUser1.displayName
-                            },
-                            function(err, result) {
-                               (err != null).should.be.true;
-                               (result != null).should.be.true;
-
-                               err.should.have.length(1);
-                               err[0].should.have.property('instanceContext', '#/email');
-                               err[0].should.have.property('constraintName', 'maxLength');
-                               err[0].should.have.property('constraintValue', db.users.jsonSchema.properties.password.maxLength);
-
-                               done();
-                            });
          });
 
          it("Should be able to find a user by email", function(done) {

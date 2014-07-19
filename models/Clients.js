@@ -21,15 +21,18 @@ var JSON_SCHEMA = {
    "properties" : {
       "displayName" : {
          "type" : "string",
-         "minLength" : 4
+         "minLength" : 4,
+         "maxLength" : 255
       },
       "clientName" : {
          "type" : "string",
-         "minLength" : 4
+         "minLength" : 4,
+         "maxLength" : 255
       },
       "clientSecret" : {
          "type" : "string",
-         "minLength" : 10
+         "minLength" : 10,
+         "maxLength" : 255
       }
    },
    "required" : ["displayName", "clientName", "clientSecret"]
