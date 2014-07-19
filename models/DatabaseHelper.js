@@ -1,5 +1,3 @@
-var log = require('log4js').getLogger();
-
 module.exports = function(pool) {
    var self = this;
 
