@@ -1,6 +1,6 @@
 var assert = require('assert');
 var should = require('should');
-var request = require('supertest');
+var agent = require('supertest');
 var mysql = require('mysql');
 var config = require('../config');
 var flow = require('nimble');
@@ -29,6 +29,7 @@ describe("ESDR", function() {
       clientSecret : "I've got a secret / I've been hiding / Under my skin"
    };
    var db = null;
+   var verificationTokens = {};
 
    var pool = mysql.createPool({
                                   connectionLimit : config.get("database:pool:connectionLimit"),
@@ -90,7 +91,7 @@ describe("ESDR", function() {
    describe("REST API", function() {
       describe("Clients", function() {
          it("Should be able to create a new client", function(done) {
-            request(url)
+            agent(url)
                   .post("/api/v1/clients")
                   .send(testClient)
                   .end(function(err, res) {
@@ -108,8 +109,25 @@ describe("ESDR", function() {
                        });
          });
 
+         it("Should fail to create a the same client again", function(done) {
+            agent(url)
+                  .post("/api/v1/clients")
+                  .send(testClient)
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 409);
+                          res.body.should.have.property('code', 409);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data', null);
+                          done();
+                       });
+         });
+
          it("Should fail to create a new client with missing required values", function(done) {
-            request(url)
+            agent(url)
                   .post("/api/v1/clients")
                   .send({ })
                   .end(function(err, res) {
@@ -135,7 +153,7 @@ describe("ESDR", function() {
          });
 
          it("Should fail to create a new client with a pretty name that's too short", function(done) {
-            request(url)
+            agent(url)
                   .post("/api/v1/clients")
                   .send({
                            displayName : "T",
@@ -160,7 +178,7 @@ describe("ESDR", function() {
          });
 
          it("Should fail to create a new client with a client name that's too short", function(done) {
-            request(url)
+            agent(url)
                   .post("/api/v1/clients")
                   .send({
                            displayName : "Test Client",
@@ -185,7 +203,7 @@ describe("ESDR", function() {
          });
 
          it("Should fail to create a new client with a client secret that's too short", function(done) {
-            request(url)
+            agent(url)
                   .post("/api/v1/clients")
                   .send({
                            displayName : "Test Client",
@@ -210,7 +228,7 @@ describe("ESDR", function() {
          });
 
          it("Should fail to create a new client with a client name that's already in use", function(done) {
-            request(url)
+            agent(url)
                   .post("/api/v1/clients")
                   .send(testClient)
                   .end(function(err, res) {
@@ -229,7 +247,7 @@ describe("ESDR", function() {
       describe("Users", function() {
 
          it("Should be able to create a new user", function(done) {
-            request(url)
+            agent(url)
                   .post("/api/v1/users")
                   .send(testUser1)
                   .end(function(err, res) {
@@ -243,12 +261,33 @@ describe("ESDR", function() {
                           res.body.should.have.property('data');
                           res.body.data.should.have.property('email', testUser1.email);
                           res.body.data.should.have.property('displayName', testUser1.displayName);
+                          res.body.data.should.have.property('verificationToken');
+
+                          // remember the verification token so we can verify this user
+                          verificationTokens.testUser1 = res.body.data.verificationToken;
+                          done();
+                       });
+         });
+
+         it("Should fail to create a the same user again", function(done) {
+            agent(url)
+                  .post("/api/v1/users")
+                  .send(testUser1)
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 409);
+                          res.body.should.have.property('code', 409);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data', null);
                           done();
                        });
          });
 
          it("Should be able to create a new user with no display name", function(done) {
-            request(url)
+            agent(url)
                   .post("/api/v1/users")
                   .send(testUser2)
                   .end(function(err, res) {
@@ -262,12 +301,16 @@ describe("ESDR", function() {
                           res.body.should.have.property('data');
                           res.body.data.should.have.property('email', testUser2.email);
                           res.body.data.should.not.have.property('displayName');
+                          res.body.data.should.have.property('verificationToken');
+
+                          // remember the verification token so we can verify this user
+                          verificationTokens.testUser2 = res.body.data.verificationToken;
                           done();
                        });
          });
 
          it("Should be able to create a new user with empty display name", function(done) {
-            request(url)
+            agent(url)
                   .post("/api/v1/users")
                   .send(testUser3)
                   .end(function(err, res) {
@@ -281,12 +324,16 @@ describe("ESDR", function() {
                           res.body.should.have.property('data');
                           res.body.data.should.have.property('email', testUser3.email);
                           res.body.data.should.not.have.property('displayName', null);
+                          res.body.data.should.have.property('verificationToken');
+
+                          // remember the verification token so we can verify this user
+                          verificationTokens.testUser3 = res.body.data.verificationToken;
                           done();
                        });
          });
 
          it("Should fail to create a new user with missing required values", function(done) {
-            request(url)
+            agent(url)
                   .post("/api/v1/users")
                   .send({})
                   .end(function(err, res) {
@@ -310,7 +357,7 @@ describe("ESDR", function() {
          });
 
          it("Should fail to create a new user with an email address that's too short", function(done) {
-            request(url)
+            agent(url)
                   .post("/api/v1/users")
                   .send({
                            email : "t@t.c",
@@ -335,7 +382,7 @@ describe("ESDR", function() {
          });
 
          it("Should fail to create a new user with a password that's too short", function(done) {
-            request(url)
+            agent(url)
                   .post("/api/v1/users")
                   .send({
                            email : testUser1.email,
@@ -360,7 +407,7 @@ describe("ESDR", function() {
          });
 
          it("Should fail to create a new user with a email address that's invalid", function(done) {
-            request(url)
+            agent(url)
                   .post("/api/v1/users")
                   .send({
                            email : "not_a_real_email_address",
@@ -386,7 +433,7 @@ describe("ESDR", function() {
          });
 
          it("Should fail to create a new user with a email address that's already in use", function(done) {
-            request(url)
+            agent(url)
                   .post("/api/v1/users")
                   .send(testUser1)
                   .end(function(err, res) {
@@ -400,6 +447,67 @@ describe("ESDR", function() {
                           done();
                        });
          });
+
+         describe("Account Verification", function() {
+            it("Should be able to verify a user", function(done) {
+
+               agent(url)
+                     .get("/api/v1/users/" + verificationTokens.testUser1 + "/verify")
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', 200);
+                             res.body.should.have.property('code', 200);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('isVerified', true);
+
+                             done();
+                          });
+            });
+
+            it("Verification should return the same thing if called again", function(done) {
+
+               agent(url)
+                     .get("/api/v1/users/" + verificationTokens.testUser1 + "/verify")
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', 200);
+                             res.body.should.have.property('code', 200);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('isVerified', true);
+
+                             done();
+                          });
+
+            });
+
+            it("Verification should fail for a bogus verification token", function(done) {
+
+               agent(url)
+                     .get("/api/v1/users/" + "bogus_token" + "/verify")
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', 400);
+                             res.body.should.have.property('code', 400);
+                             res.body.should.have.property('status', 'error');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('isVerified', false);
+
+                             done();
+                          });
+            });
+         });
+
       });
    });
 
@@ -407,36 +515,73 @@ describe("ESDR", function() {
       var tokens = null;
       var newTokens = null;
 
-      it("Should be able to request access and refresh tokens", function(done) {
-         request(url)
+      it("Should fail to request access and refresh tokens for an unverified user", function(done) {
+         agent(url)
                .post("/oauth/token")
                .send({
                         grant_type : "password",
                         client_id : testClient.clientName,
                         client_secret : testClient.clientSecret,
-                        username : testUser1.email,
-                        password : testUser1.password
+                        username : testUser2.email,
+                        password : testUser2.password
                      })
                .end(function(err, res) {
                        if (err) {
                           return done(err);
                        }
 
-                       res.should.have.property('status', 200);
-                       res.body.should.have.property('access_token');
-                       res.body.should.have.property('refresh_token');
-                       res.body.should.have.property('expires_in', 3600);
-                       res.body.should.have.property('token_type', "Bearer");
-
-                       // remember these tokens
-                       tokens = res.body;
+                       res.should.have.property('status', 403);
+                       res.body.should.have.property('error', 'invalid_grant');
 
                        done();
                     });
       });
 
+      it("Should be able to request access and refresh tokens after verifying the user", function(done) {
+         agent(url)
+               .get("/api/v1/users/" + verificationTokens.testUser2 + "/verify")
+               .end(function(err, res) {
+                       if (err) {
+                          return done(err);
+                       }
+
+                       res.should.have.property('status', 200);
+                       res.body.should.have.property('code', 200);
+                       res.body.should.have.property('status', 'success');
+                       res.body.should.have.property('data');
+                       res.body.data.should.have.property('isVerified', true);
+
+                       // now that the user is verified, request access and refresh tokens
+                       agent(url)
+                             .post("/oauth/token")
+                             .send({
+                                      grant_type : "password",
+                                      client_id : testClient.clientName,
+                                      client_secret : testClient.clientSecret,
+                                      username : testUser1.email,
+                                      password : testUser1.password
+                                   })
+                             .end(function(err, res) {
+                                     if (err) {
+                                        return done(err);
+                                     }
+
+                                     res.should.have.property('status', 200);
+                                     res.body.should.have.property('access_token');
+                                     res.body.should.have.property('refresh_token');
+                                     res.body.should.have.property('expires_in', 3600);
+                                     res.body.should.have.property('token_type', "Bearer");
+
+                                     // remember these tokens
+                                     tokens = res.body;
+
+                                     done();
+                                  });
+                    });
+      });
+
       it("Should not be able to request access and refresh tokens with an invalid client ID", function(done) {
-         request(url)
+         agent(url)
                .post("/oauth/token")
                .send({
                         grant_type : "password",
@@ -457,7 +602,7 @@ describe("ESDR", function() {
       });
 
       it("Should not be able to request access and refresh tokens with an invalid client secret", function(done) {
-         request(url)
+         agent(url)
                .post("/oauth/token")
                .send({
                         grant_type : "password",
@@ -478,7 +623,7 @@ describe("ESDR", function() {
       });
 
       it("Should not be able to request access and refresh tokens with an invalid email (username)", function(done) {
-         request(url)
+         agent(url)
                .post("/oauth/token")
                .send({
                         grant_type : "password",
@@ -499,7 +644,7 @@ describe("ESDR", function() {
       });
 
       it("Should not be able to request access and refresh tokens with an invalid password", function(done) {
-         request(url)
+         agent(url)
                .post("/oauth/token")
                .send({
                         grant_type : "password",
@@ -520,7 +665,7 @@ describe("ESDR", function() {
       });
 
       it("Should be able to access a protected resource with the access token", function(done) {
-         request(url)
+         agent(url)
                .get("/api/v1/users")
                .set({
                        Authorization : "Bearer " + tokens.access_token
@@ -536,7 +681,7 @@ describe("ESDR", function() {
       });
 
       it("Should not be able to access a protected resource without the access token", function(done) {
-         request(url)
+         agent(url)
                .get("/api/v1/users")
                .end(function(err, res) {
                        if (err) {
@@ -550,7 +695,7 @@ describe("ESDR", function() {
       });
 
       it("Should not be able to access a protected resource with an invalid access token", function(done) {
-         request(url)
+         agent(url)
                .get("/api/v1/users")
                .set({
                        Authorization : "Bearer bogus"
@@ -567,7 +712,7 @@ describe("ESDR", function() {
       });
 
       it("Should be able to refresh an access token", function(done) {
-         request(url)
+         agent(url)
                .post("/oauth/token")
                .send({
                         grant_type : "refresh_token",
@@ -597,7 +742,7 @@ describe("ESDR", function() {
       });
 
       it("Should be able to access a protected resource with the new access token", function(done) {
-         request(url)
+         agent(url)
                .get("/api/v1/users")
                .set({
                        Authorization : "Bearer " + newTokens.access_token
@@ -613,7 +758,7 @@ describe("ESDR", function() {
       });
 
       it("Should not be able to access a protected resource with the old access token", function(done) {
-         request(url)
+         agent(url)
                .get("/api/v1/users")
                .set({
                        Authorization : "Bearer " + tokens.access_token
@@ -629,7 +774,7 @@ describe("ESDR", function() {
       });
 
       it("Should not be able to refresh an access token with an invalid refresh token", function(done) {
-         request(url)
+         agent(url)
                .post("/oauth/token")
                .send({
                         grant_type : "refresh_token",
@@ -651,7 +796,7 @@ describe("ESDR", function() {
       });
 
       it("Should not be able to refresh an access token with a valid refresh token but invalid client ID", function(done) {
-         request(url)
+         agent(url)
                .post("/oauth/token")
                .send({
                         grant_type : "refresh_token",
@@ -671,7 +816,7 @@ describe("ESDR", function() {
       });
 
       it("Should not be able to refresh an access token with a valid refresh token but invalid client secret", function(done) {
-         request(url)
+         agent(url)
                .post("/oauth/token")
                .send({
                         grant_type : "refresh_token",
@@ -774,6 +919,25 @@ describe("ESDR", function() {
                err.should.have.property("code", "ER_DUP_ENTRY");
                done();
             });
+         });
+
+         it("Should not be able to create a user with an email that's too long", function(done) {
+            db.users.create({
+                               email : "thisisaverylongemailaddressthatismuchtoolongandsoitwillfailvalidation@domainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainname.com",
+                               password : testUser1.password,
+                               displayName : testUser1.displayName
+                            },
+                            function(err, result) {
+                               (err != null).should.be.true;
+                               (result != null).should.be.true;
+
+                               err.should.have.length(1);
+                               err[0].should.have.property('instanceContext', '#/email');
+                               err[0].should.have.property('constraintName', 'maxLength');
+                               err[0].should.have.property('constraintValue', db.users.jsonSchema.properties.password.maxLength);
+
+                               done();
+                            });
          });
 
          it("Should be able to find a user by email", function(done) {

@@ -25,6 +25,10 @@ module.exports = function(UserModel, TokenModel) {
             return done(null, false);
          }
 
+         if (!user.isVerified) {
+            return done(null, false);
+         }
+
          // Everything validated, generate and return the tokens
          TokenModel.create(user.id, client.id, function(err, tokenValues) {
             if (err) {

@@ -32,11 +32,31 @@ module.exports = function(UserModel) {
 
                                       res.jsendSuccess({
                                                           email : newUser.email,
-                                                          displayName : newUser.displayName
+                                                          displayName : newUser.displayName,
+                                                          verificationToken : result.verificationToken
                                                        }, 201); // HTTP 201 Created
                                    });
 
                });
+
+   router.get('/:verificationToken/verify',
+              function(req, res) {
+                 UserModel.verify(req.params.verificationToken, function(err, result) {
+                    if (err) {
+                       var message = "Error while trying to verify user with verification token [" + req.params.verificationToken + "]";
+                       log.error(message + ": " + err);
+                       return res.jsendServerError(message);
+                    }
+
+                    if (result.isVerified) {
+                       return res.jsendSuccess(result);
+                    }
+
+                    return res.jsendClientError("Invalid verification token", result, 400);
+
+                 });
+              }
+   );
 
    // TODO: this is just a placeholder for testing...
    router.get('/',
