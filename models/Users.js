@@ -92,9 +92,9 @@ module.exports = function(databaseHelper) {
                   insertId : result.insertId
                };
 
-               // Only return the verification token when in test mode.  In other modes, we want to
-               // email the verification token to the user, to ensure the email address is correct
-               // and actually belongs to the person who created the account.
+               // Only return the verification token when in test mode.  In other modes, we
+               // email the verification token to the user, to ensure the email address is
+               // correct and actually belongs to the person who created the account.
                if (process.env['NODE_ENV'] == "test") {
                   obj.verificationToken = user.verificationToken
                }
