@@ -8,7 +8,7 @@ module.exports = function(UserModel) {
    router.post('/',
                function(req, res) {
                   var newUser = req.body;
-                  log.debug("Received POST to create user:" + JSON.stringify(newUser, null, 3));
+                  log.debug("Received POST to create user [" + (newUser && newUser.email ? newUser.email : null) + "]");
 
                   UserModel.create(newUser,
                                    function(err, result) {
@@ -30,11 +30,18 @@ module.exports = function(UserModel) {
 
                                       log.debug("Created new user [" + newUser.email + "] with id [" + result.insertId + "] ");
 
-                                      res.jsendSuccess({
-                                                          email : newUser.email,
-                                                          displayName : newUser.displayName,
-                                                          verificationToken : result.verificationToken
-                                                       }, 201); // HTTP 201 Created
+                                      var obj = {
+                                         email : newUser.email,
+                                         displayName : newUser.displayName
+                                      };
+                                      // Only return the verification token when in test mode.  In other modes, we want to
+                                      // email the verification token to the user, to ensure the email address is correct
+                                      // and actually belongs to the person who created the account.
+                                      if (process.env['NODE_ENV'] == "test") {
+                                         obj.verificationToken = result.verificationToken
+                                      }
+
+                                      res.jsendSuccess(obj, 201); // HTTP 201 Created
                                    });
 
                });
