@@ -8,7 +8,7 @@ module.exports = function(ClientModel) {
    router.post('/',
                function(req, res) {
                   var newClient = req.body;
-                  log.debug("Received POST to create client:" + JSON.stringify(newClient, null, 3));
+                  log.debug("Received POST to create client [" + (newClient && newClient.clientName ? newClient.clientName : null) + "]");
 
                   ClientModel.create(newClient,
                                      function(err, result) {
