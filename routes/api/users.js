@@ -60,7 +60,6 @@ module.exports = function(UserModel) {
                     }
 
                     return res.jsendClientError("Invalid verification token", result, 400);
-
                  });
               }
    );
