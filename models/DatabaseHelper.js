@@ -1,17 +1,24 @@
+var DatabaseError = require('../lib/errors').DatabaseError;
+var DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
+
 module.exports = function(pool) {
    var self = this;
 
    this.execute = function(query, params, callback) {
       pool.getConnection(function(err1, connection) {
          if (err1) {
-            return callback(err1, null);
+            return callback(new DatabaseError(err1, "Error obtaining the connection"), null);
          }
 
          connection.query(query, params, function(err2, result) {
             connection.release();
 
             if (err2) {
-               return callback(err2);
+               if (err2.code == "ER_DUP_ENTRY") {
+                  return callback(new DuplicateRecordError(err2));
+               }
+
+               return callback(new DatabaseError(err2, "Error executing query [" + query + "]"));
             }
 
             callback(null, result);

@@ -84,9 +84,9 @@ module.exports = function(databaseHelper) {
    this.refreshToken = function(clientId, refreshToken, callback) {
 
       var connection = null;
-      var errors = [];
-      var hasErrors = function() {
-         return errors.length > 0
+      var error = null;
+      var hasError = function() {
+         return error != null;
       };
       var userId = null;
       var newTokens = null;
@@ -99,7 +99,7 @@ module.exports = function(databaseHelper) {
                   log.debug("refreshToken(): 1) Getting the connection");
                   databaseHelper.getConnection(function(err, newConnection) {
                      if (err) {
-                        errors.push(err);
+                        error = err;
                      }
                      else {
                         connection = newConnection;
@@ -110,11 +110,11 @@ module.exports = function(databaseHelper) {
 
                // begin the transaction
                function(done) {
-                  if (!hasErrors()) {
+                  if (!hasError()) {
                      log.debug("refreshToken(): 2) Beginning the transaction");
                      connection.beginTransaction(function(err) {
                         if (err) {
-                           errors.push(err);
+                           error = err;
                         }
                         done();
                      });
@@ -126,13 +126,13 @@ module.exports = function(databaseHelper) {
 
                // find the refresh token for this client--from this we'll determine the userId of the user owning this token
                function(done) {
-                  if (!hasErrors()) {
+                  if (!hasError()) {
                      log.debug("refreshToken(): 3) Find the refresh token for the client");
                      connection.query("SELECT userId FROM Tokens WHERE refreshToken=? AND clientId=?",
                                       [refreshToken, clientId],
                                       function(err, rows) {
                                          if (err) {
-                                            errors.push(err);
+                                            error = err;
                                          }
                                          else {
                                             // might not find anything, but that's OK--just set to null and
@@ -150,12 +150,12 @@ module.exports = function(databaseHelper) {
 
                // generate new tokens and update the record
                function(done) {
-                  if (!hasErrors() && userId) {
+                  if (!hasError() && userId) {
                      log.debug("refreshToken(): 4) generate new tokens and update the record");
 
                      self.create(userId, clientId, function(err, tokens) {
                         if (err) {
-                           errors.push(err);
+                           error = err;
                         }
                         else {
                            newTokens = tokens;
@@ -172,16 +172,10 @@ module.exports = function(databaseHelper) {
             // handle outcome
             function() {
                log.debug("refreshToken(): 5) All done, now checking status and performing commit/rollback as necessary!");
-               if (hasErrors()) {
+               if (hasError()) {
                   connection.rollback(function() {
                      connection.release();
-                     log.error("refreshToken():    Error(s) occurred while refreshing token, rolled back the transaction. Error(s):");
-                     errors.forEach(function(e) {
-                        log.error("   " + e);
-                     });
-
-                     var error = new Error("Error(s) occurred while refreshing token. See errors property in this object.");
-                     error.errors = errors;
+                     log.error("refreshToken():    An error occurred while refreshing token, rolled back the transaction. Error:" + error);
                      callback(error);
                   });
                }

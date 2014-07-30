@@ -6,6 +6,7 @@ var config = require('../config');
 var flow = require('nimble');
 var log = require('log4js').getLogger();
 var Database = require("../models/Database");
+var DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
 
 describe("ESDR", function() {
    var url = "http://localhost:3001";
@@ -992,9 +993,10 @@ describe("ESDR", function() {
          it("Should not be able to create the same client again", function(done) {
             db.clients.create(testClient, function(err, result) {
                (err != null).should.be.true;
-               (result != null).should.be.true;
-               result.should.have.property("errorType", "database");
-               err.should.have.property("code", "ER_DUP_ENTRY");
+               (result == null).should.be.true;
+               (err instanceof DuplicateRecordError).should.be.true;
+               err.should.have.property("data");
+               err.data.should.have.property("code", "ER_DUP_ENTRY");
                done();
             });
          });
@@ -1064,9 +1066,10 @@ describe("ESDR", function() {
          it("Should not be able to create the same user again", function(done) {
             db.users.create(testUser1, function(err, result) {
                (err != null).should.be.true;
-               (result != null).should.be.true;
-               result.should.have.property("errorType", "database");
-               err.should.have.property("code", "ER_DUP_ENTRY");
+               (result == null).should.be.true;
+               (err instanceof DuplicateRecordError).should.be.true;
+               err.should.have.property("data");
+               err.data.should.have.property("code", "ER_DUP_ENTRY");
                done();
             });
          });

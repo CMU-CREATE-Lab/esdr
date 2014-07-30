@@ -1,6 +1,7 @@
 var trimAndCopyPropertyIfNonEmpty = require('../lib/objectUtils').trimAndCopyPropertyIfNonEmpty;
 var JaySchema = require('jayschema');
 var jsonValidator = new JaySchema();
+var ValidationError = require('../lib/errors').ValidationError;
 var log = require('log4js').getLogger();
 
 var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Clients` ( " +
@@ -64,13 +65,13 @@ module.exports = function(databaseHelper) {
       // now validate
       jsonValidator.validate(client, JSON_SCHEMA, function(err1) {
          if (err1) {
-            return callback(err1, {errorType : "validation"});
+            return callback(new ValidationError(err1));
          }
 
          // if validation was successful, then try to insert
          databaseHelper.execute("INSERT INTO Clients SET ?", client, function(err2, result) {
             if (err2) {
-               return callback(err2, {errorType : "database"});
+               return callback(err2);
             }
 
             return callback(null, {insertId : result.insertId});

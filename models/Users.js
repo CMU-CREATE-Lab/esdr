@@ -3,6 +3,7 @@ var crypto = require('crypto');
 var trimAndCopyPropertyIfNonEmpty = require('../lib/objectUtils').trimAndCopyPropertyIfNonEmpty;
 var JaySchema = require('jayschema');
 var jsonValidator = new JaySchema();
+var ValidationError = require('../lib/errors').ValidationError;
 var log = require('log4js').getLogger();
 
 var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Users` ( " +
@@ -72,7 +73,7 @@ module.exports = function(databaseHelper) {
       // now validate
       jsonValidator.validate(user, JSON_SCHEMA, function(err1) {
          if (err1) {
-            return callback(err1, {errorType : "validation"});
+            return callback(new ValidationError(err1));
          }
 
          // if validation was successful, then hash the password
@@ -85,7 +86,7 @@ module.exports = function(databaseHelper) {
             user.password = hashedPassword;
             databaseHelper.execute("INSERT INTO Users SET ?", user, function(err3, result) {
                if (err3) {
-                  return callback(err3, {errorType : "database"});
+                  return callback(err3);
                }
 
                var obj = {
