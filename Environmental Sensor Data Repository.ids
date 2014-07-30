@@ -7,17 +7,18 @@
     </database-info>
     <case-sensitivity plain-identifiers="mixed" quoted-identifiers="upper"/>
     <schema name="" catalog="esdr"/>
-    <table name="Clients" schema="" catalog="esdr" type="TABLE">
+    <schema name="" catalog="esdr_test"/>
+    <table name="Clients" schema="" catalog="esdr_test" type="TABLE">
       <column name="id" sqlType="BIGINT" precision="19" scale="0" nullable="false" jdbcType="-5" autoIncrement="true"/>
-      <column name="prettyName" sqlType="VARCHAR" precision="255" scale="0" nullable="false" jdbcType="12"/>
+      <column name="displayName" sqlType="VARCHAR" precision="255" scale="0" nullable="false" jdbcType="12"/>
       <column name="clientName" sqlType="VARCHAR" precision="255" scale="0" nullable="false" jdbcType="12"/>
       <column name="clientSecret" sqlType="VARCHAR" precision="255" scale="0" nullable="false" jdbcType="12"/>
       <column name="created" sqlType="TIMESTAMP" precision="19" scale="0" nullable="false" jdbcType="93" def="Q1VSUkVOVF9USU1FU1RBTVA="/>
       <primary-key name="PRIMARY" columns="id"/>
-      <exported-key name="refreshtokens_ibfk_2" table="Tokens" schema="" catalog="esdr" columns="clientId"/>
+      <exported-key name="refreshtokens_ibfk_2" table="Tokens" schema="" catalog="esdr_test" columns="clientId"/>
       <index name="unique_clientName" unique="true" columns="clientName"/>
     </table>
-    <table name="Tokens" schema="" catalog="esdr" type="TABLE">
+    <table name="Tokens" schema="" catalog="esdr_test" type="TABLE">
       <column name="id" sqlType="BIGINT" precision="19" scale="0" nullable="false" jdbcType="-5" autoIncrement="true"/>
       <column name="userId" sqlType="BIGINT" precision="19" scale="0" nullable="false" jdbcType="-5"/>
       <column name="clientId" sqlType="BIGINT" precision="19" scale="0" nullable="false" jdbcType="-5"/>
@@ -25,22 +26,26 @@
       <column name="refreshToken" sqlType="VARCHAR" precision="255" scale="0" nullable="false" jdbcType="12"/>
       <column name="created" sqlType="TIMESTAMP" precision="19" scale="0" nullable="false" jdbcType="93" def="Q1VSUkVOVF9USU1FU1RBTVA="/>
       <primary-key name="PRIMARY" columns="id"/>
-      <foreign-key name="refreshtokens_ibfk_1" columns="userId" ref-table="Users" ref-schema="" ref-catalog="esdr" ref-columns="id" update-rule="3" delete-rule="3" deferrability="2"/>
-      <foreign-key name="refreshtokens_ibfk_2" columns="clientId" ref-table="Clients" ref-schema="" ref-catalog="esdr" ref-columns="id" update-rule="3" delete-rule="3" deferrability="2"/>
+      <foreign-key name="refreshtokens_ibfk_1" columns="userId" ref-table="Users" ref-schema="" ref-catalog="esdr_test" ref-columns="id" update-rule="3" delete-rule="3" deferrability="2"/>
+      <foreign-key name="refreshtokens_ibfk_2" columns="clientId" ref-table="Clients" ref-schema="" ref-catalog="esdr_test" ref-columns="id" update-rule="3" delete-rule="3" deferrability="2"/>
       <index name="unique_accessToken" unique="true" columns="accessToken"/>
       <index name="unique_refreshToken" unique="true" columns="refreshToken"/>
       <index name="userId_clientId_index" unique="true" columns="userId,clientId"/>
     </table>
-    <table name="Users" schema="" catalog="esdr" type="TABLE">
+    <table name="Users" schema="" catalog="esdr_test" type="TABLE">
       <column name="id" sqlType="BIGINT" precision="19" scale="0" nullable="false" jdbcType="-5" autoIncrement="true"/>
-      <column name="username" sqlType="VARCHAR" precision="255" scale="0" nullable="false" jdbcType="12"/>
-      <column name="password" sqlType="VARCHAR" precision="255" scale="0" nullable="false" jdbcType="12"/>
       <column name="email" sqlType="VARCHAR" precision="255" scale="0" nullable="false" jdbcType="12"/>
+      <column name="password" sqlType="VARCHAR" precision="255" scale="0" nullable="false" jdbcType="12"/>
+      <column name="displayName" sqlType="VARCHAR" precision="255" scale="0" nullable="true" jdbcType="12"/>
       <column name="created" sqlType="TIMESTAMP" precision="19" scale="0" nullable="false" jdbcType="93" def="Q1VSUkVOVF9USU1FU1RBTVA="/>
       <column name="modified" sqlType="TIMESTAMP" precision="19" scale="0" nullable="false" jdbcType="93" def="Q1VSUkVOVF9USU1FU1RBTVA=" version="true"/>
+      <column name="verificationToken" sqlType="VARCHAR" precision="64" scale="0" nullable="false" jdbcType="12"/>
+      <column name="isVerified" sqlType="TINYINT" precision="3" scale="0" nullable="true" jdbcType="-6" def="MA=="/>
+      <column name="verified" sqlType="TIMESTAMP" precision="19" scale="0" nullable="false" jdbcType="93" def="JzAwMDAtMDAtMDAgMDA6MDA6MDAn"/>
       <primary-key name="PRIMARY" columns="id"/>
-      <exported-key name="refreshtokens_ibfk_1" table="Tokens" schema="" catalog="esdr" columns="userId"/>
-      <index name="unique_username" unique="true" columns="username"/>
+      <exported-key name="refreshtokens_ibfk_1" table="Tokens" schema="" catalog="esdr_test" columns="userId"/>
+      <index name="unique_email" unique="true" columns="email"/>
+      <index name="unique_verificationToken" unique="true" columns="verificationToken"/>
     </table>
   </data-source>
 </component>

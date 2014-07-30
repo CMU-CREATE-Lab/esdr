@@ -20,7 +20,7 @@
     </annotationProcessing>
   </component>
   <component name="CopyrightManager" default="" />
-  <component name="DataSourceManagerImpl" format="xml" hash="3246133046">
+  <component name="DataSourceManagerImpl" format="xml" hash="1018867931">
     <data-source source="LOCAL" name="MySQL - esdr@localhost" uuid="a1a93e08-2069-498b-befe-f2b24560c574">
       <driver-ref>mysql</driver-ref>
       <synchronize>true</synchronize>
@@ -28,8 +28,8 @@
       <jdbc-url>jdbc:mysql://localhost:3306/esdr</jdbc-url>
       <user-name>root</user-name>
       <user-password>dfdadfcbdfd9dfd9dfdddfc5dfd8dfce</user-password>
-      <schema-pattern>esdr.*</schema-pattern>
-      <default-schemas>esdr.*</default-schemas>
+      <schema-pattern>esdr.* esdr_test.*</schema-pattern>
+      <default-schemas>esdr.* esdr_test.*</default-schemas>
       <driver-properties>
         <property name="zeroDateTimeBehavior" value="convertToNull" />
         <property name="tinyInt1isBit" value="false" />
