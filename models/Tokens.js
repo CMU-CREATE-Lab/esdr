@@ -7,8 +7,8 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Tokens` ( " +
                          "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
                          "`userId` bigint(20) NOT NULL, " +
                          "`clientId` bigint(20) NOT NULL, " +
-                         "`accessToken` varchar(255) NOT NULL, " +
-                         "`refreshToken` varchar(255) NOT NULL, " +
+                         "`accessToken` varchar(64) NOT NULL, " +
+                         "`refreshToken` varchar(64) NOT NULL, " +
                          "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
                          "PRIMARY KEY (`id`), " +
                          "UNIQUE KEY `unique_accessToken` (`accessToken`), " +
@@ -37,8 +37,8 @@ module.exports = function(databaseHelper) {
 
    var generateTokens = function() {
       return {
-         access : crypto.randomBytes(128).toString('base64'),
-         refresh : crypto.randomBytes(128).toString('base64')
+         access : crypto.randomBytes(32).toString('hex'),
+         refresh : crypto.randomBytes(32).toString('hex')
       };
    };
 
