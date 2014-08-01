@@ -20,7 +20,7 @@ module.exports = function(ClientModel) {
                                            }
                                            if (err instanceof DuplicateRecordError) {
                                               log.debug("Client name [" + newClient.clientName + "] already in use!");
-                                              return res.jsendClientError("Client name already in use.", null, 409);  // HTTP 409 Conflict
+                                              return res.jsendClientError("Client name already in use.", {clientName : newClient.clientName}, 409);  // HTTP 409 Conflict
                                            }
 
                                            var message = "Error while trying to create client [" + newClient.clientName + "]";
