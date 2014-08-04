@@ -110,7 +110,7 @@ describe("ESDR", function() {
                        });
          });
 
-         it("Should fail to create a the same client again", function(done) {
+         it("Should fail to create the same client again", function(done) {
             agent(url)
                   .post("/api/v1/clients")
                   .send(testClient)
@@ -122,7 +122,8 @@ describe("ESDR", function() {
                           res.should.have.property('status', 409);
                           res.body.should.have.property('code', 409);
                           res.body.should.have.property('status', 'error');
-                          res.body.should.have.property('data', null);
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.property('clientName', testClient.clientName);
                           done();
                        });
          });
@@ -345,7 +346,7 @@ describe("ESDR", function() {
                        });
          });
 
-         it("Should fail to create a the same user again", function(done) {
+         it("Should fail to create the same user again", function(done) {
             agent(url)
                   .post("/api/v1/users")
                   .send(testUser1)
@@ -357,7 +358,8 @@ describe("ESDR", function() {
                           res.should.have.property('status', 409);
                           res.body.should.have.property('code', 409);
                           res.body.should.have.property('status', 'error');
-                          res.body.should.have.property('data', null);
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.property('email', testUser1.email);
                           done();
                        });
          });
