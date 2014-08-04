@@ -20,7 +20,7 @@ module.exports = function(UserModel) {
                                          }
                                          if (err instanceof DuplicateRecordError) {
                                             log.debug("Email [" + newUser.email + "] already in use!");
-                                            return res.jsendClientError("Email already in use.", null, 409);  // HTTP 409 Conflict
+                                            return res.jsendClientError("Email already in use.", {email : newUser.email}, 409);  // HTTP 409 Conflict
                                          }
 
                                          var message = "Error while trying to create user [" + newUser.email + "]";
@@ -31,6 +31,7 @@ module.exports = function(UserModel) {
                                       log.debug("Created new user [" + newUser.email + "] with id [" + result.insertId + "] ");
 
                                       var obj = {
+                                         id : result.insertId,
                                          email : newUser.email,
                                          displayName : newUser.displayName
                                       };
