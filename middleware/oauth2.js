@@ -34,7 +34,7 @@ module.exports = function(UserModel, TokenModel) {
             if (err) {
                return done(err);
             }
-            done(null, tokenValues.access, tokenValues.refresh, { 'expires_in' : config.get('security:tokenLifeSecs') });
+            done(null, tokenValues.access, tokenValues.refresh, { userId : user.id, 'expires_in' : config.get('security:tokenLifeSecs') });
          });
       });
    }));
