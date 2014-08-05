@@ -90,7 +90,9 @@ module.exports = function(databaseHelper) {
                }
 
                var obj = {
-                  insertId : result.insertId
+                  insertId : result.insertId,
+                  email : user.email,
+                  displayName : user.displayName
                };
 
                // Only return the verification token when in test mode.  In other modes, we
