@@ -24,9 +24,19 @@ describe("ESDR", function() {
       password : "password3",
       displayName : ""
    };
+   var testUserNeedsTrimming = {
+      email : "    test_trimming@user.com ",
+      password : "password",
+      displayName : "    Test User Trimming   "
+   };
    var testClient = {
       displayName : "Test Client",
       clientName : "test_client",
+      clientSecret : "I've got a secret / I've been hiding / Under my skin"
+   };
+   var testClientNeedsTrimming = {
+      displayName : "   Test Client Trimming  ",
+      clientName : "  test_client_trimming             ",
       clientSecret : "I've got a secret / I've been hiding / Under my skin"
    };
    var db = null;
@@ -106,6 +116,25 @@ describe("ESDR", function() {
                           res.body.should.have.property('data');
                           res.body.data.should.have.property('displayName', testClient.displayName);
                           res.body.data.should.have.property('clientName', testClient.clientName);
+                          done();
+                       });
+         });
+
+         it("Should trim the displayName and clientName when creating a new client", function(done) {
+            agent(url)
+                  .post("/api/v1/clients")
+                  .send(testClientNeedsTrimming)
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 201);
+                          res.body.should.have.property('code', 201);
+                          res.body.should.have.property('status', 'success');
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.property('displayName', testClientNeedsTrimming.displayName.trim());
+                          res.body.data.should.have.property('clientName', testClientNeedsTrimming.clientName.trim());
                           done();
                        });
          });
@@ -343,6 +372,28 @@ describe("ESDR", function() {
 
                           // remember the verification token so we can verify this user
                           verificationTokens.testUser1 = res.body.data.verificationToken;
+                          done();
+                       });
+         });
+
+         it("Should trim the email and displayName when creating a new user", function(done) {
+            agent(url)
+                  .post("/api/v1/users")
+                  .send(testUserNeedsTrimming)
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 201);
+                          res.body.should.have.property('code', 201);
+                          res.body.should.have.property('status', 'success');
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.property('id');
+                          res.body.data.should.have.property('email', testUserNeedsTrimming.email.trim());
+                          res.body.data.should.have.property('displayName', testUserNeedsTrimming.displayName.trim());
+                          res.body.data.should.have.property('verificationToken');
+
                           done();
                        });
          });
