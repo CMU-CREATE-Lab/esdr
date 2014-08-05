@@ -32,8 +32,8 @@ module.exports = function(UserModel) {
 
                                       var obj = {
                                          id : result.insertId,
-                                         email : newUser.email,
-                                         displayName : newUser.displayName
+                                         email : result.email,
+                                         displayName : result.displayName
                                       };
                                       // Only return the verification token when in test mode.  In other modes, we want to
                                       // email the verification token to the user, to ensure the email address is correct
