@@ -336,6 +336,7 @@ describe("ESDR", function() {
                           res.body.should.have.property('code', 201);
                           res.body.should.have.property('status', 'success');
                           res.body.should.have.property('data');
+                          res.body.data.should.have.property('id');
                           res.body.data.should.have.property('email', testUser1.email);
                           res.body.data.should.have.property('displayName', testUser1.displayName);
                           res.body.data.should.have.property('verificationToken');
@@ -377,6 +378,7 @@ describe("ESDR", function() {
                           res.body.should.have.property('code', 201);
                           res.body.should.have.property('status', 'success');
                           res.body.should.have.property('data');
+                          res.body.data.should.have.property('id');
                           res.body.data.should.have.property('email', testUser2.email);
                           res.body.data.should.not.have.property('displayName');
                           res.body.data.should.have.property('verificationToken');
@@ -400,6 +402,7 @@ describe("ESDR", function() {
                           res.body.should.have.property('code', 201);
                           res.body.should.have.property('status', 'success');
                           res.body.should.have.property('data');
+                          res.body.data.should.have.property('id');
                           res.body.data.should.have.property('email', testUser3.email);
                           res.body.data.should.not.have.property('displayName', null);
                           res.body.data.should.have.property('verificationToken');
