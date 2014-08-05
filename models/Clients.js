@@ -74,7 +74,12 @@ module.exports = function(databaseHelper) {
                return callback(err2);
             }
 
-            return callback(null, {insertId : result.insertId});
+            return callback(null, {
+               insertId : result.insertId,
+               // include these because they might have been modified by the trimming
+               displayName : client.displayName,
+               clientName : client.clientName
+            });
          });
       });
    };
