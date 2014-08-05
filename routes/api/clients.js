@@ -28,11 +28,11 @@ module.exports = function(ClientModel) {
                                            return res.jsendServerError(message);
                                         }
 
-                                        log.debug("Created new client [" + newClient.clientName + "] with id [" + result.insertId + "] ");
+                                        log.debug("Created new client [" + result.clientName + "] with id [" + result.insertId + "] ");
 
                                         res.jsendSuccess({
-                                                            displayName : newClient.displayName,
-                                                            clientName : newClient.clientName
+                                                            displayName : result.displayName,
+                                                            clientName : result.clientName
                                                          }, 201); // HTTP 201 Created
                                      });
                });
