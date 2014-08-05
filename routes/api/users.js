@@ -28,10 +28,11 @@ module.exports = function(UserModel) {
                                          return res.jsendServerError(message);
                                       }
 
-                                      log.debug("Created new user [" + newUser.email + "] with id [" + result.insertId + "] ");
+                                      log.debug("Created new user [" + result.email + "] with id [" + result.insertId + "] ");
 
                                       var obj = {
                                          id : result.insertId,
+                                         // include these because they might have been modified by the trimming in the call to create()
                                          email : result.email,
                                          displayName : result.displayName
                                       };
