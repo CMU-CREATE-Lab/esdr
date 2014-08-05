@@ -91,6 +91,7 @@ module.exports = function(databaseHelper) {
 
                var obj = {
                   insertId : result.insertId,
+                  // include these because they might have been modified by the trimming
                   email : user.email,
                   displayName : user.displayName
                };
