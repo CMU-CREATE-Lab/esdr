@@ -1,3 +1,4 @@
+var config = require('../../config');
 var express = require('express');
 var router = express.Router();
 var passport = require('passport');
@@ -36,10 +37,12 @@ module.exports = function(UserModel) {
                                          email : result.email,
                                          displayName : result.displayName
                                       };
-                                      // Only return the verification token when in test mode.  In other modes, we want to
-                                      // email the verification token to the user, to ensure the email address is correct
-                                      // and actually belongs to the person who created the account.
-                                      if (process.env['NODE_ENV'] == "test") {
+                                      // See whether we should return the verification token.  E.g., in most cases, we simply
+                                      // want to email the verification token to the user, to ensure the email address is
+                                      // correct and actually belongs to the person who created the account. But, when
+                                      // testing, just return it here so I don't have to write tests that check an email
+                                      // account :-)
+                                      if (config.get("verificationToken:willReturnViaApi")) {
                                          obj.verificationToken = result.verificationToken
                                       }
 

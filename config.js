@@ -11,6 +11,10 @@ config.defaults({
                    "server" : {
                       "port" : 3000
                    },
+                   "verificationToken" : {
+                      "willReturnViaApi" : false,
+                      "willEmailToUser" : true
+                   },
                    "security" : {
                       "tokenLifeSecs" : 3600
                    },
