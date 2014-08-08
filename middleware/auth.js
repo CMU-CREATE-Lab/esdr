@@ -7,9 +7,9 @@ var log = require('log4js').getLogger();
 module.exports = function(ClientModel, UserModel, TokenModel) {
 
    var authenticateClient = function(clientName, clientSecret, callback) {
-      log.debug("authenticateClient(" + clientName + ")) at " + new Date().getTime());
+      log.debug("auth.authenticateClient(" + clientName + "))");
       ClientModel.findByNameAndSecret(clientName, clientSecret, function(err, client) {
-         log.debug("   in callback for ClientModel.findByName(" + clientName + ")");
+         log.debug("   in callback for ClientModel.findByNameAndSecret(" + clientName + ")");
          if (err) {
             return callback(err);
          }
