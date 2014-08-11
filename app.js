@@ -62,7 +62,7 @@ Database.create(function(err, db) {
 
          // configure routing
          app.use('/oauth', require('./routes/oauth')(oauthServer));
-         app.use('/api/v1/users', require('./routes/api/users')(db.users));
+         app.use('/api/v1/users', require('./routes/api/users')(db.users, db.clients));
          app.use('/api/v1/clients', require('./routes/api/clients')(db.clients));
          app.use('/', require('./routes/index'));
 

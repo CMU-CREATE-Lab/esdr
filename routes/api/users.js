@@ -2,53 +2,126 @@ var config = require('../../config');
 var express = require('express');
 var router = express.Router();
 var passport = require('passport');
+var Mailer = require('../../lib/mailer');
 var ValidationError = require('../../lib/errors').ValidationError;
 var DuplicateRecordError = require('../../lib/errors').DuplicateRecordError;
 var log = require('log4js').getLogger();
 
-module.exports = function(UserModel) {
+module.exports = function(UserModel, ClientModel) {
 
+   var createUser = function(res, user, client) {
+      log.debug("Received POST to create user [" + (user && user.email ? user.email : null) + "]");
+
+      UserModel.create(user,
+                       function(err, result) {
+                          if (err) {
+                             if (err instanceof ValidationError) {
+                                return res.jsendClientError("Validation failure", err.data);
+                             }
+                             if (err instanceof DuplicateRecordError) {
+                                log.debug("Email [" + user.email + "] already in use!");
+                                return res.jsendClientError("Email already in use.", {email : user.email}, 409);  // HTTP 409 Conflict
+                             }
+
+                             var message = "Error while trying to create user [" + user.email + "]";
+                             log.error(message + ": " + err);
+                             return res.jsendServerError(message);
+                          }
+
+                          log.debug("Created new user [" + result.email + "] with id [" + result.insertId + "] ");
+
+                          var obj = {
+                             id : result.insertId,
+                             // include these because they might have been modified by the trimming in the call to UserModel.create()
+                             email : result.email,
+                             displayName : result.displayName
+                          };
+
+                          // See whether we should return the verification token.  In most cases, we simply want to
+                          // email the verification token to the user (see below), to ensure the email address is
+                          // correct and actually belongs to the person who created the account. But, when testing, just
+                          // return it here so I don't have to write tests that check an email account :-)
+                          if (config.get("verificationToken:willReturnViaApi")) {
+                             obj.verificationToken = result.verificationToken
+                          }
+
+                          // See whether we should email a link to the user to verify her/his account.
+                          if (config.get("verificationToken:willEmailToUser")) {
+                             var sender = {
+                                name : client.displayName || config.get("mail:sender:name"),
+                                email : client.verificationEmail || config.get("mail:sender:email")
+                             };
+                             var recipientEmail = user.email;
+
+                             // build the verification URL
+                             var verificationUrl = client.verificationUrl || config.get("verificationToken:url");
+                             verificationUrl = verificationUrl.replace(/\:verificationToken/gi, result.verificationToken);
+
+                             // send the email later
+                             process.nextTick(function() {
+                                Mailer.sendVerificationEmail(sender, recipientEmail, verificationUrl, function(err, mailResult) {
+                                   if (err) {
+                                      log.error("Error sending verification email to [" + recipientEmail + "]: " + err);
+                                   }
+                                   else {
+                                      log.info("Verification email sent to [" + recipientEmail + "].  Result: " + JSON.stringify(mailResult, null, 3));
+                                   }
+                                });
+                             });
+                          }
+
+                          return res.jsendSuccess(obj, 201); // HTTP 201 Created
+                       });
+   };
+
+   /**
+    * Creates the given user on behalf of the given client (if any). After the user is created, an email will be sent
+    * to the user (if configured to do so, depending on the current Node runtime environment).  By default, the email
+    * will be sent from an ESDR email account, and will include an URL in the ESDR web site which the user can use to
+    * verify her/his account.  Specifying the client is only necessary if you wish to override the default sender email
+    * and verification link and use the email and link for the client instead.
+    *
+    * The submitted JSON must use the following schema:
+    *
+    * {
+    *    "client" : {
+    *       "clientName" : "CLIENT_ID",
+    *       "clientSecret" : "CLIENT_SECRET"
+    *    },
+    *    "user" : {
+    *       "email" : "EMAIL_ADDRESS",
+    *       "password" : "PASSWORD"
+    *    }
+    * }
+    *
+    * Possible JSend responses:
+    * - Success 201: the user was created successfully
+    * - Client Error 400: the user was not specified or fails validation
+    * - Client Error 401: the client was specified, but failed authentication
+    * - Client Error 409: a user with the same email already exists
+    * - Server Error 500: an unexpected error occurred
+    */
    router.post('/',
                function(req, res) {
-                  var newUser = req.body;
-                  log.debug("Received POST to create user [" + (newUser && newUser.email ? newUser.email : null) + "]");
+                  var user = req.body.user || {};
+                  var client = req.body.client;
 
-                  UserModel.create(newUser,
-                                   function(err, result) {
-                                      if (err) {
-                                         if (err instanceof ValidationError) {
-                                            return res.jsendClientError("Validation failure", err.data);
-                                         }
-                                         if (err instanceof DuplicateRecordError) {
-                                            log.debug("Email [" + newUser.email + "] already in use!");
-                                            return res.jsendClientError("Email already in use.", {email : newUser.email}, 409);  // HTTP 409 Conflict
-                                         }
+                  // if they specified the client, then try to authenticate
+                  if (client) {
+                     ClientModel.findByNameAndSecret(client.clientName, client.clientSecret, function(err, theClient) {
+                        if (err) {
+                           return res.jsendServerError("Error while authenticating client [" + client.clientName + "]");
+                        }
+                        if (!theClient) {
+                           return res.jsendClientError("Failed to authenticate client.", {client : client}, 401);  // HTTP 409 Unauthorized
+                        }
 
-                                         var message = "Error while trying to create user [" + newUser.email + "]";
-                                         log.error(message + ": " + err);
-                                         return res.jsendServerError(message);
-                                      }
-
-                                      log.debug("Created new user [" + result.email + "] with id [" + result.insertId + "] ");
-
-                                      var obj = {
-                                         id : result.insertId,
-                                         // include these because they might have been modified by the trimming in the call to create()
-                                         email : result.email,
-                                         displayName : result.displayName
-                                      };
-                                      // See whether we should return the verification token.  E.g., in most cases, we simply
-                                      // want to email the verification token to the user, to ensure the email address is
-                                      // correct and actually belongs to the person who created the account. But, when
-                                      // testing, just return it here so I don't have to write tests that check an email
-                                      // account :-)
-                                      if (config.get("verificationToken:willReturnViaApi")) {
-                                         obj.verificationToken = result.verificationToken
-                                      }
-
-                                      res.jsendSuccess(obj, 201); // HTTP 201 Created
-                                   });
-
+                        return createUser(res, user, theClient);
+                     });
+                  }
+                  else {
+                     return createUser(res, user, null);
+                  }
                });
 
    router.get('/:verificationToken/verify',

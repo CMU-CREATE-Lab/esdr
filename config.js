@@ -3,9 +3,13 @@ var log = require('log4js').getLogger();
 
 var nodeEnvironment = process.env.NODE_ENV || "development";
 var configFile = './config-' + nodeEnvironment + '.json';
-log.info("Using config file: " + configFile);
+var mailConfigFile = './mail-config-' + nodeEnvironment + '.json';
+log.info("Using config file:      " + configFile);
+log.info("Using mail config file: " + mailConfigFile);
 
-config.argv().env().file({ file : configFile });
+config.argv().env();
+config.add('mail', { type : 'file', file : mailConfigFile });
+config.add('global', { type : 'file', file : configFile });
 
 config.defaults({
                    "server" : {
@@ -13,7 +17,8 @@ config.defaults({
                    },
                    "verificationToken" : {
                       "willReturnViaApi" : false,
-                      "willEmailToUser" : true
+                      "willEmailToUser" : true,
+                      "url" : "http://localhost:3000/api/v1/users/:verificationToken/verify"
                    },
                    "security" : {
                       "tokenLifeSecs" : 3600
@@ -26,6 +31,18 @@ config.defaults({
                       "password" : "password",
                       "pool" : {
                          "connectionLimit" : 10
+                      }
+                   },
+                   "mail" : {
+                      "sender" : {
+                         "name" : "ESDR Admin",
+                         "email" : "esdr-admin@cmucreatelab.org"
+                      },
+                      "smtp" : {
+                         "host" : "smtp.host.name.here",
+                         "port" : 587,
+                         "login" : "login",
+                         "password" : "password"
                       }
                    }
                 });

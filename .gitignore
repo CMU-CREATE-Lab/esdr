@@ -4,3 +4,5 @@ node_modules
 out
 
 config-production.json
+mail-config-development.json
+mail-config-production.json

@@ -23,6 +23,8 @@
     "mysql": "^2.4.2",
     "nconf": "^0.6.9",
     "nimble": "0.0.2",
+    "nodemailer": "^1.1.1",
+    "nodemailer-smtp-transport": "^0.1.12",
     "oauth2orize": "^1.0.1",
     "passport": "^0.2.0",
     "passport-http": "^0.2.2",

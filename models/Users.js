@@ -92,18 +92,12 @@ module.exports = function(databaseHelper) {
 
                var obj = {
                   insertId : result.insertId,
+                  verificationToken : user.verificationToken,
+
                   // include these because they might have been modified by the trimming
                   email : user.email,
                   displayName : user.displayName
                };
-               // See whether we should return the verification token.  E.g., in most cases, we simply
-               // want to email the verification token to the user, to ensure the email address is
-               // correct and actually belongs to the person who created the account. But, when
-               // testing, just return it here so I don't have to write tests that check an email
-               // account :-)
-               if (config.get("verificationToken:willReturnViaApi")) {
-                  obj.verificationToken = user.verificationToken
-               }
 
                return callback(null, obj);
             });

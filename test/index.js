@@ -24,6 +24,11 @@ describe("ESDR", function() {
       password : "password3",
       displayName : ""
    };
+   var testUser4 = {
+      email : "test4@user.com",
+      password : "password4",
+      displayName : ""
+   };
    var testUserNeedsTrimming = {
       email : "    test_trimming@user.com ",
       password : "password",
@@ -355,7 +360,7 @@ describe("ESDR", function() {
          it("Should be able to create a new user", function(done) {
             agent(url)
                   .post("/api/v1/users")
-                  .send(testUser1)
+                  .send({user : testUser1, client : testClient})
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -379,7 +384,7 @@ describe("ESDR", function() {
          it("Should trim the email and displayName when creating a new user", function(done) {
             agent(url)
                   .post("/api/v1/users")
-                  .send(testUserNeedsTrimming)
+                  .send({user : testUserNeedsTrimming, client : testClient})
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -401,7 +406,7 @@ describe("ESDR", function() {
          it("Should fail to create the same user again", function(done) {
             agent(url)
                   .post("/api/v1/users")
-                  .send(testUser1)
+                  .send({user : testUser1, client : testClient})
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -419,7 +424,7 @@ describe("ESDR", function() {
          it("Should be able to create a new user with no display name", function(done) {
             agent(url)
                   .post("/api/v1/users")
-                  .send(testUser2)
+                  .send({user : testUser2, client : testClient})
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -443,7 +448,7 @@ describe("ESDR", function() {
          it("Should be able to create a new user with empty display name", function(done) {
             agent(url)
                   .post("/api/v1/users")
-                  .send(testUser3)
+                  .send({user : testUser3, client : testClient})
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -464,10 +469,58 @@ describe("ESDR", function() {
                        });
          });
 
-         it("Should fail to create a new user with missing required values", function(done) {
+         it("Should be able to create a new user with no client specified", function(done) {
+            agent(url)
+                  .post("/api/v1/users")
+                  .send({user : testUser4})
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 201);
+                          res.body.should.have.property('code', 201);
+                          res.body.should.have.property('status', 'success');
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.property('id');
+                          res.body.data.should.have.property('email', testUser4.email);
+                          res.body.data.should.not.have.property('displayName', null);
+                          res.body.data.should.have.property('verificationToken');
+
+                          // remember the verification token so we can verify this user
+                          verificationTokens.testUser4 = res.body.data.verificationToken;
+                          done();
+                       });
+         });
+
+         it("Should fail to create a new user with missing user and client", function(done) {
             agent(url)
                   .post("/api/v1/users")
                   .send({})
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 400);
+                          res.body.should.have.property('code', 400);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.length(2);
+                          res.body.data[0].should.have.property('instanceContext', '#');
+                          res.body.data[0].should.have.property('constraintName', 'required');
+                          res.body.data[0].should.have.property('constraintValue', db.users.jsonSchema.required);
+                          res.body.data[1].should.have.property('instanceContext', '#/password');
+                          res.body.data[1].should.have.property('constraintName', 'type');
+                          res.body.data[1].should.have.property('constraintValue', "string");
+                          done();
+                       });
+         });
+
+         it("Should fail to create a new user with missing user but present client", function(done) {
+            agent(url)
+                  .post("/api/v1/users")
+                  .send({user : {}, client : testClient})
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -492,9 +545,12 @@ describe("ESDR", function() {
             agent(url)
                   .post("/api/v1/users")
                   .send({
-                           email : "t@t.c",
-                           password : testUser1.password,
-                           displayName : testUser1.displayName
+                           user : {
+                              email : "t@t.c",
+                              password : testUser1.password,
+                              displayName : testUser1.displayName
+                           },
+                           client : testClient
                         })
                   .end(function(err, res) {
                           if (err) {
@@ -517,9 +573,12 @@ describe("ESDR", function() {
             agent(url)
                   .post("/api/v1/users")
                   .send({
-                           email : "thisisaverylongemailaddressthatismuchtoolongandsoitwillfailvalidation@domainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainname.com",
-                           password : testUser1.password,
-                           displayName : testUser1.displayName
+                           user : {
+                              email : "thisisaverylongemailaddressthatismuchtoolongandsoitwillfailvalidation@domainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainnamedomainname.com",
+                              password : testUser1.password,
+                              displayName : testUser1.displayName
+                           },
+                           client : testClient
                         })
                   .end(function(err, res) {
                           if (err) {
@@ -542,9 +601,12 @@ describe("ESDR", function() {
             agent(url)
                   .post("/api/v1/users")
                   .send({
-                           email : testUser1.email,
-                           password : "p",
-                           displayName : testUser1.displayName
+                           user : {
+                              email : testUser1.email,
+                              password : "p",
+                              displayName : testUser1.displayName
+                           },
+                           client : testClient
                         })
                   .end(function(err, res) {
                           if (err) {
@@ -567,9 +629,12 @@ describe("ESDR", function() {
             agent(url)
                   .post("/api/v1/users")
                   .send({
-                           email : testUser1.email,
-                           password : "thisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstring",
-                           displayName : testUser1.displayName
+                           user : {
+                              email : testUser1.email,
+                              password : "thisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstring",
+                              displayName : testUser1.displayName
+                           },
+                           client : testClient
                         })
                   .end(function(err, res) {
                           if (err) {
@@ -592,9 +657,12 @@ describe("ESDR", function() {
             agent(url)
                   .post("/api/v1/users")
                   .send({
-                           email : testUser1.email,
-                           password : testUser1.password,
-                           displayName : "thisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstring"
+                           user : {
+                              email : testUser1.email,
+                              password : testUser1.password,
+                              displayName : "thisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstring"
+                           },
+                           client : testClient
                         })
                   .end(function(err, res) {
                           if (err) {
@@ -617,9 +685,12 @@ describe("ESDR", function() {
             agent(url)
                   .post("/api/v1/users")
                   .send({
-                           email : "not_a_real_email_address",
-                           password : testUser1.password,
-                           displayName : testUser1.displayName
+                           user : {
+                              email : "not_a_real_email_address",
+                              password : testUser1.password,
+                              displayName : testUser1.displayName
+                           },
+                           client : testClient
                         })
                   .end(function(err, res) {
                           if (err) {
@@ -642,7 +713,7 @@ describe("ESDR", function() {
          it("Should fail to create a new user with a email address that's already in use", function(done) {
             agent(url)
                   .post("/api/v1/users")
-                  .send(testUser1)
+                  .send({user : testUser1})
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
