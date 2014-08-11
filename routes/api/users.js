@@ -9,6 +9,30 @@ var log = require('log4js').getLogger();
 
 module.exports = function(UserModel, ClientModel) {
 
+   var sendVerificationEmail = function(client, user, verificationToken) {
+      var sender = {
+         name : client.displayName || config.get("mail:sender:name"),
+         email : client.verificationEmail || config.get("mail:sender:email")
+      };
+      var recipientEmail = user.email;
+
+      // build the verification URL
+      var verificationUrl = client.verificationUrl || config.get("verificationToken:url");
+      verificationUrl = verificationUrl.replace(/\:verificationToken/gi, verificationToken);
+
+      // send the email later
+      process.nextTick(function() {
+         Mailer.sendVerificationEmail(sender, recipientEmail, verificationUrl, function(err, mailResult) {
+            if (err) {
+               log.error("Error sending verification email to [" + recipientEmail + "]: " + err);
+            }
+            else {
+               log.info("Verification email sent to [" + recipientEmail + "].  Result: " + JSON.stringify(mailResult, null, 3));
+            }
+         });
+      });
+   };
+
    var createUser = function(res, user, client) {
       log.debug("Received POST to create user [" + (user && user.email ? user.email : null) + "]");
 
@@ -47,31 +71,46 @@ module.exports = function(UserModel, ClientModel) {
 
                           // See whether we should email a link to the user to verify her/his account.
                           if (config.get("verificationToken:willEmailToUser")) {
-                             var sender = {
-                                name : client.displayName || config.get("mail:sender:name"),
-                                email : client.verificationEmail || config.get("mail:sender:email")
-                             };
-                             var recipientEmail = user.email;
-
-                             // build the verification URL
-                             var verificationUrl = client.verificationUrl || config.get("verificationToken:url");
-                             verificationUrl = verificationUrl.replace(/\:verificationToken/gi, result.verificationToken);
-
-                             // send the email later
-                             process.nextTick(function() {
-                                Mailer.sendVerificationEmail(sender, recipientEmail, verificationUrl, function(err, mailResult) {
-                                   if (err) {
-                                      log.error("Error sending verification email to [" + recipientEmail + "]: " + err);
-                                   }
-                                   else {
-                                      log.info("Verification email sent to [" + recipientEmail + "].  Result: " + JSON.stringify(mailResult, null, 3));
-                                   }
-                                });
-                             });
+                             sendVerificationEmail(client, user, result.verificationToken);
                           }
 
                           return res.jsendSuccess(obj, 201); // HTTP 201 Created
                        });
+   };
+
+   var resendVerificationEmail = function(res, userEmail, client) {
+      log.debug("Received POST to resend verification email for user [" + userEmail + "]");
+
+      UserModel.findByEmail(userEmail, function(err, user) {
+         if (err) {
+            var message = "Error while trying to find user [" + userEmail + "] to resend verification token";
+            log.error(message + ": " + err);
+            return res.jsendServerError(message);
+         }
+
+         if (user) {
+
+            var obj = {
+               email : user.email,
+               isVerified : !!user.isVerified,
+               verified : user.verified
+            };
+            // See whether we should return the verification token.  In most cases, we simply want to
+            // email the verification token to the user (see below), to ensure the email address is
+            // correct and actually belongs to the person who created the account. But, when testing, just
+            // return it here so I don't have to write tests that check an email account :-)
+            if (config.get("verificationToken:willReturnViaApi")) {
+               obj.verificationToken = user.verificationToken
+            }
+
+            if (!user.isVerified && config.get("verificationToken:willEmailToUser")) {
+               sendVerificationEmail(client, user, user.verificationToken);
+            }
+            return res.jsendSuccess(obj, user.isVerified ? 200 : 201);
+         }
+
+         return res.jsendClientError("Unknown or invalid email address", {email: userEmail}, 400);
+      });
    };
 
    /**
@@ -140,6 +179,29 @@ module.exports = function(UserModel, ClientModel) {
                     return res.jsendClientError("Invalid verification token", result, 400);
                  });
               }
+   );
+
+   router.post('/:emailAddress/resendVerification',
+               function(req, res) {
+                  var client = req.body.client;
+
+                  // if they specified the client, then try to authenticate
+                  if (client) {
+                     ClientModel.findByNameAndSecret(client.clientName, client.clientSecret, function(err, theClient) {
+                        if (err) {
+                           return res.jsendServerError("Error while authenticating client [" + client.clientName + "]");
+                        }
+                        if (!theClient) {
+                           return res.jsendClientError("Failed to authenticate client.", {client : client}, 401);  // HTTP 409 Unauthorized
+                        }
+
+                        return resendVerificationEmail(res, req.params.emailAddress, theClient);
+                     });
+                  }
+                  else {
+                     return resendVerificationEmail(res, req.params.emailAddress, null);
+                  }
+               }
    );
 
    // TODO: this is just a placeholder for testing...

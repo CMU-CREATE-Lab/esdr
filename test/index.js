@@ -727,6 +727,28 @@ describe("ESDR", function() {
          });
 
          describe("Account Verification", function() {
+            it("Should be able to request that the verification token be sent again (after creation, before verification)", function(done) {
+               agent(url)
+                     .post("/api/v1/users/"+testUser1.email+"/resendVerification")
+                     .send({client : testClient})
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', 201);
+                             res.body.should.have.property('code', 201);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('email', testUser1.email);
+                             res.body.data.should.have.property('isVerified', false);
+                             res.body.data.should.have.property('verified', '0000-00-00 00:00:00');
+                             res.body.data.should.have.property('verificationToken', verificationTokens.testUser1);
+
+                             done();
+                          });
+            });
+
             it("Should be able to verify a user", function(done) {
 
                agent(url)
@@ -741,6 +763,27 @@ describe("ESDR", function() {
                              res.body.should.have.property('status', 'success');
                              res.body.should.have.property('data');
                              res.body.data.should.have.property('isVerified', true);
+
+                             done();
+                          });
+            });
+
+            it("Should be able to request that the verification token be sent again (after creation, after verification)", function(done) {
+               agent(url)
+                     .post("/api/v1/users/"+testUser1.email+"/resendVerification")
+                     .send({client : testClient})
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', 200);
+                             res.body.should.have.property('code', 200);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('email', testUser1.email);
+                             res.body.data.should.have.property('isVerified', true);
+                             res.body.data.should.have.property('verificationToken', verificationTokens.testUser1);
 
                              done();
                           });
@@ -784,8 +827,28 @@ describe("ESDR", function() {
                              done();
                           });
             });
-         });
 
+            it("Should fail when requesting that the verification token be sent again for an unknown user", function(done) {
+               var unknownUser = {email : 'unknown@unknown.com'};
+               agent(url)
+                     .post("/api/v1/users/"+unknownUser.email+"/resendVerification")
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', 400);
+                             res.body.should.have.property('code', 400);
+                             res.body.should.have.property('status', 'error');
+                             res.body.should.have.property('data');
+                             res.body.should.have.property('data');
+                             should(res.body.data).eql({email : unknownUser.email});
+
+                             done();
+                          });
+            });
+
+         });
       });
    });
 
