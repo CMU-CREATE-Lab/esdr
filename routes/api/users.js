@@ -9,12 +9,11 @@ var log = require('log4js').getLogger();
 
 module.exports = function(UserModel, ClientModel) {
 
-   var sendVerificationEmail = function(client, user, verificationToken) {
+   var sendVerificationEmail = function(client, recipientEmail, verificationToken) {
       var sender = {
          name : client.displayName || config.get("mail:sender:name"),
-         email : client.verificationEmail || config.get("mail:sender:email")
+         email : client.email || config.get("mail:sender:email")
       };
-      var recipientEmail = user.email;
 
       // build the verification URL
       var verificationUrl = client.verificationUrl || config.get("verificationToken:url");
@@ -71,7 +70,7 @@ module.exports = function(UserModel, ClientModel) {
 
                           // See whether we should email a link to the user to verify her/his account.
                           if (config.get("verificationToken:willEmailToUser")) {
-                             sendVerificationEmail(client, user, result.verificationToken);
+                             sendVerificationEmail(client, user.email, result.verificationToken);
                           }
 
                           return res.jsendSuccess(obj, 201); // HTTP 201 Created
@@ -104,12 +103,12 @@ module.exports = function(UserModel, ClientModel) {
             }
 
             if (!user.isVerified && config.get("verificationToken:willEmailToUser")) {
-               sendVerificationEmail(client, user, user.verificationToken);
+               sendVerificationEmail(client, user.email, user.verificationToken);
             }
             return res.jsendSuccess(obj, user.isVerified ? 200 : 201);
          }
 
-         return res.jsendClientError("Unknown or invalid email address", {email: userEmail}, 400);
+         return res.jsendClientError("Unknown or invalid email address", {email : userEmail}, 400);
       });
    };
 
@@ -152,7 +151,7 @@ module.exports = function(UserModel, ClientModel) {
                            return res.jsendServerError("Error while authenticating client [" + client.clientName + "]");
                         }
                         if (!theClient) {
-                           return res.jsendClientError("Failed to authenticate client.", {client : client}, 401);  // HTTP 409 Unauthorized
+                           return res.jsendClientError("Failed to authenticate client.", {client : client}, 401);  // HTTP 401 Unauthorized
                         }
 
                         return createUser(res, user, theClient);
@@ -192,7 +191,7 @@ module.exports = function(UserModel, ClientModel) {
                            return res.jsendServerError("Error while authenticating client [" + client.clientName + "]");
                         }
                         if (!theClient) {
-                           return res.jsendClientError("Failed to authenticate client.", {client : client}, 401);  // HTTP 409 Unauthorized
+                           return res.jsendClientError("Failed to authenticate client.", {client : client}, 401);  // HTTP 401 Unauthorized
                         }
 
                         return resendVerificationEmail(res, req.params.emailAddress, theClient);

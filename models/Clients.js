@@ -9,8 +9,9 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Clients` ( " +
                          "`displayName` varchar(255) NOT NULL, " +
                          "`clientName` varchar(255) NOT NULL, " +
                          "`clientSecret` varchar(255) NOT NULL, " +
-                         "`verificationEmail` varchar(255) DEFAULT NULL, " +
+                         "`email` varchar(255) DEFAULT NULL, " +
                          "`verificationUrl` varchar(255) DEFAULT NULL, " +
+                         "`resetPasswordUrl` varchar(255) DEFAULT NULL, " +
                          "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
                          "PRIMARY KEY (`id`), " +
                          "UNIQUE KEY `unique_clientName` (`clientName`) " +
@@ -37,7 +38,7 @@ var JSON_SCHEMA = {
          "minLength" : 10,
          "maxLength" : 255
       },
-      "verificationEmail" : {
+      "email" : {
          "type" : "string",
          "minLength" : 0,
          "maxLength" : 255,
@@ -46,7 +47,12 @@ var JSON_SCHEMA = {
       "verificationUrl" : {
          "type" : "string",
          "minLength" : 0,
-         "maxLength" : 255
+         "maxLength" : 512
+      },
+      "resetPasswordUrl" : {
+         "type" : "string",
+         "minLength" : 0,
+         "maxLength" : 512
       }
    },
    "required" : ["displayName", "clientName", "clientSecret"]
@@ -74,8 +80,9 @@ module.exports = function(databaseHelper) {
       };
       trimAndCopyPropertyIfNonEmpty(clientDetails, client, "displayName");
       trimAndCopyPropertyIfNonEmpty(clientDetails, client, "clientName");
-      trimAndCopyPropertyIfNonEmpty(clientDetails, client, "verificationEmail");
+      trimAndCopyPropertyIfNonEmpty(clientDetails, client, "email");
       trimAndCopyPropertyIfNonEmpty(clientDetails, client, "verificationUrl");
+      trimAndCopyPropertyIfNonEmpty(clientDetails, client, "resetPasswordUrl");
 
       // now validate
       jsonValidator.validate(client, JSON_SCHEMA, function(err1) {

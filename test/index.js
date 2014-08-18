@@ -729,7 +729,7 @@ describe("ESDR", function() {
          describe("Account Verification", function() {
             it("Should be able to request that the verification token be sent again (after creation, before verification)", function(done) {
                agent(url)
-                     .post("/api/v1/users/"+testUser1.email+"/resendVerification")
+                     .post("/api/v1/users/" + testUser1.email + "/resendVerification")
                      .send({client : testClient})
                      .end(function(err, res) {
                              if (err) {
@@ -770,7 +770,7 @@ describe("ESDR", function() {
 
             it("Should be able to request that the verification token be sent again (after creation, after verification)", function(done) {
                agent(url)
-                     .post("/api/v1/users/"+testUser1.email+"/resendVerification")
+                     .post("/api/v1/users/" + testUser1.email + "/resendVerification")
                      .send({client : testClient})
                      .end(function(err, res) {
                              if (err) {
@@ -831,7 +831,7 @@ describe("ESDR", function() {
             it("Should fail when requesting that the verification token be sent again for an unknown user", function(done) {
                var unknownUser = {email : 'unknown@unknown.com'};
                agent(url)
-                     .post("/api/v1/users/"+unknownUser.email+"/resendVerification")
+                     .post("/api/v1/users/" + unknownUser.email + "/resendVerification")
                      .end(function(err, res) {
                              if (err) {
                                 return done(err);
@@ -849,6 +849,281 @@ describe("ESDR", function() {
             });
 
          });
+
+      });
+
+      describe("Reset Password Request", function() {
+         var resetPasswordToken = null;
+         var oldPassword = testUser1.password;
+         var newPassword = "this is the new password";
+
+         it("Should be able to request a password reset token", function(done) {
+            agent(url)
+                  .post("/api/v1/reset-password-request")
+                  .send({user : {email : testUser1.email}, client : testClient})
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 201);
+                          res.body.should.have.property('code', 201);
+                          res.body.should.have.property('status', 'success');
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.property('email', testUser1.email);
+                          res.body.data.should.have.property('resetPasswordToken');
+
+                          // remember the reset password token
+                          resetPasswordToken = res.body.data.resetPasswordToken;
+                          done();
+                       });
+         });
+
+         it("Should be able to request a password reset token again, and get a different token", function(done) {
+            agent(url)
+                  .post("/api/v1/reset-password-request")
+                  .send({user : {email : testUser1.email}, client : testClient})
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 201);
+                          res.body.should.have.property('code', 201);
+                          res.body.should.have.property('status', 'success');
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.property('email', testUser1.email);
+                          res.body.data.should.have.property('resetPasswordToken');
+                          (resetPasswordToken != res.body.data.resetPasswordToken).should.be.true;
+
+                          // remember the reset password token
+                          resetPasswordToken = res.body.data.resetPasswordToken;
+                          done();
+                       });
+         });
+
+         it("Should fail to set the password if the reset password token is missing", function(done) {
+            agent(url)
+                  .put("/api/v1/reset-password-request")
+                  .send({password : newPassword})
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 422);
+                          res.body.should.have.property('code', 422);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data', null);
+
+                          done();
+                       });
+         });
+
+         it("Should fail to set the password using an invalid reset password token", function(done) {
+            agent(url)
+                  .put("/api/v1/reset-password-request")
+                  .send({password : newPassword, token: "bogus"})
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 400);
+                          res.body.should.have.property('code', 400);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data', null);
+
+                          done();
+                       });
+         });
+
+         it("Should fail to set the password using an invalid password", function(done) {
+            var invalidPassword = "a";
+            agent(url)
+                  .put("/api/v1/reset-password-request")
+                  .send({password : invalidPassword, token: resetPasswordToken})
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 422);
+                          res.body.should.have.property('code', 422);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.length(1);
+                          res.body.data[0].should.have.property('instanceContext', '#/password');
+                          res.body.data[0].should.have.property('constraintName', 'minLength');
+                          res.body.data[0].should.have.property('constraintValue', '5');
+                          res.body.data[0].should.have.property('testedValue', invalidPassword.length);
+                          res.body.data[0].should.have.property('kind', 'StringValidationError');
+
+                          done();
+                       });
+         });
+
+         it("Should be able to set the password using the reset password token", function(done) {
+            agent(url)
+                  .put("/api/v1/reset-password-request")
+                  .send({password : newPassword, token: resetPasswordToken})
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 200);
+                          res.body.should.have.property('code', 200);
+                          res.body.should.have.property('status', 'success');
+                          res.body.should.have.property('data', null);
+
+                          testUser1.password = newPassword;
+                          done();
+                       });
+         });
+
+         it("Should fail to find the user by email and the old password", function(done) {
+            db.users.findByEmailAndPassword(testUser1.email, oldPassword, function(err, user) {
+               if (err) {
+                  return done(err);
+               }
+               (user == null).should.be.true;
+
+               done();
+            });
+         });
+
+         it("Should be able to find the user by email and the new password", function(done) {
+            db.users.findByEmailAndPassword(testUser1.email, newPassword, function(err, user) {
+               if (err) {
+                  return done(err);
+               }
+               user.should.have.property("id");
+               user.should.have.property("email", testUser1.email);
+               user.should.have.property("password");
+               user.should.have.property("displayName", testUser1.displayName);
+               user.should.have.property("created");
+               user.should.have.property("modified");
+
+               done();
+            });
+         });
+
+         it("Should fail to request a password reset token if user is not specified", function(done) {
+            agent(url)
+                  .post("/api/v1/reset-password-request")
+                  .send({client : testClient})
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 422);
+                          res.body.should.have.property('code', 422);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data', null);
+                          done();
+                       });
+         });
+
+         it("Should fail to request a password reset token if email is not specified", function(done) {
+            agent(url)
+                  .post("/api/v1/reset-password-request")
+                  .send({user : {foo : "bar"}, client : testClient})
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 422);
+                          res.body.should.have.property('code', 422);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data', null);
+                          done();
+                       });
+         });
+
+         it("Should fail to request a password reset token for an invalid email", function(done) {
+            var invalidEmail = {email : 'invalid'};
+            agent(url)
+                  .post("/api/v1/reset-password-request")
+                  .send({user : {email : invalidEmail.email}, client : testClient})
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 422);
+                          res.body.should.have.property('code', 422);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.property('email', invalidEmail.email);
+
+                          done();
+                       });
+         });
+
+         it("Should fail to request a password reset token for an unknown email", function(done) {
+            var unknownUser = {email : 'unknown@unknown.com'};
+            agent(url)
+                  .post("/api/v1/reset-password-request")
+                  .send({user : {email : unknownUser.email}, client : testClient})
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 400);
+                          res.body.should.have.property('code', 400);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.property('email', unknownUser.email);
+
+                          done();
+                       });
+         });
+
+         it("Should fail to request a password reset token for an invalid client", function(done) {
+            var bogusClient = {
+               displayName : "Bogus Client",
+               clientName : "bogus_client",
+               clientSecret : "I am bogus"
+            };
+            agent(url)
+                  .post("/api/v1/reset-password-request")
+                  .send({user: {email: testUser1.email}, client : bogusClient})
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 401);
+                          res.body.should.have.property('code', 401);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.property('clientName', bogusClient.clientName);
+                          done();
+                       });
+         });
+
+         it("Should fail to request a password reset token if not client is specified", function(done) {
+
+            agent(url)
+                  .post("/api/v1/reset-password-request")
+                  .send({user: {email: testUser1.email}})
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 422);
+                          res.body.should.have.property('code', 422);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data', null);
+                          done();
+                       });
+         });
+
       });
    });
 
@@ -1354,6 +1629,57 @@ describe("ESDR", function() {
 
                done();
             });
+         });
+
+         describe("Reset Password", function() {
+
+            var resetPasswordToken = null;
+            var foundUser = null;
+            var newPassword = 'this is my new password';
+
+            it("Should be able to create a reset password token", function(done) {
+               db.users.findByEmail(testUser1.email, function(err, user) {
+                  if (err) {
+                     return done(err);
+                  }
+                  foundUser = user;
+
+                  db.users.createResetPasswordToken(user.email, function(err, token) {
+                     if (err) {
+                        return done(err);
+                     }
+                     (token != null).should.be.true;
+
+                     // remember the token so we can use it to reset the user's password
+                     resetPasswordToken = token;
+
+                     done();
+                  });
+               });
+            });
+
+            it("Should be able to set the password using the reset password token", function(done) {
+               db.users.setPassword(resetPasswordToken, newPassword, function(err, wasSuccessful) {
+                  if (err) {
+                     return done(err);
+                  }
+                  wasSuccessful.should.be.true;
+
+                  // do a find on the user to verify that the password and modification timestamp changed
+                  db.users.findByEmail(testUser1.email, function(err, user) {
+                     if (err) {
+                        return done(err);
+                     }
+                     (foundUser.password != user.password).should.be.true;
+                     (foundUser.modified != user.modified).should.be.true;
+                     user.should.have.property('resetPasswordToken', null);
+                     user.should.have.property('resetPasswordExpiration', '0000-00-00 00:00:00');
+
+                     done();
+                  });
+               });
+            });
+
          });
       });
    });

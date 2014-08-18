@@ -17,34 +17,61 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Users` ( " +
                          "`verificationToken` varchar(64) NOT NULL, " +
                          "`isVerified` boolean DEFAULT 0, " +
                          "`verified` timestamp, " +
+                         "`resetPasswordToken` varchar(64) DEFAULT NULL, " +
+                         "`resetPasswordExpiration` timestamp, " +
                          "PRIMARY KEY (`id`), " +
                          "UNIQUE KEY `unique_email` (`email`), " +
-                         "UNIQUE KEY `unique_verificationToken` (`verificationToken`) " +
+                         "UNIQUE KEY `unique_verificationToken` (`verificationToken`), " +
+                         "UNIQUE KEY `unique_resetPasswordToken` (`resetPasswordToken`) " +
                          ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
 
+var EMAIL_ATTRS = {
+   "type" : "string",
+   "minLength" : 6,
+   "maxLength" : 255,
+   "format" : "email"
+};
+var PASSWORD_ATTRS = {
+   "type" : "string",
+   "minLength" : 5,
+   "maxLength" : 255
+};
 var JSON_SCHEMA = {
    "$schema" : "http://json-schema.org/draft-04/schema#",
    "title" : "User",
    "description" : "An ESDR user",
    "type" : "object",
    "properties" : {
-      "email" : {
-         "type" : "string",
-         "minLength" : 6,
-         "maxLength" : 255,
-         "format" : "email"
-      },
-      "password" : {
-         "type" : "string",
-         "minLength" : 5,
-         "maxLength" : 255
-      },
+      "email" : EMAIL_ATTRS,
+      "password" : PASSWORD_ATTRS,
       "displayName" : {
          "type" : "string",
          "maxLength" : 255
       }
    },
    "required" : ["email", "password"]
+};
+
+var JSON_SCHEMA_EMAIL = {
+   "$schema" : "http://json-schema.org/draft-04/schema#",
+   "title" : "User email",
+   "description" : "An ESDR user's email",
+   "type" : "object",
+   "properties" : {
+      "email" : EMAIL_ATTRS
+   },
+   "required" : ["email"]
+};
+
+var JSON_SCHEMA_PASSWORD = {
+   "$schema" : "http://json-schema.org/draft-04/schema#",
+   "title" : "User password",
+   "description" : "An ESDR user's password",
+   "type" : "object",
+   "properties" : {
+      "password" : PASSWORD_ATTRS
+   },
+   "required" : ["password"]
 };
 
 module.exports = function(databaseHelper) {
@@ -66,7 +93,7 @@ module.exports = function(databaseHelper) {
       // first build a copy and trim some fields
       var user = {
          password : userDetails.password,
-         verificationToken : generateVerificationToken()
+         verificationToken : generateToken()
       };
       trimAndCopyPropertyIfNonEmpty(userDetails, user, "email");
       trimAndCopyPropertyIfNonEmpty(userDetails, user, "displayName");
@@ -197,6 +224,62 @@ module.exports = function(databaseHelper) {
       });
    };
 
+   this.createResetPasswordToken = function(email, callback) {
+      // validate--don't even bother hitting the DB if the email is obviously invalid
+      jsonValidator.validate({email : email}, JSON_SCHEMA_EMAIL, function(err1) {
+         if (err1) {
+            return callback(new ValidationError(err1));
+         }
+
+         // generate a token expiring in 1 hour and try to update the user with the given email
+         var token = generateToken();
+         databaseHelper.execute("UPDATE Users " +
+                                "SET " +
+                                "resetPasswordToken=?," +
+                                "resetPasswordExpiration=now()+INTERVAL 1 HOUR " +
+                                "WHERE email=?",
+                                [token, email],
+                                function(err2, result) {
+                                   if (err2) {
+                                      return callback(err2);
+                                   }
+
+                                   return callback(null, result.changedRows == 1 ? token : null);
+                                });
+      });
+   };
+
+   this.setPassword = function(resetPasswordToken, newPassword, callback) {
+      // validate
+      jsonValidator.validate({password : newPassword}, JSON_SCHEMA_PASSWORD, function(err1) {
+         if (err1) {
+            return callback(new ValidationError(err1));
+         }
+
+         // if validation was successful, then hash the password
+         bcrypt.hash(newPassword, 8, function(err2, hashedPassword) {
+            if (err2) {
+               return callback(err2);
+            }
+
+            // now that we have the hashed password, try to update
+            databaseHelper.execute("UPDATE Users " +
+                                   "SET " +
+                                   "password=?," +
+                                   "resetPasswordToken=NULL," +
+                                   "resetPasswordExpiration=0 " +
+                                   "WHERE resetPasswordToken=? AND resetPasswordExpiration>now()",
+                                   [hashedPassword, resetPasswordToken],
+                                   function(err3, result) {
+                                      if (err3) {
+                                         return callback(err3);
+                                      }
+                                      return callback(null, result.changedRows == 1);
+                                   });
+         });
+      });
+   };
+
    var isValidPassword = function(user, clearTextPassword) {
       return bcrypt.compareSync(clearTextPassword, user.password);
    };
@@ -212,7 +295,7 @@ module.exports = function(databaseHelper) {
       });
    };
 
-   var generateVerificationToken = function() {
+   var generateToken = function() {
       return crypto.randomBytes(32).toString('hex');
    };
 };

@@ -15,6 +15,10 @@ config.defaults({
                    "server" : {
                       "port" : 3000
                    },
+                   "resetPasswordToken" : {
+                      "willReturnViaApi" : false,
+                      "willEmailToUser" : true
+                   },
                    "verificationToken" : {
                       "willReturnViaApi" : false,
                       "willEmailToUser" : true,
