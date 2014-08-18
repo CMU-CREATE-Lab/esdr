@@ -39,7 +39,7 @@ module.exports = function(UserModel, ClientModel) {
                        function(err, result) {
                           if (err) {
                              if (err instanceof ValidationError) {
-                                return res.jsendClientError("Validation failure", err.data);
+                                return res.jsendClientError("Validation failure", err.data, 422);  // HTTP 422 Unprocessable Entity
                              }
                              if (err instanceof DuplicateRecordError) {
                                 log.debug("Email [" + user.email + "] already in use!");
@@ -134,9 +134,9 @@ module.exports = function(UserModel, ClientModel) {
     *
     * Possible JSend responses:
     * - Success 201: the user was created successfully
-    * - Client Error 400: the user was not specified or fails validation
     * - Client Error 401: the client was specified, but failed authentication
     * - Client Error 409: a user with the same email already exists
+    * - Client Error 422: the user was not specified or fails validation
     * - Server Error 500: an unexpected error occurred
     */
    router.post('/',
