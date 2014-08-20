@@ -37,12 +37,14 @@ describe("ESDR", function() {
    var testClient = {
       displayName : "Test Client",
       clientName : "test_client",
-      clientSecret : "I've got a secret / I've been hiding / Under my skin"
+      clientSecret : "I've got a secret / I've been hiding / Under my skin",
+      resetPasswordUrl : "http://localhost:3333/password-reset/:resetPasswordToken"
    };
    var testClientNeedsTrimming = {
       displayName : "   Test Client Trimming  ",
       clientName : "  test_client_trimming             ",
-      clientSecret : "I've got a secret / I've been hiding / Under my skin"
+      clientSecret : "I've got a secret / I've been hiding / Under my skin",
+      resetPasswordUrl : "http://localhost:3333/password-reset/:resetPasswordToken"
    };
    var db = null;
    var verificationTokens = {};
@@ -194,7 +196,8 @@ describe("ESDR", function() {
                   .send({
                            displayName : "T",
                            clientName : testClient.clientName,
-                           clientSecret : testClient.clientSecret
+                           clientSecret : testClient.clientSecret,
+                           resetPasswordUrl : testClient.resetPasswordUrl
                         })
                   .end(function(err, res) {
                           if (err) {
@@ -219,7 +222,8 @@ describe("ESDR", function() {
                   .send({
                            displayName : "thisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstring",
                            clientName : testClient.clientName,
-                           clientSecret : testClient.clientSecret
+                           clientSecret : testClient.clientSecret,
+                           resetPasswordUrl : testClient.resetPasswordUrl
                         })
                   .end(function(err, res) {
                           if (err) {
@@ -244,7 +248,8 @@ describe("ESDR", function() {
                   .send({
                            displayName : testClient.displayName,
                            clientName : "t",
-                           clientSecret : testClient.clientSecret
+                           clientSecret : testClient.clientSecret,
+                           resetPasswordUrl : testClient.resetPasswordUrl
                         })
                   .end(function(err, res) {
                           if (err) {
@@ -269,7 +274,8 @@ describe("ESDR", function() {
                   .send({
                            displayName : testClient.displayName,
                            clientName : "thisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstring",
-                           clientSecret : testClient.clientSecret
+                           clientSecret : testClient.clientSecret,
+                           resetPasswordUrl : testClient.resetPasswordUrl
                         })
                   .end(function(err, res) {
                           if (err) {
@@ -294,7 +300,8 @@ describe("ESDR", function() {
                   .send({
                            displayName : testClient.displayName,
                            clientName : testClient.clientName,
-                           clientSecret : "I"
+                           clientSecret : "I",
+                           resetPasswordUrl : testClient.resetPasswordUrl
                         })
                   .end(function(err, res) {
                           if (err) {
@@ -319,7 +326,8 @@ describe("ESDR", function() {
                   .send({
                            displayName : testClient.displayName,
                            clientName : testClient.clientName,
-                           clientSecret : "thisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstring"
+                           clientSecret : "thisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstring",
+                           resetPasswordUrl : testClient.resetPasswordUrl
                         })
                   .end(function(err, res) {
                           if (err) {
@@ -334,6 +342,59 @@ describe("ESDR", function() {
                           res.body.data[0].should.have.property('instanceContext', '#/clientSecret');
                           res.body.data[0].should.have.property('constraintName', 'maxLength');
                           res.body.data[0].should.have.property('constraintValue', db.clients.jsonSchema.properties.clientSecret.maxLength);
+                          done();
+                       });
+         });
+
+         it("Should fail to create a new client with a reset password URL that's too short", function(done) {
+            agent(url)
+                  .post("/api/v1/clients")
+                  .send({
+                           displayName : testClient.displayName,
+                           clientName : testClient.clientName,
+                           clientSecret : testClient.clientSecret,
+                           resetPasswordUrl : "foo"
+                        })
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 422);
+                          res.body.should.have.property('code', 422);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.length(1);
+                          res.body.data[0].should.have.property('instanceContext', '#/resetPasswordUrl');
+                          res.body.data[0].should.have.property('constraintName', 'minLength');
+                          res.body.data[0].should.have.property('constraintValue', db.clients.jsonSchema.properties.resetPasswordUrl.minLength);
+                          done();
+                       });
+         });
+
+         it("Should fail to create a new client with a verification URL that's too short", function(done) {
+            agent(url)
+                  .post("/api/v1/clients")
+                  .send({
+                           displayName : testClient.displayName,
+                           clientName : testClient.clientName,
+                           clientSecret : testClient.clientSecret,
+                           verificationUrl : "foo",
+                           resetPasswordUrl : testClient.resetPasswordUrl
+                        })
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 422);
+                          res.body.should.have.property('code', 422);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.length(1);
+                          res.body.data[0].should.have.property('instanceContext', '#/verificationUrl');
+                          res.body.data[0].should.have.property('constraintName', 'minLength');
+                          res.body.data[0].should.have.property('constraintValue', db.clients.jsonSchema.properties.verificationUrl.minLength);
                           done();
                        });
          });
@@ -923,7 +984,7 @@ describe("ESDR", function() {
          it("Should fail to set the password using an invalid reset password token", function(done) {
             agent(url)
                   .put("/api/v1/password-reset")
-                  .send({password : newPassword, token: "bogus"})
+                  .send({password : newPassword, token : "bogus"})
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -942,7 +1003,7 @@ describe("ESDR", function() {
             var invalidPassword = "a";
             agent(url)
                   .put("/api/v1/password-reset")
-                  .send({password : invalidPassword, token: resetPasswordToken})
+                  .send({password : invalidPassword, token : resetPasswordToken})
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -966,7 +1027,7 @@ describe("ESDR", function() {
          it("Should be able to set the password using the reset password token", function(done) {
             agent(url)
                   .put("/api/v1/password-reset")
-                  .send({password : newPassword, token: resetPasswordToken})
+                  .send({password : newPassword, token : resetPasswordToken})
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -1091,7 +1152,7 @@ describe("ESDR", function() {
             };
             agent(url)
                   .post("/api/v1/password-reset")
-                  .send({user: {email: testUser1.email}, client : bogusClient})
+                  .send({user : {email : testUser1.email}, client : bogusClient})
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -1110,7 +1171,7 @@ describe("ESDR", function() {
 
             agent(url)
                   .post("/api/v1/password-reset")
-                  .send({user: {email: testUser1.email}})
+                  .send({user : {email : testUser1.email}})
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
