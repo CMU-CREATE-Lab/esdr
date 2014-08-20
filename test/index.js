@@ -859,7 +859,7 @@ describe("ESDR", function() {
 
          it("Should be able to request a password reset token", function(done) {
             agent(url)
-                  .post("/api/v1/reset-password-request")
+                  .post("/api/v1/password-reset")
                   .send({user : {email : testUser1.email}, client : testClient})
                   .end(function(err, res) {
                           if (err) {
@@ -881,7 +881,7 @@ describe("ESDR", function() {
 
          it("Should be able to request a password reset token again, and get a different token", function(done) {
             agent(url)
-                  .post("/api/v1/reset-password-request")
+                  .post("/api/v1/password-reset")
                   .send({user : {email : testUser1.email}, client : testClient})
                   .end(function(err, res) {
                           if (err) {
@@ -904,7 +904,7 @@ describe("ESDR", function() {
 
          it("Should fail to set the password if the reset password token is missing", function(done) {
             agent(url)
-                  .put("/api/v1/reset-password-request")
+                  .put("/api/v1/password-reset")
                   .send({password : newPassword})
                   .end(function(err, res) {
                           if (err) {
@@ -922,7 +922,7 @@ describe("ESDR", function() {
 
          it("Should fail to set the password using an invalid reset password token", function(done) {
             agent(url)
-                  .put("/api/v1/reset-password-request")
+                  .put("/api/v1/password-reset")
                   .send({password : newPassword, token: "bogus"})
                   .end(function(err, res) {
                           if (err) {
@@ -941,7 +941,7 @@ describe("ESDR", function() {
          it("Should fail to set the password using an invalid password", function(done) {
             var invalidPassword = "a";
             agent(url)
-                  .put("/api/v1/reset-password-request")
+                  .put("/api/v1/password-reset")
                   .send({password : invalidPassword, token: resetPasswordToken})
                   .end(function(err, res) {
                           if (err) {
@@ -965,7 +965,7 @@ describe("ESDR", function() {
 
          it("Should be able to set the password using the reset password token", function(done) {
             agent(url)
-                  .put("/api/v1/reset-password-request")
+                  .put("/api/v1/password-reset")
                   .send({password : newPassword, token: resetPasswordToken})
                   .end(function(err, res) {
                           if (err) {
@@ -1011,7 +1011,7 @@ describe("ESDR", function() {
 
          it("Should fail to request a password reset token if user is not specified", function(done) {
             agent(url)
-                  .post("/api/v1/reset-password-request")
+                  .post("/api/v1/password-reset")
                   .send({client : testClient})
                   .end(function(err, res) {
                           if (err) {
@@ -1028,7 +1028,7 @@ describe("ESDR", function() {
 
          it("Should fail to request a password reset token if email is not specified", function(done) {
             agent(url)
-                  .post("/api/v1/reset-password-request")
+                  .post("/api/v1/password-reset")
                   .send({user : {foo : "bar"}, client : testClient})
                   .end(function(err, res) {
                           if (err) {
@@ -1046,7 +1046,7 @@ describe("ESDR", function() {
          it("Should fail to request a password reset token for an invalid email", function(done) {
             var invalidEmail = {email : 'invalid'};
             agent(url)
-                  .post("/api/v1/reset-password-request")
+                  .post("/api/v1/password-reset")
                   .send({user : {email : invalidEmail.email}, client : testClient})
                   .end(function(err, res) {
                           if (err) {
@@ -1066,7 +1066,7 @@ describe("ESDR", function() {
          it("Should fail to request a password reset token for an unknown email", function(done) {
             var unknownUser = {email : 'unknown@unknown.com'};
             agent(url)
-                  .post("/api/v1/reset-password-request")
+                  .post("/api/v1/password-reset")
                   .send({user : {email : unknownUser.email}, client : testClient})
                   .end(function(err, res) {
                           if (err) {
@@ -1090,7 +1090,7 @@ describe("ESDR", function() {
                clientSecret : "I am bogus"
             };
             agent(url)
-                  .post("/api/v1/reset-password-request")
+                  .post("/api/v1/password-reset")
                   .send({user: {email: testUser1.email}, client : bogusClient})
                   .end(function(err, res) {
                           if (err) {
@@ -1109,7 +1109,7 @@ describe("ESDR", function() {
          it("Should fail to request a password reset token if not client is specified", function(done) {
 
             agent(url)
-                  .post("/api/v1/reset-password-request")
+                  .post("/api/v1/password-reset")
                   .send({user: {email: testUser1.email}})
                   .end(function(err, res) {
                           if (err) {
