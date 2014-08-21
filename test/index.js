@@ -1582,20 +1582,6 @@ describe("ESDR", function() {
             });
          });
 
-         it("Should be able to find a client by name", function(done) {
-            db.clients.findByName(testClient.clientName, function(err, client) {
-               if (err) {
-                  return done(err);
-               }
-               client.should.have.property("id");
-               client.should.have.property("displayName", testClient.displayName);
-               client.should.have.property("clientName", testClient.clientName);
-               client.should.have.property("clientSecret", testClient.clientSecret);
-               client.should.have.property("created");
-               done();
-            });
-         });
-
          it("Should be able to find a client by name and secret", function(done) {
             db.clients.findByNameAndSecret(testClient.clientName, testClient.clientSecret, function(err, client) {
                if (err) {
@@ -1604,18 +1590,8 @@ describe("ESDR", function() {
                client.should.have.property("id");
                client.should.have.property("displayName", testClient.displayName);
                client.should.have.property("clientName", testClient.clientName);
-               client.should.have.property("clientSecret", testClient.clientSecret);
+               client.should.have.property("clientSecret");
                client.should.have.property("created");
-               done();
-            });
-         });
-
-         it("Should not be able to find a client with a non-existent name", function(done) {
-            db.clients.findByName("bogus", function(err, client) {
-               if (err) {
-                  return done(err);
-               }
-               assert.equal(client, null);
                done();
             });
          });

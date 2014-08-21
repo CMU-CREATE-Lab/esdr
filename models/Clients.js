@@ -1,4 +1,5 @@
 var trimAndCopyPropertyIfNonEmpty = require('../lib/objectUtils').trimAndCopyPropertyIfNonEmpty;
+var bcrypt = require('bcrypt');
 var JaySchema = require('jayschema');
 var jsonValidator = new JaySchema();
 var ValidationError = require('../lib/errors').ValidationError;
@@ -90,32 +91,29 @@ module.exports = function(databaseHelper) {
             return callback(new ValidationError(err1));
          }
 
-         // if validation was successful, then try to insert
-         databaseHelper.execute("INSERT INTO Clients SET ?", client, function(err2, result) {
+         // if validation was successful, then hash the secret
+         bcrypt.hash(client.clientSecret, 8, function(err2, hashedSecret) {
             if (err2) {
                return callback(err2);
             }
 
-            return callback(null, {
-               insertId : result.insertId,
-               // include these because they might have been modified by the trimming
-               displayName : client.displayName,
-               clientName : client.clientName
+            // now that we have the hashed secret, try to insert
+            client.clientSecret = hashedSecret;
+            databaseHelper.execute("INSERT INTO Clients SET ?", client, function(err2, result) {
+               if (err2) {
+                  return callback(err2);
+               }
+
+               return callback(null, {
+                  insertId : result.insertId,
+                  // include these because they might have been modified by the trimming
+                  displayName : client.displayName,
+                  clientName : client.clientName
+               });
             });
+
          });
       });
-   };
-
-   /**
-    * Tries to find the client with the given <code>clientName</code> and returns it to the given <code>callback</code>. If
-    * successful, the client is returned as the 2nd argument to the <code>callback</code> function.  If unsuccessful,
-    * <code>null</code> is returned to the callback.
-    *
-    * @param {string} clientName name of the client to find.
-    * @param {function} callback function with signature <code>callback(err, client)</code>
-    */
-   this.findByName = function(clientName, callback) {
-      findClient("SELECT * FROM Clients WHERE clientName=?", [clientName], callback);
    };
 
    /**
@@ -124,11 +122,21 @@ module.exports = function(databaseHelper) {
     * <code>callback</code> function.  If unsuccessful, <code>null</code> is returned to the callback.
     *
     * @param {string} clientName name of the client to find.
-    * @param {string} clientSecret secret of the client to find.
+    * @param {string} clearTextSecret clear-text secret of the client to find.
     * @param {function} callback function with signature <code>callback(err, client)</code>
     */
-   this.findByNameAndSecret = function(clientName, clientSecret, callback) {
-      findClient("SELECT * FROM Clients WHERE clientName=? and clientSecret=?", [clientName, clientSecret], callback);
+   this.findByNameAndSecret = function(clientName, clearTextSecret, callback) {
+      findClient("SELECT * FROM Clients WHERE clientName=?", [clientName], function(err, client) {
+         if (err) {
+            return callback(err);
+         }
+
+         if (client && isValidSecret(client, clearTextSecret)) {
+            return callback(null, client);
+         }
+
+         callback(null, null);
+      });
    };
 
    var findClient = function(query, params, callback) {
@@ -140,5 +148,9 @@ module.exports = function(databaseHelper) {
 
          return callback(null, client);
       });
+   };
+
+   var isValidSecret = function(client, clearTextSecret) {
+      return bcrypt.compareSync(clearTextSecret, client.clientSecret);
    };
 };
