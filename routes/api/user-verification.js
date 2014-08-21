@@ -13,31 +13,29 @@ module.exports = function(UserModel, ClientModel) {
     * with the following schema:
     *
     * {
-    * user: {
-    *    email: USER_EMAIL_ADDRESS
-    * },
-    * client: {
-    *    clientName: CLIENT_NAME,
-    *    clientSecret: CLIENT_SECRET,
-    *    displayName: CLIENT_DISPLAY_NAME,
-    *    email: CLIENT_EMAIL_ADDRESS,
-    *    verificationUrl: VERIFICATION_URL
+    *    "client" : {
+    *       "clientName" : "CLIENT_ID",
+    *       "clientSecret" : "CLIENT_SECRET"
+    *    },
+    *    "user" : {
+    *       "email" : "EMAIL_ADDRESS"
+    *    }
     * }
     */
    router.post('/',
                function(req, res) {
                   var userEmail = (req.body.user) ? req.body.user.email : null;
-                  var client = req.body.client;
+                  var theClient = req.body.client;
 
                   if (userEmail) {
                      // if they specified the client, then try to authenticate
-                     if (client) {
-                        ClientModel.findByNameAndSecret(client.clientName, client.clientSecret, function(err1, theClient) {
+                     if (theClient) {
+                        ClientModel.findByNameAndSecret(theClient.clientName, theClient.clientSecret, function(err1, client) {
                            if (err1) {
-                              return res.jsendServerError("Error while authenticating client [" + client.clientName + "]");
+                              return res.jsendServerError("Error while authenticating client [" + theClient.clientName + "]");
                            }
-                           if (!theClient) {
-                              return res.jsendClientError("Failed to authenticate client.", {client : client}, 401);  // HTTP 401 Unauthorized
+                           if (!client) {
+                              return res.jsendClientError("Failed to authenticate client.", {client : {clientName: theClient.clientName}}, 401);  // HTTP 401 Unauthorized
                            }
 
                            log.debug("Received POST to resend verification email for user [" + userEmail + "]");
