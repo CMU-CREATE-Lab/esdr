@@ -10,8 +10,8 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Clients` ( " +
                          "`clientName` varchar(255) NOT NULL, " +
                          "`clientSecret` varchar(255) NOT NULL, " +
                          "`email` varchar(255) DEFAULT NULL, " +
-                         "`verificationUrl` varchar(512) DEFAULT NULL, " +
-                         "`resetPasswordUrl` varchar(512) DEFAULT NULL, " +
+                         "`verificationUrl` varchar(512) NOT NULL, " +
+                         "`resetPasswordUrl` varchar(512) NOT NULL, " +
                          "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
                          "PRIMARY KEY (`id`), " +
                          "UNIQUE KEY `unique_clientName` (`clientName`) " +
@@ -55,7 +55,7 @@ var JSON_SCHEMA = {
          "maxLength" : 512
       }
    },
-   "required" : ["displayName", "clientName", "clientSecret", "resetPasswordUrl"]
+   "required" : ["displayName", "clientName", "clientSecret", "verificationUrl", "resetPasswordUrl"]
 };
 
 module.exports = function(databaseHelper) {

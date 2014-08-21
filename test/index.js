@@ -38,13 +38,15 @@ describe("ESDR", function() {
       displayName : "Test Client",
       clientName : "test_client",
       clientSecret : "I've got a secret / I've been hiding / Under my skin",
-      resetPasswordUrl : "http://localhost:3333/password-reset/:resetPasswordToken"
+      resetPasswordUrl : "http://localhost:3333/password-reset/:resetPasswordToken",
+      verificationUrl : "http://localhost:3333/user-verification/:verificationToken"
    };
    var testClientNeedsTrimming = {
       displayName : "   Test Client Trimming  ",
       clientName : "  test_client_trimming             ",
       clientSecret : "I've got a secret / I've been hiding / Under my skin",
-      resetPasswordUrl : "http://localhost:3333/password-reset/:resetPasswordToken"
+      resetPasswordUrl : "http://localhost:3333/password-reset/:resetPasswordToken",
+      verificationUrl : "http://localhost:3333/user-verification/:verificationToken"
    };
    var db = null;
    var verificationTokens = {};
@@ -197,7 +199,8 @@ describe("ESDR", function() {
                            displayName : "T",
                            clientName : testClient.clientName,
                            clientSecret : testClient.clientSecret,
-                           resetPasswordUrl : testClient.resetPasswordUrl
+                           resetPasswordUrl : testClient.resetPasswordUrl,
+                           verificationUrl : testClient.verificationUrl
                         })
                   .end(function(err, res) {
                           if (err) {
@@ -223,7 +226,8 @@ describe("ESDR", function() {
                            displayName : "thisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstring",
                            clientName : testClient.clientName,
                            clientSecret : testClient.clientSecret,
-                           resetPasswordUrl : testClient.resetPasswordUrl
+                           resetPasswordUrl : testClient.resetPasswordUrl,
+                           verificationUrl : testClient.verificationUrl
                         })
                   .end(function(err, res) {
                           if (err) {
@@ -249,7 +253,8 @@ describe("ESDR", function() {
                            displayName : testClient.displayName,
                            clientName : "t",
                            clientSecret : testClient.clientSecret,
-                           resetPasswordUrl : testClient.resetPasswordUrl
+                           resetPasswordUrl : testClient.resetPasswordUrl,
+                           verificationUrl : testClient.verificationUrl
                         })
                   .end(function(err, res) {
                           if (err) {
@@ -275,7 +280,8 @@ describe("ESDR", function() {
                            displayName : testClient.displayName,
                            clientName : "thisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstring",
                            clientSecret : testClient.clientSecret,
-                           resetPasswordUrl : testClient.resetPasswordUrl
+                           resetPasswordUrl : testClient.resetPasswordUrl,
+                           verificationUrl : testClient.verificationUrl
                         })
                   .end(function(err, res) {
                           if (err) {
@@ -301,7 +307,8 @@ describe("ESDR", function() {
                            displayName : testClient.displayName,
                            clientName : testClient.clientName,
                            clientSecret : "I",
-                           resetPasswordUrl : testClient.resetPasswordUrl
+                           resetPasswordUrl : testClient.resetPasswordUrl,
+                           verificationUrl : testClient.verificationUrl
                         })
                   .end(function(err, res) {
                           if (err) {
@@ -327,7 +334,8 @@ describe("ESDR", function() {
                            displayName : testClient.displayName,
                            clientName : testClient.clientName,
                            clientSecret : "thisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstring",
-                           resetPasswordUrl : testClient.resetPasswordUrl
+                           resetPasswordUrl : testClient.resetPasswordUrl,
+                           verificationUrl : testClient.verificationUrl
                         })
                   .end(function(err, res) {
                           if (err) {
@@ -353,7 +361,8 @@ describe("ESDR", function() {
                            displayName : testClient.displayName,
                            clientName : testClient.clientName,
                            clientSecret : testClient.clientSecret,
-                           resetPasswordUrl : "foo"
+                           resetPasswordUrl : "foo",
+                           verificationUrl : testClient.verificationUrl
                         })
                   .end(function(err, res) {
                           if (err) {
@@ -379,8 +388,8 @@ describe("ESDR", function() {
                            displayName : testClient.displayName,
                            clientName : testClient.clientName,
                            clientSecret : testClient.clientSecret,
-                           verificationUrl : "foo",
-                           resetPasswordUrl : testClient.resetPasswordUrl
+                           resetPasswordUrl : testClient.resetPasswordUrl,
+                           verificationUrl : "foo"
                         })
                   .end(function(err, res) {
                           if (err) {
@@ -530,30 +539,6 @@ describe("ESDR", function() {
                        });
          });
 
-         it("Should be able to create a new user with no client specified", function(done) {
-            agent(url)
-                  .post("/api/v1/users")
-                  .send({user : testUser4})
-                  .end(function(err, res) {
-                          if (err) {
-                             return done(err);
-                          }
-
-                          res.should.have.property('status', 201);
-                          res.body.should.have.property('code', 201);
-                          res.body.should.have.property('status', 'success');
-                          res.body.should.have.property('data');
-                          res.body.data.should.have.property('id');
-                          res.body.data.should.have.property('email', testUser4.email);
-                          res.body.data.should.not.have.property('displayName', null);
-                          res.body.data.should.have.property('verificationToken');
-
-                          // remember the verification token so we can verify this user
-                          verificationTokens.testUser4 = res.body.data.verificationToken;
-                          done();
-                       });
-         });
-
          it("Should fail to create a new user with missing user and client", function(done) {
             agent(url)
                   .post("/api/v1/users")
@@ -566,14 +551,25 @@ describe("ESDR", function() {
                           res.should.have.property('status', 422);
                           res.body.should.have.property('code', 422);
                           res.body.should.have.property('status', 'error');
-                          res.body.should.have.property('data');
-                          res.body.data.should.have.length(2);
-                          res.body.data[0].should.have.property('instanceContext', '#');
-                          res.body.data[0].should.have.property('constraintName', 'required');
-                          res.body.data[0].should.have.property('constraintValue', db.users.jsonSchema.required);
-                          res.body.data[1].should.have.property('instanceContext', '#/password');
-                          res.body.data[1].should.have.property('constraintName', 'type');
-                          res.body.data[1].should.have.property('constraintValue', "string");
+                          res.body.should.have.property('data', null);
+                          done();
+                       });
+         });
+
+         it("Should fail to create a new user with no client specified", function(done) {
+            agent(url)
+                  .post("/api/v1/users")
+                  .send({user : testUser4})
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', 422);
+                          res.body.should.have.property('code', 422);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data', null);
+
                           done();
                        });
          });
@@ -774,7 +770,7 @@ describe("ESDR", function() {
          it("Should fail to create a new user with a email address that's already in use", function(done) {
             agent(url)
                   .post("/api/v1/users")
-                  .send({user : testUser1})
+                  .send({user : testUser1, client: testClient})
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -790,8 +786,8 @@ describe("ESDR", function() {
          describe("Account Verification", function() {
             it("Should be able to request that the verification token be sent again (after creation, before verification)", function(done) {
                agent(url)
-                     .post("/api/v1/users/" + testUser1.email + "/resendVerification")
-                     .send({client : testClient})
+                     .post("/api/v1/user-verification")
+                     .send({user : {email : testUser1.email}, client : testClient})
                      .end(function(err, res) {
                              if (err) {
                                 return done(err);
@@ -813,7 +809,8 @@ describe("ESDR", function() {
             it("Should be able to verify a user", function(done) {
 
                agent(url)
-                     .get("/api/v1/users/" + verificationTokens.testUser1 + "/verify")
+                     .put("/api/v1/user-verification")
+                     .send({token : verificationTokens.testUser1})
                      .end(function(err, res) {
                              if (err) {
                                 return done(err);
@@ -831,8 +828,8 @@ describe("ESDR", function() {
 
             it("Should be able to request that the verification token be sent again (after creation, after verification)", function(done) {
                agent(url)
-                     .post("/api/v1/users/" + testUser1.email + "/resendVerification")
-                     .send({client : testClient})
+                     .post("/api/v1/user-verification")
+                     .send({user : {email : testUser1.email}, client : testClient})
                      .end(function(err, res) {
                              if (err) {
                                 return done(err);
@@ -853,7 +850,8 @@ describe("ESDR", function() {
             it("Verification should return the same thing if called again", function(done) {
 
                agent(url)
-                     .get("/api/v1/users/" + verificationTokens.testUser1 + "/verify")
+                     .post("/api/v1/user-verification")
+                     .send({user : {email : testUser1.email}, client : testClient})
                      .end(function(err, res) {
                              if (err) {
                                 return done(err);
@@ -870,10 +868,29 @@ describe("ESDR", function() {
 
             });
 
+            it("Verification should fail for a missing verification token", function(done) {
+
+               agent(url)
+                     .put("/api/v1/user-verification")
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', 422);
+                             res.body.should.have.property('code', 422);
+                             res.body.should.have.property('status', 'error');
+                             res.body.should.have.property('data', null);
+
+                             done();
+                          });
+            });
+
             it("Verification should fail for a bogus verification token", function(done) {
 
                agent(url)
-                     .get("/api/v1/users/" + "bogus_token" + "/verify")
+                     .put("/api/v1/user-verification")
+                     .send({token : "bogus_token"})
                      .end(function(err, res) {
                              if (err) {
                                 return done(err);
@@ -892,7 +909,8 @@ describe("ESDR", function() {
             it("Should fail when requesting that the verification token be sent again for an unknown user", function(done) {
                var unknownUser = {email : 'unknown@unknown.com'};
                agent(url)
-                     .post("/api/v1/users/" + unknownUser.email + "/resendVerification")
+                     .post("/api/v1/user-verification")
+                     .send({user : {email : unknownUser.email}, client : testClient})
                      .end(function(err, res) {
                              if (err) {
                                 return done(err);
@@ -904,6 +922,42 @@ describe("ESDR", function() {
                              res.body.should.have.property('data');
                              res.body.should.have.property('data');
                              should(res.body.data).eql({email : unknownUser.email});
+
+                             done();
+                          });
+            });
+
+            it("Should fail when requesting that the verification token be sent again but the email address is not given", function(done) {
+               agent(url)
+                     .post("/api/v1/user-verification")
+                     .send({user : {}, client : testClient})
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', 422);
+                             res.body.should.have.property('code', 422);
+                             res.body.should.have.property('status', 'error');
+                             res.body.should.have.property('data', null);
+
+                             done();
+                          });
+            });
+
+            it("Should fail when requesting that the verification token be sent again but the client is not given", function(done) {
+               agent(url)
+                     .post("/api/v1/user-verification")
+                     .send({user : {email : testUser1.email} })
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', 422);
+                             res.body.should.have.property('code', 422);
+                             res.body.should.have.property('status', 'error');
+                             res.body.should.have.property('data', null);
 
                              done();
                           });
@@ -1216,7 +1270,8 @@ describe("ESDR", function() {
 
       it("Should be able to request access and refresh tokens after verifying the user", function(done) {
          agent(url)
-               .get("/api/v1/users/" + verificationTokens.testUser2 + "/verify")
+               .put("/api/v1/user-verification")
+               .send({token : verificationTokens.testUser2})
                .end(function(err, res) {
                        if (err) {
                           return done(err);

@@ -21,8 +21,7 @@ config.defaults({
                    },
                    "verificationToken" : {
                       "willReturnViaApi" : false,
-                      "willEmailToUser" : true,
-                      "url" : "http://localhost:3000/api/v1/users/:verificationToken/verify"
+                      "willEmailToUser" : true
                    },
                    "security" : {
                       "tokenLifeSecs" : 3600

@@ -8,29 +8,6 @@ var log = require('log4js').getLogger();
 
 module.exports = function(UserModel, ClientModel) {
 
-   var sendPasswordResetEmail = function(client, recipientEmail, resetPasswordToken) {
-      var sender = {
-         name : client.displayName || config.get("mail:sender:name"),
-         email : client.email || config.get("mail:sender:email")
-      };
-
-      // build the verification URL
-      var resetPasswordUrl = client.resetPasswordUrl || "";
-      resetPasswordUrl = resetPasswordUrl.replace(/\:resetPasswordToken/gi, resetPasswordToken);
-
-      // send the email later
-      process.nextTick(function() {
-         Mailer.sendResetPasswordEmail(sender, recipientEmail, resetPasswordUrl, function(err, mailResult) {
-            if (err) {
-               log.error("Error sending reset password email to [" + recipientEmail + "]: " + err);
-            }
-            else {
-               log.info("Reset password email sent to [" + recipientEmail + "].  Result: " + JSON.stringify(mailResult, null, 3));
-            }
-         });
-      });
-   };
-
    router.post('/',
                function(req, res) {
                   var userEmail = (req.body.user) ? req.body.user.email : null;
@@ -71,7 +48,7 @@ module.exports = function(UserModel, ClientModel) {
                                  }
 
                                  if (config.get("resetPasswordToken:willEmailToUser")) {
-                                    sendPasswordResetEmail(client, userEmail, token);
+                                    Mailer.sendPasswordResetEmail(client, userEmail, token);
                                  }
                                  return res.jsendSuccess(obj, 201);
                               }
