@@ -48,7 +48,7 @@ module.exports = function(UserModel, ClientModel) {
                            return res.jsendServerError("Error while authenticating client [" + theClient.clientName + "]");
                         }
                         if (!client) {
-                           return res.jsendClientError("Failed to authenticate client.", {client : theClient}, 401);  // HTTP 401 Unauthorized
+                           return res.jsendClientError("Failed to authenticate client.", {client : {clientName : theClient.clientName}}, 401);  // HTTP 401 Unauthorized
                         }
 
                         log.debug("Received POST to create user [" + (user && user.email ? user.email : null) + "]");
