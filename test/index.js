@@ -48,6 +48,43 @@ describe("ESDR", function() {
       resetPasswordUrl : "http://localhost:3333/password-reset/:resetPasswordToken",
       verificationUrl : "http://localhost:3333/user-verification/:verificationToken"
    };
+   var testProduct1 = {
+      name : 'cattfish_v1',
+      prettyName : 'CATTfish v1',
+      vendor : 'CMU CREATE Lab',
+      description : 'The CATTfish v1 water temperature and conductivity sensor.',
+      isPublic : true,
+      defaultAllowUnauthenticatedUpload : true,
+      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "uS/cm" }}
+   };
+   var testProduct2 = {
+      name : 'cattfish_v2',
+      prettyName : 'CATTfish v2',
+      vendor : 'CMU CREATE Lab',
+      description : 'The CATTfish v2 water temperature and conductivity sensor.',
+      isPublic : true,
+      defaultAllowUnauthenticatedUpload : true,
+      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "uS/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }}
+   };
+   var testProduct3 = {
+      name : 'cattfish_v3',
+      prettyName : 'CATTfish v3',
+      vendor : 'CMU CREATE Lab',
+      description : 'The CATTfish v3 water temperature and conductivity sensor.',
+      isPublic : true,
+      defaultAllowUnauthenticatedUpload : true,
+      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "uS/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }, "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" }}
+   };
+   var testProduct4 = {
+      name : 'cattfish_v4',
+      prettyName : 'CATTfish v4',
+      vendor : 'CMU CREATE Lab',
+      description : 'The CATTfish v4 water temperature and conductivity sensor.',
+      isPublic : true,
+      defaultAllowUnauthenticatedUpload : true,
+      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "uS/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }, "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" }, "humidity" : { "prettyName" : "Humidity", "units" : "%" }}
+   };
+
    var db = null;
    var verificationTokens = {};
 
@@ -75,6 +112,15 @@ describe("ESDR", function() {
             flow.series([
                            function(done) {
                               connection.query("DELETE FROM Tokens", function(err) {
+                                 if (err) {
+                                    throw err;
+                                 }
+
+                                 done();
+                              });
+                           },
+                           function(done) {
+                              connection.query("DELETE FROM Products", function(err) {
                                  if (err) {
                                     throw err;
                                  }
@@ -770,7 +816,7 @@ describe("ESDR", function() {
          it("Should fail to create a new user with a email address that's already in use", function(done) {
             agent(url)
                   .post("/api/v1/users")
-                  .send({user : testUser1, client: testClient})
+                  .send({user : testUser1, client : testClient})
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -1775,4 +1821,73 @@ describe("ESDR", function() {
          });
       });
    });
+
+   describe("Products", function() {
+
+      var insertIds = {};
+
+      it("Should be able to create a product with a null creator", function(done) {
+         db.products.create(testProduct3, null, function(err, product) {
+            if (err) {
+               return done(err);
+            }
+
+            product.should.have.property('insertId');
+            product.should.have.property('name', testProduct3.name);
+
+            // remember the insert ID
+            insertIds.testProduct3 = product.insertId;
+
+            done();
+         });
+      });
+
+      it("Should be able to create a product with a non-null creator", function(done) {
+         db.users.findByEmail(testUser1.email, function(err, user) {
+            if (err) {
+               done(err);
+            }
+            db.products.create(testProduct4, user.id, function(err, product) {
+               if (err) {
+                  return done(err);
+               }
+
+               product.should.have.property('insertId');
+               product.should.have.property('name', testProduct4.name);
+
+               // remember the insert ID
+               insertIds.testProduct4 = product.insertId;
+
+               done();
+            });
+
+         });
+
+      });
+
+      it("Should be able to find a product by name", function(done) {
+         db.products.findByName(testProduct3.name, function(err, product) {
+            if (err) {
+               return done(err);
+            }
+
+            product.should.have.property('id', insertIds.testProduct3);
+            product.should.have.property('name', testProduct3.name);
+            product.should.have.property('prettyName', testProduct3.prettyName);
+            product.should.have.property('vendor', testProduct3.vendor);
+            product.should.have.property('description', testProduct3.description);
+            product.should.have.property('creatorUserId', null);
+            product.should.have.property('isPublic', testProduct3.isPublic);
+            product.should.have.property('defaultAllowUnauthenticatedUpload', testProduct3.defaultAllowUnauthenticatedUpload);
+            product.should.have.property('created');
+            product.should.have.property('modified');
+
+            // do a deep equal
+            should(JSON.parse(product.defaultChannelSpec)).eql(testProduct3.defaultChannelSpec);
+
+            done();
+         });
+      });
+   });
+
 });

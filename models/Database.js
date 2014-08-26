@@ -5,6 +5,7 @@ var DatabaseHelper = require("./DatabaseHelper");
 var Users = require('./Users.js');
 var Clients = require('./Clients.js');
 var Tokens = require('./Tokens.js');
+var Products = require('./Products.js');
 
 var config = require('../config');
 var log = require('log4js').getLogger();
@@ -136,6 +137,27 @@ module.exports = {
                         }
                         else {
                            db.tokens = tokens;
+                        }
+
+                        done();
+                     });
+                  }
+                  else {
+                     done();
+                  }
+               },
+
+               // create the Products table, if necessary
+               function(done) {
+                  if (!hasErrors()) {
+                     log.info("6) Ensuring the Products table exists.");
+                     var products = new Products(databaseHelper);
+                     products.initialize(function(err) {
+                        if (err) {
+                           errors.push(err)
+                        }
+                        else {
+                           db.products = products;
                         }
 
                         done();
