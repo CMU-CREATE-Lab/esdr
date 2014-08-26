@@ -1818,76 +1818,75 @@ describe("ESDR", function() {
                });
             });
 
-         });
-      });
-   });
+         });   // end Reset Password
+      });      // end Users
 
-   describe("Products", function() {
+      describe("Products", function() {
 
-      var insertIds = {};
+         var insertIds = {};
 
-      it("Should be able to create a product with a null creator", function(done) {
-         db.products.create(testProduct3, null, function(err, product) {
-            if (err) {
-               return done(err);
-            }
-
-            product.should.have.property('insertId');
-            product.should.have.property('name', testProduct3.name);
-
-            // remember the insert ID
-            insertIds.testProduct3 = product.insertId;
-
-            done();
-         });
-      });
-
-      it("Should be able to create a product with a non-null creator", function(done) {
-         db.users.findByEmail(testUser1.email, function(err, user) {
-            if (err) {
-               done(err);
-            }
-            db.products.create(testProduct4, user.id, function(err, product) {
+         it("Should be able to create a product with a null creator", function(done) {
+            db.products.create(testProduct3, null, function(err, product) {
                if (err) {
                   return done(err);
                }
 
                product.should.have.property('insertId');
-               product.should.have.property('name', testProduct4.name);
+               product.should.have.property('name', testProduct3.name);
 
                // remember the insert ID
-               insertIds.testProduct4 = product.insertId;
+               insertIds.testProduct3 = product.insertId;
 
                done();
+            });
+         });
+
+         it("Should be able to create a product with a non-null creator", function(done) {
+            db.users.findByEmail(testUser1.email, function(err, user) {
+               if (err) {
+                  done(err);
+               }
+               db.products.create(testProduct4, user.id, function(err, product) {
+                  if (err) {
+                     return done(err);
+                  }
+
+                  product.should.have.property('insertId');
+                  product.should.have.property('name', testProduct4.name);
+
+                  // remember the insert ID
+                  insertIds.testProduct4 = product.insertId;
+
+                  done();
+               });
+
             });
 
          });
 
-      });
+         it("Should be able to find a product by name", function(done) {
+            db.products.findByName(testProduct3.name, function(err, product) {
+               if (err) {
+                  return done(err);
+               }
 
-      it("Should be able to find a product by name", function(done) {
-         db.products.findByName(testProduct3.name, function(err, product) {
-            if (err) {
-               return done(err);
-            }
+               product.should.have.property('id', insertIds.testProduct3);
+               product.should.have.property('name', testProduct3.name);
+               product.should.have.property('prettyName', testProduct3.prettyName);
+               product.should.have.property('vendor', testProduct3.vendor);
+               product.should.have.property('description', testProduct3.description);
+               product.should.have.property('creatorUserId', null);
+               product.should.have.property('isPublic', testProduct3.isPublic);
+               product.should.have.property('defaultAllowUnauthenticatedUpload', testProduct3.defaultAllowUnauthenticatedUpload);
+               product.should.have.property('created');
+               product.should.have.property('modified');
 
-            product.should.have.property('id', insertIds.testProduct3);
-            product.should.have.property('name', testProduct3.name);
-            product.should.have.property('prettyName', testProduct3.prettyName);
-            product.should.have.property('vendor', testProduct3.vendor);
-            product.should.have.property('description', testProduct3.description);
-            product.should.have.property('creatorUserId', null);
-            product.should.have.property('isPublic', testProduct3.isPublic);
-            product.should.have.property('defaultAllowUnauthenticatedUpload', testProduct3.defaultAllowUnauthenticatedUpload);
-            product.should.have.property('created');
-            product.should.have.property('modified');
+               // do a deep equal
+               should(JSON.parse(product.defaultChannelSpec)).eql(testProduct3.defaultChannelSpec);
 
-            // do a deep equal
-            should(JSON.parse(product.defaultChannelSpec)).eql(testProduct3.defaultChannelSpec);
-
-            done();
+               done();
+            });
          });
-      });
-   });
-
-});
+      });      // end Products
+   });         // end Database
+});            // end ESDR
