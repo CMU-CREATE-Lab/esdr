@@ -62,8 +62,8 @@ describe("ESDR", function() {
       prettyName : 'CATTfish v2',
       vendor : 'CMU CREATE Lab',
       description : 'The CATTfish v2 water temperature and conductivity sensor.',
-      isPublic : true,
-      defaultAllowUnauthenticatedUpload : true,
+      isPublic : false,
+      defaultAllowUnauthenticatedUpload : false,
       defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "uS/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }}
    };
    var testProduct3 = {
@@ -83,6 +83,17 @@ describe("ESDR", function() {
       isPublic : true,
       defaultAllowUnauthenticatedUpload : true,
       defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "uS/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }, "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" }, "humidity" : { "prettyName" : "Humidity", "units" : "%" }}
+   };
+
+   var shallowClone = function(obj) {
+      if (obj) {
+         var clone = {};
+         Object.keys(obj).forEach(function(key) {
+            clone[key] = obj[key];
+         });
+         return clone;
+      }
+      return obj;
    };
 
    var db = null;
@@ -872,6 +883,26 @@ describe("ESDR", function() {
                           });
             });
 
+            it("Should be able to verify another user", function(done) {
+
+               agent(url)
+                     .put("/api/v1/user-verification")
+                     .send({token : verificationTokens.testUser2})
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', 200);
+                             res.body.should.have.property('code', 200);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('isVerified', true);
+
+                             done();
+                          });
+            });
+
             it("Should be able to request that the verification token be sent again (after creation, after verification)", function(done) {
                agent(url)
                      .post("/api/v1/user-verification")
@@ -1285,8 +1316,350 @@ describe("ESDR", function() {
                        });
          });
 
-      });
-   });
+      });   // end Reset Password Request
+
+      describe("Products", function() {
+
+         var tokens = {};
+
+         before(function(initDone) {
+            // request access and refresh tokens
+            var requestTokens = function(user, callback) {
+               agent(url)
+                     .post("/oauth/token")
+                     .send({
+                              grant_type : "password",
+                              client_id : testClient.clientName,
+                              client_secret : testClient.clientSecret,
+                              username : user.email,
+                              password : user.password
+                           })
+                     .end(function(err, res) {
+                             if (err) {
+                                return initDone(err);
+                             }
+
+                             res.should.have.property('status', 200);
+                             res.body.should.have.property('access_token');
+                             res.body.should.have.property('refresh_token');
+                             res.body.should.have.property('token_type', "Bearer");
+
+                             // return the tokens
+                             callback(res.body);
+                          });
+
+            };
+
+            flow.series([
+                           function(done) {
+                              requestTokens(testUser1, function(theTokens) {
+                                 tokens.testUser1 = theTokens;
+                                 done();
+                              });
+                           },
+                           function(done) {
+                              requestTokens(testUser2, function(theTokens) {
+                                 tokens.testUser2 = theTokens;
+                                 done();
+                              });
+                           }
+                        ],
+                        function() {
+                           initDone();
+                        });
+         });
+
+         describe("Create", function() {
+            it("Should be able to create a new public product", function(done) {
+               agent(url)
+                     .post("/api/v1/products")
+                     .set({
+                             Authorization : "Bearer " + tokens.testUser1.access_token
+                          })
+                     .send(testProduct1)
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', 201);
+                             res.body.should.have.property('code', 201);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('name', testProduct1.name);
+
+                             done();
+                          });
+            });
+
+            it("Should be able to create a new private product", function(done) {
+               agent(url)
+                     .post("/api/v1/products")
+                     .set({
+                             Authorization : "Bearer " + tokens.testUser2.access_token
+                          })
+                     .send(testProduct2)
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', 201);
+                             res.body.should.have.property('code', 201);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('name', testProduct2.name);
+
+                             done();
+                          });
+            });
+
+            it("Should fail to create a new product if the name is already in use", function(done) {
+               agent(url)
+                     .post("/api/v1/products")
+                     .set({
+                             Authorization : "Bearer " + tokens.testUser1.access_token
+                          })
+                     .send(testProduct1)
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', 409);
+                             res.body.should.have.property('code', 409);
+                             res.body.should.have.property('status', 'error');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('name', testProduct1.name);
+
+                             done();
+                          });
+            });
+
+            it("Should fail to create a new product if the required fields are missing", function(done) {
+               var product = shallowClone(testProduct1);
+               delete product.name;
+               delete product.prettyName;
+               delete product.defaultChannelSpec;
+
+               agent(url)
+                     .post("/api/v1/products")
+                     .set({
+                             Authorization : "Bearer " + tokens.testUser1.access_token
+                          })
+                     .send(product)
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', 422);
+                             res.body.should.have.property('code', 422);
+                             res.body.should.have.property('status', 'error');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.length(1);
+                             res.body.data[0].should.have.property('instanceContext', '#');
+                             res.body.data[0].should.have.property('constraintName', 'required');
+                             res.body.data[0].should.have.property('desc', 'missing: name,prettyName,defaultChannelSpec');
+                             res.body.data[0].should.have.property('kind', 'ObjectValidationError');
+
+                             done();
+                          });
+            });
+
+            it("Should fail to create a new product if the fields with minLength are too short", function(done) {
+               var product = shallowClone(testProduct1);
+               product.name = "Yo";
+               product.prettyName = "Ya";
+               product.defaultChannelSpec = 1;
+
+               agent(url)
+                     .post("/api/v1/products")
+                     .set({
+                             Authorization : "Bearer " + tokens.testUser1.access_token
+                          })
+                     .send(product)
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', 422);
+                             res.body.should.have.property('code', 422);
+                             res.body.should.have.property('status', 'error');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.length(3);
+                             res.body.data[0].should.have.property('instanceContext', '#/name');
+                             res.body.data[0].should.have.property('constraintName', 'minLength');
+                             res.body.data[0].should.have.property('constraintValue', db.products.jsonSchema.properties.name.minLength);
+                             res.body.data[0].should.have.property('testedValue', product.name.length);
+                             res.body.data[1].should.have.property('instanceContext', '#/prettyName');
+                             res.body.data[1].should.have.property('constraintName', 'minLength');
+                             res.body.data[1].should.have.property('constraintValue', db.products.jsonSchema.properties.prettyName.minLength);
+                             res.body.data[1].should.have.property('testedValue', product.prettyName.length);
+                             res.body.data[2].should.have.property('instanceContext', '#/defaultChannelSpec');
+                             res.body.data[2].should.have.property('constraintName', 'minLength');
+                             res.body.data[2].should.have.property('constraintValue', db.products.jsonSchema.properties.defaultChannelSpec.minLength);
+                             res.body.data[2].should.have.property('testedValue', 1);
+
+                             done();
+                          });
+            });
+
+         });   // end Create
+
+         describe("Find", function() {
+
+            it("Should be able to get a public product by name, with no access token provided", function(done) {
+               agent(url)
+                     .get("/api/v1/products/" + testProduct1.name)
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', 200);
+                             res.body.should.have.property('code', 200);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('id');
+                             res.body.data.should.have.property('name', testProduct1.name);
+                             res.body.data.should.have.property('prettyName', testProduct1.prettyName);
+                             res.body.data.should.have.property('vendor', testProduct1.vendor);
+                             res.body.data.should.have.property('description', testProduct1.description);
+                             res.body.data.should.have.property('creatorUserId', tokens.testUser1.userId);
+                             res.body.data.should.have.property('isPublic', testProduct1.isPublic);
+                             res.body.data.should.have.property('defaultAllowUnauthenticatedUpload', testProduct1.defaultAllowUnauthenticatedUpload);
+                             should(res.body.data.defaultChannelSpec).eql(testProduct1.defaultChannelSpec); // deep equal
+                             res.body.data.should.have.property('created');
+                             res.body.data.should.have.property('modified');
+
+                             done();
+                          });
+            });
+
+            it("Should be able to get a public product by name, with an access token provided", function(done) {
+               agent(url)
+                     .get("/api/v1/products/" + testProduct1.name)
+                     .set({
+                             Authorization : "Bearer " + tokens.testUser2.access_token
+                          })
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', 200);
+                             res.body.should.have.property('code', 200);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('id');
+                             res.body.data.should.have.property('name', testProduct1.name);
+                             res.body.data.should.have.property('prettyName', testProduct1.prettyName);
+                             res.body.data.should.have.property('vendor', testProduct1.vendor);
+                             res.body.data.should.have.property('description', testProduct1.description);
+                             res.body.data.should.have.property('creatorUserId', tokens.testUser1.userId);
+                             res.body.data.should.have.property('isPublic', testProduct1.isPublic);
+                             res.body.data.should.have.property('defaultAllowUnauthenticatedUpload', testProduct1.defaultAllowUnauthenticatedUpload);
+                             should(res.body.data.defaultChannelSpec).eql(testProduct1.defaultChannelSpec); // deep equal
+                             res.body.data.should.have.property('created');
+                             res.body.data.should.have.property('modified');
+
+                             done();
+                          });
+            });
+
+            it("Should be able to get a private product by name, with an access token for the product creator provided", function(done) {
+               agent(url)
+                     .get("/api/v1/products/" + testProduct2.name)
+                     .set({
+                             Authorization : "Bearer " + tokens.testUser2.access_token
+                          })
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', 200);
+                             res.body.should.have.property('code', 200);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('id');
+                             res.body.data.should.have.property('name', testProduct2.name);
+                             res.body.data.should.have.property('prettyName', testProduct2.prettyName);
+                             res.body.data.should.have.property('vendor', testProduct2.vendor);
+                             res.body.data.should.have.property('description', testProduct2.description);
+                             res.body.data.should.have.property('creatorUserId', tokens.testUser2.userId);
+                             res.body.data.should.have.property('isPublic', testProduct2.isPublic);
+                             res.body.data.should.have.property('defaultAllowUnauthenticatedUpload', testProduct2.defaultAllowUnauthenticatedUpload);
+                             should(res.body.data.defaultChannelSpec).eql(testProduct2.defaultChannelSpec); // deep equal
+                             res.body.data.should.have.property('created');
+                             res.body.data.should.have.property('modified');
+
+                             done();
+                          });
+            });
+
+            it("Should fail to get a private product by name, with no access token provided", function(done) {
+               agent(url)
+                     .get("/api/v1/products/" + testProduct2.name)
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', 401);
+                             res.body.should.have.property('code', 401);
+                             res.body.should.have.property('status', 'error');
+                             res.body.should.have.property('data', null);
+
+                             done();
+                          });
+            });
+
+            it("Should fail to get a private product by name, with an access token provided for a user other than the product creator", function(done) {
+               agent(url)
+                     .get("/api/v1/products/" + testProduct2.name)
+                     .set({
+                             Authorization : "Bearer " + tokens.testUser1.access_token
+                          })
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', 403);
+                             res.body.should.have.property('code', 403);
+                             res.body.should.have.property('status', 'error');
+                             res.body.should.have.property('data', null);
+
+                             done();
+                          });
+            });
+
+            it("Should fail to get a product with a bogus name", function(done) {
+               agent(url)
+                     .get("/api/v1/products/" + "bogus")
+                     .set({
+                             Authorization : "Bearer " + tokens.testUser1.access_token
+                          })
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', 404);
+                             res.body.should.have.property('code', 404);
+                             res.body.should.have.property('status', 'error');
+                             res.body.should.have.property('data', null);
+
+                             done();
+                          });
+            });
+         });   // end Find
+
+      });   // end Products
+   });      // end REST API
 
    describe("OAuth 2.0", function() {
       var tokens = null;
@@ -1299,8 +1672,8 @@ describe("ESDR", function() {
                         grant_type : "password",
                         client_id : testClient.clientName,
                         client_secret : testClient.clientSecret,
-                        username : testUser2.email,
-                        password : testUser2.password
+                        username : testUser3.email,
+                        password : testUser3.password
                      })
                .end(function(err, res) {
                        if (err) {
@@ -1317,7 +1690,7 @@ describe("ESDR", function() {
       it("Should be able to request access and refresh tokens after verifying the user", function(done) {
          agent(url)
                .put("/api/v1/user-verification")
-               .send({token : verificationTokens.testUser2})
+               .send({token : verificationTokens.testUser3})
                .end(function(err, res) {
                        if (err) {
                           return done(err);
