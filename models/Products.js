@@ -31,6 +31,7 @@ var JSON_SCHEMA = {
    "properties" : {
       "name" : {
          "type" : "string",
+         "pattern" : "^[a-zA-Z0-9_]+$",
          "minLength" : 3,
          "maxLength" : 255
       },
@@ -49,9 +50,15 @@ var JSON_SCHEMA = {
          "minLength" : 0,
          "maxLength" : 512
       },
+      "isPublic" : {
+         "type" : "boolean"
+      },
+      "defaultAllowUnauthenticatedUpload" : {
+         "type" : "boolean"
+      },
       "defaultChannelSpec" : {
          "type" : "string",
-         "minLength" : 1
+         "minLength" : 2
       }
    },
    "required" : ["name", "prettyName", "defaultChannelSpec"]
@@ -74,17 +81,18 @@ module.exports = function(databaseHelper) {
 
    this.create = function(productDetails, creatorUserId, callback) {
       // first build a copy and trim some fields
-      var defaultChannelSpec = productDetails.defaultChannelSpec || {};
       var product = {
          creatorUserId : creatorUserId,
          isPublic : !!productDetails.isPublic,
-         defaultAllowUnauthenticatedUpload : !!productDetails.defaultAllowUnauthenticatedUpload,
-         defaultChannelSpec : JSON.stringify(defaultChannelSpec)
+         defaultAllowUnauthenticatedUpload : !!productDetails.defaultAllowUnauthenticatedUpload
       };
       trimAndCopyPropertyIfNonEmpty(productDetails, product, "name");
       trimAndCopyPropertyIfNonEmpty(productDetails, product, "prettyName");
       trimAndCopyPropertyIfNonEmpty(productDetails, product, "vendor");
       trimAndCopyPropertyIfNonEmpty(productDetails, product, "description");
+      if (typeof productDetails.defaultChannelSpec !== 'undefined' && productDetails.defaultChannelSpec != null) {
+         product.defaultChannelSpec = JSON.stringify(productDetails.defaultChannelSpec)
+      }
 
       // now validate
       jsonValidator.validate(product, JSON_SCHEMA, function(err1) {
@@ -92,22 +100,21 @@ module.exports = function(databaseHelper) {
             return callback(new ValidationError(err1));
          }
 
-            // now that we have the hashed secret, try to insert
-            databaseHelper.execute("INSERT INTO Products SET ?", product, function(err2, result) {
-               if (err2) {
-                  return callback(err2);
-               }
+         // now that we have the hashed secret, try to insert
+         databaseHelper.execute("INSERT INTO Products SET ?", product, function(err2, result) {
+            if (err2) {
+               return callback(err2);
+            }
 
-               return callback(null, {
-                  insertId : result.insertId,
-                  // include these because they might have been modified by the trimming
-                  name : product.name
-               });
+            return callback(null, {
+               insertId : result.insertId,
+               // include these because they might have been modified by the trimming
+               name : product.name
             });
+         });
       });
    };
 
-   
    /**
     * Tries to find the product with the given <code>name</code> and returns it to the given <code>callback</code>. If
     * successful, the product is returned as the 2nd argument to the <code>callback</code> function.  If unsuccessful,
