@@ -84,6 +84,18 @@ describe("ESDR", function() {
       defaultAllowUnauthenticatedUpload : true,
       defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "uS/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }, "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" }, "humidity" : { "prettyName" : "Humidity", "units" : "%" }}
    };
+   var testDevice1 = {
+      serialNumber : '03e7322a7d3630530218ff6b0dcc2e28'
+   };
+   var testDevice2 = {
+      serialNumber : 'b5129637a32268fcf72b78f63a0b42db'
+   };
+   var testDevice3 = {
+      serialNumber : 'fbf11c1a9befe54852ab453bcaae6fda'
+   };
+   var testDevice4 = {
+      serialNumber : '0e66d7a06c77a561ebc23646a57fc76e'
+   };
 
    var shallowClone = function(obj) {
       if (obj) {
@@ -123,6 +135,15 @@ describe("ESDR", function() {
             flow.series([
                            function(done) {
                               connection.query("DELETE FROM Tokens", function(err) {
+                                 if (err) {
+                                    throw err;
+                                 }
+
+                                 done();
+                              });
+                           },
+                           function(done) {
+                              connection.query("DELETE FROM Devices", function(err) {
                                  if (err) {
                                     throw err;
                                  }
@@ -2261,5 +2282,61 @@ describe("ESDR", function() {
             });
          });
       });      // end Products
+
+      describe("Devices", function() {
+
+         var insertIds = {};
+         var productNameToId = {};
+
+         before(function(initDone) {
+            // find the product database IDs
+            var getProductId = function(productName, callback) {
+               db.products.findByName(productName, function(err, product) {
+                  if (err) {
+                     return initDone(err);
+                  }
+
+                  callback(product.id);
+               });
+            };
+
+            flow.series([
+                           function(done) {
+                              getProductId(testProduct1.name, function(productId) {
+                                 productNameToId.testProduct1 = productId;
+                                 done();
+                              });
+                           },
+                           function(done) {
+                              getProductId(testProduct2.name, function(productId) {
+                                 productNameToId.testProduct2 = productId;
+                                 done();
+                              });
+                           }
+                        ],
+                        function() {
+                           initDone();
+                        });
+         });
+
+         it("Should be able to create a device", function(done) {
+            db.devices.create(testDevice3, productNameToId.testProduct1, function(err, device) {
+               if (err) {
+                  return done(err);
+               }
+
+               log.debug(device);
+
+               device.should.have.property('insertId');
+               device.should.have.property('serialNumber', testDevice3.serialNumber);
+
+               // remember the insert ID
+               insertIds.testDevice3 = device.insertId;
+
+               done();
+            });
+         });
+      });      // end Devices
+
    });         // end Database
 });            // end ESDR
