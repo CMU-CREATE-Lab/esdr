@@ -7,6 +7,7 @@ var Clients = require('./Clients.js');
 var Tokens = require('./Tokens.js');
 var Products = require('./Products.js');
 var Devices = require('./Devices.js');
+var Feeds = require('./Feeds.js');
 
 var config = require('../config');
 var log = require('log4js').getLogger();
@@ -172,7 +173,7 @@ module.exports = {
                // create the Devices table, if necessary
                function(done) {
                   if (!hasErrors()) {
-                     log.info("6) Ensuring the Devices table exists.");
+                     log.info("7) Ensuring the Devices table exists.");
                      var devices = new Devices(databaseHelper);
                      devices.initialize(function(err) {
                         if (err) {
@@ -180,6 +181,27 @@ module.exports = {
                         }
                         else {
                            db.devices = devices;
+                        }
+
+                        done();
+                     });
+                  }
+                  else {
+                     done();
+                  }
+               },
+
+               // create the Feeds table, if necessary
+               function(done) {
+                  if (!hasErrors()) {
+                     log.info("8) Ensuring the Feeds table exists.");
+                     var feeds = new Feeds(databaseHelper);
+                     feeds.initialize(function(err) {
+                        if (err) {
+                           errors.push(err)
+                        }
+                        else {
+                           db.feeds = feeds;
                         }
 
                         done();

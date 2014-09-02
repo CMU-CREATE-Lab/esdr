@@ -12,7 +12,6 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Products` ( " +
                          "`description` varchar(512) DEFAULT NULL, " +
                          "`creatorUserId` bigint(20) DEFAULT NULL, " +
                          "`isPublic` boolean DEFAULT 0, " +
-                         "`defaultAllowUnauthenticatedUpload` boolean DEFAULT 0, " +
                          "`defaultChannelSpec` text NOT NULL, " +
                          "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
                          "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
@@ -53,9 +52,6 @@ var JSON_SCHEMA = {
       "isPublic" : {
          "type" : "boolean"
       },
-      "defaultAllowUnauthenticatedUpload" : {
-         "type" : "boolean"
-      },
       "defaultChannelSpec" : {
          "type" : "string",
          "minLength" : 2
@@ -83,8 +79,7 @@ module.exports = function(databaseHelper) {
       // first build a copy and trim some fields
       var product = {
          creatorUserId : creatorUserId,
-         isPublic : !!productDetails.isPublic,
-         defaultAllowUnauthenticatedUpload : !!productDetails.defaultAllowUnauthenticatedUpload
+         isPublic : !!productDetails.isPublic
       };
       trimAndCopyPropertyIfNonEmpty(productDetails, product, "name");
       trimAndCopyPropertyIfNonEmpty(productDetails, product, "prettyName");

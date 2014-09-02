@@ -1,6 +1,6 @@
-var crypto = require('crypto');
 var flow = require('nimble');
 var config = require('../config');
+var createRandomHexToken = require('../lib/token').createRandomHexToken;
 var log = require('log4js').getLogger();
 
 var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Tokens` ( " +
@@ -37,8 +37,8 @@ module.exports = function(databaseHelper) {
 
    var generateTokens = function() {
       return {
-         access : crypto.randomBytes(32).toString('hex'),
-         refresh : crypto.randomBytes(32).toString('hex')
+         access : createRandomHexToken(32),
+         refresh : createRandomHexToken(32)
       };
    };
 

@@ -1,6 +1,6 @@
 var config = require('../config');
 var bcrypt = require('bcrypt');
-var crypto = require('crypto');
+var createRandomHexToken = require('../lib/token').createRandomHexToken;
 var trimAndCopyPropertyIfNonEmpty = require('../lib/objectUtils').trimAndCopyPropertyIfNonEmpty;
 var JaySchema = require('jayschema');
 var jsonValidator = new JaySchema();
@@ -296,6 +296,6 @@ module.exports = function(databaseHelper) {
    };
 
    var generateToken = function() {
-      return crypto.randomBytes(32).toString('hex');
+      return createRandomHexToken(32);
    };
 };

@@ -7,14 +7,17 @@ var log = require('log4js').getLogger();
 var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Devices` ( " +
                          "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
                          "`serialNumber` varchar(255) NOT NULL, " +
-                         "`productId` bigint(20) DEFAULT NULL, " +
+                         "`productId` bigint(20) NOT NULL, " +
+                         "`userId` bigint(20) DEFAULT NULL, " +    // TODO: make this NOT NULL?
                          "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
                          "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
                          "PRIMARY KEY (`id`), " +
                          "UNIQUE KEY `serialNumber_productId_index` (`serialNumber`,`productId`), " +
+                         "KEY `userId` (`userId`), " +
                          "KEY `serialNumber` (`serialNumber`), " +
                          "KEY `productId` (`productId`), " +
-                         "CONSTRAINT `devices_productId_fk_1` FOREIGN KEY (`productId`) REFERENCES `Products` (`id`) " +
+                         "CONSTRAINT `devices_productId_fk_1` FOREIGN KEY (`productId`) REFERENCES `Products` (`id`), " +
+                         "CONSTRAINT `devices_userId_fk_1` FOREIGN KEY (`userId`) REFERENCES `Users` (`id`) " +
                          ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
 
 var JSON_SCHEMA = {
@@ -48,10 +51,11 @@ module.exports = function(databaseHelper) {
       });
    };
 
-   this.create = function(deviceDetails, productId, callback) {
+   this.create = function(deviceDetails, productId, userId, callback) {
       // first build a copy and trim some fields
       var device = {
-         productId : productId
+         productId : productId,
+         userId : userId
       };
       trimAndCopyPropertyIfNonEmpty(deviceDetails, device, "serialNumber");
 
