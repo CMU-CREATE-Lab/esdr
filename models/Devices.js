@@ -9,6 +9,7 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Devices` ( " +
                          "`serialNumber` varchar(255) NOT NULL, " +
                          "`productId` bigint(20) NOT NULL, " +
                          "`userId` bigint(20) DEFAULT NULL, " +    // TODO: make this NOT NULL?
+                         "`isPublic` boolean DEFAULT 0, " +
                          "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
                          "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
                          "PRIMARY KEY (`id`), " +
@@ -31,6 +32,9 @@ var JSON_SCHEMA = {
          "pattern" : "^[a-zA-Z0-9_\\+\\-\\,\\:]+$",   // alphanumeric and _ + - , :
          "minLength" : 1,
          "maxLength" : 255
+      },
+      "isPublic" : {
+         "type" : "boolean"
       }
    },
    "required" : ["serialNumber"]
@@ -55,7 +59,8 @@ module.exports = function(databaseHelper) {
       // first build a copy and trim some fields
       var device = {
          productId : productId,
-         userId : userId
+         userId : userId,
+         isPublic : !!deviceDetails.isPublic
       };
       trimAndCopyPropertyIfNonEmpty(deviceDetails, device, "serialNumber");
 

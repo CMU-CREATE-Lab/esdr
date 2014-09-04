@@ -82,20 +82,24 @@ describe("ESDR", function() {
       defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "uS/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }, "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" }, "humidity" : { "prettyName" : "Humidity", "units" : "%" }}
    };
    var testDevice1 = {
-      serialNumber : '03e7322a7d3630530218ff6b0dcc2e28'
+      serialNumber : '03e7322a7d3630530218ff6b0dcc2e28',
+      isPublic : true
    };
    var testDevice2 = {
-      serialNumber : 'b5129637a32268fcf72b78f63a0b42db'
+      serialNumber : 'b5129637a32268fcf72b78f63a0b42db',
+      isPublic : false
    };
    var testDevice3 = {
-      serialNumber : 'fbf11c1a9befe54852ab453bcaae6fda'
+      serialNumber : 'fbf11c1a9befe54852ab453bcaae6fda',
+      isPublic : true
    };
    var testDevice4 = {
-      serialNumber : '0e66d7a06c77a561ebc23646a57fc76e'
+      serialNumber : '0e66d7a06c77a561ebc23646a57fc76e',
+      isPublic : false
    };
 
    var testFeed3 = {
-      name: "Upstairs Bathroom",
+      name : "Upstairs Bathroom",
       exposure : "indoor",
       isPublic : false,
       isMobile : false,
@@ -1354,7 +1358,7 @@ describe("ESDR", function() {
 
       });   // end Reset Password Request
 
-      describe("Products", function() {
+      describe("Products, Devices, and Feeds", function() {
 
          var accessTokens = {};
 
@@ -1404,7 +1408,8 @@ describe("ESDR", function() {
                         });
          });
 
-         describe("Create", function() {
+         describe("Products", function() {
+
             it("Should be able to create a new public product", function(done) {
                agent(url)
                      .post("/api/v1/products")
@@ -1540,10 +1545,6 @@ describe("ESDR", function() {
                              done();
                           });
             });
-
-         });   // end Products: Create
-
-         describe("Find", function() {
 
             it("Should be able to get a public product by name, with no access token provided", function(done) {
                agent(url)
@@ -1688,9 +1689,15 @@ describe("ESDR", function() {
                              done();
                           });
             });
-         });   // end Products: Find
 
-      });   // end Products
+            describe("Devices", function() {
+
+               describe("Feeds", function() {
+
+               });      // end Feeds
+            });      // end Devices
+         });      // end Products
+      });      // end Products, Devices, and Feeds
    });      // end REST API
 
    describe("OAuth 2.0", function() {

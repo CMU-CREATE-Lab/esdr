@@ -6,7 +6,7 @@ var DuplicateRecordError = require('../../lib/errors').DuplicateRecordError;
 var httpStatus = require('http-status');
 var log = require('log4js').getLogger();
 
-module.exports = function(ProductModel) {
+module.exports = function(ProductModel, DevicesModel) {
 
    router.post('/',
                passport.authenticate('bearer', { session : false }),
