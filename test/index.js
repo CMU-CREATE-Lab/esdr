@@ -95,9 +95,12 @@ describe("ESDR", function() {
    };
 
    var testFeed3 = {
+      name: "Upstairs Bathroom",
       exposure : "indoor",
       isPublic : false,
-      isMobile : false
+      isMobile : false,
+      latitude : 40.443679814953626,
+      longitude : -79.94643892510089
    };
 
    var shallowClone = function(obj) {
