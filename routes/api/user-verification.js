@@ -4,6 +4,7 @@ var router = express.Router();
 var passport = require('passport');
 var Mailer = require('../../lib/mailer');
 var ValidationError = require('../../lib/errors').ValidationError;
+var httpStatus = require('http-status');
 var log = require('log4js').getLogger();
 
 module.exports = function(UserModel, ClientModel) {
@@ -35,7 +36,7 @@ module.exports = function(UserModel, ClientModel) {
                               return res.jsendServerError("Error while authenticating client [" + theClient.clientName + "]");
                            }
                            if (!client) {
-                              return res.jsendClientError("Failed to authenticate client.", {client : {clientName: theClient.clientName}}, 401);  // HTTP 401 Unauthorized
+                              return res.jsendClientError("Failed to authenticate client.", {client : {clientName: theClient.clientName}}, httpStatus.UNAUTHORIZED);  // HTTP 401 Unauthorized
                            }
 
                            log.debug("Received POST to resend verification email for user [" + userEmail + "]");
@@ -65,20 +66,20 @@ module.exports = function(UserModel, ClientModel) {
                                  if (!user.isVerified && config.get("verificationToken:willEmailToUser")) {
                                     Mailer.sendVerificationEmail(client, user.email, user.verificationToken);
                                  }
-                                 return res.jsendSuccess(obj, user.isVerified ? 200 : 201);
+                                 return res.jsendSuccess(obj, user.isVerified ? httpStatus.OK : httpStatus.CREATED);
                               }
 
-                              return res.jsendClientError("Unknown or invalid email address", {email : userEmail}, 400);
+                              return res.jsendClientError("Unknown or invalid email address", {email : userEmail}, httpStatus.BAD_REQUEST);
                            });
                         });
 
                      }
                      else {
-                        return res.jsendClientError("Client not specified.", null, 422);  // HTTP 422 Unprocessable Entity
+                        return res.jsendClientError("Client not specified.", null, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 Unprocessable Entity
                      }
                   }
                   else {
-                     return res.jsendClientError("Email address not specified.", null, 422);  // HTTP 422 Unprocessable Entity
+                     return res.jsendClientError("Email address not specified.", null, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 Unprocessable Entity
                   }
                }
    );
@@ -103,11 +104,11 @@ module.exports = function(UserModel, ClientModel) {
                           return res.jsendSuccess(result);
                        }
 
-                       return res.jsendClientError("Invalid verification token", result, 400);
+                       return res.jsendClientError("Invalid verification token", result, httpStatus.BAD_REQUEST);
                     });
                  }
                  else {
-                    return res.jsendClientError("Verification token not specified.", null, 422);  // HTTP 422 Unprocessable Entity
+                    return res.jsendClientError("Verification token not specified.", null, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 Unprocessable Entity
                  }
               }
    );

@@ -3,6 +3,7 @@ var router = express.Router();
 var passport = require('passport');
 var ValidationError = require('../../lib/errors').ValidationError;
 var DuplicateRecordError = require('../../lib/errors').DuplicateRecordError;
+var httpStatus = require('http-status');
 var log = require('log4js').getLogger();
 
 module.exports = function(ClientModel) {
@@ -16,11 +17,11 @@ module.exports = function(ClientModel) {
                                      function(err, result) {
                                         if (err) {
                                            if (err instanceof ValidationError) {
-                                              return res.jsendClientError("Validation failure", err.data, 422);   // HTTP 422 Unprocessable Entity
+                                              return res.jsendClientError("Validation failure", err.data, httpStatus.UNPROCESSABLE_ENTITY);   // HTTP 422 Unprocessable Entity
                                            }
                                            if (err instanceof DuplicateRecordError) {
                                               log.debug("Client name [" + newClient.clientName + "] already in use!");
-                                              return res.jsendClientError("Client name already in use.", {clientName : newClient.clientName}, 409);  // HTTP 409 Conflict
+                                              return res.jsendClientError("Client name already in use.", {clientName : newClient.clientName}, httpStatus.CONFLICT);  // HTTP 409 Conflict
                                            }
 
                                            var message = "Error while trying to create client [" + newClient.clientName + "]";
@@ -33,7 +34,7 @@ module.exports = function(ClientModel) {
                                         res.jsendSuccess({
                                                             displayName : result.displayName,
                                                             clientName : result.clientName
-                                                         }, 201); // HTTP 201 Created
+                                                         }, httpStatus.CREATED); // HTTP 201 Created
                                      });
                });
 

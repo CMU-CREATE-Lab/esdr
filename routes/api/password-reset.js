@@ -4,6 +4,7 @@ var router = express.Router();
 var passport = require('passport');
 var Mailer = require('../../lib/mailer');
 var ValidationError = require('../../lib/errors').ValidationError;
+var httpStatus = require('http-status');
 var log = require('log4js').getLogger();
 
 module.exports = function(UserModel, ClientModel) {
@@ -21,14 +22,14 @@ module.exports = function(UserModel, ClientModel) {
                               return res.jsendServerError("Error while authenticating client [" + theClient.clientName + "]");
                            }
                            if (!client) {
-                              return res.jsendClientError("Failed to authenticate client.", {clientName : theClient.clientName}, 401);  // HTTP 401 Unauthorized
+                              return res.jsendClientError("Failed to authenticate client.", {clientName : theClient.clientName}, httpStatus.UNAUTHORIZED);  // HTTP 401 Unauthorized
                            }
 
                            // try to create the reset password token
                            UserModel.createResetPasswordToken(userEmail, function(err, token) {
                               if (err) {
                                  if (err instanceof ValidationError) {
-                                    return res.jsendClientError("Invalid email address.", {email : userEmail}, 422);  // HTTP 422 Unprocessable Entity
+                                    return res.jsendClientError("Invalid email address.", {email : userEmail}, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 Unprocessable Entity
                                  }
                                  var message = "Error while trying create a reset password token request";
                                  log.error(message + ": " + err);
@@ -50,19 +51,19 @@ module.exports = function(UserModel, ClientModel) {
                                  if (config.get("resetPasswordToken:willEmailToUser")) {
                                     Mailer.sendPasswordResetEmail(client, userEmail, token);
                                  }
-                                 return res.jsendSuccess(obj, 201);
+                                 return res.jsendSuccess(obj, httpStatus.CREATED);  // HTTP 201 Created
                               }
 
-                              return res.jsendClientError("Unknown email address", {email : userEmail}, 400);
+                              return res.jsendClientError("Unknown email address", {email : userEmail}, httpStatus.BAD_REQUEST);  // HTTP 400 Bad Request
                            });
                         });
                      }
                      else {
-                        return res.jsendClientError("Client not specified.", null, 422);  // HTTP 422 Unprocessable Entity
+                        return res.jsendClientError("Client not specified.", null, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 Unprocessable Entity
                      }
                   }
                   else {
-                     return res.jsendClientError("Email address not specified.", null, 422);  // HTTP 422 Unprocessable Entity
+                     return res.jsendClientError("Email address not specified.", null, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 Unprocessable Entity
                   }
                }
    );
@@ -77,7 +78,7 @@ module.exports = function(UserModel, ClientModel) {
                        UserModel.setPassword(token, password, function(err, wasSuccessful) {
                           if (err) {
                              if (err instanceof ValidationError) {
-                                return res.jsendClientError("Validation failure", err.data, 422);  // HTTP 422 Unprocessable Entity
+                                return res.jsendClientError("Validation failure", err.data, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 Unprocessable Entity
                              }
                              var message = "Error while trying set the new password";
                              log.error(message + ": " + err);
@@ -85,18 +86,18 @@ module.exports = function(UserModel, ClientModel) {
                           }
 
                           if (wasSuccessful) {
-                             return res.jsendSuccess(null, 200);
+                             return res.jsendSuccess(null);
                           }
 
-                          return res.jsendClientError("Unknown or invalid reset password token", null, 400);
+                          return res.jsendClientError("Unknown or invalid reset password token", null, httpStatus.BAD_REQUEST);  // HTTP 400 Bad Request
                        });
                     }
                     else {
-                       return res.jsendClientError("Reset password token not specified.", null, 422);  // HTTP 422 Unprocessable Entity
+                       return res.jsendClientError("Reset password token not specified.", null, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 Unprocessable Entity
                     }
                  }
                  else {
-                    return res.jsendClientError("Password not specified.", null, 422);  // HTTP 422 Unprocessable Entity
+                    return res.jsendClientError("Password not specified.", null, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 Unprocessable Entity
                  }
               }
    );

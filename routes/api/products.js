@@ -3,6 +3,7 @@ var router = express.Router();
 var passport = require('passport');
 var ValidationError = require('../../lib/errors').ValidationError;
 var DuplicateRecordError = require('../../lib/errors').DuplicateRecordError;
+var httpStatus = require('http-status');
 var log = require('log4js').getLogger();
 
 module.exports = function(ProductModel) {
@@ -17,11 +18,11 @@ module.exports = function(ProductModel) {
                                       function(err, result) {
                                          if (err) {
                                             if (err instanceof ValidationError) {
-                                               return res.jsendClientError("Validation failure", err.data, 422);   // HTTP 422 Unprocessable Entity
+                                               return res.jsendClientError("Validation failure", err.data, httpStatus.UNPROCESSABLE_ENTITY);   // HTTP 422 Unprocessable Entity
                                             }
                                             if (err instanceof DuplicateRecordError) {
                                                log.debug("Product name [" + newProduct.name + "] already in use!");
-                                               return res.jsendClientError("Product name already in use.", {name : newProduct.name}, 409);  // HTTP 409 Conflict
+                                               return res.jsendClientError("Product name already in use.", {name : newProduct.name}, httpStatus.CONFLICT);  // HTTP 409 Conflict
                                             }
 
                                             var message = "Error while trying to create product [" + newProduct.name + "]";
@@ -33,7 +34,7 @@ module.exports = function(ProductModel) {
 
                                          res.jsendSuccess({
                                                              name : result.name
-                                                          }, 201); // HTTP 201 Created
+                                                          }, httpStatus.CREATED); // HTTP 201 Created
                                       });
                });
 
@@ -53,7 +54,7 @@ module.exports = function(ProductModel) {
                        var inflateAndReturnProduct = function() {
                           // inflate the JSON text into an object
                           product.defaultChannelSpec = JSON.parse(product.defaultChannelSpec);
-                          return res.jsendSuccess(product, 200); // HTTP 200 OK
+                          return res.jsendSuccess(product); // HTTP 200 OK
                        };
 
                        // if the product is private, then make sure this user has access
@@ -73,10 +74,10 @@ module.exports = function(ProductModel) {
                                                          return inflateAndReturnProduct();
                                                       }
                                                       else {
-                                                         return res.jsendClientError("Access denied.", null, 403);  // HTTP 401 Forbidden
+                                                         return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
                                                       }
                                                    }
-                                                   return res.jsendClientError("Authentication required.", null, 401);  // HTTP 401 Unauthorized
+                                                   return res.jsendClientError("Authentication required.", null, httpStatus.UNAUTHORIZED);  // HTTP 401 Unauthorized
 
                                                 })(req, res, next);
                        }
@@ -85,7 +86,7 @@ module.exports = function(ProductModel) {
                        }
                     }
                     else {
-                       return res.jsendClientError("Product not found", null, 404); // HTTP 404 Not Found
+                       return res.jsendClientError("Unknown or invalid product name", null, httpStatus.BAD_REQUEST); // HTTP 400 Bad Request
                     }
                  });
               });

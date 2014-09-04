@@ -5,6 +5,7 @@ var passport = require('passport');
 var Mailer = require('../../lib/mailer');
 var ValidationError = require('../../lib/errors').ValidationError;
 var DuplicateRecordError = require('../../lib/errors').DuplicateRecordError;
+var httpStatus = require('http-status');
 var log = require('log4js').getLogger();
 
 module.exports = function(UserModel, ClientModel) {
@@ -48,7 +49,7 @@ module.exports = function(UserModel, ClientModel) {
                            return res.jsendServerError("Error while authenticating client [" + theClient.clientName + "]");
                         }
                         if (!client) {
-                           return res.jsendClientError("Failed to authenticate client.", {client : {clientName : theClient.clientName}}, 401);  // HTTP 401 Unauthorized
+                           return res.jsendClientError("Failed to authenticate client.", {client : {clientName : theClient.clientName}}, httpStatus.UNAUTHORIZED);  // HTTP 401 Unauthorized
                         }
 
                         log.debug("Received POST to create user [" + (user && user.email ? user.email : null) + "]");
@@ -57,11 +58,11 @@ module.exports = function(UserModel, ClientModel) {
                                          function(err, result) {
                                             if (err) {
                                                if (err instanceof ValidationError) {
-                                                  return res.jsendClientError("Validation failure", err.data, 422);  // HTTP 422 Unprocessable Entity
+                                                  return res.jsendClientError("Validation failure", err.data, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 Unprocessable Entity
                                                }
                                                if (err instanceof DuplicateRecordError) {
                                                   log.debug("Email [" + user.email + "] already in use!");
-                                                  return res.jsendClientError("Email already in use.", {email : user.email}, 409);  // HTTP 409 Conflict
+                                                  return res.jsendClientError("Email already in use.", {email : user.email}, httpStatus.CONFLICT);  // HTTP 409 Conflict
                                                }
 
                                                var message = "Error while trying to create user [" + user.email + "]";
@@ -91,12 +92,12 @@ module.exports = function(UserModel, ClientModel) {
                                                Mailer.sendVerificationEmail(client, user.email, result.verificationToken);
                                             }
 
-                                            return res.jsendSuccess(obj, 201); // HTTP 201 Created
+                                            return res.jsendSuccess(obj, httpStatus.CREATED); // HTTP 201 Created
                                          });
                      });
                   }
                   else {
-                     return res.jsendClientError("Client not specified.", null, 422);  // HTTP 422 Unprocessable Entity
+                     return res.jsendClientError("Client not specified.", null, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 Unprocessable Entity
                   }
                });
 
