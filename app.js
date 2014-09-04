@@ -1,5 +1,6 @@
 // dependencies
 var express = require('express');
+var cors = require('cors');
 var app = express();
 
 var log = require('log4js').getLogger();
@@ -44,6 +45,9 @@ Database.create(function(err, db) {
 
          // setup middleware
          app.use(favicon(path.join(__dirname, 'public/favicon.ico')));     // favicon serving
+         app.use(cors({
+                         origin : '*'
+                      }));
          app.use(requestLogger('dev'));      // request logging
          app.use(compress());                // enables gzip compression
          app.use(bodyParser.urlencoded({ extended : true }));     // form parsing
@@ -82,7 +86,7 @@ Database.create(function(err, db) {
          // set the port and start the server
          app.set('port', config.get("server:port"));
          var server = app.listen(app.get('port'), function() {
-           log.info('Express server listening on port ' + server.address().port);
+            log.info('Express server listening on port ' + server.address().port);
          });
 
       }

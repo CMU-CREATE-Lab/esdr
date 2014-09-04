@@ -16,6 +16,7 @@
     "body-parser": "^1.6.2",
     "bodytrack-datastore": "^0.1.1",
     "compression": "^1.0.10",
+    "cors": "^2.4.1",
     "express": "^4.8.2",
     "http-status": "^0.1.8",
     "jayschema": "^0.2.8",
