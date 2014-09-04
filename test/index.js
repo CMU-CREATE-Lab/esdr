@@ -1692,6 +1692,118 @@ describe("ESDR", function() {
 
             describe("Devices", function() {
 
+               it("Should be able to create a new device", function(done) {
+                  agent(url)
+                        .post("/api/v1/products/" + testProduct1.name + "/devices")
+                        .set({
+                                Authorization : "Bearer " + accessTokens.testUser1.access_token
+                             })
+                        .send(testDevice1)
+                        .end(function(err, res) {
+                                if (err) {
+                                   return done(err);
+                                }
+
+                                res.should.have.property('status', httpStatus.CREATED);
+                                res.body.should.have.property('code', httpStatus.CREATED);
+                                res.body.should.have.property('status', 'success');
+                                res.body.should.have.property('data');
+                                res.body.data.should.have.property('id');
+                                res.body.data.should.have.property('serialNumber', testDevice1.serialNumber);
+
+                                done();
+                             });
+               });
+
+               it("Should fail to create the same device for the same product again", function(done) {
+                  agent(url)
+                        .post("/api/v1/products/" + testProduct1.name + "/devices")
+                        .set({
+                                Authorization : "Bearer " + accessTokens.testUser1.access_token
+                             })
+                        .send(testDevice1)
+                        .end(function(err, res) {
+                                if (err) {
+                                   return done(err);
+                                }
+
+                                res.should.have.property('status', httpStatus.CONFLICT);
+                                res.body.should.have.property('code', httpStatus.CONFLICT);
+                                res.body.should.have.property('status', 'error');
+                                res.body.should.have.property('data');
+                                res.body.data.should.have.property('serialNumber', testDevice1.serialNumber);
+
+                                done();
+                             });
+               });
+
+               it("Should fail to create a new device for a bogus product", function(done) {
+                  agent(url)
+                        .post("/api/v1/products/bogus/devices")
+                        .set({
+                                Authorization : "Bearer " + accessTokens.testUser1.access_token
+                             })
+                        .send(testDevice1)
+                        .end(function(err, res) {
+                                if (err) {
+                                   return done(err);
+                                }
+
+                                res.should.have.property('status', httpStatus.BAD_REQUEST);
+                                res.body.should.have.property('code', httpStatus.BAD_REQUEST);
+                                res.body.should.have.property('status', 'error');
+                                res.body.should.have.property('data', null);
+
+                                done();
+                             });
+               });
+
+               it("Should fail to create a new device for a private product by the wrong user", function(done) {
+                  agent(url)
+                        .post("/api/v1/products/" + testProduct2.name + "/devices")
+                        .set({
+                                Authorization : "Bearer " + accessTokens.testUser1.access_token
+                             })
+                        .send(testDevice2)
+                        .end(function(err, res) {
+                                if (err) {
+                                   return done(err);
+                                }
+
+                                res.should.have.property('status', httpStatus.FORBIDDEN);
+                                res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                res.body.should.have.property('status', 'error');
+                                res.body.should.have.property('data', null);
+
+                                done();
+                             });
+               });
+
+               it("Should be able to create a new device for a private product by the correct user", function(done) {
+                  agent(url)
+                        .post("/api/v1/products/" + testProduct2.name + "/devices")
+                        .set({
+                                Authorization : "Bearer " + accessTokens.testUser2.access_token
+                             })
+                        .send(testDevice2)
+                        .end(function(err, res) {
+                                if (err) {
+                                   return done(err);
+                                }
+
+                                res.should.have.property('status', httpStatus.CREATED);
+                                res.body.should.have.property('code', httpStatus.CREATED);
+                                res.body.should.have.property('status', 'success');
+                                res.body.should.have.property('data');
+                                res.body.data.should.have.property('id');
+                                res.body.data.should.have.property('serialNumber', testDevice2.serialNumber);
+
+                                done();
+                             });
+               });
+
+               // TODO: add tests for validation
+
                describe("Feeds", function() {
 
                });      // end Feeds

@@ -91,5 +91,57 @@ module.exports = function(ProductModel, DevicesModel) {
                  });
               });
 
+   router.post('/:productName/devices',
+               passport.authenticate('bearer', { session : false }),
+               function(req, res, next) {
+                  var productName = req.params.productName;
+                  log.debug("Received POST to create a new device for product [" + productName + "]");
+
+                  // find the product
+                  ProductModel.findByName(productName, function(err1, product) {
+                     if (err1) {
+                        var message = "Error while trying to find product with name [" + productName + "]";
+                        log.error(message + ": " + err1);
+                        return res.jsendServerError(message);
+                     }
+
+                     if (product) {
+                        // if the product is private, then make sure this user has access
+                        if (product.isPublic || req.user.id == product.creatorUserId) {
+                           log.debug("Found product [" + productName + "], will now create the device...");
+                           var newDevice = req.body;
+                           DevicesModel.create(newDevice, product.id, req.user.id, function(err2, result) {
+                              if (err2) {
+                                 if (err2 instanceof ValidationError) {
+                                    return res.jsendClientError("Validation failure", err2.data, httpStatus.UNPROCESSABLE_ENTITY);   // HTTP 422 Unprocessable Entity
+                                 }
+                                 if (err2 instanceof DuplicateRecordError) {
+                                    log.debug("Serial number [" + newDevice.serialNumber + "] for product [" + productName + "] already in use!");
+                                    return res.jsendClientError("Serial number already in use.", {serialNumber : newDevice.serialNumber}, httpStatus.CONFLICT);  // HTTP 409 Conflict
+                                 }
+
+                                 var message = "Error while trying to create device [" + newDevice.serialNumber + "]";
+                                 log.error(message + ": " + err2);
+                                 return res.jsendServerError(message);
+                              }
+
+                              log.debug("Created new device [" + result.serialNumber + "] with id [" + result.insertId + "] ");
+
+                              res.jsendSuccess({
+                                                  id : result.insertId,
+                                                  serialNumber : result.serialNumber
+                                               }, httpStatus.CREATED); // HTTP 201 Created
+                           });
+                        }
+                        else {
+                           return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
+                        }
+                     }
+                     else {
+                        return res.jsendClientError("Unknown or invalid product name", null, httpStatus.BAD_REQUEST); // HTTP 400 Bad Request
+                     }
+                  });
+               });
+
    return router;
 };
