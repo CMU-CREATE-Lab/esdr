@@ -1708,7 +1708,7 @@ describe("ESDR", function() {
 
             describe("Devices", function() {
 
-               deviceIds = {};
+               var deviceIds = {};
 
                it("Should be able to create a new device", function(done) {
                   agent(url)
@@ -1736,7 +1736,30 @@ describe("ESDR", function() {
                              });
                });
 
-               it("Should fail to create the same device for the same product again", function(done) {
+               it("Should be able to create the same device for the same product for a different user", function(done) {
+                  agent(url)
+                        .post("/api/v1/products/" + testProduct1.name + "/devices")
+                        .set({
+                                Authorization : "Bearer " + accessTokens.testUser2.access_token
+                             })
+                        .send(testDevice1)
+                        .end(function(err, res) {
+                                if (err) {
+                                   return done(err);
+                                }
+
+                                res.should.have.property('status', httpStatus.CREATED);
+                                res.body.should.have.property('code', httpStatus.CREATED);
+                                res.body.should.have.property('status', 'success');
+                                res.body.should.have.property('data');
+                                res.body.data.should.have.property('id');
+                                res.body.data.should.have.property('serialNumber', testDevice1.serialNumber);
+
+                                done();
+                             });
+               });
+
+               it("Should fail to create the same device for the same product for the same user again", function(done) {
                   agent(url)
                         .post("/api/v1/products/" + testProduct1.name + "/devices")
                         .set({
@@ -1979,7 +2002,6 @@ describe("ESDR", function() {
                                    done();
                                 });
                   });
-
 
                   it("Should fail to create a feed if fields are invalid", function(done) {
                      var invalidFeed = shallowClone(testFeed1b);

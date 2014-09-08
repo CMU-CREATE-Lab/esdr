@@ -8,15 +8,15 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Devices` ( " +
                          "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
                          "`serialNumber` varchar(255) NOT NULL, " +
                          "`productId` bigint(20) NOT NULL, " +
-                         "`userId` bigint(20) DEFAULT NULL, " +    // TODO: make this NOT NULL?
+                         "`userId` bigint(20) NOT NULL, " +
                          "`isPublic` boolean DEFAULT 0, " +
                          "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
                          "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
                          "PRIMARY KEY (`id`), " +
-                         "UNIQUE KEY `serialNumber_productId_index` (`serialNumber`,`productId`), " +
-                         "KEY `userId` (`userId`), " +
+                         "UNIQUE KEY `serialNumber_productId_userId_index` (`serialNumber`,`productId`,`userId`), " +
                          "KEY `serialNumber` (`serialNumber`), " +
                          "KEY `productId` (`productId`), " +
+                         "KEY `userId` (`userId`), " +
                          "CONSTRAINT `devices_productId_fk_1` FOREIGN KEY (`productId`) REFERENCES `Products` (`id`), " +
                          "CONSTRAINT `devices_userId_fk_1` FOREIGN KEY (`userId`) REFERENCES `Users` (`id`) " +
                          ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
