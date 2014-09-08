@@ -127,7 +127,7 @@ module.exports = function(ProductModel, DevicesModel) {
 
                               log.debug("Created new device [" + result.serialNumber + "] with id [" + result.insertId + "] ");
 
-                              res.jsendSuccess({
+                              return res.jsendSuccess({
                                                   id : result.insertId,
                                                   serialNumber : result.serialNumber
                                                }, httpStatus.CREATED); // HTTP 201 Created
