@@ -280,11 +280,9 @@ describe("ESDR", function() {
                           res.body.data[0].should.have.property('instanceContext', '#');
                           res.body.data[0].should.have.property('constraintName', 'required');
                           res.body.data[0].should.have.property('constraintValue', db.clients.jsonSchema.required);
-                          res.body.data[0].should.have.property('constraintValue');
                           res.body.data[1].should.have.property('instanceContext', '#/clientSecret');
                           res.body.data[1].should.have.property('constraintName', 'type');
                           res.body.data[1].should.have.property('constraintValue', 'string');
-                          res.body.data[1].should.have.property('constraintValue');
                           done();
                        });
          });
@@ -1802,7 +1800,58 @@ describe("ESDR", function() {
                              });
                });
 
-               // TODO: add tests for validation
+               it("Should fail to create a new device if required fields are missing", function(done) {
+                  var badDevice = shallowClone(testDevice1);
+                  delete badDevice.serialNumber;
+
+                  agent(url)
+                        .post("/api/v1/products/" + testProduct1.name + "/devices")
+                        .set({
+                                Authorization : "Bearer " + accessTokens.testUser1.access_token
+                             })
+                        .send(badDevice)
+                        .end(function(err, res) {
+                                if (err) {
+                                   return done(err);
+                                }
+
+                                res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
+                                res.body.should.have.property('code', httpStatus.UNPROCESSABLE_ENTITY);
+                                res.body.should.have.property('status', 'error');
+                                res.body.should.have.property('data');
+                                res.body.data[0].should.have.property('instanceContext', '#');
+                                res.body.data[0].should.have.property('constraintName', 'required');
+                                res.body.data[0].should.have.property('constraintValue', db.devices.jsonSchema.required);
+
+                                done();
+                             });
+               });
+
+               it("Should fail to create a new device if serial number is invalid", function(done) {
+                  var badDevice = shallowClone(testDevice1);
+                  badDevice.serialNumber = "serial number cannot have spaces";
+
+                  agent(url)
+                        .post("/api/v1/products/" + testProduct1.name + "/devices")
+                        .set({
+                                Authorization : "Bearer " + accessTokens.testUser1.access_token
+                             })
+                        .send(badDevice)
+                        .end(function(err, res) {
+                                if (err) {
+                                   return done(err);
+                                }
+
+                                res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
+                                res.body.should.have.property('code', httpStatus.UNPROCESSABLE_ENTITY);
+                                res.body.should.have.property('status', 'error');
+                                res.body.should.have.property('data');
+                                res.body.data[0].should.have.property('instanceContext', '#/serialNumber');
+                                res.body.data[0].should.have.property('constraintName', 'pattern');
+                                res.body.data[0].should.have.property('kind', 'StringValidationError');
+                                done();
+                             });
+               });
 
                describe("Feeds", function() {
 
