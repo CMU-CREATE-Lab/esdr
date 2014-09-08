@@ -21,6 +21,7 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Feeds` ( " +
                          "`channelSpec` text DEFAULT NULL, " +    // TODO: make this NOT NULL and just copy from Product upon creation?
                          "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
                          "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
+                         // TODO: keep track of last upload timestamp, and maybe timestamps of earliest and latest data
                          "PRIMARY KEY (`id`), " +
                          "UNIQUE KEY `apiToken` (`apiToken`), " +
                          "KEY `deviceId` (`deviceId`), " +

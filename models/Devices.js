@@ -86,16 +86,15 @@ module.exports = function(databaseHelper) {
    };
 
    /**
-    * Tries to find the device with the given <code>serialNumber</code> and returns it to the given <code>callback</code>. If
-    * successful, the device is returned as the 2nd argument to the <code>callback</code> function.  If unsuccessful,
+    * Tries to find the device with the given <code>deviceId</code> and returns it to the given <code>callback</code>.
+    * If successful, the device is returned as the 2nd argument to the <code>callback</code> function.  If unsuccessful,
     * <code>null</code> is returned to the callback.
     *
-    * @param {number} productId product id of the device to find.
-    * @param {string} serialNumber serial number of the device to find.
+    * @param {number} deviceId id of the device to find.
     * @param {function} callback function with signature <code>callback(err, device)</code>
     */
-   this.findByProductIdAndSerialNumber = function(productId, serialNumber, callback) {
-      findDevice("SELECT * FROM Devices WHERE productId=? AND serialNumber=?", [productId, serialNumber], callback);
+   this.findById = function(deviceId, callback) {
+      findDevice("SELECT * FROM Devices WHERE id=?", [deviceId], callback);
    };
 
    var findDevice = function(query, params, callback) {

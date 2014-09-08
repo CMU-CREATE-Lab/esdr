@@ -6,8 +6,11 @@ var DuplicateRecordError = require('../../lib/errors').DuplicateRecordError;
 var httpStatus = require('http-status');
 var log = require('log4js').getLogger();
 
-module.exports = function(ProductModel, DevicesModel) {
+module.exports = function(ProductModel, DeviceModel) {
 
+   // TODO: add a method to get all products
+
+   // create a product
    router.post('/',
                passport.authenticate('bearer', { session : false }),
                function(req, res) {
@@ -38,6 +41,7 @@ module.exports = function(ProductModel, DevicesModel) {
                                       });
                });
 
+   // get details for a specific product
    router.get('/:productName',
               function(req, res, next) {
                  var productName = req.params.productName;
@@ -91,6 +95,9 @@ module.exports = function(ProductModel, DevicesModel) {
                  });
               });
 
+   // TODO: create methods to list all devices and find devices for a given product
+
+   // create a new device
    router.post('/:productName/devices',
                passport.authenticate('bearer', { session : false }),
                function(req, res, next) {
@@ -110,7 +117,7 @@ module.exports = function(ProductModel, DevicesModel) {
                         if (product.isPublic || req.user.id == product.creatorUserId) {
                            log.debug("Found product [" + productName + "], will now create the device...");
                            var newDevice = req.body;
-                           DevicesModel.create(newDevice, product.id, req.user.id, function(err2, result) {
+                           DeviceModel.create(newDevice, product.id, req.user.id, function(err2, result) {
                               if (err2) {
                                  if (err2 instanceof ValidationError) {
                                     return res.jsendClientError("Validation failure", err2.data, httpStatus.UNPROCESSABLE_ENTITY);   // HTTP 422 Unprocessable Entity

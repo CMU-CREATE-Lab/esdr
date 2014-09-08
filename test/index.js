@@ -98,6 +98,24 @@ describe("ESDR", function() {
       isPublic : false
    };
 
+   var testFeed1a = {
+      name : "Newell Simon 3rd Floor Bathroom",
+      exposure : "indoor",
+      isPublic : true,
+      isMobile : false,
+      latitude : 40.443403,
+      longitude : -79.94564
+   };
+
+   var testFeed1b = {
+      name : "Newell Simon 4th Floor Kitchen",
+      exposure : "indoor",
+      isPublic : true,
+      isMobile : false,
+      latitude : 40.443493,
+      longitude : -79.945721
+   };
+
    var testFeed3 = {
       name : "Upstairs Bathroom",
       exposure : "indoor",
@@ -1690,6 +1708,8 @@ describe("ESDR", function() {
 
             describe("Devices", function() {
 
+               deviceIds = {};
+
                it("Should be able to create a new device", function(done) {
                   agent(url)
                         .post("/api/v1/products/" + testProduct1.name + "/devices")
@@ -1708,6 +1728,9 @@ describe("ESDR", function() {
                                 res.body.should.have.property('data');
                                 res.body.data.should.have.property('id');
                                 res.body.data.should.have.property('serialNumber', testDevice1.serialNumber);
+
+                                // remember this ID
+                                deviceIds.testDevice1 = res.body.data.id;
 
                                 done();
                              });
@@ -1796,6 +1819,9 @@ describe("ESDR", function() {
                                 res.body.data.should.have.property('id');
                                 res.body.data.should.have.property('serialNumber', testDevice2.serialNumber);
 
+                                // remember this ID
+                                deviceIds.testDevice2 = res.body.data.id;
+
                                 done();
                              });
                });
@@ -1854,6 +1880,173 @@ describe("ESDR", function() {
                });
 
                describe("Feeds", function() {
+
+                  var feeds = {};
+
+                  it("Should be able to create a new feed", function(done) {
+                     agent(url)
+                           .post("/api/v1/devices/" + deviceIds.testDevice1)
+                           .set({
+                                   Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                })
+                           .send(testFeed1a)
+                           .end(function(err, res) {
+                                   if (err) {
+                                      return done(err);
+                                   }
+
+                                   res.should.have.property('status', httpStatus.CREATED);
+                                   res.body.should.have.property('code', httpStatus.CREATED);
+                                   res.body.should.have.property('status', 'success');
+                                   res.body.should.have.property('data');
+                                   res.body.data.should.have.property('id');
+                                   res.body.data.should.have.property('apiToken');
+
+                                   // remember this feed
+                                   feeds.testFeed1a = res.body.data;
+
+                                   done();
+                                });
+                  });
+
+                  it("Should fail to create a new feed for a bogus device", function(done) {
+                     agent(url)
+                           .post("/api/v1/devices/" + "bogus")
+                           .set({
+                                   Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                })
+                           .send(testFeed1a)
+                           .end(function(err, res) {
+                                   if (err) {
+                                      return done(err);
+                                   }
+
+                                   res.should.have.property('status', httpStatus.BAD_REQUEST);
+                                   res.body.should.have.property('code', httpStatus.BAD_REQUEST);
+                                   res.body.should.have.property('status', 'error');
+                                   res.body.should.have.property('data', null);
+
+                                   done();
+                                });
+                  });
+
+                  it("Should fail to create a new feed for a device owned by a different user", function(done) {
+                     agent(url)
+                           .post("/api/v1/devices/" + deviceIds.testDevice1)
+                           .set({
+                                   Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                })
+                           .send(testFeed1b)
+                           .end(function(err, res) {
+                                   if (err) {
+                                      return done(err);
+                                   }
+
+                                   res.should.have.property('status', httpStatus.FORBIDDEN);
+                                   res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                   res.body.should.have.property('status', 'error');
+                                   res.body.should.have.property('data', null);
+
+                                   done();
+                                });
+                  });
+
+                  it("Should fail to create a feed if required fields are missing", function(done) {
+                     var invalidFeed = shallowClone(testFeed1b);
+                     delete invalidFeed.name;
+                     delete invalidFeed.exposure;
+
+                     agent(url)
+                           .post("/api/v1/devices/" + deviceIds.testDevice1)
+                           .set({
+                                   Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                })
+                           .send(invalidFeed)
+                           .end(function(err, res) {
+                                   if (err) {
+                                      return done(err);
+                                   }
+
+                                   res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
+                                   res.body.should.have.property('code', httpStatus.UNPROCESSABLE_ENTITY);
+                                   res.body.should.have.property('status', 'error');
+                                   res.body.should.have.property('data');
+                                   res.body.data.should.have.length(1);
+                                   res.body.data[0].should.have.property('instanceContext', '#');
+                                   res.body.data[0].should.have.property('constraintName', 'required');
+                                   res.body.data[0].should.have.property('constraintValue', db.feeds.jsonSchema.required);
+
+                                   done();
+                                });
+                  });
+
+
+                  it("Should fail to create a feed if fields are invalid", function(done) {
+                     var invalidFeed = shallowClone(testFeed1b);
+                     invalidFeed.name = "This is an absurdly long feed name an only a crazy person would create one this long because, seriously, what good does it do to have a name that's over 255 characters long? None, as far as I can tell, other than testing the max length of feed names, of course.";
+                     invalidFeed.exposure = "outer space";
+                     invalidFeed.latitude = "a";
+                     invalidFeed.longitude = 4242;
+
+                     agent(url)
+                           .post("/api/v1/devices/" + deviceIds.testDevice1)
+                           .set({
+                                   Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                })
+                           .send(invalidFeed)
+                           .end(function(err, res) {
+                                   if (err) {
+                                      return done(err);
+                                   }
+
+                                   res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
+                                   res.body.should.have.property('code', httpStatus.UNPROCESSABLE_ENTITY);
+                                   res.body.should.have.property('status', 'error');
+                                   res.body.should.have.property('data');
+                                   res.body.data.should.have.length(4);
+                                   res.body.data[0].should.have.property('instanceContext', '#/name');
+                                   res.body.data[0].should.have.property('constraintName', 'maxLength');
+                                   res.body.data[0].should.have.property('constraintValue', db.feeds.jsonSchema.properties.name.maxLength);
+                                   res.body.data[0].should.have.property('kind', "StringValidationError");
+                                   res.body.data[1].should.have.property('instanceContext', '#/exposure');
+                                   res.body.data[1].should.have.property('constraintName', 'enum');
+                                   res.body.data[1].should.have.property('constraintValue', db.feeds.jsonSchema.properties.exposure.enum);
+                                   res.body.data[2].should.have.property('instanceContext', '#/latitude');
+                                   res.body.data[2].should.have.property('constraintName', 'type');
+                                   res.body.data[2].should.have.property('constraintValue', db.feeds.jsonSchema.properties.latitude.type);
+                                   res.body.data[3].should.have.property('instanceContext', '#/longitude');
+                                   res.body.data[3].should.have.property('constraintName', 'maximum');
+                                   res.body.data[3].should.have.property('constraintValue', db.feeds.jsonSchema.properties.longitude.maximum);
+
+                                   done();
+                                });
+                  });
+
+                  it("Should be able to create an additional feed for a device", function(done) {
+                     agent(url)
+                           .post("/api/v1/devices/" + deviceIds.testDevice1)
+                           .set({
+                                   Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                })
+                           .send(testFeed1b)
+                           .end(function(err, res) {
+                                   if (err) {
+                                      return done(err);
+                                   }
+
+                                   res.should.have.property('status', httpStatus.CREATED);
+                                   res.body.should.have.property('code', httpStatus.CREATED);
+                                   res.body.should.have.property('status', 'success');
+                                   res.body.should.have.property('data');
+                                   res.body.data.should.have.property('id');
+                                   res.body.data.should.have.property('apiToken');
+
+                                   // remember this feed
+                                   feeds.testFeed1b = res.body.data;
+
+                                   done();
+                                });
+                  });
 
                });      // end Feeds
             });      // end Devices
