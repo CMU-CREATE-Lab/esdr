@@ -53,7 +53,7 @@ module.exports = function(DeviceModel, FeedModel) {
                         }
                      }
                      else {
-                        return res.jsendClientError("Unknown or invalid device", null, httpStatus.BAD_REQUEST); // HTTP 400 Bad Request
+                        return res.jsendClientError("Unknown or invalid device", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
                      }
                   });
                });

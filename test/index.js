@@ -1697,8 +1697,8 @@ describe("ESDR", function() {
                                 return done(err);
                              }
 
-                             res.should.have.property('status', httpStatus.BAD_REQUEST);
-                             res.body.should.have.property('code', httpStatus.BAD_REQUEST);
+                             res.should.have.property('status', httpStatus.NOT_FOUND);
+                             res.body.should.have.property('code', httpStatus.NOT_FOUND);
                              res.body.should.have.property('status', 'error');
                              res.body.should.have.property('data', null);
 
@@ -1793,8 +1793,8 @@ describe("ESDR", function() {
                                    return done(err);
                                 }
 
-                                res.should.have.property('status', httpStatus.BAD_REQUEST);
-                                res.body.should.have.property('code', httpStatus.BAD_REQUEST);
+                                res.should.have.property('status', httpStatus.NOT_FOUND);
+                                res.body.should.have.property('code', httpStatus.NOT_FOUND);
                                 res.body.should.have.property('status', 'error');
                                 res.body.should.have.property('data', null);
 
@@ -1944,8 +1944,8 @@ describe("ESDR", function() {
                                       return done(err);
                                    }
 
-                                   res.should.have.property('status', httpStatus.BAD_REQUEST);
-                                   res.body.should.have.property('code', httpStatus.BAD_REQUEST);
+                                   res.should.have.property('status', httpStatus.NOT_FOUND);
+                                   res.body.should.have.property('code', httpStatus.NOT_FOUND);
                                    res.body.should.have.property('status', 'error');
                                    res.body.should.have.property('data', null);
 
