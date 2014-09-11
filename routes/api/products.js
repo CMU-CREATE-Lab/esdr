@@ -95,7 +95,10 @@ module.exports = function(ProductModel, DeviceModel) {
                  });
               });
 
-   // TODO: create methods to list all devices and find devices for a given product
+   // TODO: create methods to:
+   // 1) list all devices
+   // 2) find devices for a given product
+   // 3) return info for a particular device
 
    // create a new device
    router.post('/:productName/devices',

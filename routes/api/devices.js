@@ -7,6 +7,8 @@ var log = require('log4js').getLogger();
 
 module.exports = function(DeviceModel, FeedModel) {
 
+   // TODO: add method to list feeds for a given device
+
    // create a feed for the specified device (specified by device ID)
    router.post('/:deviceId',
                passport.authenticate('bearer', { session : false }),
