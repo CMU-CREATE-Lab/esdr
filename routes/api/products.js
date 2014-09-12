@@ -47,58 +47,14 @@ module.exports = function(ProductModel, DeviceModel) {
                  var productName = req.params.productName;
                  log.debug("Received GET for product [" + productName + "]");
 
-                 ProductModel.findByName(productName, function(err1, product) {
-                    if (err1) {
-                       var message = "Error while trying to find product with name [" + productName + "]";
-                       log.error(message + ": " + err1);
-                       return res.jsendServerError(message);
-                    }
-
-                    if (product) {
-                       var inflateAndReturnProduct = function() {
-                          // inflate the JSON text into an object
-                          product.defaultChannelSpec = JSON.parse(product.defaultChannelSpec);
-                          return res.jsendSuccess(product); // HTTP 200 OK
-                       };
-
-                       // if the product is private, then make sure this user has access
-                       if (!product.isPublic) {
-                          // first, do the bearer token authentication
-                          passport.authenticate('bearer',
-                                                { session : false },
-                                                function(err2, user, info) {
-                                                   if (err2) {
-                                                      var message = "Error while trying to find authenticate user to determine access to product [" + productName + "]";
-                                                      log.error(message + ": " + err2);
-                                                      return res.jsendServerError(message);
-                                                   }
-
-                                                   if (user) {
-                                                      if (user.id == product.creatorUserId) {
-                                                         return inflateAndReturnProduct();
-                                                      }
-                                                      else {
-                                                         return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
-                                                      }
-                                                   }
-                                                   return res.jsendClientError("Authentication required.", null, httpStatus.UNAUTHORIZED);  // HTTP 401 Unauthorized
-
-                                                })(req, res, next);
-                       }
-                       else {
-                          return inflateAndReturnProduct();
-                       }
-                    }
-                    else {
-                       return res.jsendClientError("Unknown or invalid product name", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
-                    }
+                 findProductByName(res, productName, function(product) {
+                    // inflate the channel spec JSON text into an object
+                    product.defaultChannelSpec = JSON.parse(product.defaultChannelSpec);
+                    return res.jsendSuccess(product); // HTTP 200 OK
                  });
               });
 
-   // TODO: create methods to:
-   // 1) list all devices
-   // 2) find devices for a given product
-   // 3) return info for a particular device
+   // TODO: create method to find devices for a given product (with optional filtering) for a given auth'd user
 
    // create a new device
    router.post('/:productName/devices',
@@ -107,51 +63,79 @@ module.exports = function(ProductModel, DeviceModel) {
                   var productName = req.params.productName;
                   log.debug("Received POST to create a new device for product [" + productName + "]");
 
-                  // find the product
-                  ProductModel.findByName(productName, function(err1, product) {
-                     if (err1) {
-                        var message = "Error while trying to find product with name [" + productName + "]";
-                        log.error(message + ": " + err1);
-                        return res.jsendServerError(message);
-                     }
+                  findProductByName(res, productName, function(product) {
+                     log.debug("Found product [" + productName + "], will now create the device...");
+                     var newDevice = req.body;
+                     DeviceModel.create(newDevice, product.id, req.user.id, function(err, result) {
+                        if (err) {
+                           if (err instanceof ValidationError) {
+                              return res.jsendClientError("Validation failure", err.data, httpStatus.UNPROCESSABLE_ENTITY);   // HTTP 422 Unprocessable Entity
+                           }
+                           if (err instanceof DuplicateRecordError) {
+                              log.debug("Serial number [" + newDevice.serialNumber + "] for product [" + productName + "] already in use!");
+                              return res.jsendClientError("Serial number already in use.", {serialNumber : newDevice.serialNumber}, httpStatus.CONFLICT);  // HTTP 409 Conflict
+                           }
 
-                     if (product) {
-                        // if the product is private, then make sure this user has access
-                        if (product.isPublic || req.user.id == product.creatorUserId) {
-                           log.debug("Found product [" + productName + "], will now create the device...");
-                           var newDevice = req.body;
-                           DeviceModel.create(newDevice, product.id, req.user.id, function(err2, result) {
-                              if (err2) {
-                                 if (err2 instanceof ValidationError) {
-                                    return res.jsendClientError("Validation failure", err2.data, httpStatus.UNPROCESSABLE_ENTITY);   // HTTP 422 Unprocessable Entity
-                                 }
-                                 if (err2 instanceof DuplicateRecordError) {
-                                    log.debug("Serial number [" + newDevice.serialNumber + "] for product [" + productName + "] already in use!");
-                                    return res.jsendClientError("Serial number already in use.", {serialNumber : newDevice.serialNumber}, httpStatus.CONFLICT);  // HTTP 409 Conflict
-                                 }
-
-                                 var message = "Error while trying to create device [" + newDevice.serialNumber + "]";
-                                 log.error(message + ": " + err2);
-                                 return res.jsendServerError(message);
-                              }
-
-                              log.debug("Created new device [" + result.serialNumber + "] with id [" + result.insertId + "] ");
-
-                              return res.jsendSuccess({
-                                                  id : result.insertId,
-                                                  serialNumber : result.serialNumber
-                                               }, httpStatus.CREATED); // HTTP 201 Created
-                           });
+                           var message = "Error while trying to create device [" + newDevice.serialNumber + "]";
+                           log.error(message + ": " + err);
+                           return res.jsendServerError(message);
                         }
-                        else {
-                           return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
-                        }
-                     }
-                     else {
-                        return res.jsendClientError("Unknown or invalid product name", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
-                     }
+
+                        log.debug("Created new device [" + result.serialNumber + "] with id [" + result.insertId + "] ");
+
+                        return res.jsendSuccess({
+                                                   id : result.insertId,
+                                                   serialNumber : result.serialNumber
+                                                }, httpStatus.CREATED); // HTTP 201 Created
+                     });
                   });
                });
+
+   // get info for a specific device (requires auth)
+   router.get('/:productName/devices/:serialNumber',
+              passport.authenticate('bearer', { session : false }),
+              function(req, res, next) {
+                 var productName = req.params.productName;
+                 var serialNumber = req.params.serialNumber;
+                 log.debug("Received GET for product [" + productName + "] and device [" + serialNumber + "]");
+
+                 findProductByName(res, productName, function(product) {
+
+                    // we know the product is valid, so now look for matching devices
+                    DeviceModel.findByProductIdAndSerialNumberForUser(product.id, serialNumber, req.user.id, function(err, device) {
+                       if (err) {
+                          var message = "Error while trying to find device with serial number [" + serialNumber + "] for product [" + productName + "]";
+                          log.error(message + ": " + err);
+                          return res.jsendServerError(message);
+                       }
+
+                       if (device) {
+                          return res.jsendSuccess(device); // HTTP 200 OK
+                       }
+                       else {
+                          return res.jsendClientError("Unknown or invalid device serial number", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
+                       }
+                    });
+                 });
+              });
+
+   var findProductByName = function(res, productName, successCallback) {
+      ProductModel.findByName(productName, function(err1, product) {
+         if (err1) {
+            var message = "Error while trying to find product with name [" + productName + "]";
+            log.error(message + ": " + err1);
+            return res.jsendServerError(message);
+         }
+
+         // call the successCallback if we found the product, otherwise return a 404
+         if (product) {
+            return successCallback(product);
+         }
+         else {
+            return res.jsendClientError("Unknown or invalid product name", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
+         }
+      });
+   };
 
    return router;
 };

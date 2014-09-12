@@ -10,7 +10,7 @@ module.exports = function(DeviceModel, FeedModel) {
    // TODO: add method to list feeds for a given device
 
    // create a feed for the specified device (specified by device ID)
-   router.post('/:deviceId',
+   router.post('/:deviceId/feeds',
                passport.authenticate('bearer', { session : false }),
                function(req, res, next) {
                   var deviceId = req.params.deviceId;

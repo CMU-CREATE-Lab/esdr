@@ -54,7 +54,6 @@ describe("ESDR", function() {
       prettyName : 'CATTfish v1',
       vendor : 'CMU CREATE Lab',
       description : 'The CATTfish v1 water temperature and conductivity sensor.',
-      isPublic : true,
       defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "uS/cm" }}
    };
    var testProduct2 = {
@@ -62,7 +61,6 @@ describe("ESDR", function() {
       prettyName : 'CATTfish v2',
       vendor : 'CMU CREATE Lab',
       description : 'The CATTfish v2 water temperature and conductivity sensor.',
-      isPublic : false,
       defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "uS/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }}
    };
    var testProduct3 = {
@@ -70,7 +68,6 @@ describe("ESDR", function() {
       prettyName : 'CATTfish v3',
       vendor : 'CMU CREATE Lab',
       description : 'The CATTfish v3 water temperature and conductivity sensor.',
-      isPublic : true,
       defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "uS/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }, "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" }}
    };
    var testProduct4 = {
@@ -78,24 +75,22 @@ describe("ESDR", function() {
       prettyName : 'CATTfish v4',
       vendor : 'CMU CREATE Lab',
       description : 'The CATTfish v4 water temperature and conductivity sensor.',
-      isPublic : true,
       defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "uS/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }, "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" }, "humidity" : { "prettyName" : "Humidity", "units" : "%" }}
    };
    var testDevice1 = {
-      serialNumber : '03e7322a7d3630530218ff6b0dcc2e28',
-      isPublic : true
+      serialNumber : 'TESTDEVICE1'
    };
    var testDevice2 = {
-      serialNumber : 'b5129637a32268fcf72b78f63a0b42db',
-      isPublic : false
+      serialNumber : 'TESTDEVICE2'
    };
    var testDevice3 = {
-      serialNumber : 'fbf11c1a9befe54852ab453bcaae6fda',
-      isPublic : true
+      serialNumber : 'TESTDEVICE3'
    };
    var testDevice4 = {
-      serialNumber : '0e66d7a06c77a561ebc23646a57fc76e',
-      isPublic : false
+      serialNumber : 'TESTDEVICE4'
+   };
+   var testDevice5 = {
+      serialNumber : 'TESTDEVICE5'
    };
 
    var testFeed1a = {
@@ -138,6 +133,7 @@ describe("ESDR", function() {
 
    var db = null;
    var verificationTokens = {};
+   var createdUsers = {};
 
    var pool = mysql.createPool({
                                   connectionLimit : config.get("database:pool:connectionLimit"),
@@ -560,6 +556,7 @@ describe("ESDR", function() {
 
                           // remember the verification token so we can verify this user
                           verificationTokens.testUser1 = res.body.data.verificationToken;
+                          createdUsers.testUser1 = res.body.data;
                           done();
                        });
          });
@@ -624,6 +621,7 @@ describe("ESDR", function() {
 
                           // remember the verification token so we can verify this user
                           verificationTokens.testUser2 = res.body.data.verificationToken;
+                          createdUsers.testUser2 = res.body.data;
                           done();
                        });
          });
@@ -648,6 +646,7 @@ describe("ESDR", function() {
 
                           // remember the verification token so we can verify this user
                           verificationTokens.testUser3 = res.body.data.verificationToken;
+                          createdUsers.testUser3 = res.body.data;
                           done();
                        });
          });
@@ -1426,7 +1425,7 @@ describe("ESDR", function() {
 
          describe("Products", function() {
 
-            it("Should be able to create a new public product", function(done) {
+            it("Should be able to create a new product", function(done) {
                agent(url)
                      .post("/api/v1/products")
                      .set({
@@ -1448,7 +1447,7 @@ describe("ESDR", function() {
                           });
             });
 
-            it("Should be able to create a new private product", function(done) {
+            it("Should be able to create another new product, owned by a different user", function(done) {
                agent(url)
                      .post("/api/v1/products")
                      .set({
@@ -1562,7 +1561,7 @@ describe("ESDR", function() {
                           });
             });
 
-            it("Should be able to get a public product by name, with no access token provided", function(done) {
+            it("Should be able to get a product by name (with no access token provided)", function(done) {
                agent(url)
                      .get("/api/v1/products/" + testProduct1.name)
                      .end(function(err, res) {
@@ -1580,107 +1579,9 @@ describe("ESDR", function() {
                              res.body.data.should.have.property('vendor', testProduct1.vendor);
                              res.body.data.should.have.property('description', testProduct1.description);
                              res.body.data.should.have.property('creatorUserId', accessTokens.testUser1.userId);
-                             res.body.data.should.have.property('isPublic', testProduct1.isPublic);
                              should(res.body.data.defaultChannelSpec).eql(testProduct1.defaultChannelSpec); // deep equal
                              res.body.data.should.have.property('created');
                              res.body.data.should.have.property('modified');
-
-                             done();
-                          });
-            });
-
-            it("Should be able to get a public product by name, with an access token provided", function(done) {
-               agent(url)
-                     .get("/api/v1/products/" + testProduct1.name)
-                     .set({
-                             Authorization : "Bearer " + accessTokens.testUser2.access_token
-                          })
-                     .end(function(err, res) {
-                             if (err) {
-                                return done(err);
-                             }
-
-                             res.should.have.property('status', httpStatus.OK);
-                             res.body.should.have.property('code', httpStatus.OK);
-                             res.body.should.have.property('status', 'success');
-                             res.body.should.have.property('data');
-                             res.body.data.should.have.property('id');
-                             res.body.data.should.have.property('name', testProduct1.name);
-                             res.body.data.should.have.property('prettyName', testProduct1.prettyName);
-                             res.body.data.should.have.property('vendor', testProduct1.vendor);
-                             res.body.data.should.have.property('description', testProduct1.description);
-                             res.body.data.should.have.property('creatorUserId', accessTokens.testUser1.userId);
-                             res.body.data.should.have.property('isPublic', testProduct1.isPublic);
-                             should(res.body.data.defaultChannelSpec).eql(testProduct1.defaultChannelSpec); // deep equal
-                             res.body.data.should.have.property('created');
-                             res.body.data.should.have.property('modified');
-
-                             done();
-                          });
-            });
-
-            it("Should be able to get a private product by name, with an access token for the product creator provided", function(done) {
-               agent(url)
-                     .get("/api/v1/products/" + testProduct2.name)
-                     .set({
-                             Authorization : "Bearer " + accessTokens.testUser2.access_token
-                          })
-                     .end(function(err, res) {
-                             if (err) {
-                                return done(err);
-                             }
-
-                             res.should.have.property('status', httpStatus.OK);
-                             res.body.should.have.property('code', httpStatus.OK);
-                             res.body.should.have.property('status', 'success');
-                             res.body.should.have.property('data');
-                             res.body.data.should.have.property('id');
-                             res.body.data.should.have.property('name', testProduct2.name);
-                             res.body.data.should.have.property('prettyName', testProduct2.prettyName);
-                             res.body.data.should.have.property('vendor', testProduct2.vendor);
-                             res.body.data.should.have.property('description', testProduct2.description);
-                             res.body.data.should.have.property('creatorUserId', accessTokens.testUser2.userId);
-                             res.body.data.should.have.property('isPublic', testProduct2.isPublic);
-                             should(res.body.data.defaultChannelSpec).eql(testProduct2.defaultChannelSpec); // deep equal
-                             res.body.data.should.have.property('created');
-                             res.body.data.should.have.property('modified');
-
-                             done();
-                          });
-            });
-
-            it("Should fail to get a private product by name, with no access token provided", function(done) {
-               agent(url)
-                     .get("/api/v1/products/" + testProduct2.name)
-                     .end(function(err, res) {
-                             if (err) {
-                                return done(err);
-                             }
-
-                             res.should.have.property('status', httpStatus.UNAUTHORIZED);
-                             res.body.should.have.property('code', httpStatus.UNAUTHORIZED);
-                             res.body.should.have.property('status', 'error');
-                             res.body.should.have.property('data', null);
-
-                             done();
-                          });
-            });
-
-            it("Should fail to get a private product by name, with an access token provided for a user other than the product creator", function(done) {
-               agent(url)
-                     .get("/api/v1/products/" + testProduct2.name)
-                     .set({
-                             Authorization : "Bearer " + accessTokens.testUser1.access_token
-                          })
-                     .end(function(err, res) {
-                             if (err) {
-                                return done(err);
-                             }
-
-                             res.should.have.property('status', httpStatus.FORBIDDEN);
-                             res.body.should.have.property('code', httpStatus.FORBIDDEN);
-                             res.body.should.have.property('status', 'error');
-                             res.body.should.have.property('data', null);
 
                              done();
                           });
@@ -1759,6 +1660,58 @@ describe("ESDR", function() {
                              });
                });
 
+               it("Should be able to find a device by product name and serial number by the user who owns it (user 1)", function(done) {
+                  agent(url)
+                        .get("/api/v1/products/" + testProduct1.name + "/devices/" + testDevice1.serialNumber)
+                        .set({
+                                Authorization : "Bearer " + accessTokens.testUser1.access_token
+                             })
+                        .end(function(err, res) {
+                                if (err) {
+                                   return done(err);
+                                }
+
+                                res.should.have.property('status', httpStatus.OK);
+                                res.body.should.have.property('code', httpStatus.OK);
+                                res.body.should.have.property('status', 'success');
+                                res.body.should.have.property('data');
+                                res.body.data.should.have.property('id');
+                                res.body.data.should.have.property('serialNumber', testDevice1.serialNumber);
+                                res.body.data.should.have.property('productId');
+                                res.body.data.should.have.property('userId', createdUsers.testUser1.id);
+                                res.body.data.should.have.property('created');
+                                res.body.data.should.have.property('modified');
+
+                                done();
+                             });
+               });
+
+               it("Should be able to find a device by product name and serial number by the user who owns it (user 2)", function(done) {
+                  agent(url)
+                        .get("/api/v1/products/" + testProduct1.name + "/devices/" + testDevice1.serialNumber)
+                        .set({
+                                Authorization : "Bearer " + accessTokens.testUser2.access_token
+                             })
+                        .end(function(err, res) {
+                                if (err) {
+                                   return done(err);
+                                }
+
+                                res.should.have.property('status', httpStatus.OK);
+                                res.body.should.have.property('code', httpStatus.OK);
+                                res.body.should.have.property('status', 'success');
+                                res.body.should.have.property('data');
+                                res.body.data.should.have.property('id');
+                                res.body.data.should.have.property('serialNumber', testDevice1.serialNumber);
+                                res.body.data.should.have.property('productId');
+                                res.body.data.should.have.property('userId', createdUsers.testUser2.id);
+                                res.body.data.should.have.property('created');
+                                res.body.data.should.have.property('modified');
+
+                                done();
+                             });
+               });
+
                it("Should fail to create the same device for the same product for the same user again", function(done) {
                   agent(url)
                         .post("/api/v1/products/" + testProduct1.name + "/devices")
@@ -1797,53 +1750,6 @@ describe("ESDR", function() {
                                 res.body.should.have.property('code', httpStatus.NOT_FOUND);
                                 res.body.should.have.property('status', 'error');
                                 res.body.should.have.property('data', null);
-
-                                done();
-                             });
-               });
-
-               it("Should fail to create a new device for a private product by the wrong user", function(done) {
-                  agent(url)
-                        .post("/api/v1/products/" + testProduct2.name + "/devices")
-                        .set({
-                                Authorization : "Bearer " + accessTokens.testUser1.access_token
-                             })
-                        .send(testDevice2)
-                        .end(function(err, res) {
-                                if (err) {
-                                   return done(err);
-                                }
-
-                                res.should.have.property('status', httpStatus.FORBIDDEN);
-                                res.body.should.have.property('code', httpStatus.FORBIDDEN);
-                                res.body.should.have.property('status', 'error');
-                                res.body.should.have.property('data', null);
-
-                                done();
-                             });
-               });
-
-               it("Should be able to create a new device for a private product by the correct user", function(done) {
-                  agent(url)
-                        .post("/api/v1/products/" + testProduct2.name + "/devices")
-                        .set({
-                                Authorization : "Bearer " + accessTokens.testUser2.access_token
-                             })
-                        .send(testDevice2)
-                        .end(function(err, res) {
-                                if (err) {
-                                   return done(err);
-                                }
-
-                                res.should.have.property('status', httpStatus.CREATED);
-                                res.body.should.have.property('code', httpStatus.CREATED);
-                                res.body.should.have.property('status', 'success');
-                                res.body.should.have.property('data');
-                                res.body.data.should.have.property('id');
-                                res.body.data.should.have.property('serialNumber', testDevice2.serialNumber);
-
-                                // remember this ID
-                                deviceIds.testDevice2 = res.body.data.id;
 
                                 done();
                              });
@@ -1908,7 +1814,7 @@ describe("ESDR", function() {
 
                   it("Should be able to create a new feed", function(done) {
                      agent(url)
-                           .post("/api/v1/devices/" + deviceIds.testDevice1)
+                           .post("/api/v1/devices/" + deviceIds.testDevice1 + "/feeds")
                            .set({
                                    Authorization : "Bearer " + accessTokens.testUser1.access_token
                                 })
@@ -1932,9 +1838,35 @@ describe("ESDR", function() {
                                 });
                   });
 
+                  it("Should be able to create an additional feed for a device", function(done) {
+                     agent(url)
+                           .post("/api/v1/devices/" + deviceIds.testDevice1 + "/feeds")
+                           .set({
+                                   Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                })
+                           .send(testFeed1b)
+                           .end(function(err, res) {
+                                   if (err) {
+                                      return done(err);
+                                   }
+
+                                   res.should.have.property('status', httpStatus.CREATED);
+                                   res.body.should.have.property('code', httpStatus.CREATED);
+                                   res.body.should.have.property('status', 'success');
+                                   res.body.should.have.property('data');
+                                   res.body.data.should.have.property('id');
+                                   res.body.data.should.have.property('apiToken');
+
+                                   // remember this feed
+                                   feeds.testFeed1b = res.body.data;
+
+                                   done();
+                                });
+                  });
+
                   it("Should fail to create a new feed for a bogus device", function(done) {
                      agent(url)
-                           .post("/api/v1/devices/" + "bogus")
+                           .post("/api/v1/devices/bogus/feeds")
                            .set({
                                    Authorization : "Bearer " + accessTokens.testUser1.access_token
                                 })
@@ -1955,7 +1887,7 @@ describe("ESDR", function() {
 
                   it("Should fail to create a new feed for a device owned by a different user", function(done) {
                      agent(url)
-                           .post("/api/v1/devices/" + deviceIds.testDevice1)
+                           .post("/api/v1/devices/" + deviceIds.testDevice1 + "/feeds")
                            .set({
                                    Authorization : "Bearer " + accessTokens.testUser2.access_token
                                 })
@@ -1980,7 +1912,7 @@ describe("ESDR", function() {
                      delete invalidFeed.exposure;
 
                      agent(url)
-                           .post("/api/v1/devices/" + deviceIds.testDevice1)
+                           .post("/api/v1/devices/" + deviceIds.testDevice1 + "/feeds")
                            .set({
                                    Authorization : "Bearer " + accessTokens.testUser1.access_token
                                 })
@@ -2011,7 +1943,7 @@ describe("ESDR", function() {
                      invalidFeed.longitude = 4242;
 
                      agent(url)
-                           .post("/api/v1/devices/" + deviceIds.testDevice1)
+                           .post("/api/v1/devices/" + deviceIds.testDevice1 + "/feeds")
                            .set({
                                    Authorization : "Bearer " + accessTokens.testUser1.access_token
                                 })
@@ -2039,32 +1971,6 @@ describe("ESDR", function() {
                                    res.body.data[3].should.have.property('instanceContext', '#/longitude');
                                    res.body.data[3].should.have.property('constraintName', 'maximum');
                                    res.body.data[3].should.have.property('constraintValue', db.feeds.jsonSchema.properties.longitude.maximum);
-
-                                   done();
-                                });
-                  });
-
-                  it("Should be able to create an additional feed for a device", function(done) {
-                     agent(url)
-                           .post("/api/v1/devices/" + deviceIds.testDevice1)
-                           .set({
-                                   Authorization : "Bearer " + accessTokens.testUser1.access_token
-                                })
-                           .send(testFeed1b)
-                           .end(function(err, res) {
-                                   if (err) {
-                                      return done(err);
-                                   }
-
-                                   res.should.have.property('status', httpStatus.CREATED);
-                                   res.body.should.have.property('code', httpStatus.CREATED);
-                                   res.body.should.have.property('status', 'success');
-                                   res.body.should.have.property('data');
-                                   res.body.data.should.have.property('id');
-                                   res.body.data.should.have.property('apiToken');
-
-                                   // remember this feed
-                                   feeds.testFeed1b = res.body.data;
 
                                    done();
                                 });
@@ -2690,7 +2596,6 @@ describe("ESDR", function() {
                   product.should.have.property('vendor', testProduct3.vendor);
                   product.should.have.property('description', testProduct3.description);
                   product.should.have.property('creatorUserId', null);
-                  product.should.have.property('isPublic', testProduct3.isPublic);
                   product.should.have.property('created');
                   product.should.have.property('modified');
 
@@ -2706,19 +2611,56 @@ describe("ESDR", function() {
                var deviceInsertIds = {};
 
                it("Should be able to create a device", function(done) {
-                  db.devices.create(testDevice3, productInsertIds.testProduct3, userIds.testUser1, function(err, device) {
+                  db.devices.create(testDevice5, productInsertIds.testProduct3, userIds.testUser1, function(err, device) {
                      if (err) {
                         return done(err);
                      }
 
                      device.should.have.property('insertId');
-                     device.should.have.property('serialNumber', testDevice3.serialNumber);
+                     device.should.have.property('serialNumber', testDevice5.serialNumber);
 
                      // remember the insert ID
-                     deviceInsertIds.testDevice3 = device.insertId;
+                     deviceInsertIds.testDevice5 = device.insertId;
 
                      done();
                   });
+               });
+
+               it("Should be able to find a device by ID", function(done) {
+                  db.devices.findById(deviceInsertIds.testDevice5, function(err, device) {
+                     if (err) {
+                        return done(err);
+                     }
+
+                     device.should.have.property('id', deviceInsertIds.testDevice5);
+                     device.should.have.property('serialNumber', testDevice5.serialNumber);
+                     device.should.have.property('productId', productInsertIds.testProduct3);
+                     device.should.have.property('userId', userIds.testUser1);
+                     device.should.have.property('created');
+                     device.should.have.property('modified');
+
+                     done();
+                  });
+               });
+
+               it("Should be able to find a device by product ID, serial number, and user ID", function(done) {
+                  db.devices.findByProductIdAndSerialNumberForUser(productInsertIds.testProduct3,
+                                                                   testDevice5.serialNumber,
+                                                                   userIds.testUser1,
+                                                                   function(err, devices) {
+                                                                      if (err) {
+                                                                         return done(err);
+                                                                      }
+
+                                                                      devices.should.have.property('id', deviceInsertIds.testDevice5);
+                                                                      devices.should.have.property('serialNumber', testDevice5.serialNumber);
+                                                                      devices.should.have.property('productId', productInsertIds.testProduct3);
+                                                                      devices.should.have.property('userId', userIds.testUser1);
+                                                                      devices.should.have.property('created');
+                                                                      devices.should.have.property('modified');
+
+                                                                      done();
+                                                                   });
                });
 
                describe("Feeds", function() {
@@ -2726,7 +2668,7 @@ describe("ESDR", function() {
                   var feedInsertIds = {};
 
                   it("Should be able to create a feed", function(done) {
-                     db.feeds.create(testFeed3, deviceInsertIds.testDevice3, userIds.testUser1, function(err, feed) {
+                     db.feeds.create(testFeed3, deviceInsertIds.testDevice5, userIds.testUser1, function(err, feed) {
                         if (err) {
                            return done(err);
                         }
