@@ -21,7 +21,7 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Feeds` ( " +
                          "`channelSpec` text DEFAULT NULL, " +    // TODO: make this NOT NULL and just copy from Product upon creation?
                          "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
                          "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
-                         // TODO: keep track of last upload timestamp, and maybe timestamps of earliest and latest data
+                            // TODO: keep track of last upload timestamp, and maybe timestamps of earliest and latest data
                          "PRIMARY KEY (`id`), " +
                          "UNIQUE KEY `apiToken` (`apiToken`), " +
                          "KEY `deviceId` (`deviceId`), " +
@@ -120,15 +120,21 @@ module.exports = function(databaseHelper) {
       });
    };
 
-   // TODO: query datastore for timestamps of earliest and latest data?
-   var findFeed = function(query, params, callback) {
-      databaseHelper.findOne(query, params, function(err, feed) {
-         if (err) {
-            log.error("Error trying to find feed: " + err);
-            return callback(err);
-         }
-
-         return callback(null, feed);
-      });
+   this.findFeedsForDevice = function(deviceId, callback) {
+      databaseHelper.execute("SELECT " +
+                             "id, " +
+                             "name, " +
+                             "deviceId, " +
+                             "userId, " +
+                             "apiToken, " +
+                             "exposure, " +
+                             "isPublic, " +
+                             "isMobile, " +
+                             "latitude, " +
+                             "longitude, " +
+                             "channelSpec, " +
+                             "created, " +
+                             "modified " +
+                             "FROM Feeds WHERE deviceId=?", [deviceId], callback);
    };
 };
