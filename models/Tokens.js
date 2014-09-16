@@ -138,7 +138,7 @@ module.exports = function(databaseHelper) {
                                             // might not find anything, but that's OK--just set to null and
                                             // later code will deal appropriately
                                             userId = (rows && rows.length > 0) ? rows[0].userId : null;
-                                            log.debug("refreshToken():    Refresh token exists=(" + (userId != null) + "), userId=" + JSON.stringify(userId, null, 3));
+                                            log.debug("refreshToken():    Refresh token exists=" + (userId != null) + ", userId=" + JSON.stringify(userId, null, 3));
                                          }
                                          done();
                                       });
@@ -172,11 +172,16 @@ module.exports = function(databaseHelper) {
             // handle outcome
             function() {
                log.debug("refreshToken(): 5) All done, now checking status and performing commit/rollback as necessary!");
-               if (hasError()) {
+               if (hasError() || userId == null) {
                   connection.rollback(function() {
                      connection.release();
-                     log.error("refreshToken():    An error occurred while refreshing token, rolled back the transaction. Error:" + error);
-                     callback(error);
+                     if (hasError()) {
+                        log.error("refreshToken():    An error occurred while refreshing token, rolled back the transaction. Error:" + error);
+                        callback(error);
+                     } else {
+                        log.error("refreshToken():    Invalid refresh token, rolled back the transaction.");
+                        callback(null);
+                     }
                   });
                }
                else {
@@ -234,10 +239,10 @@ module.exports = function(databaseHelper) {
                log.debug("validateAccessToken(): token found!");
                return callback(null, token);
             }
+         } else {
+            log.debug("validateAccessToken(): token not found!");
+            callback(null, null);
          }
-
-         log.debug("validateAccessToken(): token not found!");
-         callback(null, null);
       });
    };
 };
