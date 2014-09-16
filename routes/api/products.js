@@ -54,7 +54,7 @@ module.exports = function(ProductModel, DeviceModel) {
                  });
               });
 
-   // TODO: create method to find devices for a given product (with optional filtering) for a given auth'd user
+   // TODO: create method to find devices for a given product (with optional filtering)
 
    // create a new device
    router.post('/:productName/devices',
