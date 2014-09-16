@@ -105,7 +105,7 @@ describe("ESDR", function() {
    var testFeed1b = {
       name : "Newell Simon 4th Floor Kitchen",
       exposure : "indoor",
-      isPublic : true,
+      isPublic : false,
       isMobile : false,
       latitude : 40.443493,
       longitude : -79.945721
@@ -1859,6 +1859,113 @@ describe("ESDR", function() {
 
                                    // remember this feed
                                    feeds.testFeed1b = res.body.data;
+
+                                   done();
+                                });
+                  });
+
+                  it("Should be able to get the public feeds for a device, without authorization", function(done) {
+                     agent(url)
+                           .get("/api/v1/devices/" + deviceIds.testDevice1 + "/feeds")
+                           .end(function(err, res) {
+                                   if (err) {
+                                      return done(err);
+                                   }
+
+                                   res.should.have.property('status', httpStatus.OK);
+                                   res.body.should.have.property('code', httpStatus.OK);
+                                   res.body.should.have.property('status', 'success');
+                                   res.body.should.have.property('data');
+                                   res.body.data.should.have.length(1);
+                                   res.body.data[0].should.have.property('name', testFeed1a.name);
+                                   res.body.data[0].should.have.property('deviceId', deviceIds.testDevice1);
+                                   res.body.data[0].should.have.property('userId', accessTokens.testUser1.userId);
+                                   res.body.data[0].should.have.property('exposure', testFeed1a.exposure);
+                                   res.body.data[0].should.have.property('isPublic', testFeed1a.isPublic);
+                                   res.body.data[0].should.have.property('isMobile', testFeed1a.isMobile);
+                                   res.body.data[0].should.have.property('latitude', testFeed1a.latitude);
+                                   res.body.data[0].should.have.property('longitude', testFeed1a.longitude);
+                                   res.body.data[0].should.have.property('channelSpec');
+                                   res.body.data[0].should.have.property('created');
+                                   res.body.data[0].should.have.property('modified');
+
+                                   done();
+                                });
+                  });
+
+                  it("Should be able to get the public and private feeds for a device, with authorization", function(done) {
+                     agent(url)
+                           .get("/api/v1/devices/" + deviceIds.testDevice1 + "/feeds")
+                           .set({
+                                   Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                })
+                           .end(function(err, res) {
+                                   if (err) {
+                                      return done(err);
+                                   }
+
+                                   res.should.have.property('status', httpStatus.OK);
+                                   res.body.should.have.property('code', httpStatus.OK);
+                                   res.body.should.have.property('status', 'success');
+                                   res.body.should.have.property('data');
+                                   res.body.data.should.have.length(2);
+                                   res.body.data[0].should.have.property('name', testFeed1a.name);
+                                   res.body.data[0].should.have.property('deviceId', deviceIds.testDevice1);
+                                   res.body.data[0].should.have.property('userId', accessTokens.testUser1.userId);
+                                   res.body.data[0].should.have.property('apiToken');
+                                   res.body.data[0].should.have.property('exposure', testFeed1a.exposure);
+                                   res.body.data[0].should.have.property('isPublic', testFeed1a.isPublic);
+                                   res.body.data[0].should.have.property('isMobile', testFeed1a.isMobile);
+                                   res.body.data[0].should.have.property('latitude', testFeed1a.latitude);
+                                   res.body.data[0].should.have.property('longitude', testFeed1a.longitude);
+                                   res.body.data[0].should.have.property('channelSpec');
+                                   res.body.data[0].should.have.property('created');
+                                   res.body.data[0].should.have.property('modified');
+
+                                   res.body.data[1].should.have.property('name', testFeed1b.name);
+                                   res.body.data[1].should.have.property('deviceId', deviceIds.testDevice1);
+                                   res.body.data[1].should.have.property('userId', accessTokens.testUser1.userId);
+                                   res.body.data[1].should.have.property('apiToken');
+                                   res.body.data[1].should.have.property('exposure', testFeed1b.exposure);
+                                   res.body.data[1].should.have.property('isPublic', testFeed1b.isPublic);
+                                   res.body.data[1].should.have.property('isMobile', testFeed1b.isMobile);
+                                   res.body.data[1].should.have.property('latitude', testFeed1b.latitude);
+                                   res.body.data[1].should.have.property('longitude', testFeed1b.longitude);
+                                   res.body.data[1].should.have.property('channelSpec');
+                                   res.body.data[1].should.have.property('created');
+                                   res.body.data[1].should.have.property('modified');
+
+                                   done();
+                                });
+                  });
+
+                  it("Should be able to get only the public feeds for a device, with incorrect authorization", function(done) {
+                     agent(url)
+                           .get("/api/v1/devices/" + deviceIds.testDevice1 + "/feeds")
+                           .set({
+                                   Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                })
+                           .end(function(err, res) {
+                                   if (err) {
+                                      return done(err);
+                                   }
+
+                                   res.should.have.property('status', httpStatus.OK);
+                                   res.body.should.have.property('code', httpStatus.OK);
+                                   res.body.should.have.property('status', 'success');
+                                   res.body.should.have.property('data');
+                                   res.body.data.should.have.length(1);
+                                   res.body.data[0].should.have.property('name', testFeed1a.name);
+                                   res.body.data[0].should.have.property('deviceId', deviceIds.testDevice1);
+                                   res.body.data[0].should.have.property('userId', accessTokens.testUser1.userId);
+                                   res.body.data[0].should.have.property('exposure', testFeed1a.exposure);
+                                   res.body.data[0].should.have.property('isPublic', testFeed1a.isPublic);
+                                   res.body.data[0].should.have.property('isMobile', testFeed1a.isMobile);
+                                   res.body.data[0].should.have.property('latitude', testFeed1a.latitude);
+                                   res.body.data[0].should.have.property('longitude', testFeed1a.longitude);
+                                   res.body.data[0].should.have.property('channelSpec');
+                                   res.body.data[0].should.have.property('created');
+                                   res.body.data[0].should.have.property('modified');
 
                                    done();
                                 });
