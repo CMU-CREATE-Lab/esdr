@@ -24,7 +24,7 @@ config.defaults({
                       "willEmailToUser" : true
                    },
                    "security" : {
-                      "tokenLifeSecs" : 3600
+                      "tokenLifeSecs" : 7 * 24 * 60 * 60 // 7 days
                    },
                    "database" : {
                       "host" : "localhost",

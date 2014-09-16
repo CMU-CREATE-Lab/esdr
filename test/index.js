@@ -2041,7 +2041,7 @@ describe("ESDR", function() {
                                      res.should.have.property('status', httpStatus.OK);
                                      res.body.should.have.property('access_token');
                                      res.body.should.have.property('refresh_token');
-                                     res.body.should.have.property('expires_in', 3600);
+                                     res.body.should.have.property('expires_in', config.get("security:tokenLifeSecs"));
                                      res.body.should.have.property('token_type', "Bearer");
 
                                      // remember these tokens
@@ -2200,7 +2200,7 @@ describe("ESDR", function() {
                        res.should.have.property('status', httpStatus.OK);
                        res.body.should.have.property('access_token');
                        res.body.should.have.property('refresh_token');
-                       res.body.should.have.property('expires_in', 3600);
+                       res.body.should.have.property('expires_in', config.get("security:tokenLifeSecs"));
                        res.body.should.have.property('token_type', "Bearer");
 
                        // remember these new tokens
