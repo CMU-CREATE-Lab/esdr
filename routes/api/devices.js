@@ -41,6 +41,9 @@ module.exports = function(DeviceModel, FeedModel) {
                                       delete feed.apiToken;
                                    }
 
+                                   // inflate the channel spec JSON text into an object
+                                   feed.channelSpec = JSON.parse(feed.channelSpec);
+
                                    filteredFeeds.push(feed);
                                 }
                              });

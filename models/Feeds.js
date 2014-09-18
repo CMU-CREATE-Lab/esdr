@@ -18,10 +18,12 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Feeds` ( " +
                          "`isMobile` boolean DEFAULT 0, " +
                          "`latitude` double DEFAULT NULL, " +
                          "`longitude` double DEFAULT NULL, " +
-                         "`channelSpec` text DEFAULT NULL, " +    // TODO: make this NOT NULL and just copy from Product upon creation?
+                         "`channelSpec` text NOT NULL, " +
                          "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
                          "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
-                            // TODO: keep track of last upload timestamp, and maybe timestamps of earliest and latest data
+                         "`lastUpload` timestamp DEFAULT 0, " +
+                         "`minTimeSecs` double DEFAULT NULL, " +
+                         "`maxTimeSecs` double DEFAULT NULL, " +
                          "PRIMARY KEY (`id`), " +
                          "UNIQUE KEY `apiToken` (`apiToken`), " +
                          "KEY `deviceId` (`deviceId`), " +
@@ -105,18 +107,31 @@ module.exports = function(databaseHelper) {
             return callback(new ValidationError(err1));
          }
 
-         // now that we have the hashed secret, try to insert
-         databaseHelper.execute("INSERT INTO Feeds SET ?", feed, function(err2, result) {
-            if (err2) {
-               return callback(err2);
-            }
+         // now that we have validated, get the default channel spec from this device's Products table record (which was
+         // already validated when inserted into the product, so no need to do so again here)
+         databaseHelper.findOne("SELECT defaultChannelSpec FROM Products WHERE id = (SELECT productId FROM Devices WHERE id=?)",
+                                [deviceId],
+                                function(err2, result) {
+                                   if (err2) {
+                                      return callback(err2);
+                                   }
 
-            return callback(null, {
-               insertId : result.insertId,
-               datastoreId : feed.datastoreId,
-               apiToken : feed.apiToken
-            });
-         });
+                                   feed.channelSpec = result.defaultChannelSpec;
+
+                                   // now that we have the channel spec, try to insert
+                                   databaseHelper.execute("INSERT INTO Feeds SET ?", feed, function(err3, result) {
+                                      if (err3) {
+                                         return callback(err3);
+                                      }
+
+                                      return callback(null, {
+                                         insertId : result.insertId,
+                                         datastoreId : feed.datastoreId,
+                                         apiToken : feed.apiToken
+                                      });
+                                   });
+                                });
+
       });
    };
 
@@ -134,7 +149,10 @@ module.exports = function(databaseHelper) {
                              "longitude, " +
                              "channelSpec, " +
                              "created, " +
-                             "modified " +
+                             "modified, " +
+                             "lastUpload, " +
+                             "minTimeSecs, " +
+                             "maxTimeSecs " +
                              "FROM Feeds WHERE deviceId=?", [deviceId], callback);
    };
 };
