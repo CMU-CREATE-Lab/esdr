@@ -93,6 +93,21 @@ module.exports = function(databaseHelper) {
    };
 
    /**
+    * Find all devices with the given <code>productId</code> for the given user and returns them to the given
+    * <code>callback</code>.  If successful, the devices are returned in an array to the 2nd argument to the
+    * <code>callback</code> function.  If unsuccessful, <code>null</code> is returned to the callback.
+    *
+    * @param {number} productId id of the product to find.
+    * @param {number} userId id of the user owning this device.
+    * @param {function} callback function with signature <code>callback(err, device)</code>
+    */
+   this.findByProductIdForUser = function(productId, userId, callback) {
+      databaseHelper.execute("SELECT * FROM Devices WHERE productId=? AND userId=?",
+                             [productId, userId],
+                             callback);
+   };
+
+   /**
     * Tries to find the device with the given <code>productId</code> and <code>serialNumber</code> for the given user
     * and returns it to the given <code>callback</code>.  If successful, the device is returned in an array to the 2nd
     * argument to the <code>callback</code> function.  If unsuccessful, <code>null</code> is returned to the callback.
@@ -103,7 +118,7 @@ module.exports = function(databaseHelper) {
     * @param {function} callback function with signature <code>callback(err, device)</code>
     */
    this.findByProductIdAndSerialNumberForUser = function(productId, serialNumber, userId, callback) {
-      findDevice("SELECT * FROM Devices WHERE productId=? AND serialNumber=? and userId=?",
+      findDevice("SELECT * FROM Devices WHERE productId=? AND serialNumber=? AND userId=?",
                  [productId, serialNumber, userId],
                  callback);
    };

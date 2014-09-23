@@ -54,7 +54,27 @@ module.exports = function(ProductModel, DeviceModel) {
                  });
               });
 
-   // TODO: create method to find devices for a given product (with optional filtering)
+   // TODO: write tests for this!
+   // get all devices for the given product owned by the authenticated user
+   router.get('/:productName/devices',
+              passport.authenticate('bearer', { session : false }),
+              function(req, res, next) {
+                 var productName = req.params.productName;
+                 log.debug("Received GET to list all devices for product [" + productName + "] owned by user [" + req.user.id + "]");
+
+                 findProductByName(res, productName, function(product) {
+                    log.debug("Found product [" + productName + "], will now find matching devices for this user...");
+                    DeviceModel.findByProductIdForUser(product.id, req.user.id, function(err, devices) {
+                       if (err) {
+                          var message = "Error while trying to find devices with product ID [" + product.id + "] for user [" + req.user.id + "]";
+                          log.error(message + ": " + err);
+                          return res.jsendServerError(message);
+                       }
+
+                       return res.jsendSuccess(devices, httpStatus.OK); // HTTP 200 OK
+                    });
+                 });
+              });
 
    // create a new device
    router.post('/:productName/devices',
