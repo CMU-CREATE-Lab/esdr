@@ -8,6 +8,8 @@ var httpStatus = require('http-status');
 var log = require('log4js').getLogger();
 var Database = require("../models/Database");
 var DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
+var fs = require('fs');
+var deleteDir = require('rimraf');
 
 describe("ESDR", function() {
    var url = "http://localhost:3001";
@@ -54,7 +56,7 @@ describe("ESDR", function() {
       prettyName : 'CATTfish v1',
       vendor : 'CMU CREATE Lab',
       description : 'The CATTfish v1 water temperature and conductivity sensor.',
-      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "uS/cm" }}
+      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "uS/cm" }, "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" }}
    };
    var testProduct2 = {
       name : 'cattfish_v2',
@@ -68,7 +70,7 @@ describe("ESDR", function() {
       prettyName : 'CATTfish v3',
       vendor : 'CMU CREATE Lab',
       description : 'The CATTfish v3 water temperature and conductivity sensor.',
-      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "uS/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }, "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" }}
+      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "uS/cm" }}
    };
    var testProduct4 = {
       name : 'cattfish_v4',
@@ -120,6 +122,50 @@ describe("ESDR", function() {
       longitude : -79.94643892510089
    };
 
+   var testFeed1aData1 = {
+      "channel_names" : ["temperature", "conductivity", "battery_voltage"],
+      "data" : [
+         [1380276279.1, 19.0, 516, 3.85],
+         [1380449602, 19.2, 485, 3.84],
+         [1380472357, 18.6, 485, 3.84],
+         [1380556690, 18.3, 501, 3.84],
+         [1380643808, 19.5, 583, 3.84],
+         [1380725507, 19.6, 551, 3.84],
+         [1380752155, 20.0, 511, 3.84],
+         [1380836116, 20.7, 491, 3.84],
+         [1380883999, 21.1, 612, 3.84],
+         [1380909922, 20.3, 587, 3.84],
+         [1380922452, 19.5, 571, 3.84],
+         [1380969641, 21.8, 495, 3.84],
+         [1381002132, 21.6, 503, 3.84],
+         [1381062285, 22.2, 464, 3.84],
+         [1381154132.009, 18.5, 565, 3.84]
+      ]
+   };
+   var testFeed1aData2 = {
+      "channel_names" : ["temperature", "conductivity", "battery_voltage"],
+      "data" : [
+         [1381238902.42, 18.2, 536, 3.84],
+         [1381242668, 17.7, 541, 3.84],
+         [1381353442, 19.5, 611, 3.84],
+         [1381403282, 20.8, 607, 3.84],
+         [1381485424, 20.6, 585, 3.84],
+         [1381490906, 20.3, 587, 3.84],
+         [1381516627, 20.2, 570, 3.84],
+         [1381572510, 20.3, 526, 3.84],
+         [1381636650, 19.9, 493, 3.84],
+         [1381667243, 20.4, 483, 3.84],
+         [1381671206, 19.9, 478, 3.84],
+         [1381801851, 20.6, 486, 3.84],
+         [1381802188, 20.6, 508, 3.84],
+         [1381840404, 20.8, 506, 3.84],
+         [1381856528, 18.9, 605, 3.84],
+         [1381917431, 20.5, 624, 3.84],
+         [1382006980, 20.6, 543, 3.84],
+         [1382054188, 19.6, 517, 3.84]
+      ]
+   };
+
    var shallowClone = function(obj) {
       if (obj) {
          var clone = {};
@@ -144,79 +190,97 @@ describe("ESDR", function() {
                                   password : config.get("database:password")
                                });
 
-   // make sure the database tables exist and, if so, wipe the tables clean
+   // Delete the datastore data directory and then make sure the database tables exist
+   // and, if so, wipe the tables clean
    before(function(initDone) {
-      Database.create(function(err, theDatabase) {
+
+      // delete the data directory, so we're sure we're always starting fresh
+      var DATASTORE_DATA_DIRECTORY = config.get("datastore:dataDirectory");
+      deleteDir(DATASTORE_DATA_DIRECTORY, function(err) {
          if (err) {
-            throw err;
+            return initDone(err);
          }
-         db = theDatabase;
-         pool.getConnection(function(err, connection) {
+
+         // create the data directory
+         fs.mkdir(DATASTORE_DATA_DIRECTORY, function(err) {
             if (err) {
-               throw err;
+               return initDone(err);
             }
 
-            flow.series([
-                           function(done) {
-                              connection.query("DELETE FROM Feeds", function(err) {
-                                 if (err) {
-                                    throw err;
-                                 }
+            // Make sure the database is initialized
+            Database.create(function(err, theDatabase) {
+               if (err) {
+                  throw err;
+               }
+               db = theDatabase;
+               pool.getConnection(function(err, connection) {
+                  if (err) {
+                     throw err;
+                  }
 
-                                 done();
-                              });
-                           },
-                           function(done) {
-                              connection.query("DELETE FROM Devices", function(err) {
-                                 if (err) {
-                                    throw err;
-                                 }
+                  flow.series([
+                                 function(done) {
+                                    connection.query("DELETE FROM Feeds", function(err) {
+                                       if (err) {
+                                          throw err;
+                                       }
 
-                                 done();
-                              });
-                           },
-                           function(done) {
-                              connection.query("DELETE FROM Products", function(err) {
-                                 if (err) {
-                                    throw err;
-                                 }
+                                       done();
+                                    });
+                                 },
+                                 function(done) {
+                                    connection.query("DELETE FROM Devices", function(err) {
+                                       if (err) {
+                                          throw err;
+                                       }
 
-                                 done();
-                              });
-                           },
-                           function(done) {
-                              connection.query("DELETE FROM Tokens", function(err) {
-                                 if (err) {
-                                    throw err;
-                                 }
+                                       done();
+                                    });
+                                 },
+                                 function(done) {
+                                    connection.query("DELETE FROM Products", function(err) {
+                                       if (err) {
+                                          throw err;
+                                       }
 
-                                 done();
-                              });
-                           },
-                           function(done) {
-                              connection.query("DELETE FROM Users", function(err) {
-                                 if (err) {
-                                    throw err;
-                                 }
+                                       done();
+                                    });
+                                 },
+                                 function(done) {
+                                    connection.query("DELETE FROM Tokens", function(err) {
+                                       if (err) {
+                                          throw err;
+                                       }
 
-                                 done();
-                              });
-                           },
-                           function(done) {
-                              connection.query("DELETE FROM Clients", function(err) {
-                                 if (err) {
-                                    throw err;
-                                 }
+                                       done();
+                                    });
+                                 },
+                                 function(done) {
+                                    connection.query("DELETE FROM Users", function(err) {
+                                       if (err) {
+                                          throw err;
+                                       }
 
-                                 done();
+                                       done();
+                                    });
+                                 },
+                                 function(done) {
+                                    connection.query("DELETE FROM Clients", function(err) {
+                                       if (err) {
+                                          throw err;
+                                       }
+
+                                       done();
+                                    });
+                                 }
+                              ],
+                              function() {
+                                 initDone();
                               });
-                           }
-                        ],
-                        function() {
-                           initDone();
-                        });
+               });
+            });
          });
-      });
+      })
    });
 
    describe("REST API", function() {
@@ -1829,7 +1893,7 @@ describe("ESDR", function() {
                                    res.body.should.have.property('status', 'success');
                                    res.body.should.have.property('data');
                                    res.body.data.should.have.property('id');
-                                   res.body.data.should.have.property('apiToken');
+                                   res.body.data.should.have.property('apiKey');
 
                                    // remember this feed
                                    feeds.testFeed1a = res.body.data;
@@ -1855,7 +1919,7 @@ describe("ESDR", function() {
                                    res.body.should.have.property('status', 'success');
                                    res.body.should.have.property('data');
                                    res.body.data.should.have.property('id');
-                                   res.body.data.should.have.property('apiToken');
+                                   res.body.data.should.have.property('apiKey');
 
                                    // remember this feed
                                    feeds.testFeed1b = res.body.data;
@@ -1888,6 +1952,11 @@ describe("ESDR", function() {
                                    res.body.data[0].should.have.property('channelSpec');
                                    res.body.data[0].should.have.property('created');
                                    res.body.data[0].should.have.property('modified');
+                                   res.body.data[0].should.not.have.property('apiKey');
+                                   res.body.data[0].should.not.have.property('datastoreId');
+
+                                   // shouldn't get the apiKey if not auth'd
+                                   res.body.data[0].should.not.have.property('apiKey');
 
                                    done();
                                 });
@@ -1912,7 +1981,7 @@ describe("ESDR", function() {
                                    res.body.data[0].should.have.property('name', testFeed1a.name);
                                    res.body.data[0].should.have.property('deviceId', deviceIds.testDevice1);
                                    res.body.data[0].should.have.property('userId', accessTokens.testUser1.userId);
-                                   res.body.data[0].should.have.property('apiToken');
+                                   res.body.data[0].should.have.property('apiKey');
                                    res.body.data[0].should.have.property('exposure', testFeed1a.exposure);
                                    res.body.data[0].should.have.property('isPublic', testFeed1a.isPublic);
                                    res.body.data[0].should.have.property('isMobile', testFeed1a.isMobile);
@@ -1921,11 +1990,12 @@ describe("ESDR", function() {
                                    res.body.data[0].should.have.property('channelSpec');
                                    res.body.data[0].should.have.property('created');
                                    res.body.data[0].should.have.property('modified');
+                                   res.body.data[0].should.not.have.property('datastoreId');
 
                                    res.body.data[1].should.have.property('name', testFeed1b.name);
                                    res.body.data[1].should.have.property('deviceId', deviceIds.testDevice1);
                                    res.body.data[1].should.have.property('userId', accessTokens.testUser1.userId);
-                                   res.body.data[1].should.have.property('apiToken');
+                                   res.body.data[1].should.have.property('apiKey');
                                    res.body.data[1].should.have.property('exposure', testFeed1b.exposure);
                                    res.body.data[1].should.have.property('isPublic', testFeed1b.isPublic);
                                    res.body.data[1].should.have.property('isMobile', testFeed1b.isMobile);
@@ -1934,6 +2004,7 @@ describe("ESDR", function() {
                                    res.body.data[1].should.have.property('channelSpec');
                                    res.body.data[1].should.have.property('created');
                                    res.body.data[1].should.have.property('modified');
+                                   res.body.data[1].should.not.have.property('datastoreId');
 
                                    done();
                                 });
@@ -1966,6 +2037,11 @@ describe("ESDR", function() {
                                    res.body.data[0].should.have.property('channelSpec');
                                    res.body.data[0].should.have.property('created');
                                    res.body.data[0].should.have.property('modified');
+                                   res.body.data[0].should.not.have.property('apiKey');
+                                   res.body.data[0].should.not.have.property('datastoreId');
+
+                                   // shouldn't get the apiKey if not auth'd
+                                   res.body.data[0].should.not.have.property('apiKey');
 
                                    done();
                                 });
@@ -2083,6 +2159,154 @@ describe("ESDR", function() {
                                 });
                   });
 
+                  describe("Upload", function() {
+                     it("Should be able to upload empty data to a feed using the feed's api token to authenticate", function(done) {
+                        agent(url)
+                              .put("/api/v1/feeds")
+                              .set({
+                                      ApiKey : feeds.testFeed1a.apiKey
+                                   })
+                              .send({})
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.OK);
+                                      res.body.should.have.property('code', httpStatus.OK);
+                                      res.body.should.have.property('status', 'success');
+                                      res.body.should.have.property('data');
+                                      res.body.data.should.have.property('channel_specs');
+                                      res.body.data.should.not.have.property('min_time');
+                                      res.body.data.should.not.have.property('max_time');
+
+                                      done();
+                                   });
+                     });
+
+                     it("Should be able to upload empty data to a feed using the user's OAuth2 access token to authenticate", function(done) {
+                        agent(url)
+                              .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                              .set({
+                                      Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                   })
+                              .send({})
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.OK);
+                                      res.body.should.have.property('code', httpStatus.OK);
+                                      res.body.should.have.property('status', 'success');
+                                      res.body.should.have.property('data');
+                                      res.body.data.should.have.property('channel_specs');
+                                      res.body.data.should.not.have.property('min_time');
+                                      res.body.data.should.not.have.property('max_time');
+
+                                      done();
+                                   });
+                     });
+
+                     it("Should be able to upload to a feed using the feed's api token to authenticate", function(done) {
+                        agent(url)
+                              .put("/api/v1/feeds")
+                              .set({
+                                      ApiKey : feeds.testFeed1a.apiKey
+                                   })
+                              .send(testFeed1aData1)
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.OK);
+                                      res.body.should.have.property('code', httpStatus.OK);
+                                      res.body.should.have.property('status', 'success');
+                                      res.body.should.have.property('data');
+                                      res.body.data.should.have.property('min_time', testFeed1aData1.data[0][0]);
+                                      res.body.data.should.have.property('max_time', testFeed1aData1.data[testFeed1aData1.data.length - 1][0]);
+
+                                      done();
+                                   });
+                     });
+
+                     it("Should fail to upload to a feed using an invalid api token to authenticate", function(done) {
+                        agent(url)
+                              .put("/api/v1/feeds")
+                              .set({
+                                      ApiKey : "bogus"
+                                   })
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.UNAUTHORIZED);
+                                      done();
+                                   });
+                     });
+
+                     it("Should be able to upload to a feed using the user's OAuth2 access token to authenticate", function(done) {
+                        agent(url)
+                              .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                              .set({
+                                      Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                   })
+                              .send(testFeed1aData2)
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.OK);
+                                      res.body.should.have.property('code', httpStatus.OK);
+                                      res.body.should.have.property('status', 'success');
+                                      res.body.should.have.property('data');
+                                      res.body.data.should.have.property('min_time', testFeed1aData1.data[0][0]);
+                                      res.body.data.should.have.property('max_time', testFeed1aData2.data[testFeed1aData2.data.length - 1][0]);
+                                      done();
+                                   });
+                     });
+
+                     it("Should fail to upload to a feed using a valid OAuth2 access token but an invalid feed ID", function(done) {
+                        agent(url)
+                              .put("/api/v1/feeds/" + "0")
+                              .set({
+                                      Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                   })
+                              .send(testFeed1aData2)
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.NOT_FOUND);
+                                      res.body.should.have.property('code', httpStatus.NOT_FOUND);
+                                      res.body.should.have.property('status', 'error');
+                                      res.body.should.have.property('data');
+                                      done();
+                                   });
+                     });
+
+                     it("Should fail to upload to a feed using an invalid OAuth2 access token to authenticate", function(done) {
+                        agent(url)
+                              .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                              .set({
+                                      Authorization : "Bearer " + "bogus"
+                                   })
+                              .send(testFeed1aData2)
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.UNAUTHORIZED);
+                                      done();
+                                   });
+                     });
+
+                  });      // end Upload
                });      // end Feeds
             });      // end Devices
          });      // end Products
@@ -2782,7 +3006,7 @@ describe("ESDR", function() {
 
                         feed.should.have.property('insertId');
                         feed.should.have.property('datastoreId');
-                        feed.should.have.property('apiToken');
+                        feed.should.have.property('apiKey');
 
                         // remember the insert ID
                         feedInsertIds.testFeed3 = feed.insertId;

@@ -18,5 +18,8 @@
       "pool" : {
          "connectionLimit" : 10
       }
+   },
+   "datastore" : {
+      "dataDirectory" : "./datastore/data-test"
    }
 }

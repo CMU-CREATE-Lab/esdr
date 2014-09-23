@@ -1,5 +1,6 @@
 .DS_Store
 *.iws
+datastore
 node_modules
 out
 

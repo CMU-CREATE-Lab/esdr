@@ -36,6 +36,10 @@ config.defaults({
                          "connectionLimit" : 10
                       }
                    },
+                   "datastore" : {
+                      "binDirectory" : "./datastore/bin",
+                      "dataDirectory" : "./datastore/data-development"
+                   },
                    "mail" : {
                       "sender" : {
                          "name" : "ESDR Admin",

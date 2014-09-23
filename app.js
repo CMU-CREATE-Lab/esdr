@@ -14,6 +14,13 @@ var requestLogger = require('morgan');
 var bodyParser = require('body-parser');
 var passport = require('passport');
 var Database = require("./models/Database");
+var BodyTrackDatastore = require('bodytrack-datastore');
+
+// instantiate the datastore
+var datastore = new BodyTrackDatastore({
+                                          binDir : config.get("datastore:binDirectory"),
+                                          dataDir : config.get("datastore:dataDirectory")
+                                       });
 
 // decorate express.response with JSend methods
 require('./lib/jsend');
@@ -60,7 +67,7 @@ Database.create(function(err, db) {
          app.use(express.static(path.join(__dirname, 'public')));          // static file serving
 
          // configure passport
-         require('./middleware/auth')(db.clients, db.users, db.tokens);
+         require('./middleware/auth')(db.clients, db.users, db.tokens, db.feeds);
 
          // ROUTING ----------------------------------------------------------------------------------------------------
 
@@ -70,7 +77,7 @@ Database.create(function(err, db) {
          app.use('/api/v1/users', require('./routes/api/users')(db.users, db.clients));
          app.use('/api/v1/products', require('./routes/api/products')(db.products, db.devices));
          app.use('/api/v1/devices', require('./routes/api/devices')(db.devices, db.feeds));
-         app.use('/api/v1/feeds', require('./routes/api/feeds')(db.feeds));
+         app.use('/api/v1/feeds', require('./routes/api/feeds')(db.feeds, datastore));
          app.use('/api/v1/user-verification', require('./routes/api/user-verification')(db.users, db.clients));
          app.use('/api/v1/password-reset', require('./routes/api/password-reset')(db.users, db.clients));
          app.use('/', require('./routes/index'));

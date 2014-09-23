@@ -34,11 +34,14 @@ module.exports = function(DeviceModel, FeedModel) {
                           var filteredFeeds = [];
                           if (feeds) {
                              feeds.forEach(function(feed) {
+                                // no need to pass through the datastoreId
+                                delete feed.datastoreId;
+
                                 // only include public feeds and private feeds owned by the auth'd user (if any)
                                 if (feed.isPublic || (user && user.id == feed.userId)) {
-                                   // remove the feed's apiToken if the user isnt auth'd, or if she doesn't own this feed
+                                   // remove the feed's apiKey if the user isnt auth'd, or if she doesn't own this feed
                                    if (!user || user.id != feed.userId) {
-                                      delete feed.apiToken;
+                                      delete feed.apiKey;
                                    }
 
                                    // inflate the channel spec JSON text into an object
@@ -84,7 +87,7 @@ module.exports = function(DeviceModel, FeedModel) {
 
                            return res.jsendSuccess({
                                                       id : result.insertId,
-                                                      apiToken : result.apiToken
+                                                      apiKey : result.apiKey
                                                    }, httpStatus.CREATED); // HTTP 201 Created
                         });
                      }

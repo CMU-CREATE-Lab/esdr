@@ -2,9 +2,10 @@ var passport = require('passport');
 var BasicStrategy = require('passport-http').BasicStrategy;
 var ClientPasswordStrategy = require('passport-oauth2-client-password').Strategy;
 var BearerStrategy = require('passport-http-bearer').Strategy;
+var LocalAPIKeyStrategy = require('passport-localapikey-update').Strategy;
 var log = require('log4js').getLogger();
 
-module.exports = function(ClientModel, UserModel, TokenModel) {
+module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {
 
    var authenticateClient = function(clientName, clientSecret, callback) {
       log.debug("auth.authenticateClient(" + clientName + "))");
@@ -61,6 +62,37 @@ module.exports = function(ClientModel, UserModel, TokenModel) {
 
                   var info = { scope : '*' };
                   done(null, user, info);
+               });
+            });
+         }
+   ));
+
+   /**
+    * LocalAPIKeyStrategy
+    *
+    * This strategy is used to authenticate requests for feeds.
+    */
+   passport.use(new LocalAPIKeyStrategy(
+         function(apiKey, done) {
+            FeedModel.findByApiKey(apiKey, function(err1, feed) {
+               if (err1) {
+                  return done(err1);
+               }
+               if (!feed) {
+                  return done(null, false, { message : 'Invalid feed API key' });
+               }
+
+               // we found the feed, so now find the user who owns this feed
+               UserModel.findById(feed.userId, function(err2, user) {
+                  if (err2) {
+                     return done(err2);
+                  }
+                  if (!user) {
+                     return done(null, false, { message : 'Unkown user' });
+                  }
+
+                  var info = { feed : feed };
+                  return done(null, user, info);
                });
             });
          }
