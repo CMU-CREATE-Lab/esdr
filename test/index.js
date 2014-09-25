@@ -56,28 +56,28 @@ describe("ESDR", function() {
       prettyName : 'CATTfish v1',
       vendor : 'CMU CREATE Lab',
       description : 'The CATTfish v1 water temperature and conductivity sensor.',
-      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "uS/cm" }, "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" }}
+      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "?S/cm" }, "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" }}
    };
    var testProduct2 = {
       name : 'cattfish_v2',
       prettyName : 'CATTfish v2',
       vendor : 'CMU CREATE Lab',
       description : 'The CATTfish v2 water temperature and conductivity sensor.',
-      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "uS/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }}
+      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "?S/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }}
    };
    var testProduct3 = {
       name : 'cattfish_v3',
       prettyName : 'CATTfish v3',
       vendor : 'CMU CREATE Lab',
       description : 'The CATTfish v3 water temperature and conductivity sensor.',
-      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "uS/cm" }}
+      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "?S/cm" }}
    };
    var testProduct4 = {
       name : 'cattfish_v4',
       prettyName : 'CATTfish v4',
       vendor : 'CMU CREATE Lab',
       description : 'The CATTfish v4 water temperature and conductivity sensor.',
-      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "uS/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }, "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" }, "humidity" : { "prettyName" : "Humidity", "units" : "%" }}
+      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "?S/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }, "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" }, "humidity" : { "prettyName" : "Humidity", "units" : "%" }}
    };
    var testDevice1 = {
       serialNumber : 'TESTDEVICE1'
@@ -274,9 +274,7 @@ describe("ESDR", function() {
                                     });
                                  }
                               ],
-                              function() {
-                                 initDone();
-                              });
+                              initDone);
                });
             });
          });
@@ -1482,9 +1480,7 @@ describe("ESDR", function() {
                               });
                            }
                         ],
-                        function() {
-                           initDone();
-                        });
+                        initDone);
          });
 
          describe("Products", function() {
@@ -1771,6 +1767,174 @@ describe("ESDR", function() {
                                 res.body.data.should.have.property('userId', createdUsers.testUser2.id);
                                 res.body.data.should.have.property('created');
                                 res.body.data.should.have.property('modified');
+
+                                done();
+                             });
+               });
+
+               it("Should be able to create some more devices for user 1 and user 2", function(done) {
+                  var createDevice = function(accessToken, device, done) {
+                     agent(url)
+                           .post("/api/v1/products/" + testProduct1.name + "/devices")
+                           .set({
+                                   Authorization : "Bearer " + accessToken
+                                })
+                           .send(device)
+                           .end(function(err, res) {
+                                   if (err) {
+                                      return done(err);
+                                   }
+
+                                   res.should.have.property('status', httpStatus.CREATED);
+                                   res.body.should.have.property('code', httpStatus.CREATED);
+                                   res.body.should.have.property('status', 'success');
+                                   res.body.should.have.property('data');
+                                   res.body.data.should.have.property('id');
+                                   res.body.data.should.have.property('serialNumber', device.serialNumber);
+
+                                   done();
+                                });
+                  };
+
+                  flow.series([
+                                 function(stepDone) {
+                                    createDevice(accessTokens.testUser1.access_token, testDevice2, stepDone);
+                                 },
+                                 function(stepDone) {
+                                    createDevice(accessTokens.testUser1.access_token, testDevice3, stepDone);
+                                 },
+                                 function(stepDone) {
+                                    createDevice(accessTokens.testUser2.access_token, testDevice4, stepDone);
+                                 }
+                              ], done);
+               });
+
+               it("Should be able to find all devices for a particular product owned by the auth'd user (user 1)", function(done) {
+                  agent(url)
+                        .get("/api/v1/products/" + testProduct1.name + "/devices")
+                        .set({
+                                Authorization : "Bearer " + accessTokens.testUser1.access_token
+                             })
+                        .end(function(err, res) {
+                                if (err) {
+                                   return done(err);
+                                }
+
+                                res.should.have.property('status', httpStatus.OK);
+                                res.body.should.have.property('code', httpStatus.OK);
+                                res.body.should.have.property('status', 'success');
+                                res.body.should.have.property('data');
+                                res.body.data.should.have.length(3);
+                                res.body.data[0].should.have.property('id');
+                                res.body.data[0].should.have.property('serialNumber', testDevice1.serialNumber);
+                                res.body.data[0].should.have.property('productId');
+                                res.body.data[0].should.have.property('userId', createdUsers.testUser1.id);
+                                res.body.data[0].should.have.property('created');
+                                res.body.data[0].should.have.property('modified');
+                                res.body.data[1].should.have.property('id');
+                                res.body.data[1].should.have.property('serialNumber', testDevice2.serialNumber);
+                                res.body.data[1].should.have.property('productId');
+                                res.body.data[1].should.have.property('userId', createdUsers.testUser1.id);
+                                res.body.data[1].should.have.property('created');
+                                res.body.data[1].should.have.property('modified');
+                                res.body.data[2].should.have.property('id');
+                                res.body.data[2].should.have.property('serialNumber', testDevice3.serialNumber);
+                                res.body.data[2].should.have.property('productId');
+                                res.body.data[2].should.have.property('userId', createdUsers.testUser1.id);
+                                res.body.data[2].should.have.property('created');
+                                res.body.data[2].should.have.property('modified');
+
+                                done();
+                             });
+               });
+
+               it("Should be able to find all devices for a particular product owned by the auth'd user (user 2)", function(done) {
+                  agent(url)
+                        .get("/api/v1/products/" + testProduct1.name + "/devices")
+                        .set({
+                                Authorization : "Bearer " + accessTokens.testUser2.access_token
+                             })
+                        .end(function(err, res) {
+                                if (err) {
+                                   return done(err);
+                                }
+
+                                res.should.have.property('status', httpStatus.OK);
+                                res.body.should.have.property('code', httpStatus.OK);
+                                res.body.should.have.property('status', 'success');
+                                res.body.should.have.property('data');
+                                res.body.data.should.have.length(2);
+                                res.body.data[0].should.have.property('id');
+                                res.body.data[0].should.have.property('serialNumber', testDevice1.serialNumber);
+                                res.body.data[0].should.have.property('productId');
+                                res.body.data[0].should.have.property('userId', createdUsers.testUser2.id);
+                                res.body.data[0].should.have.property('created');
+                                res.body.data[0].should.have.property('modified');
+                                res.body.data[1].should.have.property('id');
+                                res.body.data[1].should.have.property('serialNumber', testDevice4.serialNumber);
+                                res.body.data[1].should.have.property('productId');
+                                res.body.data[1].should.have.property('userId', createdUsers.testUser2.id);
+                                res.body.data[1].should.have.property('created');
+                                res.body.data[1].should.have.property('modified');
+
+                                done();
+                             });
+               });
+
+               it("Should fail to find any devices for a particular product if the auth'd user (user 1) has no devices for that product", function(done) {
+                  agent(url)
+                        .get("/api/v1/products/" + testProduct2.name + "/devices")
+                        .set({
+                                Authorization : "Bearer " + accessTokens.testUser1.access_token
+                             })
+                        .end(function(err, res) {
+                                if (err) {
+                                   return done(err);
+                                }
+
+                                res.should.have.property('status', httpStatus.OK);
+                                res.body.should.have.property('code', httpStatus.OK);
+                                res.body.should.have.property('status', 'success');
+                                res.body.should.have.property('data');
+                                res.body.data.should.have.length(0);
+
+                                done();
+                             });
+               });
+
+               it("Should fail to find any devices for a particular product if the auth'd user (user 2) has no devices for that product", function(done) {
+                  agent(url)
+                        .get("/api/v1/products/" + testProduct2.name + "/devices")
+                        .set({
+                                Authorization : "Bearer " + accessTokens.testUser2.access_token
+                             })
+                        .end(function(err, res) {
+                                if (err) {
+                                   return done(err);
+                                }
+
+                                res.should.have.property('status', httpStatus.OK);
+                                res.body.should.have.property('code', httpStatus.OK);
+                                res.body.should.have.property('status', 'success');
+                                res.body.should.have.property('data');
+                                res.body.data.should.have.length(0);
+
+                                done();
+                             });
+               });
+
+               it("Should fail to find any devices for a particular product if auth is invalid", function(done) {
+                  agent(url)
+                        .get("/api/v1/products/" + testProduct1.name + "/devices")
+                        .set({
+                                Authorization : "Bearer " + "bogus"
+                             })
+                        .end(function(err, res) {
+                                if (err) {
+                                   return done(err);
+                                }
+
+                                res.should.have.property('status', httpStatus.UNAUTHORIZED);
 
                                 done();
                              });
@@ -2876,9 +3040,7 @@ describe("ESDR", function() {
                               });
                            }
                         ],
-                        function() {
-                           initDone();
-                        });
+                        initDone);
          });
 
          describe("Products", function() {
