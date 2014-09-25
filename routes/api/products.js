@@ -54,7 +54,6 @@ module.exports = function(ProductModel, DeviceModel) {
                  });
               });
 
-   // TODO: write tests for this!
    // get all devices for the given product owned by the authenticated user
    router.get('/:productName/devices',
               passport.authenticate('bearer', { session : false }),
