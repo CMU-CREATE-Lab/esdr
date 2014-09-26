@@ -38,9 +38,12 @@ module.exports = function(DeviceModel, FeedModel) {
                                 delete feed.datastoreId;
 
                                 // only include public feeds and private feeds owned by the auth'd user (if any)
-                                if (feed.isPublic || (user && user.id == feed.userId)) {
-                                   // remove the feed's apiKey if the user isnt auth'd, or if she doesn't own this feed
-                                   if (!user || user.id != feed.userId) {
+                                var hasAccessToPrivateFeed = (user && user.id == feed.userId);
+                                if (feed.isPublic || hasAccessToPrivateFeed) {
+                                   // Remove the feed's apiKey if the user doesn't have private access (i.e. isn't
+                                   // auth'd or isn't the feed owner). It's OK to leave the apiKeyReadOnly in the object
+                                   // since the feed is either public or owned by this user.
+                                   if (!hasAccessToPrivateFeed) {
                                       delete feed.apiKey;
                                    }
 
@@ -87,7 +90,8 @@ module.exports = function(DeviceModel, FeedModel) {
 
                            return res.jsendSuccess({
                                                       id : result.insertId,
-                                                      apiKey : result.apiKey
+                                                      apiKey : result.apiKey,
+                                                      apiKeyReadOnly : result.apiKeyReadOnly
                                                    }, httpStatus.CREATED); // HTTP 201 Created
                         });
                      }

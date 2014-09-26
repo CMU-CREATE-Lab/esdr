@@ -85,11 +85,18 @@ module.exports = function(FeedModel, datastore) {
       }
 
    };
+
    // for uploads authenticated using the feed's API Key in the header
    router.put('/',
               passport.authenticate('localapikey', { session : false }),
               function(req, res, next) {
                  var feed = req.authInfo.feed;
+                 var isReadOnly = req.authInfo.isReadOnly;
+
+                 // Deny access if user authenticated with the read-only API key
+                 if (isReadOnly) {
+                    return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
+                 }
 
                  log.debug("Received PUT to upload data for feed ID [" + feed.id + "] (feed API Key authentication)");
                  return handleUpload(res, req.user, feed, req.body);
@@ -110,6 +117,107 @@ module.exports = function(FeedModel, datastore) {
                     }
                     else {
                        return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
+                    }
+                 });
+              });
+
+   var createEmptyTile = function(level, offset) {
+      return {
+         "data" : [],
+         "fields" : ["time", "mean", "stddev", "count"],
+         "level" : level,
+         "offset" : offset,
+         "sample_width" : 0,
+
+         // TODO: get this from the feed's channel specs, and default to value if undefined
+         "type" : "value"
+      };
+   };
+
+   var getTile = function(res, feed, channelName, level, offset) {
+      datastore.getTile(feed.userId,
+                        feed.datastoreId,
+                        channelName,
+                        level,
+                        offset,
+                        function(err, tile) {
+
+                           if (err) {
+                              log.error(JSON.stringify(err, null, 3));
+                              if (err.data && err.data.code == httpStatus.UNPROCESSABLE_ENTITY) {
+                                 return res.jsendPassThrough(err.data);
+                              }
+
+                              return res.jsendServerError("Failed to fetch tile: " + err.message, null);
+                           }
+
+                           // no error, so check whether there was actually any data returned at all
+                           if (typeof tile['data'] === 'undefined') {
+                              tile = createEmptyTile(level, offset);
+                           }
+
+                           // Must set the type since the grapher won't render anything if the type is not set
+                           // (TODO: get this from the feed's channel specs, and default to value if undefined)
+                           tile['type'] = "value";
+
+                           res.jsendSuccess(tile);
+                        });
+   };
+
+   // for tile requests authenticated using the feed's API Key in the header
+   router.get('/channels/:channelName/tiles/:level.:offset',
+              passport.authenticate('localapikey', { session : false }),
+              function(req, res, next) {
+                 var feed = req.authInfo.feed;
+                 var channelName = req.params.channelName;
+                 var level = req.params.level;
+                 var offset = req.params.offset;
+
+                 log.debug("Received GET to get tile for channel [" + channelName + "] in feed [" + feed.id + "] with level.offset [" + level + "." + offset + "](feed API Key authentication)");
+                 return getTile(res, feed, channelName, level, offset);
+              });
+
+   // For tile requests optionally authenticated using the user's OAuth2 access token in the header
+   //
+   // NOT: for private feeds, this will be slower than authenticating with the feed's apiKey or apiKeyReadOnly because
+   // we have to make an extra call to the database to authenticate the user so we can determine whether she has access
+   // to the private feed.
+   router.get('/:feedId/channels/:channelName/tiles/:level.:offset',
+              function(req, res, next) {
+                 var feedId = req.params.feedId;
+                 var channelName = req.params.channelName;
+                 var level = req.params.level;
+                 var offset = req.params.offset;
+
+                 log.debug("Received GET to get tile for channel [" + channelName + "] in feed [" + feedId + "] with level.offset [" + level + "." + offset + "]");
+
+                 // find the feed
+                 findFeedById(res, feedId, function(feed) {
+                    // Allow access to the tile if the feed is public
+                    if (feed.isPublic) {
+                       return getTile(res, feed, channelName, level, offset);
+                    }
+                    else {
+                       // if the feed is private, then authenticate and check for authorization
+                       passport.authenticate('bearer', function(err, user, info) {
+                          if (err) {
+                             var message = "Error while authenticating to get tile for channel [" + channelName + "] in feed [" + feedId + "] with level.offset [" + level + "." + offset + "]";
+                             log.error(message + ": " + err);
+                             return res.jsendServerError(message);
+                          }
+
+                          if (user) {
+                             if (user.id == feed.userId) {
+                                return getTile(res, feed, channelName, level, offset);
+                             }
+
+                             return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
+                          }
+                          else {
+                             return res.jsendClientError("Authentication required.", null, httpStatus.UNAUTHORIZED);  // HTTP 401 Unauthorized
+                          }
+
+                       })(req, res, next);
                     }
                  });
               });

@@ -166,6 +166,41 @@ describe("ESDR", function() {
       ]
    };
 
+   var testFeed1aTile10_2633 = {
+      "data" : [
+         [ 1380472357, 18.6, 0, 1 ],
+         [ 1380556690, 18.3, 0, 1 ],
+         [ 1380643808, 19.5, 0, 1 ],
+         [ 1380725507, 19.6, 0, 1 ],
+         [ 1380752155, 20, 0, 1 ],
+         [ 1380836116, 20.7, 0, 1 ],
+         [ 1380883999, 21.1, 0, 1 ],
+         [ 1380909922, 20.3, 0, 1 ],
+         [ 1380922452, 19.5, 0, 1 ],
+         [ 1380969641, 21.8, 0, 1 ]
+      ],
+      "fields" : [ "time", "mean", "stddev", "count" ],
+      "level" : 10,
+      "offset" : 2633,
+      "type" : "value"
+   };
+
+   var testFeed1bTile10_2634 = {
+      "data" : [
+         [1381106747.21, -1e308, 0, 0],
+         [1381238902.42, 18.2, 0, 1],
+         [1381242668, 17.7, 0, 1],
+         [1381353442, 19.5, 0, 1],
+         [1381403282, 20.8, 0, 1],
+         [1381485424, 20.6, 0, 1],
+         [1381490906, 20.3, 0, 1]
+      ],
+      "fields" : ["time", "mean", "stddev", "count"],
+      "level" : 10,
+      "offset" : 2634,
+      "type" : "value"
+   };
+
    var shallowClone = function(obj) {
       if (obj) {
          var clone = {};
@@ -2058,6 +2093,7 @@ describe("ESDR", function() {
                                    res.body.should.have.property('data');
                                    res.body.data.should.have.property('id');
                                    res.body.data.should.have.property('apiKey');
+                                   res.body.data.should.have.property('apiKeyReadOnly');
 
                                    // remember this feed
                                    feeds.testFeed1a = res.body.data;
@@ -2084,6 +2120,7 @@ describe("ESDR", function() {
                                    res.body.should.have.property('data');
                                    res.body.data.should.have.property('id');
                                    res.body.data.should.have.property('apiKey');
+                                   res.body.data.should.have.property('apiKeyReadOnly');
 
                                    // remember this feed
                                    feeds.testFeed1b = res.body.data;
@@ -2116,11 +2153,15 @@ describe("ESDR", function() {
                                    res.body.data[0].should.have.property('channelSpec');
                                    res.body.data[0].should.have.property('created');
                                    res.body.data[0].should.have.property('modified');
-                                   res.body.data[0].should.not.have.property('apiKey');
+
+                                   // end user never needs to know the datastoreId
                                    res.body.data[0].should.not.have.property('datastoreId');
 
                                    // shouldn't get the apiKey if not auth'd
                                    res.body.data[0].should.not.have.property('apiKey');
+
+                                   // SHOULD get the apiKeyReadOnly, even if not auth'd
+                                   res.body.data[0].should.have.property('apiKeyReadOnly');
 
                                    done();
                                 });
@@ -2146,6 +2187,7 @@ describe("ESDR", function() {
                                    res.body.data[0].should.have.property('deviceId', deviceIds.testDevice1);
                                    res.body.data[0].should.have.property('userId', accessTokens.testUser1.userId);
                                    res.body.data[0].should.have.property('apiKey');
+                                   res.body.data[0].should.have.property('apiKeyReadOnly');
                                    res.body.data[0].should.have.property('exposure', testFeed1a.exposure);
                                    res.body.data[0].should.have.property('isPublic', testFeed1a.isPublic);
                                    res.body.data[0].should.have.property('isMobile', testFeed1a.isMobile);
@@ -2160,6 +2202,7 @@ describe("ESDR", function() {
                                    res.body.data[1].should.have.property('deviceId', deviceIds.testDevice1);
                                    res.body.data[1].should.have.property('userId', accessTokens.testUser1.userId);
                                    res.body.data[1].should.have.property('apiKey');
+                                   res.body.data[1].should.have.property('apiKeyReadOnly');
                                    res.body.data[1].should.have.property('exposure', testFeed1b.exposure);
                                    res.body.data[1].should.have.property('isPublic', testFeed1b.isPublic);
                                    res.body.data[1].should.have.property('isMobile', testFeed1b.isMobile);
@@ -2201,11 +2244,15 @@ describe("ESDR", function() {
                                    res.body.data[0].should.have.property('channelSpec');
                                    res.body.data[0].should.have.property('created');
                                    res.body.data[0].should.have.property('modified');
-                                   res.body.data[0].should.not.have.property('apiKey');
+
+                                   // end user never needs to know the datastoreId
                                    res.body.data[0].should.not.have.property('datastoreId');
 
                                    // shouldn't get the apiKey if not auth'd
                                    res.body.data[0].should.not.have.property('apiKey');
+
+                                   // SHOULD get the apiKeyReadOnly, even if not auth'd
+                                   res.body.data[0].should.have.property('apiKeyReadOnly');
 
                                    done();
                                 });
@@ -2284,7 +2331,7 @@ describe("ESDR", function() {
 
                   it("Should fail to create a feed if fields are invalid", function(done) {
                      var invalidFeed = shallowClone(testFeed1b);
-                     invalidFeed.name = "This is an absurdly long feed name an only a crazy person would create one this long because, seriously, what good does it do to have a name that's over 255 characters long? None, as far as I can tell, other than testing the max length of feed names, of course.";
+                     invalidFeed.name = "This is an absurdly long feed name and only a crazy person would create one this long because, seriously, what good does it do to have a name that's over 255 characters long? None, as far as I can tell, other than testing the max length of feed names, of course.";
                      invalidFeed.exposure = "outer space";
                      invalidFeed.latitude = "a";
                      invalidFeed.longitude = 4242;
@@ -2324,7 +2371,7 @@ describe("ESDR", function() {
                   });
 
                   describe("Upload", function() {
-                     it("Should be able to upload empty data to a feed using the feed's api token to authenticate", function(done) {
+                     it("Should be able to upload empty data to a feed using the feed's apiKey to authenticate", function(done) {
                         agent(url)
                               .put("/api/v1/feeds")
                               .set({
@@ -2343,6 +2390,27 @@ describe("ESDR", function() {
                                       res.body.data.should.have.property('channel_specs');
                                       res.body.data.should.not.have.property('min_time');
                                       res.body.data.should.not.have.property('max_time');
+
+                                      done();
+                                   });
+                     });
+
+                     it("Should fail to upload empty data to a feed using the feed's apiKeyReadOnly to authenticate", function(done) {
+                        agent(url)
+                              .put("/api/v1/feeds")
+                              .set({
+                                      ApiKey : feeds.testFeed1a.apiKeyReadOnly
+                                   })
+                              .send({})
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.FORBIDDEN);
+                                      res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                      res.body.should.have.property('status', 'error');
+                                      res.body.should.have.property('data', null);
 
                                       done();
                                    });
@@ -2372,7 +2440,7 @@ describe("ESDR", function() {
                                    });
                      });
 
-                     it("Should be able to upload to a feed using the feed's api token to authenticate", function(done) {
+                     it("Should be able to upload to a feed using the feed's apiKey to authenticate", function(done) {
                         agent(url)
                               .put("/api/v1/feeds")
                               .set({
@@ -2395,7 +2463,28 @@ describe("ESDR", function() {
                                    });
                      });
 
-                     it("Should fail to upload to a feed using an invalid api token to authenticate", function(done) {
+                     it("Should fail to upload to a feed using the feed's apiKeyReadOnly to authenticate", function(done) {
+                        agent(url)
+                              .put("/api/v1/feeds")
+                              .set({
+                                      ApiKey : feeds.testFeed1a.apiKeyReadOnly
+                                   })
+                              .send(testFeed1aData1)
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.FORBIDDEN);
+                                      res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                      res.body.should.have.property('status', 'error');
+                                      res.body.should.have.property('data', null);
+
+                                      done();
+                                   });
+                     });
+
+                     it("Should fail to upload to a feed using an invalid apiKey to authenticate", function(done) {
                         agent(url)
                               .put("/api/v1/feeds")
                               .set({
@@ -2411,7 +2500,7 @@ describe("ESDR", function() {
                                    });
                      });
 
-                     it("Should be able to upload to a feed using the user's OAuth2 access token to authenticate", function(done) {
+                     it("Should be able to upload to a public feed using the user's OAuth2 access token to authenticate", function(done) {
                         agent(url)
                               .put("/api/v1/feeds/" + feeds.testFeed1a.id)
                               .set({
@@ -2429,6 +2518,68 @@ describe("ESDR", function() {
                                       res.body.should.have.property('data');
                                       res.body.data.should.have.property('min_time', testFeed1aData1.data[0][0]);
                                       res.body.data.should.have.property('max_time', testFeed1aData2.data[testFeed1aData2.data.length - 1][0]);
+                                      done();
+                                   });
+                     });
+
+                     it("Should be able to upload to a private feed using the user's OAuth2 access token to authenticate", function(done) {
+                        agent(url)
+                              .put("/api/v1/feeds/" + feeds.testFeed1b.id)
+                              .set({
+                                      Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                   })
+                              .send(testFeed1aData2)
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.OK);
+                                      res.body.should.have.property('code', httpStatus.OK);
+                                      res.body.should.have.property('status', 'success');
+                                      res.body.should.have.property('data');
+                                      res.body.data.should.have.property('min_time', testFeed1aData2.data[0][0]);
+                                      res.body.data.should.have.property('max_time', testFeed1aData2.data[testFeed1aData2.data.length - 1][0]);
+                                      done();
+                                   });
+                     });
+
+                     it("Should fail to upload to a public feed using the wrong user's OAuth2 access token to authenticate", function(done) {
+                        agent(url)
+                              .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                              .set({
+                                      Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                   })
+                              .send(testFeed1aData2)
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.FORBIDDEN);
+                                      res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                      res.body.should.have.property('status', 'error');
+                                      res.body.should.have.property('data', null);
+                                      done();
+                                   });
+                     });
+
+                     it("Should fail to upload to a private feed using the wrong user's OAuth2 access token to authenticate", function(done) {
+                        agent(url)
+                              .put("/api/v1/feeds/" + feeds.testFeed1b.id)
+                              .set({
+                                      Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                   })
+                              .send(testFeed1aData2)
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.FORBIDDEN);
+                                      res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                      res.body.should.have.property('status', 'error');
+                                      res.body.should.have.property('data', null);
                                       done();
                                    });
                      });
@@ -2470,7 +2621,267 @@ describe("ESDR", function() {
                                    });
                      });
 
+                     it("Should fail to upload to a feed if no apiKey is provided", function(done) {
+                        agent(url)
+                              .put("/api/v1/feeds")
+                              .send(testFeed1aData2)
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.UNAUTHORIZED);
+                                      done();
+                                   });
+                     });
+
+                     it("Should fail to upload to a feed if no OAuth2 access token is provided", function(done) {
+                        agent(url)
+                              .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                              .send(testFeed1aData2)
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.UNAUTHORIZED);
+                                      done();
+                                   });
+                     });
+
                   });      // end Upload
+
+                  describe("Get Tile", function() {
+                     describe("OAuth2 Authentication", function() {
+
+                        it("Should be able to get a tile from a public feed without authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/channels/temperature/tiles/10.2633")
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+                                         should(res.body.data).eql(testFeed1aTile10_2633); // deep equal
+                                         done();
+                                      });
+                        });
+
+                        it("Should be able to get a tile from a public feed with valid authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/channels/temperature/tiles/10.2633")
+                                 .set({
+                                         Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                      })
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+                                         should(res.body.data).eql(testFeed1aTile10_2633); // deep equal
+                                         done();
+                                      });
+                        });
+
+                        it("Should be able to get a tile from a public feed with invalid authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/channels/temperature/tiles/10.2633")
+                                 .set({
+                                         Authorization : "Bearer " + "bogus"
+                                      })
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+                                         should(res.body.data).eql(testFeed1aTile10_2633); // deep equal
+                                         done();
+                                      });
+                        });
+
+                        it("Should fail to get a tile from a private feed without authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/temperature/tiles/10.2633")
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.UNAUTHORIZED);
+                                         res.body.should.have.property('code', httpStatus.UNAUTHORIZED);
+                                         res.body.should.have.property('status', 'error');
+                                         res.body.should.have.property('data', null);
+                                         done();
+                                      });
+                        });
+
+                        it("Should be able to get a tile from a private feed with valid authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/temperature/tiles/10.2634")
+                                 .set({
+                                         Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                      })
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+                                         should(res.body.data).eql(testFeed1bTile10_2634); // deep equal
+                                         done();
+                                      });
+                        });
+
+                        it("Should fail to get a tile from a private feed with invalid authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/temperature/tiles/10.2634")
+                                 .set({
+                                         Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                      })
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.FORBIDDEN);
+                                         res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                         res.body.should.have.property('status', 'error');
+                                         res.body.should.have.property('data', null);
+                                         done();
+                                      });
+                        });
+
+                     });      // end OAuth2 Authentication
+
+                     describe("API Key Authentication", function() {
+
+                        it("Should be able to get a tile from a public feed with valid authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/channels/temperature/tiles/10.2633")
+                                 .set({
+                                         ApiKey : feeds.testFeed1a.apiKey
+                                      })
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+                                         should(res.body.data).eql(testFeed1aTile10_2633); // deep equal
+                                         done();
+                                      });
+                        });
+
+                        it("Should be able to get a tile from a public feed with valid read-only authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/channels/temperature/tiles/10.2633")
+                                 .set({
+                                         ApiKey : feeds.testFeed1a.apiKeyReadOnly
+                                      })
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+                                         should(res.body.data).eql(testFeed1aTile10_2633); // deep equal
+                                         done();
+                                      });
+                        });
+
+                        it("Should be able to get a tile from a private feed with valid authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/channels/temperature/tiles/10.2634")
+                                 .set({
+                                         ApiKey : feeds.testFeed1b.apiKey
+                                      })
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+                                         should(res.body.data).eql(testFeed1bTile10_2634); // deep equal
+                                         done();
+                                      });
+                        });
+
+                        it("Should be able to get a tile from a private feed with valid read-only authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/channels/temperature/tiles/10.2634")
+                                 .set({
+                                         ApiKey : feeds.testFeed1b.apiKeyReadOnly
+                                      })
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+                                         should(res.body.data).eql(testFeed1bTile10_2634); // deep equal
+                                         done();
+                                      });
+                        });
+
+                        it("Should fail to get a tile with invalid authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/channels/temperature/tiles/10.2633")
+                                 .set({
+                                         ApiKey : "bogus"
+                                      })
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.UNAUTHORIZED);
+                                         done();
+                                      });
+                        });
+
+                        it("Should fail to get a tile without authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/channels/temperature/tiles/10.2633")
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.UNAUTHORIZED);
+                                         done();
+                                      });
+                        });
+
+                     });      // end API Key Authentication
+
+                  });      // end Get Tile
                });      // end Feeds
             });      // end Devices
          });      // end Products
@@ -3169,6 +3580,7 @@ describe("ESDR", function() {
                         feed.should.have.property('insertId');
                         feed.should.have.property('datastoreId');
                         feed.should.have.property('apiKey');
+                        feed.should.have.property('apiKeyReadOnly');
 
                         // remember the insert ID
                         feedInsertIds.testFeed3 = feed.insertId;

@@ -82,18 +82,16 @@ module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {
                   return done(null, false, { message : 'Invalid feed API key' });
                }
 
-               // we found the feed, so now find the user who owns this feed
-               UserModel.findById(feed.userId, function(err2, user) {
-                  if (err2) {
-                     return done(err2);
-                  }
-                  if (!user) {
-                     return done(null, false, { message : 'Unkown user' });
-                  }
+               var user = {
+                  id : feed.userId
+               };
 
-                  var info = { feed : feed };
-                  return done(null, user, info);
-               });
+               var info = {
+                  feed : feed,
+                  isReadOnly : feed.apiKeyReadOnly == apiKey
+               };
+
+               return done(null, user, info);
             });
          }
    ));

@@ -12,6 +12,7 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Feeds` ( " +
                          "`deviceId` bigint(20) DEFAULT NULL, " +
                          "`userId` bigint(20) DEFAULT NULL, " +
                          "`apiKey` varchar(64) NOT NULL, " +
+                         "`apiKeyReadOnly` varchar(64) NOT NULL, " +
                          "`exposure` enum('indoor','outdoor','virtual') NOT NULL, " +
                          "`isPublic` boolean DEFAULT 0, " +
                          "`isMobile` boolean DEFAULT 0, " +
@@ -25,6 +26,7 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Feeds` ( " +
                          "`maxTimeSecs` double DEFAULT NULL, " +
                          "PRIMARY KEY (`id`), " +
                          "UNIQUE KEY `apiKey` (`apiKey`), " +
+                         "UNIQUE KEY `apiKeyReadOnly` (`apiKeyReadOnly`), " +
                          "KEY `deviceId` (`deviceId`), " +
                          "KEY `userId` (`userId`), " +
                          "KEY `exposure` (`exposure`), " +
@@ -91,6 +93,7 @@ module.exports = function(databaseHelper) {
          deviceId : deviceId,
          userId : userId,
          apiKey : createRandomHexToken(32),
+         apiKeyReadOnly : createRandomHexToken(32),
          isPublic : !!feedDetails.isPublic,
          isMobile : !!feedDetails.isMobile
       };
@@ -125,7 +128,8 @@ module.exports = function(databaseHelper) {
                                       return callback(null, {
                                          insertId : result.insertId,
                                          datastoreId : "feed_" + result.insertId,
-                                         apiKey : feed.apiKey
+                                         apiKey : feed.apiKey,
+                                         apiKeyReadOnly : feed.apiKeyReadOnly
                                       });
                                    });
                                 });
@@ -158,6 +162,6 @@ module.exports = function(databaseHelper) {
    };
 
    this.findByApiKey = function(apiKey, callback) {
-      databaseHelper.findOne("SELECT *, concat('feed_',id) AS datastoreId FROM Feeds WHERE apiKey=?", [apiKey], callback);
+      databaseHelper.findOne("SELECT *, concat('feed_',id) AS datastoreId FROM Feeds WHERE apiKey=? OR apiKeyReadOnly=?", [apiKey, apiKey], callback);
    };
 };
