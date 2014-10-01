@@ -9,8 +9,8 @@ var log = require('log4js').getLogger();
 var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Feeds` ( " +
                          "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
                          "`name` varchar(255) NOT NULL, " +
-                         "`deviceId` bigint(20) DEFAULT NULL, " +
-                         "`userId` bigint(20) DEFAULT NULL, " +
+                         "`deviceId` bigint(20) NOT NULL, " +
+                         "`userId` bigint(20) NOT NULL, " +
                          "`apiKey` varchar(64) NOT NULL, " +
                          "`apiKeyReadOnly` varchar(64) NOT NULL, " +
                          "`exposure` enum('indoor','outdoor','virtual') NOT NULL, " +
