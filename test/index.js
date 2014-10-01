@@ -56,28 +56,28 @@ describe("ESDR", function() {
       prettyName : 'CATTfish v1',
       vendor : 'CMU CREATE Lab',
       description : 'The CATTfish v1 water temperature and conductivity sensor.',
-      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "?S/cm" }, "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" }}
+      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "&mu;S/cm" }, "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" }}
    };
    var testProduct2 = {
       name : 'cattfish_v2',
       prettyName : 'CATTfish v2',
       vendor : 'CMU CREATE Lab',
       description : 'The CATTfish v2 water temperature and conductivity sensor.',
-      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "?S/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }}
+      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "&mu;S/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }}
    };
    var testProduct3 = {
       name : 'cattfish_v3',
       prettyName : 'CATTfish v3',
       vendor : 'CMU CREATE Lab',
       description : 'The CATTfish v3 water temperature and conductivity sensor.',
-      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "?S/cm" }}
+      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "&mu;S/cm" }}
    };
    var testProduct4 = {
       name : 'cattfish_v4',
       prettyName : 'CATTfish v4',
       vendor : 'CMU CREATE Lab',
       description : 'The CATTfish v4 water temperature and conductivity sensor.',
-      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "?S/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }, "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" }, "humidity" : { "prettyName" : "Humidity", "units" : "%" }}
+      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "&mu;S/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }, "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" }, "humidity" : { "prettyName" : "Humidity", "units" : "%" }}
    };
    var testDevice1 = {
       serialNumber : 'TESTDEVICE1'
