@@ -7,81 +7,76 @@ var log = require('log4js').getLogger();
 
 module.exports = function(FeedModel, datastore) {
 
-   var handleUpload = function(res, user, feed, data) {
+   var handleUpload = function(res, feed, data) {
 
-      if (user) {
-         if (feed) {
-            if (data) {
+      if (feed) {
+         if (data) {
 
-               datastore.importJson(user.id,
-                                    feed.datastoreId,
-                                    data,
-                                    function(err, importResult) {
-                                       if (err) {
-                                          // See if the error contains a JSend data object.  If so, pass it on through.
-                                          if (typeof err.data !== 'undefined' &&
-                                              typeof err.data.code !== 'undefined' &&
-                                              typeof err.data.status !== 'undefined') {
-                                             return res.jsendPassThrough(err.data);
-                                          }
-                                          return res.jsendServerError("Failed to import data", err);
+            datastore.importJson(feed.userId,
+                                 feed.datastoreId,
+                                 data,
+                                 function(err, importResult) {
+                                    if (err) {
+                                       // See if the error contains a JSend data object.  If so, pass it on through.
+                                       if (typeof err.data !== 'undefined' &&
+                                           typeof err.data.code !== 'undefined' &&
+                                           typeof err.data.status !== 'undefined') {
+                                          return res.jsendPassThrough(err.data);
                                        }
-
-                                       // If there was no error, then first see whether any data were actually
-                                       // imported.  The "channel_specs" field will be defined and non-null if so.
-                                       var wasDataActuallyImported = typeof importResult.channel_specs !== 'undefined' && importResult.channel_specs != null;
-
-                                       // Get the info for this device so we can return the current state to the caller
-                                       // and optionally update the min/max times and last upload time in the DB.
-                                       datastore.getInfo({
-                                                            userId : user.id,
-                                                            deviceName : feed.datastoreId
-                                                         },
-                                                         function(err, info) {
-                                                            if (err) {
-                                                               // See if the error contains a JSend data object.  If so, pass it on through.
-                                                               if (typeof err.data !== 'undefined' &&
-                                                                   typeof err.data.code !== 'undefined' &&
-                                                                   typeof err.data.status !== 'undefined') {
-                                                                  return res.jsendPassThrough(err.data);
-                                                               }
-                                                               return res.jsendServerError("Failed to get info after importing data", err);
-                                                            }
-
-                                                            // If there's data in the datastore for this device, then min and max
-                                                            // time will be defined.  If they are, and if data was actually imported above,
-                                                            // then update the database with the min/max times and last upload time
-                                                            if (wasDataActuallyImported &&
-                                                                typeof info.min_time !== 'undefined' &&
-                                                                typeof info.max_time !== 'undefined') {
-                                                               FeedModel.updateLastUploadTime(feed.id,
-                                                                                              info.min_time,
-                                                                                              info.max_time,
-                                                                                              function(err) {
-                                                                                                 if (err) {
-                                                                                                    return res.jsendServerError("Failed to update last upload time after importing data", err);
-                                                                                                 }
-                                                                                                 return res.jsendSuccess(info, httpStatus.OK); // HTTP 200 OK
-                                                                                              });
-                                                            }
-                                                            else {
-                                                               return res.jsendSuccess(info, httpStatus.OK); // HTTP 200 OK
-                                                            }
-
-                                                         });
+                                       return res.jsendServerError("Failed to import data", err);
                                     }
-               );
-            }
-            else {
-               return res.jsendClientError("No data received", null, httpStatus.BAD_REQUEST);
-            }
+
+                                    // If there was no error, then first see whether any data were actually
+                                    // imported.  The "channel_specs" field will be defined and non-null if so.
+                                    var wasDataActuallyImported = typeof importResult.channel_specs !== 'undefined' && importResult.channel_specs != null;
+
+                                    // Get the info for this device so we can return the current state to the caller
+                                    // and optionally update the min/max times and last upload time in the DB.
+                                    datastore.getInfo({
+                                                         userId : feed.userId,
+                                                         deviceName : feed.datastoreId
+                                                      },
+                                                      function(err, info) {
+                                                         if (err) {
+                                                            // See if the error contains a JSend data object.  If so, pass it on through.
+                                                            if (typeof err.data !== 'undefined' &&
+                                                                typeof err.data.code !== 'undefined' &&
+                                                                typeof err.data.status !== 'undefined') {
+                                                               return res.jsendPassThrough(err.data);
+                                                            }
+                                                            return res.jsendServerError("Failed to get info after importing data", err);
+                                                         }
+
+                                                         // If there's data in the datastore for this device, then min and max
+                                                         // time will be defined.  If they are, and if data was actually imported above,
+                                                         // then update the database with the min/max times and last upload time
+                                                         if (wasDataActuallyImported &&
+                                                             typeof info.min_time !== 'undefined' &&
+                                                             typeof info.max_time !== 'undefined') {
+                                                            FeedModel.updateLastUploadTime(feed.id,
+                                                                                           info.min_time,
+                                                                                           info.max_time,
+                                                                                           function(err) {
+                                                                                              if (err) {
+                                                                                                 return res.jsendServerError("Failed to update last upload time after importing data", err);
+                                                                                              }
+                                                                                              return res.jsendSuccess(info, httpStatus.OK); // HTTP 200 OK
+                                                                                           });
+                                                         }
+                                                         else {
+                                                            return res.jsendSuccess(info, httpStatus.OK); // HTTP 200 OK
+                                                         }
+
+                                                      });
+                                 }
+            );
          }
          else {
-            return res.jsendClientError("Unknown or invalid feed", null, httpStatus.NOT_FOUND);
+            return res.jsendClientError("No data received", null, httpStatus.BAD_REQUEST);
          }
       }
       else {
-         return res.jsendClientError("Authentication required", null, httpStatus.UNAUTHORIZED);
+         return res.jsendClientError("Unknown or invalid feed", null, httpStatus.NOT_FOUND);
       }
 
    };
@@ -99,7 +94,7 @@ module.exports = function(FeedModel, datastore) {
                  }
 
                  log.debug("Received PUT to upload data for feed ID [" + feed.id + "] (feed API Key authentication)");
-                 return handleUpload(res, req.user, feed, req.body);
+                 return handleUpload(res, feed, req.body);
               });
 
    // for uploads authenticated using the user's OAuth2 access token in the header
@@ -113,7 +108,7 @@ module.exports = function(FeedModel, datastore) {
                  findFeedById(res, feedId, function(feed) {
                     // Now make sure this user has access to upload to this feed and, if so, continue with the upload
                     if (req.user.id == feed.userId) {
-                       return handleUpload(res, req.user, feed, req.body);
+                       return handleUpload(res, feed, req.body);
                     }
                     else {
                        return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
