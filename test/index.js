@@ -2371,9 +2371,10 @@ describe("ESDR", function() {
                   });
 
                   describe("Upload", function() {
+
                      it("Should be able to upload empty data to a feed using the feed's apiKey to authenticate", function(done) {
                         agent(url)
-                              .put("/api/v1/feeds")
+                              .put("/api/v1/feed")
                               .set({
                                       ApiKey : feeds.testFeed1a.apiKey
                                    })
@@ -2397,7 +2398,7 @@ describe("ESDR", function() {
 
                      it("Should fail to upload empty data to a feed using the feed's apiKeyReadOnly to authenticate", function(done) {
                         agent(url)
-                              .put("/api/v1/feeds")
+                              .put("/api/v1/feed")
                               .set({
                                       ApiKey : feeds.testFeed1a.apiKeyReadOnly
                                    })
@@ -2442,7 +2443,7 @@ describe("ESDR", function() {
 
                      it("Should be able to upload to a feed using the feed's apiKey to authenticate", function(done) {
                         agent(url)
-                              .put("/api/v1/feeds")
+                              .put("/api/v1/feed")
                               .set({
                                       ApiKey : feeds.testFeed1a.apiKey
                                    })
@@ -2465,7 +2466,7 @@ describe("ESDR", function() {
 
                      it("Should fail to upload to a feed using the feed's apiKeyReadOnly to authenticate", function(done) {
                         agent(url)
-                              .put("/api/v1/feeds")
+                              .put("/api/v1/feed")
                               .set({
                                       ApiKey : feeds.testFeed1a.apiKeyReadOnly
                                    })
@@ -2486,7 +2487,7 @@ describe("ESDR", function() {
 
                      it("Should fail to upload to a feed using an invalid apiKey to authenticate", function(done) {
                         agent(url)
-                              .put("/api/v1/feeds")
+                              .put("/api/v1/feed")
                               .set({
                                       ApiKey : "bogus"
                                    })
@@ -2623,7 +2624,7 @@ describe("ESDR", function() {
 
                      it("Should fail to upload to a feed if no apiKey is provided", function(done) {
                         agent(url)
-                              .put("/api/v1/feeds")
+                              .put("/api/v1/feed")
                               .send(testFeed1aData2)
                               .end(function(err, res) {
                                       if (err) {
@@ -2847,7 +2848,7 @@ describe("ESDR", function() {
 
                         it("Should be able to get info for a public feed with valid authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feeds")
+                                 .get("/api/v1/feed")
                                  .set({
                                          ApiKey : feeds.testFeed1a.apiKey
                                       })
@@ -2863,7 +2864,7 @@ describe("ESDR", function() {
 
                         it("Should be able to get info for a public feed with valid read-only authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feeds")
+                                 .get("/api/v1/feed")
                                  .set({
                                          ApiKey : feeds.testFeed1a.apiKeyReadOnly
                                       })
@@ -2879,7 +2880,7 @@ describe("ESDR", function() {
 
                         it("Should be able to get info for a private feed with valid authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feeds")
+                                 .get("/api/v1/feed")
                                  .set({
                                          ApiKey : feeds.testFeed1b.apiKey
                                       })
@@ -2895,7 +2896,7 @@ describe("ESDR", function() {
 
                         it("Should be able to get info for a private feed with valid read-only authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feeds")
+                                 .get("/api/v1/feed")
                                  .set({
                                          ApiKey : feeds.testFeed1b.apiKeyReadOnly
                                       })
@@ -2911,7 +2912,7 @@ describe("ESDR", function() {
 
                         it("Should fail to get info for a private feed with invalid authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feeds")
+                                 .get("/api/v1/feed")
                                  .set({
                                          ApiKey : "bogus"
                                       })
@@ -2927,7 +2928,7 @@ describe("ESDR", function() {
 
                         it("Should fail to get info for a private feed without authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feeds")
+                                 .get("/api/v1/feed")
                                  .end(function(err, res) {
                                          if (err) {
                                             return done(err);
@@ -3062,7 +3063,7 @@ describe("ESDR", function() {
 
                         it("Should be able to get a tile from a public feed with valid authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feeds/channels/temperature/tiles/10.2633")
+                                 .get("/api/v1/feed/channels/temperature/tiles/10.2633")
                                  .set({
                                          ApiKey : feeds.testFeed1a.apiKey
                                       })
@@ -3082,7 +3083,7 @@ describe("ESDR", function() {
 
                         it("Should be able to get a tile from a public feed with valid read-only authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feeds/channels/temperature/tiles/10.2633")
+                                 .get("/api/v1/feed/channels/temperature/tiles/10.2633")
                                  .set({
                                          ApiKey : feeds.testFeed1a.apiKeyReadOnly
                                       })
@@ -3102,7 +3103,7 @@ describe("ESDR", function() {
 
                         it("Should be able to get a tile from a private feed with valid authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feeds/channels/temperature/tiles/10.2634")
+                                 .get("/api/v1/feed/channels/temperature/tiles/10.2634")
                                  .set({
                                          ApiKey : feeds.testFeed1b.apiKey
                                       })
@@ -3122,7 +3123,7 @@ describe("ESDR", function() {
 
                         it("Should be able to get a tile from a private feed with valid read-only authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feeds/channels/temperature/tiles/10.2634")
+                                 .get("/api/v1/feed/channels/temperature/tiles/10.2634")
                                  .set({
                                          ApiKey : feeds.testFeed1b.apiKeyReadOnly
                                       })
@@ -3142,7 +3143,7 @@ describe("ESDR", function() {
 
                         it("Should fail to get a tile with invalid authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feeds/channels/temperature/tiles/10.2633")
+                                 .get("/api/v1/feed/channels/temperature/tiles/10.2633")
                                  .set({
                                          ApiKey : "bogus"
                                       })
@@ -3158,7 +3159,7 @@ describe("ESDR", function() {
 
                         it("Should fail to get a tile without authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feeds/channels/temperature/tiles/10.2633")
+                                 .get("/api/v1/feed/channels/temperature/tiles/10.2633")
                                  .end(function(err, res) {
                                          if (err) {
                                             return done(err);
