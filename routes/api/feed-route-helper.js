@@ -2,7 +2,7 @@ var httpStatus = require('http-status');
 var log = require('log4js').getLogger();
 
 module.exports = function(FeedModel, datastore) {
-   
+
    this.importData = function(res, feed, data) {
       if (feed) {
          if (data) {
