@@ -159,16 +159,11 @@ module.exports = function(FeedModel, datastore) {
                         });
    };
 
-   var getFeedInfo = function(res, feed, channelName) {
-      var infoFilter = {
-         userId : feed.userId,
-         deviceName : feed.datastoreId
-      };
-      if (typeof channelName !== 'undefined' && channelName != null) {
-         infoFilter.channelName = channelName;
-      }
-
-      datastore.getInfo(infoFilter,
+   var getFeedInfo = function(res, feed) {
+      datastore.getInfo({
+                           userId : feed.userId,
+                           deviceName : feed.datastoreId
+                        },
                         function(err, info) {
                            if (err) {
                               // See if the error contains a JSend data object.  If so, pass it on through.
