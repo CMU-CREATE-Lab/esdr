@@ -3863,7 +3863,7 @@ describe("ESDR", function() {
                   var feedInsertIds = {};
 
                   it("Should be able to create a feed", function(done) {
-                     db.feeds.create(testFeed3, deviceInsertIds.testDevice5, userIds.testUser1, function(err, feed) {
+                     db.feeds.create(testFeed3, deviceInsertIds.testDevice5, productInsertIds.testProduct3, userIds.testUser1, function(err, feed) {
                         if (err) {
                            return done(err);
                         }

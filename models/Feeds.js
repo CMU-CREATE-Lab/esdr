@@ -10,6 +10,7 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Feeds` ( " +
                          "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
                          "`name` varchar(255) NOT NULL, " +
                          "`deviceId` bigint(20) NOT NULL, " +
+                         "`productId` bigint(20) NOT NULL, " +
                          "`userId` bigint(20) NOT NULL, " +
                          "`apiKey` varchar(64) NOT NULL, " +
                          "`apiKeyReadOnly` varchar(64) NOT NULL, " +
@@ -28,6 +29,7 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Feeds` ( " +
                          "UNIQUE KEY `apiKey` (`apiKey`), " +
                          "UNIQUE KEY `apiKeyReadOnly` (`apiKeyReadOnly`), " +
                          "KEY `deviceId` (`deviceId`), " +
+                         "KEY `productId` (`productId`), " +
                          "KEY `userId` (`userId`), " +
                          "KEY `exposure` (`exposure`), " +
                          "KEY `isPublic` (`isPublic`), " +
@@ -35,6 +37,7 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Feeds` ( " +
                          "KEY `latitude` (`latitude`), " +
                          "KEY `longitude` (`longitude`), " +
                          "CONSTRAINT `feeds_deviceId_fk_1` FOREIGN KEY (`deviceId`) REFERENCES `Devices` (`id`), " +
+                         "CONSTRAINT `feeds_productId_fk_1` FOREIGN KEY (`productId`) REFERENCES `Products` (`id`), " +
                          "CONSTRAINT `feeds_userId_fk_1` FOREIGN KEY (`userId`) REFERENCES `Users` (`id`) " +
                          ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
 
@@ -87,10 +90,11 @@ module.exports = function(databaseHelper) {
       });
    };
 
-   this.create = function(feedDetails, deviceId, userId, callback) {
+   this.create = function(feedDetails, deviceId, productId, userId, callback) {
       // first build a copy and trim some fields
       var feed = {
          deviceId : deviceId,
+         productId : productId,
          userId : userId,
          apiKey : createRandomHexToken(32),
          apiKeyReadOnly : createRandomHexToken(32),
@@ -110,8 +114,8 @@ module.exports = function(databaseHelper) {
 
          // now that we have validated, get the default channel spec from this device's Products table record (which was
          // already validated when inserted into the product, so no need to do so again here)
-         databaseHelper.findOne("SELECT defaultChannelSpec FROM Products WHERE id = (SELECT productId FROM Devices WHERE id=?)",
-                                [deviceId],
+         databaseHelper.findOne("SELECT defaultChannelSpec FROM Products WHERE id = ?",
+                                [productId],
                                 function(err2, result) {
                                    if (err2) {
                                       return callback(err2);
