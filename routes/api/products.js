@@ -54,7 +54,7 @@ module.exports = function(ProductModel, DeviceModel) {
                  });
               });
 
-   // get all devices for the given product owned by the authenticated user
+   // get all devices for the given product owned by the authenticated user (TODO: do we need this method?)
    router.get('/:productName/devices',
               passport.authenticate('bearer', { session : false }),
               function(req, res, next) {
