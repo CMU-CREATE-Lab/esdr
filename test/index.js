@@ -2652,619 +2652,306 @@ describe("ESDR", function() {
                   });      // end Upload
 
                   describe("Get Info", function() {
-                     describe("Feed Info", function() {
-                        var getExpectedInfoFeed1a = function(feedId) {
-                           var info = {
-                              "channel_specs" : {},
-                              "max_time" : 1382054188,
-                              "min_time" : 1380276279.1
-                           };
-                           info.channel_specs['feed_' + feedId + '.battery_voltage'] = {
-                              "channel_bounds" : {
-                                 "max_time" : 1382054188,
-                                 "max_value" : 3.85,
-                                 "min_time" : 1380276279.1,
-                                 "min_value" : 3.84
-                              }
-                           };
-                           info.channel_specs['feed_' + feedId + '.conductivity'] = {
-                              "channel_bounds" : {
-                                 "max_time" : 1382054188,
-                                 "max_value" : 624,
-                                 "min_time" : 1380276279.1,
-                                 "min_value" : 464
-                              }
-                           };
-                           info.channel_specs['feed_' + feedId + '.temperature'] = {
-                              "channel_bounds" : {
-                                 "max_time" : 1382054188,
-                                 "max_value" : 22.2,
-                                 "min_time" : 1380276279.1,
-                                 "min_value" : 17.7
-                              }
-                           };
-                           return info;
+                     var getExpectedInfoFeed1a = function(feedId) {
+                        var info = {
+                           "channel_specs" : {},
+                           "max_time" : 1382054188,
+                           "min_time" : 1380276279.1
                         };
-
-                        var getExpectedInfoFeed1b = function(feedId) {
-                           var info = {
-                              "channel_specs" : {},
+                        info.channel_specs['feed_' + feedId + '.battery_voltage'] = {
+                           "channel_bounds" : {
                               "max_time" : 1382054188,
-                              "min_time" : 1381238902.42
-                           };
-                           info.channel_specs['feed_' + feedId + '.battery_voltage'] = {
-                              "channel_bounds" : {
-                                 "max_time" : 1382054188,
-                                 "max_value" : 3.84,
-                                 "min_time" : 1381238902.42,
-                                 "min_value" : 3.84
-                              }
-                           };
-                           info.channel_specs['feed_' + feedId + '.conductivity'] = {
-                              "channel_bounds" : {
-                                 "max_time" : 1382054188,
-                                 "max_value" : 624,
-                                 "min_time" : 1381238902.42,
-                                 "min_value" : 478
-                              }
-                           };
-                           info.channel_specs['feed_' + feedId + '.temperature'] = {
-                              "channel_bounds" : {
-                                 "max_time" : 1382054188,
-                                 "max_value" : 20.8,
-                                 "min_time" : 1381238902.42,
-                                 "min_value" : 17.7
-                              }
-                           };
-                           return info;
+                              "max_value" : 3.85,
+                              "min_time" : 1380276279.1,
+                              "min_value" : 3.84
+                           }
                         };
-
-                        describe("OAuth2 Authentication", function() {
-                           it("Should be able to get info for a public feed without authentication", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/info")
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
-
-                                            res.should.have.property('status', httpStatus.OK);
-                                            res.body.should.have.property('code', httpStatus.OK);
-                                            res.body.should.have.property('status', 'success');
-                                            res.body.should.have.property('data');
-                                            should(res.body.data).eql(getExpectedInfoFeed1a(feeds.testFeed1a.id)); // deep equal
-
-                                            done();
-                                         });
-                           });
-
-                           it("Should be able to get info for a public feed with valid authentication", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/info")
-                                    .set({
-                                            Authorization : "Bearer " + accessTokens.testUser1.access_token
-                                         })
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
-
-                                            res.should.have.property('status', httpStatus.OK);
-                                            res.body.should.have.property('code', httpStatus.OK);
-                                            res.body.should.have.property('status', 'success');
-                                            res.body.should.have.property('data');
-                                            should(res.body.data).eql(getExpectedInfoFeed1a(feeds.testFeed1a.id)); // deep equal
-
-                                            done();
-                                         });
-                           });
-
-                           it("Should be able to get info for a public feed with invalid authentication", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/info")
-                                    .set({
-                                            Authorization : "Bearer " + "bogus"
-                                         })
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
-
-                                            res.should.have.property('status', httpStatus.OK);
-                                            res.body.should.have.property('code', httpStatus.OK);
-                                            res.body.should.have.property('status', 'success');
-                                            res.body.should.have.property('data');
-                                            should(res.body.data).eql(getExpectedInfoFeed1a(feeds.testFeed1a.id)); // deep equal
-
-                                            done();
-                                         });
-                           });
-
-                           it("Should fail to get info for a private feed without authentication", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/info")
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
-
-                                            res.should.have.property('status', httpStatus.UNAUTHORIZED);
-                                            res.body.should.have.property('code', httpStatus.UNAUTHORIZED);
-                                            res.body.should.have.property('status', 'error');
-                                            res.body.should.have.property('data', null);
-                                            done();
-                                         });
-                           });
-
-                           it("Should be able to get info for a private feed with valid authentication", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/info")
-                                    .set({
-                                            Authorization : "Bearer " + accessTokens.testUser1.access_token
-                                         })
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
-
-                                            res.should.have.property('status', httpStatus.OK);
-                                            res.body.should.have.property('code', httpStatus.OK);
-                                            res.body.should.have.property('status', 'success');
-                                            res.body.should.have.property('data');
-                                            should(res.body.data).eql(getExpectedInfoFeed1b(feeds.testFeed1b.id)); // deep equal
-                                            done();
-                                         });
-                           });
-
-                           it("Should fail to get info for a private feed with invalid authentication", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/info")
-                                    .set({
-                                            Authorization : "Bearer " + accessTokens.testUser2.access_token
-                                         })
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
-
-                                            res.should.have.property('status', httpStatus.FORBIDDEN);
-                                            res.body.should.have.property('code', httpStatus.FORBIDDEN);
-                                            res.body.should.have.property('status', 'error');
-                                            res.body.should.have.property('data', null);
-                                            done();
-                                         });
-                           });
-
-                        });      // end OAuth2 Authentication
-
-                        describe("API Key Authentication", function() {
-
-                           it("Should be able to get info for a public feed with valid authentication", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/info")
-                                    .set({
-                                            ApiKey : feeds.testFeed1a.apiKey
-                                         })
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
-
-                                            res.should.have.property('status', httpStatus.OK);
-                                            res.body.should.have.property('code', httpStatus.OK);
-                                            res.body.should.have.property('status', 'success');
-                                            res.body.should.have.property('data');
-                                            should(res.body.data).eql(getExpectedInfoFeed1a(feeds.testFeed1a.id)); // deep equal
-
-                                            done();
-                                         });
-                           });
-
-                           it("Should be able to get info for a public feed with valid read-only authentication", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/info")
-                                    .set({
-                                            ApiKey : feeds.testFeed1a.apiKeyReadOnly
-                                         })
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
-
-                                            res.should.have.property('status', httpStatus.OK);
-                                            res.body.should.have.property('code', httpStatus.OK);
-                                            res.body.should.have.property('status', 'success');
-                                            res.body.should.have.property('data');
-                                            should(res.body.data).eql(getExpectedInfoFeed1a(feeds.testFeed1a.id)); // deep equal
-
-                                            done();
-                                         });
-                           });
-
-                           it("Should be able to get info for a private feed with valid authentication", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/info")
-                                    .set({
-                                            ApiKey : feeds.testFeed1b.apiKey
-                                         })
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
-
-                                            res.should.have.property('status', httpStatus.OK);
-                                            res.body.should.have.property('code', httpStatus.OK);
-                                            res.body.should.have.property('status', 'success');
-                                            res.body.should.have.property('data');
-                                            should(res.body.data).eql(getExpectedInfoFeed1b(feeds.testFeed1b.id)); // deep equal
-
-                                            done();
-                                         });
-                           });
-
-                           it("Should be able to get info for a private feed with valid read-only authentication", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/info")
-                                    .set({
-                                            ApiKey : feeds.testFeed1b.apiKeyReadOnly
-                                         })
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
-
-                                            res.should.have.property('status', httpStatus.OK);
-                                            res.body.should.have.property('code', httpStatus.OK);
-                                            res.body.should.have.property('status', 'success');
-                                            res.body.should.have.property('data');
-                                            should(res.body.data).eql(getExpectedInfoFeed1b(feeds.testFeed1b.id)); // deep equal
-
-                                            done();
-                                         });
-                           });
-
-                           it("Should fail to get info for a private feed with invalid authentication", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/info")
-                                    .set({
-                                            ApiKey : "bogus"
-                                         })
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
-
-                                            res.should.have.property('status', httpStatus.UNAUTHORIZED);
-                                            done();
-                                         });
-                           });
-
-                           it("Should fail to get info for a private feed without authentication", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/info")
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
-
-                                            res.should.have.property('status', httpStatus.UNAUTHORIZED);
-                                            done();
-                                         });
-                           });
-
-                        });      // end API Key Authentication
-
-                     });      // end Feed Info
-
-                     describe("Channel Info", function() {
-                        var emptyChannelInfo = {"channel_specs" : {}};
-
-                        var getExpectedInfoFeed1a = function(feedId) {
-                           var info = {
-                              "channel_specs" : {},
+                        info.channel_specs['feed_' + feedId + '.conductivity'] = {
+                           "channel_bounds" : {
                               "max_time" : 1382054188,
-                              "min_time" : 1380276279.1
-                           };
-                           info.channel_specs['feed_' + feedId + '.conductivity'] = {
-                              "channel_bounds" : {
-                                 "max_time" : 1382054188,
-                                 "max_value" : 624,
-                                 "min_time" : 1380276279.1,
-                                 "min_value" : 464
-                              }
-                           };
-                           return info;
+                              "max_value" : 624,
+                              "min_time" : 1380276279.1,
+                              "min_value" : 464
+                           }
                         };
-
-                        var getExpectedInfoFeed1b = function(feedId) {
-                           var info = {
-                              "channel_specs" : {},
+                        info.channel_specs['feed_' + feedId + '.temperature'] = {
+                           "channel_bounds" : {
                               "max_time" : 1382054188,
-                              "min_time" : 1381238902.42
-                           };
-                           info.channel_specs['feed_' + feedId + '.conductivity'] = {
-                              "channel_bounds" : {
-                                 "max_time" : 1382054188,
-                                 "max_value" : 624,
-                                 "min_time" : 1381238902.42,
-                                 "min_value" : 478
-                              }
-                           };
-                           return info;
+                              "max_value" : 22.2,
+                              "min_time" : 1380276279.1,
+                              "min_value" : 17.7
+                           }
                         };
+                        return info;
+                     };
 
-                        describe("OAuth2 Authentication", function() {
-                           it("Should be able to get channel info for a public feed without authentication", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/channels/conductivity/info")
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
+                     var getExpectedInfoFeed1b = function(feedId) {
+                        var info = {
+                           "channel_specs" : {},
+                           "max_time" : 1382054188,
+                           "min_time" : 1381238902.42
+                        };
+                        info.channel_specs['feed_' + feedId + '.battery_voltage'] = {
+                           "channel_bounds" : {
+                              "max_time" : 1382054188,
+                              "max_value" : 3.84,
+                              "min_time" : 1381238902.42,
+                              "min_value" : 3.84
+                           }
+                        };
+                        info.channel_specs['feed_' + feedId + '.conductivity'] = {
+                           "channel_bounds" : {
+                              "max_time" : 1382054188,
+                              "max_value" : 624,
+                              "min_time" : 1381238902.42,
+                              "min_value" : 478
+                           }
+                        };
+                        info.channel_specs['feed_' + feedId + '.temperature'] = {
+                           "channel_bounds" : {
+                              "max_time" : 1382054188,
+                              "max_value" : 20.8,
+                              "min_time" : 1381238902.42,
+                              "min_value" : 17.7
+                           }
+                        };
+                        return info;
+                     };
 
-                                            res.should.have.property('status', httpStatus.OK);
-                                            res.body.should.have.property('code', httpStatus.OK);
-                                            res.body.should.have.property('status', 'success');
-                                            res.body.should.have.property('data');
-                                            should(res.body.data).eql(getExpectedInfoFeed1a(feeds.testFeed1a.id)); // deep equal
-                                            done();
-                                         });
-                           });
+                     describe("OAuth2 Authentication", function() {
+                        it("Should be able to get info for a public feed without authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/info")
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
 
-                           it("Should be able to get channel info for a public feed with valid authentication", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/channels/conductivity/info")
-                                    .set({
-                                            Authorization : "Bearer " + accessTokens.testUser1.access_token
-                                         })
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+                                         should(res.body.data).eql(getExpectedInfoFeed1a(feeds.testFeed1a.id)); // deep equal
 
-                                            res.should.have.property('status', httpStatus.OK);
-                                            res.body.should.have.property('code', httpStatus.OK);
-                                            res.body.should.have.property('status', 'success');
-                                            res.body.should.have.property('data');
-                                            should(res.body.data).eql(getExpectedInfoFeed1a(feeds.testFeed1a.id)); // deep equal
+                                         done();
+                                      });
+                        });
 
-                                            done();
-                                         });
-                           });
+                        it("Should be able to get info for a public feed with valid authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/info")
+                                 .set({
+                                         Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                      })
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
 
-                           it("Should be able to get channel info for a public feed with invalid authentication", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/channels/conductivity/info")
-                                    .set({
-                                            Authorization : "Bearer " + "bogus"
-                                         })
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+                                         should(res.body.data).eql(getExpectedInfoFeed1a(feeds.testFeed1a.id)); // deep equal
 
-                                            res.should.have.property('status', httpStatus.OK);
-                                            res.body.should.have.property('code', httpStatus.OK);
-                                            res.body.should.have.property('status', 'success');
-                                            res.body.should.have.property('data');
-                                            should(res.body.data).eql(getExpectedInfoFeed1a(feeds.testFeed1a.id)); // deep equal
+                                         done();
+                                      });
+                        });
 
-                                            done();
-                                         });
-                           });
+                        it("Should be able to get info for a public feed with invalid authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/info")
+                                 .set({
+                                         Authorization : "Bearer " + "bogus"
+                                      })
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
 
-                           it("Should fail to get channel info for a private feed without authentication", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/conductivity/info")
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+                                         should(res.body.data).eql(getExpectedInfoFeed1a(feeds.testFeed1a.id)); // deep equal
 
-                                            res.should.have.property('status', httpStatus.UNAUTHORIZED);
-                                            res.body.should.have.property('code', httpStatus.UNAUTHORIZED);
-                                            res.body.should.have.property('status', 'error');
-                                            res.body.should.have.property('data', null);
-                                            done();
-                                         });
-                           });
+                                         done();
+                                      });
+                        });
 
-                           it("Should be able to get channel info for a private feed with valid authentication", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/conductivity/info")
-                                    .set({
-                                            Authorization : "Bearer " + accessTokens.testUser1.access_token
-                                         })
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
+                        it("Should fail to get info for a private feed without authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/info")
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
 
-                                            res.should.have.property('status', httpStatus.OK);
-                                            res.body.should.have.property('code', httpStatus.OK);
-                                            res.body.should.have.property('status', 'success');
-                                            res.body.should.have.property('data');
-                                            should(res.body.data).eql(getExpectedInfoFeed1b(feeds.testFeed1b.id)); // deep equal
-                                            done();
-                                         });
-                           });
+                                         res.should.have.property('status', httpStatus.UNAUTHORIZED);
+                                         res.body.should.have.property('code', httpStatus.UNAUTHORIZED);
+                                         res.body.should.have.property('status', 'error');
+                                         res.body.should.have.property('data', null);
+                                         done();
+                                      });
+                        });
 
-                           it("Should fail to get channel info for a private feed with invalid authentication", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/conductivity/info")
-                                    .set({
-                                            Authorization : "Bearer " + accessTokens.testUser2.access_token
-                                         })
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
+                        it("Should be able to get info for a private feed with valid authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/info")
+                                 .set({
+                                         Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                      })
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
 
-                                            res.should.have.property('status', httpStatus.FORBIDDEN);
-                                            res.body.should.have.property('code', httpStatus.FORBIDDEN);
-                                            res.body.should.have.property('status', 'error');
-                                            res.body.should.have.property('data', null);
-                                            done();
-                                         });
-                           });
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+                                         should(res.body.data).eql(getExpectedInfoFeed1b(feeds.testFeed1b.id)); // deep equal
+                                         done();
+                                      });
+                        });
 
-                           it("Should get empty channel info when requesting a bogus channel from a feed", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/channels/bogus/info")
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
+                        it("Should fail to get info for a private feed with invalid authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/info")
+                                 .set({
+                                         Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                      })
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
 
-                                            res.should.have.property('status', httpStatus.OK);
-                                            res.body.should.have.property('code', httpStatus.OK);
-                                            res.body.should.have.property('status', 'success');
-                                            res.body.should.have.property('data');
-                                            should(res.body.data).eql(emptyChannelInfo); // deep equal
-                                            done();
-                                         });
-                           });
+                                         res.should.have.property('status', httpStatus.FORBIDDEN);
+                                         res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                         res.body.should.have.property('status', 'error');
+                                         res.body.should.have.property('data', null);
+                                         done();
+                                      });
+                        });
 
-                        });      // end OAuth2 Authentication
+                     });      // end OAuth2 Authentication
 
-                        describe("API Key Authentication", function() {
+                     describe("API Key Authentication", function() {
 
-                           it("Should be able to get channel info for a public feed with valid authentication", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/channels/conductivity/info")
-                                    .set({
-                                            ApiKey : feeds.testFeed1a.apiKey
-                                         })
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
+                        it("Should be able to get info for a public feed with valid authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/info")
+                                 .set({
+                                         ApiKey : feeds.testFeed1a.apiKey
+                                      })
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
 
-                                            res.should.have.property('status', httpStatus.OK);
-                                            res.body.should.have.property('code', httpStatus.OK);
-                                            res.body.should.have.property('status', 'success');
-                                            res.body.should.have.property('data');
-                                            should(res.body.data).eql(getExpectedInfoFeed1a(feeds.testFeed1a.id)); // deep equal
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+                                         should(res.body.data).eql(getExpectedInfoFeed1a(feeds.testFeed1a.id)); // deep equal
 
-                                            done();
-                                         });
-                           });
+                                         done();
+                                      });
+                        });
 
-                           it("Should be able to get channel info for a public feed with valid read-only authentication", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/channels/conductivity/info")
-                                    .set({
-                                            ApiKey : feeds.testFeed1a.apiKeyReadOnly
-                                         })
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
+                        it("Should be able to get info for a public feed with valid read-only authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/info")
+                                 .set({
+                                         ApiKey : feeds.testFeed1a.apiKeyReadOnly
+                                      })
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
 
-                                            res.should.have.property('status', httpStatus.OK);
-                                            res.body.should.have.property('code', httpStatus.OK);
-                                            res.body.should.have.property('status', 'success');
-                                            res.body.should.have.property('data');
-                                            should(res.body.data).eql(getExpectedInfoFeed1a(feeds.testFeed1a.id)); // deep equal
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+                                         should(res.body.data).eql(getExpectedInfoFeed1a(feeds.testFeed1a.id)); // deep equal
 
-                                            done();
-                                         });
-                           });
+                                         done();
+                                      });
+                        });
 
-                           it("Should be able to get channel info for a private feed with valid authentication", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/channels/conductivity/info")
-                                    .set({
-                                            ApiKey : feeds.testFeed1b.apiKey
-                                         })
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
+                        it("Should be able to get info for a private feed with valid authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/info")
+                                 .set({
+                                         ApiKey : feeds.testFeed1b.apiKey
+                                      })
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
 
-                                            res.should.have.property('status', httpStatus.OK);
-                                            res.body.should.have.property('code', httpStatus.OK);
-                                            res.body.should.have.property('status', 'success');
-                                            res.body.should.have.property('data');
-                                            should(res.body.data).eql(getExpectedInfoFeed1b(feeds.testFeed1b.id)); // deep equal
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+                                         should(res.body.data).eql(getExpectedInfoFeed1b(feeds.testFeed1b.id)); // deep equal
 
-                                            done();
-                                         });
-                           });
+                                         done();
+                                      });
+                        });
 
-                           it("Should be able to get channel info for a private feed with valid read-only authentication", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/channels/conductivity/info")
-                                    .set({
-                                            ApiKey : feeds.testFeed1b.apiKeyReadOnly
-                                         })
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
+                        it("Should be able to get info for a private feed with valid read-only authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/info")
+                                 .set({
+                                         ApiKey : feeds.testFeed1b.apiKeyReadOnly
+                                      })
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
 
-                                            res.should.have.property('status', httpStatus.OK);
-                                            res.body.should.have.property('code', httpStatus.OK);
-                                            res.body.should.have.property('status', 'success');
-                                            res.body.should.have.property('data');
-                                            should(res.body.data).eql(getExpectedInfoFeed1b(feeds.testFeed1b.id)); // deep equal
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+                                         should(res.body.data).eql(getExpectedInfoFeed1b(feeds.testFeed1b.id)); // deep equal
 
-                                            done();
-                                         });
-                           });
+                                         done();
+                                      });
+                        });
 
-                           it("Should fail to get channel info for a private feed with invalid authentication", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/channels/conductivity/info")
-                                    .set({
-                                            ApiKey : "bogus"
-                                         })
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
+                        it("Should fail to get info for a private feed with invalid authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/info")
+                                 .set({
+                                         ApiKey : "bogus"
+                                      })
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
 
-                                            res.should.have.property('status', httpStatus.UNAUTHORIZED);
-                                            done();
-                                         });
-                           });
+                                         res.should.have.property('status', httpStatus.UNAUTHORIZED);
+                                         done();
+                                      });
+                        });
 
-                           it("Should fail to get channel info for a private feed without authentication", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/channels/conductivity/info")
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
+                        it("Should fail to get info for a private feed without authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/info")
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
 
-                                            res.should.have.property('status', httpStatus.UNAUTHORIZED);
-                                            done();
-                                         });
-                           });
+                                         res.should.have.property('status', httpStatus.UNAUTHORIZED);
+                                         done();
+                                      });
+                        });
 
-                           it("Should get empty channel info when requesting a bogus channel from a feed", function(done) {
-                              agent(url)
-                                    .get("/api/v1/feeds/channels/bogus/info")
-                                    .set({
-                                            ApiKey : feeds.testFeed1a.apiKeyReadOnly
-                                         })
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
-
-                                            res.should.have.property('status', httpStatus.OK);
-                                            res.body.should.have.property('code', httpStatus.OK);
-                                            res.body.should.have.property('status', 'success');
-                                            res.body.should.have.property('data');
-                                            should(res.body.data).eql(emptyChannelInfo); // deep equal
-                                            done();
-                                         });
-                           });
-
-
-                        });      // end API Key Authentication
-                     });      // end Feed Info
+                     });      // end API Key Authentication
                   });      // end Get Info
 
                   describe("Get Tile", function() {

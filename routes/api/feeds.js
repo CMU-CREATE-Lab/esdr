@@ -239,62 +239,6 @@ module.exports = function(FeedModel, datastore) {
                  });
               });
 
-   // for getting info about a feed's channel, authenticated using the feed's API Key in the header
-   // TODO: allow filtering by min/max time
-   router.get('/channels/:channelName/info',
-              passport.authenticate('localapikey', { session : false }),
-              function(req, res, next) {
-                 var feed = req.authInfo.feed;
-                 var channelName = req.params.channelName;
-
-                 log.debug("Received GET to get info for in channel [" + channelName + "] in feed [" + feed.id + "] (feed API Key authentication)");
-                 return getFeedInfo(res, feed, channelName);
-              });
-
-   // For getting info about a feed's channel, authenticated using the user's OAuth2 access token in the header
-   //
-   // NOT: for private feeds, this will be slower than authenticating with the feed's apiKey or apiKeyReadOnly because
-   // we have to make an extra call to the database to authenticate the user so we can determine whether she has access
-   // to the private feed.
-   // TODO: allow filtering by min/max time
-   router.get('/:feedId/channels/:channelName/info',
-              function(req, res, next) {
-                 var feedId = req.params.feedId;
-                 var channelName = req.params.channelName;
-
-                 log.debug("Received GET to get info for channel [" + channelName + "] in feed [" + feedId + "]");
-
-                 // find the feed
-                 findFeedById(res, feedId, function(feed) {
-                    // Allow access to the tile if the feed is public
-                    if (feed.isPublic) {
-                       return getFeedInfo(res, feed, channelName);
-                    }
-                    else {
-                       // if the feed is private, then authenticate and check for authorization
-                       passport.authenticate('bearer', function(err, user, info) {
-                          if (err) {
-                             var message = "Error while authenticating to get info for channel [" + channelName + "] in feed [" + feedId + "]";
-                             log.error(message + ": " + err);
-                             return res.jsendServerError(message);
-                          }
-
-                          if (user) {
-                             if (user.id == feed.userId) {
-                                return getFeedInfo(res, feed, channelName);
-                             }
-
-                             return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
-                          }
-                          else {
-                             return res.jsendClientError("Authentication required.", null, httpStatus.UNAUTHORIZED);  // HTTP 401 Unauthorized
-                          }
-
-                       })(req, res, next);
-                    }
-                 });
-              });
-
    // for tile requests authenticated using the feed's API Key in the header
    router.get('/channels/:channelName/tiles/:level.:offset',
               passport.authenticate('localapikey', { session : false }),
