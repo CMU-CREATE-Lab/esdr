@@ -175,14 +175,41 @@ module.exports = function(FeedModel, datastore) {
                               return res.jsendServerError("Failed to get info for feed [" + feed.id + "]", err);
                            }
 
-                           return res.jsendSuccess(info, httpStatus.OK); // HTTP 200 OK
+                           // inflate the channel spec JSON text into an object
+                           feed.channelSpec = JSON.parse(feed.channelSpec);
 
+                           // Iterate over each of the channels in the info from the datastore
+                           // and copy to our new format, merged with the channelSpec.
+                           var deviceAndChannelPrefixLength = (feed.datastoreId + ".").length;
+                           Object.keys(info.channel_specs).forEach(function(deviceAndChannel) {
+                              var channelName = deviceAndChannel.slice(deviceAndChannelPrefixLength);
+                              var channelInfo = info.channel_specs[deviceAndChannel];
+
+                              // copy the bounds (changing from snake to camel case)
+                              var channelBounds = channelInfo.channel_bounds;
+                              feed.channelSpec[channelName].bounds = {
+                                 minTimeSecs : channelBounds.min_time,
+                                 maxTimeSecs : channelBounds.max_time,
+                                 minValue : channelBounds.min_value,
+                                 maxValue : channelBounds.max_value
+                              };
+                           });
+
+                           // rename the channelSpec field to simply "channels"
+                           feed.channels = feed.channelSpec;
+                           delete feed.channelSpec;
+
+                           // Remove the datastoreId and API Key. No need to reveal either here.
+                           delete feed.datastoreId;
+                           delete feed.apiKey;
+
+                           return res.jsendSuccess(feed, httpStatus.OK); // HTTP 200 OK
                         });
    };
 
-   // for getting info about a feed, authenticated using the feed's API Key in the header
+   // for getting info about a feed, authenticated using the feed's API Key in the request header
    // TODO: allow filtering by min/max time
-   router.get('/info',
+   router.get('/',
               passport.authenticate('localapikey', { session : false }),
               function(req, res, next) {
                  var feed = req.authInfo.feed;
@@ -191,13 +218,13 @@ module.exports = function(FeedModel, datastore) {
                  return getFeedInfo(res, feed);
               });
 
-   // For getting info about a feed, authenticated using the user's OAuth2 access token in the header
+   // For getting info about a feed, authenticated using the user's OAuth2 access token in the request header (but only if the feed is private)
    //
    // NOT: for private feeds, this will be slower than authenticating with the feed's apiKey or apiKeyReadOnly because
    // we have to make an extra call to the database to authenticate the user so we can determine whether she has access
    // to the private feed.
    // TODO: allow filtering by min/max time
-   router.get('/:feedId/info',
+   router.get('/:feedId',
               function(req, res, next) {
                  var feedId = req.params.feedId;
 

@@ -2652,94 +2652,115 @@ describe("ESDR", function() {
                   });      // end Upload
 
                   describe("Get Info", function() {
-                     var getExpectedInfoFeed1a = function(feedId) {
-                        var info = {
-                           "channel_specs" : {},
-                           "max_time" : 1382054188,
-                           "min_time" : 1380276279.1
-                        };
-                        info.channel_specs['feed_' + feedId + '.battery_voltage'] = {
-                           "channel_bounds" : {
-                              "max_time" : 1382054188,
-                              "max_value" : 3.85,
-                              "min_time" : 1380276279.1,
-                              "min_value" : 3.84
+                     var channelInfoFeed1a = {
+                        "temperature" : {
+                           "prettyName" : "Temperature",
+                           "units" : "C",
+                           "bounds" : {
+                              "minTimeSecs" : 1380276279.1,
+                              "maxTimeSecs" : 1382054188,
+                              "minValue" : 17.7,
+                              "maxValue" : 22.2
                            }
-                        };
-                        info.channel_specs['feed_' + feedId + '.conductivity'] = {
-                           "channel_bounds" : {
-                              "max_time" : 1382054188,
-                              "max_value" : 624,
-                              "min_time" : 1380276279.1,
-                              "min_value" : 464
+                        },
+                        "conductivity" : {
+                           "prettyName" : "Conductivity",
+                           "units" : "&mu;S/cm",
+                           "bounds" : {
+                              "minTimeSecs" : 1380276279.1,
+                              "maxTimeSecs" : 1382054188,
+                              "minValue" : 464,
+                              "maxValue" : 624
                            }
-                        };
-                        info.channel_specs['feed_' + feedId + '.temperature'] = {
-                           "channel_bounds" : {
-                              "max_time" : 1382054188,
-                              "max_value" : 22.2,
-                              "min_time" : 1380276279.1,
-                              "min_value" : 17.7
+                        },
+                        "battery_voltage" : {
+                           "prettyName" : "Battery Voltage",
+                           "units" : "V",
+                           "bounds" : {
+                              "minTimeSecs" : 1380276279.1,
+                              "maxTimeSecs" : 1382054188,
+                              "minValue" : 3.84,
+                              "maxValue" : 3.85
                            }
-                        };
-                        return info;
+                        }
                      };
 
-                     var getExpectedInfoFeed1b = function(feedId) {
-                        var info = {
-                           "channel_specs" : {},
-                           "max_time" : 1382054188,
-                           "min_time" : 1381238902.42
-                        };
-                        info.channel_specs['feed_' + feedId + '.battery_voltage'] = {
-                           "channel_bounds" : {
-                              "max_time" : 1382054188,
-                              "max_value" : 3.84,
-                              "min_time" : 1381238902.42,
-                              "min_value" : 3.84
+                     var channelInfoFeed1b = {
+                        "temperature" : {
+                           "prettyName" : "Temperature",
+                           "units" : "C",
+                           "bounds" : {
+                              "minTimeSecs" : 1381238902.42,
+                              "maxTimeSecs" : 1382054188,
+                              "minValue" : 17.7,
+                              "maxValue" : 20.8
                            }
-                        };
-                        info.channel_specs['feed_' + feedId + '.conductivity'] = {
-                           "channel_bounds" : {
-                              "max_time" : 1382054188,
-                              "max_value" : 624,
-                              "min_time" : 1381238902.42,
-                              "min_value" : 478
+                        },
+                        "conductivity" : {
+                           "prettyName" : "Conductivity",
+                           "units" : "&mu;S/cm",
+                           "bounds" : {
+                              "minTimeSecs" : 1381238902.42,
+                              "maxTimeSecs" : 1382054188,
+                              "minValue" : 478,
+                              "maxValue" : 624
                            }
-                        };
-                        info.channel_specs['feed_' + feedId + '.temperature'] = {
-                           "channel_bounds" : {
-                              "max_time" : 1382054188,
-                              "max_value" : 20.8,
-                              "min_time" : 1381238902.42,
-                              "min_value" : 17.7
+                        },
+                        "battery_voltage" : {
+                           "prettyName" : "Battery Voltage",
+                           "units" : "V",
+                           "bounds" : {
+                              "minTimeSecs" : 1381238902.42,
+                              "maxTimeSecs" : 1382054188,
+                              "minValue" : 3.84,
+                              "maxValue" : 3.84
                            }
-                        };
-                        return info;
+                        }
+                     };
+
+                     var validateSuccessfulInfoFetch = function(res, feedId, testFeed, channelInfo) {
+                        res.should.have.property('status', httpStatus.OK);
+                        res.body.should.have.property('code', httpStatus.OK);
+                        res.body.should.have.property('status', 'success');
+                        res.body.should.have.property('data');
+                        res.body.data.should.have.property('id', feedId);
+                        res.body.data.should.have.property('name', testFeed.name);
+                        res.body.data.should.have.property('deviceId');
+                        res.body.data.should.have.property('userId');
+                        res.body.data.should.have.property('apiKeyReadOnly');
+                        res.body.data.should.have.property('exposure', testFeed.exposure);
+                        res.body.data.should.have.property('isPublic', testFeed.isPublic);
+                        res.body.data.should.have.property('isMobile', testFeed.isMobile);
+                        res.body.data.should.have.property('latitude', testFeed.latitude);
+                        res.body.data.should.have.property('longitude', testFeed.longitude);
+                        res.body.data.should.have.property('created');
+                        res.body.data.should.have.property('modified');
+                        res.body.data.should.have.property('lastUpload');
+                        res.body.data.should.have.property('minTimeSecs');
+                        res.body.data.should.have.property('maxTimeSecs');
+                        should(res.body.data.channels).eql(channelInfo); // deep equal
+
+                        // should NOT have the read-only property
+                        res.body.data.should.not.have.property('apiKey');
                      };
 
                      describe("OAuth2 Authentication", function() {
                         it("Should be able to get info for a public feed without authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/info")
+                                 .get("/api/v1/feeds/" + feeds.testFeed1a.id)
                                  .end(function(err, res) {
                                          if (err) {
                                             return done(err);
                                          }
 
-                                         res.should.have.property('status', httpStatus.OK);
-                                         res.body.should.have.property('code', httpStatus.OK);
-                                         res.body.should.have.property('status', 'success');
-                                         res.body.should.have.property('data');
-                                         should(res.body.data).eql(getExpectedInfoFeed1a(feeds.testFeed1a.id)); // deep equal
-
+                                         validateSuccessfulInfoFetch(res, feeds.testFeed1a.id, testFeed1a, channelInfoFeed1a);
                                          done();
                                       });
                         });
 
                         it("Should be able to get info for a public feed with valid authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/info")
+                                 .get("/api/v1/feeds/" + feeds.testFeed1a.id)
                                  .set({
                                          Authorization : "Bearer " + accessTokens.testUser1.access_token
                                       })
@@ -2748,19 +2769,14 @@ describe("ESDR", function() {
                                             return done(err);
                                          }
 
-                                         res.should.have.property('status', httpStatus.OK);
-                                         res.body.should.have.property('code', httpStatus.OK);
-                                         res.body.should.have.property('status', 'success');
-                                         res.body.should.have.property('data');
-                                         should(res.body.data).eql(getExpectedInfoFeed1a(feeds.testFeed1a.id)); // deep equal
-
+                                         validateSuccessfulInfoFetch(res, feeds.testFeed1a.id, testFeed1a, channelInfoFeed1a);
                                          done();
                                       });
                         });
 
                         it("Should be able to get info for a public feed with invalid authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/info")
+                                 .get("/api/v1/feeds/" + feeds.testFeed1a.id)
                                  .set({
                                          Authorization : "Bearer " + "bogus"
                                       })
@@ -2769,19 +2785,14 @@ describe("ESDR", function() {
                                             return done(err);
                                          }
 
-                                         res.should.have.property('status', httpStatus.OK);
-                                         res.body.should.have.property('code', httpStatus.OK);
-                                         res.body.should.have.property('status', 'success');
-                                         res.body.should.have.property('data');
-                                         should(res.body.data).eql(getExpectedInfoFeed1a(feeds.testFeed1a.id)); // deep equal
-
+                                         validateSuccessfulInfoFetch(res, feeds.testFeed1a.id, testFeed1a, channelInfoFeed1a);
                                          done();
                                       });
                         });
 
                         it("Should fail to get info for a private feed without authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/info")
+                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id)
                                  .end(function(err, res) {
                                          if (err) {
                                             return done(err);
@@ -2797,7 +2808,7 @@ describe("ESDR", function() {
 
                         it("Should be able to get info for a private feed with valid authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/info")
+                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id)
                                  .set({
                                          Authorization : "Bearer " + accessTokens.testUser1.access_token
                                       })
@@ -2806,18 +2817,14 @@ describe("ESDR", function() {
                                             return done(err);
                                          }
 
-                                         res.should.have.property('status', httpStatus.OK);
-                                         res.body.should.have.property('code', httpStatus.OK);
-                                         res.body.should.have.property('status', 'success');
-                                         res.body.should.have.property('data');
-                                         should(res.body.data).eql(getExpectedInfoFeed1b(feeds.testFeed1b.id)); // deep equal
+                                         validateSuccessfulInfoFetch(res, feeds.testFeed1b.id, testFeed1b, channelInfoFeed1b);
                                          done();
                                       });
                         });
 
                         it("Should fail to get info for a private feed with invalid authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/info")
+                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id)
                                  .set({
                                          Authorization : "Bearer " + accessTokens.testUser2.access_token
                                       })
@@ -2840,7 +2847,7 @@ describe("ESDR", function() {
 
                         it("Should be able to get info for a public feed with valid authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feeds/info")
+                                 .get("/api/v1/feeds")
                                  .set({
                                          ApiKey : feeds.testFeed1a.apiKey
                                       })
@@ -2849,19 +2856,14 @@ describe("ESDR", function() {
                                             return done(err);
                                          }
 
-                                         res.should.have.property('status', httpStatus.OK);
-                                         res.body.should.have.property('code', httpStatus.OK);
-                                         res.body.should.have.property('status', 'success');
-                                         res.body.should.have.property('data');
-                                         should(res.body.data).eql(getExpectedInfoFeed1a(feeds.testFeed1a.id)); // deep equal
-
+                                         validateSuccessfulInfoFetch(res, feeds.testFeed1a.id, testFeed1a, channelInfoFeed1a);
                                          done();
                                       });
                         });
 
                         it("Should be able to get info for a public feed with valid read-only authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feeds/info")
+                                 .get("/api/v1/feeds")
                                  .set({
                                          ApiKey : feeds.testFeed1a.apiKeyReadOnly
                                       })
@@ -2870,19 +2872,14 @@ describe("ESDR", function() {
                                             return done(err);
                                          }
 
-                                         res.should.have.property('status', httpStatus.OK);
-                                         res.body.should.have.property('code', httpStatus.OK);
-                                         res.body.should.have.property('status', 'success');
-                                         res.body.should.have.property('data');
-                                         should(res.body.data).eql(getExpectedInfoFeed1a(feeds.testFeed1a.id)); // deep equal
-
+                                         validateSuccessfulInfoFetch(res, feeds.testFeed1a.id, testFeed1a, channelInfoFeed1a);
                                          done();
                                       });
                         });
 
                         it("Should be able to get info for a private feed with valid authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feeds/info")
+                                 .get("/api/v1/feeds")
                                  .set({
                                          ApiKey : feeds.testFeed1b.apiKey
                                       })
@@ -2891,19 +2888,14 @@ describe("ESDR", function() {
                                             return done(err);
                                          }
 
-                                         res.should.have.property('status', httpStatus.OK);
-                                         res.body.should.have.property('code', httpStatus.OK);
-                                         res.body.should.have.property('status', 'success');
-                                         res.body.should.have.property('data');
-                                         should(res.body.data).eql(getExpectedInfoFeed1b(feeds.testFeed1b.id)); // deep equal
-
+                                         validateSuccessfulInfoFetch(res, feeds.testFeed1b.id, testFeed1b, channelInfoFeed1b);
                                          done();
                                       });
                         });
 
                         it("Should be able to get info for a private feed with valid read-only authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feeds/info")
+                                 .get("/api/v1/feeds")
                                  .set({
                                          ApiKey : feeds.testFeed1b.apiKeyReadOnly
                                       })
@@ -2912,19 +2904,14 @@ describe("ESDR", function() {
                                             return done(err);
                                          }
 
-                                         res.should.have.property('status', httpStatus.OK);
-                                         res.body.should.have.property('code', httpStatus.OK);
-                                         res.body.should.have.property('status', 'success');
-                                         res.body.should.have.property('data');
-                                         should(res.body.data).eql(getExpectedInfoFeed1b(feeds.testFeed1b.id)); // deep equal
-
+                                         validateSuccessfulInfoFetch(res, feeds.testFeed1b.id, testFeed1b, channelInfoFeed1b);
                                          done();
                                       });
                         });
 
                         it("Should fail to get info for a private feed with invalid authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feeds/info")
+                                 .get("/api/v1/feeds")
                                  .set({
                                          ApiKey : "bogus"
                                       })
@@ -2940,7 +2927,7 @@ describe("ESDR", function() {
 
                         it("Should fail to get info for a private feed without authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feeds/info")
+                                 .get("/api/v1/feeds")
                                  .end(function(err, res) {
                                          if (err) {
                                             return done(err);
