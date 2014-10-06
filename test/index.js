@@ -56,28 +56,28 @@ describe("ESDR", function() {
       prettyName : 'CATTfish v1',
       vendor : 'CMU CREATE Lab',
       description : 'The CATTfish v1 water temperature and conductivity sensor.',
-      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "&mu;S/cm" }, "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" }}
+      defaultChannelSpecs : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "&mu;S/cm" }, "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" }}
    };
    var testProduct2 = {
       name : 'cattfish_v2',
       prettyName : 'CATTfish v2',
       vendor : 'CMU CREATE Lab',
       description : 'The CATTfish v2 water temperature and conductivity sensor.',
-      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "&mu;S/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }}
+      defaultChannelSpecs : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "&mu;S/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }}
    };
    var testProduct3 = {
       name : 'cattfish_v3',
       prettyName : 'CATTfish v3',
       vendor : 'CMU CREATE Lab',
       description : 'The CATTfish v3 water temperature and conductivity sensor.',
-      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "&mu;S/cm" }}
+      defaultChannelSpecs : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "&mu;S/cm" }}
    };
    var testProduct4 = {
       name : 'cattfish_v4',
       prettyName : 'CATTfish v4',
       vendor : 'CMU CREATE Lab',
       description : 'The CATTfish v4 water temperature and conductivity sensor.',
-      defaultChannelSpec : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "&mu;S/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }, "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" }, "humidity" : { "prettyName" : "Humidity", "units" : "%" }}
+      defaultChannelSpecs : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "&mu;S/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }, "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" }, "humidity" : { "prettyName" : "Humidity", "units" : "%" }}
    };
    var testDevice1 = {
       serialNumber : 'TESTDEVICE1'
@@ -163,6 +163,22 @@ describe("ESDR", function() {
          [1381917431, 20.5, 624, 3.84],
          [1382006980, 20.6, 543, 3.84],
          [1382054188, 19.6, 517, 3.84]
+      ]
+   };
+
+   var testFeed1aData3 = {
+      "channel_names" : ["temperature"],
+      "data" : [
+         [1380270001, 14.2],
+         [1382055042, 33.9]
+      ]
+   };
+
+   var testFeed1aData4 = {
+      "channel_names" : ["conductivity"],
+      "data" : [
+         [1380752248, 500],
+         [1380752359, 501]
       ]
    };
 
@@ -1590,7 +1606,7 @@ describe("ESDR", function() {
                var product = shallowClone(testProduct1);
                delete product.name;
                delete product.prettyName;
-               delete product.defaultChannelSpec;
+               delete product.defaultChannelSpecs;
 
                agent(url)
                      .post("/api/v1/products")
@@ -1610,7 +1626,7 @@ describe("ESDR", function() {
                              res.body.data.should.have.length(1);
                              res.body.data[0].should.have.property('instanceContext', '#');
                              res.body.data[0].should.have.property('constraintName', 'required');
-                             res.body.data[0].should.have.property('desc', 'missing: name,prettyName,defaultChannelSpec');
+                             res.body.data[0].should.have.property('desc', 'missing: name,prettyName,defaultChannelSpecs');
                              res.body.data[0].should.have.property('kind', 'ObjectValidationError');
 
                              done();
@@ -1621,7 +1637,7 @@ describe("ESDR", function() {
                var product = shallowClone(testProduct1);
                product.name = "Yo";
                product.prettyName = "Ya";
-               product.defaultChannelSpec = 1;
+               product.defaultChannelSpecs = 1;
 
                agent(url)
                      .post("/api/v1/products")
@@ -1647,9 +1663,9 @@ describe("ESDR", function() {
                              res.body.data[1].should.have.property('constraintName', 'minLength');
                              res.body.data[1].should.have.property('constraintValue', db.products.jsonSchema.properties.prettyName.minLength);
                              res.body.data[1].should.have.property('testedValue', product.prettyName.length);
-                             res.body.data[2].should.have.property('instanceContext', '#/defaultChannelSpec');
+                             res.body.data[2].should.have.property('instanceContext', '#/defaultChannelSpecs');
                              res.body.data[2].should.have.property('constraintName', 'minLength');
-                             res.body.data[2].should.have.property('constraintValue', db.products.jsonSchema.properties.defaultChannelSpec.minLength);
+                             res.body.data[2].should.have.property('constraintValue', db.products.jsonSchema.properties.defaultChannelSpecs.minLength);
                              res.body.data[2].should.have.property('testedValue', 1);
 
                              done();
@@ -1674,7 +1690,7 @@ describe("ESDR", function() {
                              res.body.data.should.have.property('vendor', testProduct1.vendor);
                              res.body.data.should.have.property('description', testProduct1.description);
                              res.body.data.should.have.property('creatorUserId', accessTokens.testUser1.userId);
-                             should(res.body.data.defaultChannelSpec).eql(testProduct1.defaultChannelSpec); // deep equal
+                             should(res.body.data.defaultChannelSpecs).eql(testProduct1.defaultChannelSpecs); // deep equal
                              res.body.data.should.have.property('created');
                              res.body.data.should.have.property('modified');
 
@@ -2150,7 +2166,7 @@ describe("ESDR", function() {
                                    res.body.data[0].should.have.property('isMobile', testFeed1a.isMobile);
                                    res.body.data[0].should.have.property('latitude', testFeed1a.latitude);
                                    res.body.data[0].should.have.property('longitude', testFeed1a.longitude);
-                                   res.body.data[0].should.have.property('channelSpec');
+                                   res.body.data[0].should.have.property('channelSpecs');
                                    res.body.data[0].should.have.property('created');
                                    res.body.data[0].should.have.property('modified');
 
@@ -2193,7 +2209,7 @@ describe("ESDR", function() {
                                    res.body.data[0].should.have.property('isMobile', testFeed1a.isMobile);
                                    res.body.data[0].should.have.property('latitude', testFeed1a.latitude);
                                    res.body.data[0].should.have.property('longitude', testFeed1a.longitude);
-                                   res.body.data[0].should.have.property('channelSpec');
+                                   res.body.data[0].should.have.property('channelSpecs');
                                    res.body.data[0].should.have.property('created');
                                    res.body.data[0].should.have.property('modified');
                                    res.body.data[0].should.not.have.property('datastoreId');
@@ -2208,7 +2224,7 @@ describe("ESDR", function() {
                                    res.body.data[1].should.have.property('isMobile', testFeed1b.isMobile);
                                    res.body.data[1].should.have.property('latitude', testFeed1b.latitude);
                                    res.body.data[1].should.have.property('longitude', testFeed1b.longitude);
-                                   res.body.data[1].should.have.property('channelSpec');
+                                   res.body.data[1].should.have.property('channelSpecs');
                                    res.body.data[1].should.have.property('created');
                                    res.body.data[1].should.have.property('modified');
                                    res.body.data[1].should.not.have.property('datastoreId');
@@ -2241,7 +2257,7 @@ describe("ESDR", function() {
                                    res.body.data[0].should.have.property('isMobile', testFeed1a.isMobile);
                                    res.body.data[0].should.have.property('latitude', testFeed1a.latitude);
                                    res.body.data[0].should.have.property('longitude', testFeed1a.longitude);
-                                   res.body.data[0].should.have.property('channelSpec');
+                                   res.body.data[0].should.have.property('channelSpecs');
                                    res.body.data[0].should.have.property('created');
                                    res.body.data[0].should.have.property('modified');
 
@@ -2388,9 +2404,8 @@ describe("ESDR", function() {
                                       res.body.should.have.property('code', httpStatus.OK);
                                       res.body.should.have.property('status', 'success');
                                       res.body.should.have.property('data');
-                                      res.body.data.should.have.property('channel_specs');
-                                      res.body.data.should.not.have.property('min_time');
-                                      res.body.data.should.not.have.property('max_time');
+                                      res.body.data.should.have.property('channelBounds', {});
+                                      res.body.data.should.have.property('importedBounds', {});
 
                                       done();
                                    });
@@ -2433,9 +2448,8 @@ describe("ESDR", function() {
                                       res.body.should.have.property('code', httpStatus.OK);
                                       res.body.should.have.property('status', 'success');
                                       res.body.should.have.property('data');
-                                      res.body.data.should.have.property('channel_specs');
-                                      res.body.data.should.not.have.property('min_time');
-                                      res.body.data.should.not.have.property('max_time');
+                                      res.body.data.should.have.property('channelBounds', {});
+                                      res.body.data.should.have.property('importedBounds', {});
 
                                       done();
                                    });
@@ -2457,8 +2471,14 @@ describe("ESDR", function() {
                                       res.body.should.have.property('code', httpStatus.OK);
                                       res.body.should.have.property('status', 'success');
                                       res.body.should.have.property('data');
-                                      res.body.data.should.have.property('min_time', testFeed1aData1.data[0][0]);
-                                      res.body.data.should.have.property('max_time', testFeed1aData1.data[testFeed1aData1.data.length - 1][0]);
+                                      res.body.data.should.have.property('channelBounds');
+                                      res.body.data.channelBounds.should.have.property('channels');
+                                      res.body.data.channelBounds.should.have.property('minTimeSecs', testFeed1aData1.data[0][0]);
+                                      res.body.data.channelBounds.should.have.property('maxTimeSecs', testFeed1aData1.data[testFeed1aData1.data.length - 1][0]);
+                                      res.body.data.should.have.property('importedBounds');
+                                      res.body.data.importedBounds.should.have.property('channels');
+                                      res.body.data.importedBounds.should.have.property('minTimeSecs', testFeed1aData1.data[0][0]);
+                                      res.body.data.importedBounds.should.have.property('maxTimeSecs', testFeed1aData1.data[testFeed1aData1.data.length - 1][0]);
 
                                       done();
                                    });
@@ -2517,8 +2537,14 @@ describe("ESDR", function() {
                                       res.body.should.have.property('code', httpStatus.OK);
                                       res.body.should.have.property('status', 'success');
                                       res.body.should.have.property('data');
-                                      res.body.data.should.have.property('min_time', testFeed1aData1.data[0][0]);
-                                      res.body.data.should.have.property('max_time', testFeed1aData2.data[testFeed1aData2.data.length - 1][0]);
+                                      res.body.data.should.have.property('channelBounds');
+                                      res.body.data.channelBounds.should.have.property('channels');
+                                      res.body.data.channelBounds.should.have.property('minTimeSecs', testFeed1aData1.data[0][0]);
+                                      res.body.data.channelBounds.should.have.property('maxTimeSecs', testFeed1aData2.data[testFeed1aData2.data.length - 1][0]);
+                                      res.body.data.should.have.property('importedBounds');
+                                      res.body.data.importedBounds.should.have.property('channels');
+                                      res.body.data.importedBounds.should.have.property('minTimeSecs', testFeed1aData2.data[0][0]);
+                                      res.body.data.importedBounds.should.have.property('maxTimeSecs', testFeed1aData2.data[testFeed1aData2.data.length - 1][0]);
                                       done();
                                    });
                      });
@@ -2539,8 +2565,73 @@ describe("ESDR", function() {
                                       res.body.should.have.property('code', httpStatus.OK);
                                       res.body.should.have.property('status', 'success');
                                       res.body.should.have.property('data');
-                                      res.body.data.should.have.property('min_time', testFeed1aData2.data[0][0]);
-                                      res.body.data.should.have.property('max_time', testFeed1aData2.data[testFeed1aData2.data.length - 1][0]);
+
+                                      res.body.data.should.have.property('channelBounds');
+                                      res.body.data.channelBounds.should.have.property('channels');
+                                      res.body.data.channelBounds.should.have.property('minTimeSecs', testFeed1aData2.data[0][0]);
+                                      res.body.data.channelBounds.should.have.property('maxTimeSecs', testFeed1aData2.data[testFeed1aData2.data.length - 1][0]);
+                                      res.body.data.should.have.property('importedBounds');
+                                      res.body.data.importedBounds.should.have.property('channels');
+                                      res.body.data.importedBounds.should.have.property('minTimeSecs', testFeed1aData2.data[0][0]);
+                                      res.body.data.importedBounds.should.have.property('maxTimeSecs', testFeed1aData2.data[testFeed1aData2.data.length - 1][0]);
+                                      done();
+                                   });
+                     });
+
+                     it("Should be able to upload data for a single channel to a feed (this one will affect the min/max times)", function(done) {
+                        agent(url)
+                              .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                              .set({
+                                      Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                   })
+                              .send(testFeed1aData3)
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.OK);
+                                      res.body.should.have.property('code', httpStatus.OK);
+                                      res.body.should.have.property('status', 'success');
+                                      res.body.should.have.property('data');
+
+                                      res.body.data.should.have.property('channelBounds');
+                                      res.body.data.channelBounds.should.have.property('channels');
+                                      res.body.data.channelBounds.should.have.property('minTimeSecs', testFeed1aData3.data[0][0]);
+                                      res.body.data.channelBounds.should.have.property('maxTimeSecs', testFeed1aData3.data[testFeed1aData3.data.length - 1][0]);
+                                      res.body.data.should.have.property('importedBounds');
+                                      res.body.data.importedBounds.should.have.property('channels');
+                                      res.body.data.importedBounds.should.have.property('minTimeSecs', testFeed1aData3.data[0][0]);
+                                      res.body.data.importedBounds.should.have.property('maxTimeSecs', testFeed1aData3.data[testFeed1aData3.data.length - 1][0]);
+                                      done();
+                                   });
+                     });
+
+                     it("Should be able to upload data for a single channel to a feed (this one won't affect the min/max times)", function(done) {
+                        agent(url)
+                              .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                              .set({
+                                      Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                   })
+                              .send(testFeed1aData4)
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.OK);
+                                      res.body.should.have.property('code', httpStatus.OK);
+                                      res.body.should.have.property('status', 'success');
+                                      res.body.should.have.property('data');
+
+                                      res.body.data.should.have.property('channelBounds');
+                                      res.body.data.channelBounds.should.have.property('channels');
+                                      res.body.data.channelBounds.should.have.property('minTimeSecs', testFeed1aData3.data[0][0]);
+                                      res.body.data.channelBounds.should.have.property('maxTimeSecs', testFeed1aData3.data[testFeed1aData3.data.length - 1][0]);
+                                      res.body.data.should.have.property('importedBounds');
+                                      res.body.data.importedBounds.should.have.property('channels');
+                                      res.body.data.importedBounds.should.have.property('minTimeSecs', testFeed1aData4.data[0][0]);
+                                      res.body.data.importedBounds.should.have.property('maxTimeSecs', testFeed1aData4.data[testFeed1aData4.data.length - 1][0]);
                                       done();
                                    });
                      });
@@ -2654,69 +2745,53 @@ describe("ESDR", function() {
 
                   describe("Get Info", function() {
                      var channelInfoFeed1a = {
-                        "temperature" : {
-                           "prettyName" : "Temperature",
-                           "units" : "C",
-                           "bounds" : {
-                              "minTimeSecs" : 1380276279.1,
-                              "maxTimeSecs" : 1382054188,
-                              "minValue" : 17.7,
-                              "maxValue" : 22.2
-                           }
-                        },
-                        "conductivity" : {
-                           "prettyName" : "Conductivity",
-                           "units" : "&mu;S/cm",
-                           "bounds" : {
+                        "channels" : {
+                           "temperature" : {
+                              "minTimeSecs" : 1380270001,
+                              "maxTimeSecs" : 1382055042,
+                              "minValue" : 14.2,
+                              "maxValue" : 33.9
+                           },
+                           "conductivity" : {
                               "minTimeSecs" : 1380276279.1,
                               "maxTimeSecs" : 1382054188,
                               "minValue" : 464,
                               "maxValue" : 624
-                           }
-                        },
-                        "battery_voltage" : {
-                           "prettyName" : "Battery Voltage",
-                           "units" : "V",
-                           "bounds" : {
+                           },
+                           "battery_voltage" : {
                               "minTimeSecs" : 1380276279.1,
                               "maxTimeSecs" : 1382054188,
                               "minValue" : 3.84,
                               "maxValue" : 3.85
                            }
-                        }
+                        },
+                        "minTimeSecs" : 1380270001,
+                        "maxTimeSecs" : 1382055042
                      };
 
                      var channelInfoFeed1b = {
-                        "temperature" : {
-                           "prettyName" : "Temperature",
-                           "units" : "C",
-                           "bounds" : {
+                        "channels" : {
+                           "temperature" : {
                               "minTimeSecs" : 1381238902.42,
                               "maxTimeSecs" : 1382054188,
                               "minValue" : 17.7,
                               "maxValue" : 20.8
-                           }
-                        },
-                        "conductivity" : {
-                           "prettyName" : "Conductivity",
-                           "units" : "&mu;S/cm",
-                           "bounds" : {
+                           },
+                           "conductivity" : {
                               "minTimeSecs" : 1381238902.42,
                               "maxTimeSecs" : 1382054188,
                               "minValue" : 478,
                               "maxValue" : 624
-                           }
-                        },
-                        "battery_voltage" : {
-                           "prettyName" : "Battery Voltage",
-                           "units" : "V",
-                           "bounds" : {
+                           },
+                           "battery_voltage" : {
                               "minTimeSecs" : 1381238902.42,
                               "maxTimeSecs" : 1382054188,
                               "minValue" : 3.84,
                               "maxValue" : 3.84
                            }
-                        }
+                        },
+                        "minTimeSecs" : 1381238902.42,
+                        "maxTimeSecs" : 1382054188
                      };
 
                      var validateSuccessfulInfoFetch = function(res, feedId, testFeed, channelInfo) {
@@ -2739,10 +2814,12 @@ describe("ESDR", function() {
                         res.body.data.should.have.property('lastUpload');
                         res.body.data.should.have.property('minTimeSecs');
                         res.body.data.should.have.property('maxTimeSecs');
-                        should(res.body.data.channels).eql(channelInfo); // deep equal
+                        should(res.body.data.channelSpecs).eql(testProduct1.defaultChannelSpecs); // deep equal
+                        should(res.body.data.channelBounds).eql(channelInfo); // deep equal
 
-                        // should NOT have the read-only property
+                        // should NOT have these properties
                         res.body.data.should.not.have.property('apiKey');
+                        res.body.data.should.not.have.property('datastoreId');
                      };
 
                      describe("OAuth2 Authentication", function() {
@@ -3795,7 +3872,7 @@ describe("ESDR", function() {
                   product.should.have.property('modified');
 
                   // do a deep equal
-                  should(JSON.parse(product.defaultChannelSpec)).eql(testProduct3.defaultChannelSpec);
+                  should(JSON.parse(product.defaultChannelSpecs)).eql(testProduct3.defaultChannelSpecs);
 
                   done();
                });

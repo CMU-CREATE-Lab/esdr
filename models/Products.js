@@ -11,7 +11,7 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Products` ( " +
                          "`vendor` varchar(255) DEFAULT NULL, " +
                          "`description` varchar(512) DEFAULT NULL, " +
                          "`creatorUserId` bigint(20) DEFAULT NULL, " +
-                         "`defaultChannelSpec` text NOT NULL, " +
+                         "`defaultChannelSpecs` text NOT NULL, " +
                          "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
                          "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
                          "PRIMARY KEY (`id`), " +
@@ -47,12 +47,12 @@ var JSON_SCHEMA = {
          "minLength" : 0,
          "maxLength" : 512
       },
-      "defaultChannelSpec" : {
+      "defaultChannelSpecs" : {
          "type" : "string",
          "minLength" : 2
       }
    },
-   "required" : ["name", "prettyName", "defaultChannelSpec"]
+   "required" : ["name", "prettyName", "defaultChannelSpecs"]
 };
 
 module.exports = function(databaseHelper) {
@@ -79,8 +79,8 @@ module.exports = function(databaseHelper) {
       trimAndCopyPropertyIfNonEmpty(productDetails, product, "prettyName");
       trimAndCopyPropertyIfNonEmpty(productDetails, product, "vendor");
       trimAndCopyPropertyIfNonEmpty(productDetails, product, "description");
-      if (typeof productDetails.defaultChannelSpec !== 'undefined' && productDetails.defaultChannelSpec != null) {
-         product.defaultChannelSpec = JSON.stringify(productDetails.defaultChannelSpec)
+      if (typeof productDetails.defaultChannelSpecs !== 'undefined' && productDetails.defaultChannelSpecs != null) {
+         product.defaultChannelSpecs = JSON.stringify(productDetails.defaultChannelSpecs)
       }
 
       // now validate

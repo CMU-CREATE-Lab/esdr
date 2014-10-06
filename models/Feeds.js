@@ -29,7 +29,8 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Feeds` ( " +
                          "`isMobile` boolean DEFAULT 0, " +
                          "`latitude` double DEFAULT NULL, " +
                          "`longitude` double DEFAULT NULL, " +
-                         "`channelSpec` text NOT NULL, " +
+                         "`channelSpecs` text NOT NULL, " +
+                         "`channelBounds` text DEFAULT NULL, " +
                          "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
                          "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
                          "`lastUpload` timestamp DEFAULT 0, " +
@@ -124,18 +125,18 @@ module.exports = function(databaseHelper) {
             return callback(new ValidationError(err1));
          }
 
-         // now that we have validated, get the default channel spec from this device's Products table record (which was
-         // already validated when inserted into the product, so no need to do so again here)
-         databaseHelper.findOne("SELECT defaultChannelSpec FROM Products WHERE id = ?",
+         // now that we have validated, get the default channel specs from this device's Products table record (which
+         // was already validated when inserted into the product, so no need to do so again here)
+         databaseHelper.findOne("SELECT defaultChannelSpecs FROM Products WHERE id = ?",
                                 [productId],
                                 function(err2, result) {
                                    if (err2) {
                                       return callback(err2);
                                    }
 
-                                   feed.channelSpec = result.defaultChannelSpec;
+                                   feed.channelSpecs = result.defaultChannelSpecs;
 
-                                   // now that we have the channel spec, try to insert
+                                   // now that we have the channel specs, try to insert
                                    databaseHelper.execute("INSERT INTO Feeds SET ?", feed, function(err3, result) {
                                       if (err3) {
                                          return callback(err3);
@@ -151,22 +152,6 @@ module.exports = function(databaseHelper) {
                                 });
 
       });
-   };
-
-   this.updateLastUploadTime = function(feedId, minTimeSecs, maxTimeSecs, callback) {
-      databaseHelper.execute("UPDATE Feeds SET " +
-                             "minTimeSecs=?, " +
-                             "maxTimeSecs=?, " +
-                             "lastUpload=now() " +
-                             "WHERE id=?",
-                             [minTimeSecs, maxTimeSecs, feedId],
-                             function(err, result) {
-                                if (err) {
-                                   return callback(err);
-                                }
-
-                                return callback(null, result.changedRows == 1);
-                             });
    };
 
    this.getTile = function(feed, channelName, level, offset, callback) {
@@ -211,53 +196,6 @@ module.exports = function(databaseHelper) {
       };
    };
 
-   this.getInfo = function(feed, callback) {
-      datastore.getInfo({
-                           userId : feed.userId,
-                           deviceName : feed.datastoreId
-                        },
-                        function(err, info) {
-                           if (err) {
-                              if (typeof err.data !== 'undefined' &&
-                                  typeof err.data.code !== 'undefined' &&
-                                  typeof err.data.status !== 'undefined') {
-                                 return callback(err.data);
-                              }
-                              return callback(new Error("Failed to get info for feed [" + feed.id + "]: " + err.message));
-                           }
-
-                           // inflate the channel spec JSON text into an object
-                           feed.channelSpec = JSON.parse(feed.channelSpec);
-
-                           // Iterate over each of the channels in the info from the datastore
-                           // and copy to our new format, merged with the channelSpec.
-                           var deviceAndChannelPrefixLength = (feed.datastoreId + ".").length;
-                           Object.keys(info.channel_specs).forEach(function(deviceAndChannel) {
-                              var channelName = deviceAndChannel.slice(deviceAndChannelPrefixLength);
-                              var channelInfo = info.channel_specs[deviceAndChannel];
-
-                              // copy the bounds (changing from snake to camel case)
-                              var channelBounds = channelInfo.channel_bounds;
-                              feed.channelSpec[channelName].bounds = {
-                                 minTimeSecs : channelBounds.min_time,
-                                 maxTimeSecs : channelBounds.max_time,
-                                 minValue : channelBounds.min_value,
-                                 maxValue : channelBounds.max_value
-                              };
-                           });
-
-                           // rename the channelSpec field to simply "channels"
-                           feed.channels = feed.channelSpec;
-                           delete feed.channelSpec;
-
-                           // Remove the datastoreId and API Key. No need to reveal either here.
-                           delete feed.datastoreId;
-                           delete feed.apiKey;
-
-                           return callback(null, feed);
-                        });
-   };
-
    this.importData = function(feed, data, callback) {
       datastore.importJson(feed.userId,
                            feed.datastoreId,
@@ -273,12 +211,38 @@ module.exports = function(databaseHelper) {
                                  return callback(new Error("Failed to import data"));
                               }
 
+                              // create the bounds object we'll return to the caller
+                              var bounds = {
+                                 channelBounds : {},
+                                 importedBounds : {}
+                              };
+
                               // If there was no error, then first see whether any data were actually
                               // imported.  The "channel_specs" field will be defined and non-null if so.
                               var wasDataActuallyImported = typeof importResult.channel_specs !== 'undefined' && importResult.channel_specs != null;
 
-                              // Get the info for this device so we can return the current state to the caller
-                              // and optionally update the min/max times and last upload time in the DB.
+                              // if data was imported, then copy the imported_bounds from importResult to our
+                              // new bounds object, but change field names from snake case to camel case.
+                              if (wasDataActuallyImported) {
+                                 bounds.importedBounds.channels = {};
+                                 bounds.importedBounds.minTimeSecs = Number.MAX_VALUE;
+                                 bounds.importedBounds.maxTimeSecs = Number.MIN_VALUE;
+                                 Object.keys(importResult.channel_specs).forEach(function(channelName) {
+                                    var importedBounds = importResult.channel_specs[channelName].imported_bounds;
+                                    bounds.importedBounds.channels[channelName] = {
+                                       minTimeSecs : importedBounds.min_time,
+                                       maxTimeSecs : importedBounds.max_time,
+                                       minValue : importedBounds.min_value,
+                                       maxValue : importedBounds.max_value
+                                    };
+
+                                    bounds.importedBounds.minTimeSecs = Math.min(bounds.importedBounds.minTimeSecs, importedBounds.min_time);
+                                    bounds.importedBounds.maxTimeSecs = Math.max(bounds.importedBounds.maxTimeSecs, importedBounds.max_time);
+                                 });
+                              }
+
+                              // Get the info for this device so we can return the current state to the caller and
+                              // optionally update the channel bounds, min/max times, and last upload time in the DB.
                               datastore.getInfo({
                                                    userId : feed.userId,
                                                    deviceName : feed.datastoreId
@@ -295,23 +259,53 @@ module.exports = function(databaseHelper) {
                                                    }
 
                                                    // If there's data in the datastore for this device, then min and max
-                                                   // time will be defined.  If they are, and if data was actually imported above,
-                                                   // then update the database with the min/max times and last upload time
+                                                   // time will be defined.  If they are, and if data was actually
+                                                   // imported above, then update the database with the channel bounds,
+                                                   // the min/max times, and last upload time
                                                    if (wasDataActuallyImported &&
                                                        typeof info.min_time !== 'undefined' &&
                                                        typeof info.max_time !== 'undefined') {
-                                                      self.updateLastUploadTime(feed.id,
-                                                                                info.min_time,
-                                                                                info.max_time,
-                                                                                function(err) {
-                                                                                   if (err) {
-                                                                                      return callback(new Error("Failed to update last upload time after importing data"));
-                                                                                   }
-                                                                                   return callback(null, info);
-                                                                                });
+
+                                                      // Iterate over each of the channels in the info from the datastore
+                                                      // and copy to our bounds object.
+                                                      var deviceAndChannelPrefixLength = (feed.datastoreId + ".").length;
+                                                      bounds.channelBounds.channels = {};
+                                                      Object.keys(info.channel_specs).forEach(function(deviceAndChannel) {
+                                                         var channelName = deviceAndChannel.slice(deviceAndChannelPrefixLength);
+                                                         var channelInfo = info.channel_specs[deviceAndChannel];
+
+                                                         // copy the bounds (changing from snake to camel case)
+                                                         var channelBounds = channelInfo.channel_bounds;
+                                                         bounds.channelBounds.channels[channelName] = {
+                                                            minTimeSecs : channelBounds.min_time,
+                                                            maxTimeSecs : channelBounds.max_time,
+                                                            minValue : channelBounds.min_value,
+                                                            maxValue : channelBounds.max_value
+                                                         };
+                                                      });
+                                                      bounds.channelBounds.minTimeSecs = info.min_time;
+                                                      bounds.channelBounds.maxTimeSecs = info.max_time;
+
+                                                      // finally, update the database with the new bounds and lastUpload time
+                                                      databaseHelper.execute("UPDATE Feeds SET " +
+                                                                             "minTimeSecs=?, " +
+                                                                             "maxTimeSecs=?, " +
+                                                                             "channelBounds=?, " +
+                                                                             "lastUpload=now() " +
+                                                                             "WHERE id=?",
+                                                                             [bounds.channelBounds.minTimeSecs,
+                                                                              bounds.channelBounds.maxTimeSecs,
+                                                                              JSON.stringify(bounds.channelBounds),
+                                                                              feed.id],
+                                                                             function(err) {
+                                                                                if (err) {
+                                                                                   return callback(new Error("Failed to update last upload time after importing data"));
+                                                                                }
+                                                                                return callback(null, bounds);
+                                                                             });
                                                    }
                                                    else {
-                                                      return callback(null, info);
+                                                      return callback(null, bounds);
                                                    }
                                                 });
                            }

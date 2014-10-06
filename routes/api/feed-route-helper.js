@@ -33,20 +33,20 @@ module.exports = function(FeedModel) {
    };
 
    this.getInfo = function(res, feed) {
-      FeedModel.getInfo(feed,
-                        function(err, feedInfo) {
-                           if (err) {
-                              // See if the error contains a JSend data object.  If so, pass it on through.
-                              if (typeof err.data !== 'undefined' &&
-                                  typeof err.data.code !== 'undefined' &&
-                                  typeof err.data.status !== 'undefined') {
-                                 return res.jsendPassThrough(err.data);
-                              }
-                              return res.jsendServerError(err.message, null);
-                           }
+      // inflate the JSON fields into objects
+      if (feed.channelSpecs) {
+         feed.channelSpecs = JSON.parse(feed.channelSpecs);
+      }
 
-                           return res.jsendSuccess(feedInfo, httpStatus.OK); // HTTP 200 OK
-                        });
+      if (feed.channelBounds) {
+         feed.channelBounds = JSON.parse(feed.channelBounds);
+      }
+
+      // Remove the datastoreId and API Key. No need to reveal either here.
+      delete feed.datastoreId;
+      delete feed.apiKey;
+
+      return res.jsendSuccess(feed, httpStatus.OK); // HTTP 200 OK
    };
 
    this.getTile = function(res, feed, channelName, level, offset) {

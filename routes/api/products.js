@@ -48,8 +48,8 @@ module.exports = function(ProductModel, DeviceModel) {
                  log.debug("Received GET for product [" + productName + "]");
 
                  findProductByName(res, productName, function(product) {
-                    // inflate the channel spec JSON text into an object
-                    product.defaultChannelSpec = JSON.parse(product.defaultChannelSpec);
+                    // inflate the channel specs JSON text into an object
+                    product.defaultChannelSpecs = JSON.parse(product.defaultChannelSpecs);
                     return res.jsendSuccess(product); // HTTP 200 OK
                  });
               });

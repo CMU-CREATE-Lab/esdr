@@ -47,8 +47,8 @@ module.exports = function(DeviceModel, FeedModel) {
                                       delete feed.apiKey;
                                    }
 
-                                   // inflate the channel spec JSON text into an object
-                                   feed.channelSpec = JSON.parse(feed.channelSpec);
+                                   // inflate the channel specs JSON text into an object
+                                   feed.channelSpecs = JSON.parse(feed.channelSpecs);
 
                                    filteredFeeds.push(feed);
                                 }
