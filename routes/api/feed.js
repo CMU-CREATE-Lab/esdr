@@ -4,7 +4,7 @@ var passport = require('passport');
 var httpStatus = require('http-status');
 var log = require('log4js').getLogger();
 
-module.exports = function(FeedModel, datastore, feedRouteHelper) {
+module.exports = function(FeedModel, feedRouteHelper) {
 
    // for uploads authenticated using the feed's API Key in the header
    router.put('/',

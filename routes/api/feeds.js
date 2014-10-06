@@ -4,7 +4,7 @@ var passport = require('passport');
 var httpStatus = require('http-status');
 var log = require('log4js').getLogger();
 
-module.exports = function(FeedModel, datastore, feedRouteHelper) {
+module.exports = function(FeedModel, feedRouteHelper) {
 
    // TODO: add GET / method, with robust querying cabability
 

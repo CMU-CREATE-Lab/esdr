@@ -4,6 +4,16 @@ var JaySchema = require('jayschema');
 var jsonValidator = new JaySchema();
 var createRandomHexToken = require('../lib/token').createRandomHexToken;
 var ValidationError = require('../lib/errors').ValidationError;
+var httpStatus = require('http-status');
+var BodyTrackDatastore = require('bodytrack-datastore');
+var config = require('../config');
+
+// instantiate the datastore
+var datastore = new BodyTrackDatastore({
+                                          binDir : config.get("datastore:binDirectory"),
+                                          dataDir : config.get("datastore:dataDirectory")
+                                       });
+
 var log = require('log4js').getLogger();
 
 var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Feeds` ( " +
@@ -76,6 +86,8 @@ var JSON_SCHEMA = {
 };
 
 module.exports = function(databaseHelper) {
+
+   var self = this;
 
    this.jsonSchema = JSON_SCHEMA;
 
@@ -155,6 +167,155 @@ module.exports = function(databaseHelper) {
 
                                 return callback(null, result.changedRows == 1);
                              });
+   };
+
+   this.getTile = function(feed, channelName, level, offset, callback) {
+      datastore.getTile(feed.userId,
+                        feed.datastoreId,
+                        channelName,
+                        level,
+                        offset,
+                        function(err, tile) {
+
+                           if (err) {
+                              if (err.data && err.data.code == httpStatus.UNPROCESSABLE_ENTITY) {
+                                 return callback(err);
+                              }
+
+                              return callback(new Error("Failed to fetch tile: " + err.message));
+                           }
+
+                           // no error, so check whether there was actually any data returned at all
+                           if (typeof tile['data'] === 'undefined') {
+                              tile = createEmptyTile(level, offset);
+                           }
+
+                           // Must set the type since the grapher won't render anything if the type is not set
+                           // (TODO: get this from the feed's channel specs, and default to value if undefined)
+                           tile['type'] = "value";
+
+                           return callback(null, tile);
+                        });
+   };
+
+   var createEmptyTile = function(level, offset) {
+      return {
+         "data" : [],
+         "fields" : ["time", "mean", "stddev", "count"],
+         "level" : level,
+         "offset" : offset,
+         "sample_width" : 0,
+
+         // TODO: get this from the feed's channel specs, and default to value if undefined
+         "type" : "value"
+      };
+   };
+
+   this.getInfo = function(feed, callback) {
+      datastore.getInfo({
+                           userId : feed.userId,
+                           deviceName : feed.datastoreId
+                        },
+                        function(err, info) {
+                           if (err) {
+                              if (typeof err.data !== 'undefined' &&
+                                  typeof err.data.code !== 'undefined' &&
+                                  typeof err.data.status !== 'undefined') {
+                                 return callback(err.data);
+                              }
+                              return callback(new Error("Failed to get info for feed [" + feed.id + "]: " + err.message));
+                           }
+
+                           // inflate the channel spec JSON text into an object
+                           feed.channelSpec = JSON.parse(feed.channelSpec);
+
+                           // Iterate over each of the channels in the info from the datastore
+                           // and copy to our new format, merged with the channelSpec.
+                           var deviceAndChannelPrefixLength = (feed.datastoreId + ".").length;
+                           Object.keys(info.channel_specs).forEach(function(deviceAndChannel) {
+                              var channelName = deviceAndChannel.slice(deviceAndChannelPrefixLength);
+                              var channelInfo = info.channel_specs[deviceAndChannel];
+
+                              // copy the bounds (changing from snake to camel case)
+                              var channelBounds = channelInfo.channel_bounds;
+                              feed.channelSpec[channelName].bounds = {
+                                 minTimeSecs : channelBounds.min_time,
+                                 maxTimeSecs : channelBounds.max_time,
+                                 minValue : channelBounds.min_value,
+                                 maxValue : channelBounds.max_value
+                              };
+                           });
+
+                           // rename the channelSpec field to simply "channels"
+                           feed.channels = feed.channelSpec;
+                           delete feed.channelSpec;
+
+                           // Remove the datastoreId and API Key. No need to reveal either here.
+                           delete feed.datastoreId;
+                           delete feed.apiKey;
+
+                           return callback(null, feed);
+                        });
+   };
+
+   this.importData = function(feed, data, callback) {
+      datastore.importJson(feed.userId,
+                           feed.datastoreId,
+                           data,
+                           function(err, importResult) {
+                              if (err) {
+                                 // See if the error contains a JSend data object.  If so, pass it on through.
+                                 if (typeof err.data !== 'undefined' &&
+                                     typeof err.data.code !== 'undefined' &&
+                                     typeof err.data.status !== 'undefined') {
+                                    return callback(err);
+                                 }
+                                 return callback(new Error("Failed to import data"));
+                              }
+
+                              // If there was no error, then first see whether any data were actually
+                              // imported.  The "channel_specs" field will be defined and non-null if so.
+                              var wasDataActuallyImported = typeof importResult.channel_specs !== 'undefined' && importResult.channel_specs != null;
+
+                              // Get the info for this device so we can return the current state to the caller
+                              // and optionally update the min/max times and last upload time in the DB.
+                              datastore.getInfo({
+                                                   userId : feed.userId,
+                                                   deviceName : feed.datastoreId
+                                                },
+                                                function(err, info) {
+                                                   if (err) {
+                                                      // See if the error contains a JSend data object.  If so, pass it on through.
+                                                      if (typeof err.data !== 'undefined' &&
+                                                          typeof err.data.code !== 'undefined' &&
+                                                          typeof err.data.status !== 'undefined') {
+                                                         return callback(err);
+                                                      }
+                                                      return callback(new Error("Failed to get info after importing data"));
+                                                   }
+
+                                                   // If there's data in the datastore for this device, then min and max
+                                                   // time will be defined.  If they are, and if data was actually imported above,
+                                                   // then update the database with the min/max times and last upload time
+                                                   if (wasDataActuallyImported &&
+                                                       typeof info.min_time !== 'undefined' &&
+                                                       typeof info.max_time !== 'undefined') {
+                                                      self.updateLastUploadTime(feed.id,
+                                                                                info.min_time,
+                                                                                info.max_time,
+                                                                                function(err) {
+                                                                                   if (err) {
+                                                                                      return callback(new Error("Failed to update last upload time after importing data"));
+                                                                                   }
+                                                                                   return callback(null, info);
+                                                                                });
+                                                   }
+                                                   else {
+                                                      return callback(null, info);
+                                                   }
+                                                });
+                           }
+      );
    };
 
    this.findFeedsForDevice = function(deviceId, callback) {

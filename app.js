@@ -73,7 +73,7 @@ Database.create(function(err, db) {
 
          // create the FeedRouteHelper
          var FeedRouteHelper = require('./routes/api/feed-route-helper');
-         var feedRouteHelper = new FeedRouteHelper(db.feeds, datastore);
+         var feedRouteHelper = new FeedRouteHelper(db.feeds);
 
          // configure routing
          app.use('/oauth', require('./routes/oauth')(oauthServer));
@@ -81,8 +81,8 @@ Database.create(function(err, db) {
          app.use('/api/v1/users', require('./routes/api/users')(db.users, db.clients));
          app.use('/api/v1/products', require('./routes/api/products')(db.products, db.devices));
          app.use('/api/v1/devices', require('./routes/api/devices')(db.devices, db.feeds));
-         app.use('/api/v1/feed', require('./routes/api/feed')(db.feeds, datastore, feedRouteHelper));
-         app.use('/api/v1/feeds', require('./routes/api/feeds')(db.feeds, datastore, feedRouteHelper));
+         app.use('/api/v1/feed', require('./routes/api/feed')(db.feeds, feedRouteHelper));
+         app.use('/api/v1/feeds', require('./routes/api/feeds')(db.feeds, feedRouteHelper));
          app.use('/api/v1/user-verification', require('./routes/api/user-verification')(db.users, db.clients));
          app.use('/api/v1/password-reset', require('./routes/api/password-reset')(db.users, db.clients));
          app.use('/', require('./routes/index'));
