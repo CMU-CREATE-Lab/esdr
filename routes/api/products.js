@@ -21,7 +21,7 @@ module.exports = function(ProductModel, DeviceModel) {
                                       function(err, result) {
                                          if (err) {
                                             if (err instanceof ValidationError) {
-                                               return res.jsendClientError("Validation failure", err.data, httpStatus.UNPROCESSABLE_ENTITY);   // HTTP 422 Unprocessable Entity
+                                               return res.jsendClientValidationError("Validation failure", err.data);   // HTTP 422 Unprocessable Entity
                                             }
                                             if (err instanceof DuplicateRecordError) {
                                                log.debug("Product name [" + newProduct.name + "] already in use!");
@@ -88,7 +88,7 @@ module.exports = function(ProductModel, DeviceModel) {
                      DeviceModel.create(newDevice, product.id, req.user.id, function(err, result) {
                         if (err) {
                            if (err instanceof ValidationError) {
-                              return res.jsendClientError("Validation failure", err.data, httpStatus.UNPROCESSABLE_ENTITY);   // HTTP 422 Unprocessable Entity
+                              return res.jsendClientValidationError("Validation failure", err.data);   // HTTP 422 Unprocessable Entity
                            }
                            if (err instanceof DuplicateRecordError) {
                               log.debug("Serial number [" + newDevice.serialNumber + "] for product [" + productName + "] already in use!");

@@ -75,11 +75,11 @@ module.exports = function(UserModel, ClientModel) {
 
                      }
                      else {
-                        return res.jsendClientError("Client not specified.", null, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 Unprocessable Entity
+                        return res.jsendClientValidationError("Client not specified.", null);  // HTTP 422 Unprocessable Entity
                      }
                   }
                   else {
-                     return res.jsendClientError("Email address not specified.", null, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 Unprocessable Entity
+                     return res.jsendClientValidationError("Email address not specified.", null);  // HTTP 422 Unprocessable Entity
                   }
                }
    );
@@ -108,7 +108,7 @@ module.exports = function(UserModel, ClientModel) {
                     });
                  }
                  else {
-                    return res.jsendClientError("Verification token not specified.", null, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 Unprocessable Entity
+                    return res.jsendClientValidationError("Verification token not specified.", null);  // HTTP 422 Unprocessable Entity
                  }
               }
    );

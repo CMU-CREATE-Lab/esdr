@@ -29,7 +29,7 @@ module.exports = function(UserModel, ClientModel) {
                            UserModel.createResetPasswordToken(userEmail, function(err, token) {
                               if (err) {
                                  if (err instanceof ValidationError) {
-                                    return res.jsendClientError("Invalid email address.", {email : userEmail}, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 Unprocessable Entity
+                                    return res.jsendClientValidationError("Invalid email address.", {email : userEmail});  // HTTP 422 Unprocessable Entity
                                  }
                                  var message = "Error while trying create a reset password token request";
                                  log.error(message + ": " + err);
@@ -59,11 +59,11 @@ module.exports = function(UserModel, ClientModel) {
                         });
                      }
                      else {
-                        return res.jsendClientError("Client not specified.", null, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 Unprocessable Entity
+                        return res.jsendClientValidationError("Client not specified.", null);  // HTTP 422 Unprocessable Entity
                      }
                   }
                   else {
-                     return res.jsendClientError("Email address not specified.", null, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 Unprocessable Entity
+                     return res.jsendClientValidationError("Email address not specified.", null);  // HTTP 422 Unprocessable Entity
                   }
                }
    );
@@ -78,7 +78,7 @@ module.exports = function(UserModel, ClientModel) {
                        UserModel.setPassword(token, password, function(err, wasSuccessful) {
                           if (err) {
                              if (err instanceof ValidationError) {
-                                return res.jsendClientError("Validation failure", err.data, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 Unprocessable Entity
+                                return res.jsendClientValidationError("Validation failure", err.data);  // HTTP 422 Unprocessable Entity
                              }
                              var message = "Error while trying set the new password";
                              log.error(message + ": " + err);
@@ -93,11 +93,11 @@ module.exports = function(UserModel, ClientModel) {
                        });
                     }
                     else {
-                       return res.jsendClientError("Reset password token not specified.", null, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 Unprocessable Entity
+                       return res.jsendClientValidationError("Reset password token not specified.", null);  // HTTP 422 Unprocessable Entity
                     }
                  }
                  else {
-                    return res.jsendClientError("Password not specified.", null, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 Unprocessable Entity
+                    return res.jsendClientValidationError("Password not specified.", null);  // HTTP 422 Unprocessable Entity
                  }
               }
    );

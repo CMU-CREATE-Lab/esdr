@@ -58,7 +58,7 @@ module.exports = function(UserModel, ClientModel) {
                                          function(err, result) {
                                             if (err) {
                                                if (err instanceof ValidationError) {
-                                                  return res.jsendClientError("Validation failure", err.data, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 Unprocessable Entity
+                                                  return res.jsendClientValidationError("Validation failure", err.data);  // HTTP 422 Unprocessable Entity
                                                }
                                                if (err instanceof DuplicateRecordError) {
                                                   log.debug("Email [" + user.email + "] already in use!");
@@ -97,7 +97,7 @@ module.exports = function(UserModel, ClientModel) {
                      });
                   }
                   else {
-                     return res.jsendClientError("Client not specified.", null, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 Unprocessable Entity
+                     return res.jsendClientValidationError("Client not specified.", null);  // HTTP 422 Unprocessable Entity
                   }
                });
 

@@ -78,7 +78,7 @@ module.exports = function(DeviceModel, FeedModel) {
                         FeedModel.create(newFeed, device.id, device.productId, req.user.id, function(err2, result) {
                            if (err2) {
                               if (err2 instanceof ValidationError) {
-                                 return res.jsendClientError("Validation failure", err2.data, httpStatus.UNPROCESSABLE_ENTITY);   // HTTP 422 Unprocessable Entity
+                                 return res.jsendClientValidationError("Validation failure", err2.data);   // HTTP 422 Unprocessable Entity
                               }
 
                               var message = "Error while trying to create feed for device [" + device.serialNumber + "]";
