@@ -2,11 +2,45 @@ var express = require('express');
 var router = express.Router();
 var passport = require('passport');
 var httpStatus = require('http-status');
+var util = require('util');
 var log = require('log4js').getLogger();
 
 module.exports = function(FeedModel, feedRouteHelper) {
 
-   // TODO: add GET / method, with robust querying cabability
+   // for requesting lists of feeds, optionally matching specified criteria and sort order
+   router.get('/',
+              function(req, res, next) {
+
+                 log.debug("==============================================================");
+                 FeedModel.findFeeds(req.query,
+                                     function(err, result) {
+                                        if (err) {
+                                           // See if the error contains a JSend data object.  If so, pass it on through.
+                                           if (typeof err.data !== 'undefined' &&
+                                               typeof err.data.code !== 'undefined' &&
+                                               typeof err.data.status !== 'undefined') {
+                                              return res.jsendPassThrough(err.data);
+                                           }
+                                           return res.jsendServerError("Failed to get feeds", null);
+                                        }
+
+                                        // TODO: deal with auth to strip out Feeds and apiKeys the caller isn't allowed to see
+                                        log.debug(JSON.stringify(result, null, 3));
+
+                                        //if (result) {
+                                        //   if (util.isArray(result) && result.length > 0) {
+                                        //      if ("channelBounds" in result[0]) {
+                                        //         result.map(function() {
+                                        //
+                                        //         });
+                                        //         result.channelBounds = JSON.parse(result.channelBounds);
+                                        //      }
+                                        //
+                                        //   }
+                                        //}
+                                        return res.jsendSuccess(result);
+                                     });
+              });
 
    // for uploads authenticated using the user's OAuth2 access token in the header
    router.put('/:feedId',
