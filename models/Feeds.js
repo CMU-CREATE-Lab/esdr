@@ -39,16 +39,22 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Feeds` ( " +
                          "`minTimeSecs` double DEFAULT NULL, " +
                          "`maxTimeSecs` double DEFAULT NULL, " +
                          "PRIMARY KEY (`id`), " +
-                         "UNIQUE KEY `apiKey` (`apiKey`), " +
-                         "UNIQUE KEY `apiKeyReadOnly` (`apiKeyReadOnly`), " +
+                         "KEY `name` (`name`), " +
                          "KEY `deviceId` (`deviceId`), " +
                          "KEY `productId` (`productId`), " +
                          "KEY `userId` (`userId`), " +
+                         "UNIQUE KEY `apiKey` (`apiKey`), " +
+                         "UNIQUE KEY `apiKeyReadOnly` (`apiKeyReadOnly`), " +
                          "KEY `exposure` (`exposure`), " +
                          "KEY `isPublic` (`isPublic`), " +
                          "KEY `isMobile` (`isMobile`), " +
                          "KEY `latitude` (`latitude`), " +
                          "KEY `longitude` (`longitude`), " +
+                         "KEY `created` (`created`), " +
+                         "KEY `modified` (`modified`), " +
+                         "KEY `lastUpload` (`lastUpload`), " +
+                         "KEY `minTimeSecs` (`minTimeSecs`), " +
+                         "KEY `maxTimeSecs` (`maxTimeSecs`), " +
                          "CONSTRAINT `feeds_deviceId_fk_1` FOREIGN KEY (`deviceId`) REFERENCES `Devices` (`id`), " +
                          "CONSTRAINT `feeds_productId_fk_1` FOREIGN KEY (`productId`) REFERENCES `Products` (`id`), " +
                          "CONSTRAINT `feeds_userId_fk_1` FOREIGN KEY (`userId`) REFERENCES `Users` (`id`) " +
