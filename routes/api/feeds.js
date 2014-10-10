@@ -15,6 +15,7 @@ module.exports = function(FeedModel, feedRouteHelper) {
                  FeedModel.findFeeds(req.query,
                                      function(err, result) {
                                         if (err) {
+                                           log.error(JSON.stringify(err, null, 3));
                                            // See if the error contains a JSend data object.  If so, pass it on through.
                                            if (typeof err.data !== 'undefined' &&
                                                typeof err.data.code !== 'undefined' &&
@@ -25,6 +26,7 @@ module.exports = function(FeedModel, feedRouteHelper) {
                                         }
 
                                         // TODO: deal with auth to strip out Feeds and apiKeys the caller isn't allowed to see
+                                        // TODO: inflate channel specs and channel bounds
                                         log.debug(JSON.stringify(result, null, 3));
 
                                         //if (result) {

@@ -55,25 +55,25 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Feeds` ( " +
                          ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
 
 var query2query = new Query2Query();
-query2query.addField('id', true, true);
-query2query.addField('name', true, true);
-query2query.addField('deviceId', true, true);
-query2query.addField('productId', true, true);
-query2query.addField('userId', true, true);
-query2query.addField('apiKey', false, false);
-query2query.addField('apiKeyReadOnly', false, false);
-query2query.addField('exposure', true, true);
-query2query.addField('isPublic', true, true);
-query2query.addField('isMobile', true, true);
-query2query.addField('latitude', true, true);
-query2query.addField('longitude', true, true);
-query2query.addField('channelSpecs', false, false);
-query2query.addField('channelBounds', false, false);
-query2query.addField('created', true, true);
-query2query.addField('modified', true, true);
-query2query.addField('lastUpload', true, true);
-query2query.addField('minTimeSecs', true, true);
-query2query.addField('maxTimeSecs', true, true);
+query2query.addField('id', true, true, false, Query2Query.types.INTEGER);
+query2query.addField('name', true, true, false);
+query2query.addField('deviceId', true, true, false, Query2Query.types.INTEGER);
+query2query.addField('productId', true, true, false, Query2Query.types.INTEGER);
+query2query.addField('userId', true, true, false, Query2Query.types.INTEGER);
+query2query.addField('apiKey', false, false, false);
+query2query.addField('apiKeyReadOnly', false, false, false);
+query2query.addField('exposure', true, true, false);
+query2query.addField('isPublic', true, true, false, Query2Query.types.BOOLEAN);
+query2query.addField('isMobile', true, true, false, Query2Query.types.BOOLEAN);
+query2query.addField('latitude', true, true, true, Query2Query.types.NUMBER);
+query2query.addField('longitude', true, true, true, Query2Query.types.NUMBER);
+query2query.addField('channelSpecs', false, false, false);
+query2query.addField('channelBounds', false, false, true);
+query2query.addField('created', true, true, false, Query2Query.types.DATETIME);
+query2query.addField('modified', true, true, false, Query2Query.types.DATETIME);
+query2query.addField('lastUpload', true, true, false, Query2Query.types.DATETIME);
+query2query.addField('minTimeSecs', true, true, true, Query2Query.types.NUMBER);
+query2query.addField('maxTimeSecs', true, true, true, Query2Query.types.NUMBER);
 
 var JSON_SCHEMA = {
    "$schema" : "http://json-schema.org/draft-04/schema#",
