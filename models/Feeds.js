@@ -341,23 +341,60 @@ module.exports = function(databaseHelper) {
       );
    };
 
-   this.findFeeds = function(queryString, callback) {
+   this.findFeeds = function(queryString, authUserId, callback) {
 
       query2query.parse(queryString, function(err, queryParts) {
-         log.debug("QUERY PARTS: " + JSON.stringify(queryParts, null, 3));
+         //log.debug("Feeds.findFeeds(userId: " + authUserId + "): QUERY PARTS: " + JSON.stringify(queryParts, null, 3));
 
          if (err) {
             return callback(err);
          }
 
-         var sql = queryParts.sql("Feeds", false);
-         log.debug(sql);
-         databaseHelper.execute(sql, queryParts.whereValues, function(err, result) {
+         // We need to be really careful about security here!  Restrict the WHERE clause to allow returning
+         // only the public feeds, or feeds owned by the authenticated user (if any).
+         var additionalWhereExpression = "(isPublic = true) ";
+         if (authUserId != null) {
+            additionalWhereExpression = "(" + additionalWhereExpression + " OR (userId = " + authUserId + "))";
+         }
+         var whereClause = "WHERE " + additionalWhereExpression;
+         if (queryParts.whereExpressions.length > 0) {
+            whereClause += " AND (" + queryParts.where + ")";
+         }
+
+         // More security! Now disallow selection of the apiKey if not authenticated.  If authenticated, then we'll
+         // need to manually remove the apiKey field after we fetch the feeds from the database (see below).
+         var apiKeyIndex = queryParts.selectFields.indexOf('apiKey');
+         if (authUserId == null && apiKeyIndex >= 0) {
+            // remove the apiKey field from the array
+            queryParts.selectFields.splice(apiKeyIndex, 1);
+         }
+
+         // build the restricted SQL query
+         var restrictedSql = [
+                  "SELECT " + queryParts.selectFields.join(','),
+                  "FROM Feeds",
+                  whereClause,
+                  queryParts.orderByClause,
+                  queryParts.limitClause
+         ].join(' ');
+         log.debug(restrictedSql + (queryParts.whereValues.length > 0 ? " [where values: " + queryParts.whereValues + "]" : ""));
+
+         databaseHelper.execute(restrictedSql, queryParts.whereValues, function(err, feeds) {
             if (err) {
-               log.error("Feeds.findFeeds(): " + err);
                return callback(err);
             }
-            return callback(null, result);
+
+            // now that we have the feeds, we need to manually remove the apiKey field (if selected) from all feeds
+            // which the user does not own.
+            if (authUserId != null && apiKeyIndex >= 0) {
+               feeds.forEach(function(feed) {
+                  if (feed.userId != authUserId) {
+                     delete feed.apiKey;
+                  }
+               });
+            }
+
+            return callback(null, feeds, queryParts.selectFields);
          });
       });
    };

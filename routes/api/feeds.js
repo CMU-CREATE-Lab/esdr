@@ -10,38 +10,45 @@ module.exports = function(FeedModel, feedRouteHelper) {
    // for requesting lists of feeds, optionally matching specified criteria and sort order
    router.get('/',
               function(req, res, next) {
+                 passport.authenticate('bearer', function(err, user, info) {
+                    if (err) {
+                       var message = "Error while authenticating to get feed list";
+                       log.error(message + ": " + err);
+                       return res.jsendServerError(message);
+                    }
 
-                 log.debug("==============================================================");
-                 FeedModel.findFeeds(req.query,
-                                     function(err, result) {
-                                        if (err) {
-                                           log.error(JSON.stringify(err, null, 3));
-                                           // See if the error contains a JSend data object.  If so, pass it on through.
-                                           if (typeof err.data !== 'undefined' &&
-                                               typeof err.data.code !== 'undefined' &&
-                                               typeof err.data.status !== 'undefined') {
-                                              return res.jsendPassThrough(err.data);
+                    FeedModel.findFeeds(req.query,
+                                        user ? user.id : null,
+                                        function(err, feeds, selectedFields) {
+                                           if (err) {
+                                              log.error(JSON.stringify(err, null, 3));
+                                              // See if the error contains a JSend data object.  If so, pass it on through.
+                                              if (typeof err.data !== 'undefined' &&
+                                                  typeof err.data.code !== 'undefined' &&
+                                                  typeof err.data.status !== 'undefined') {
+                                                 return res.jsendPassThrough(err.data);
+                                              }
+                                              return res.jsendServerError("Failed to get feeds", null);
                                            }
-                                           return res.jsendServerError("Failed to get feeds", null);
-                                        }
 
-                                        // TODO: deal with auth to strip out Feeds and apiKeys the caller isn't allowed to see
-                                        // TODO: inflate channel specs and channel bounds
-                                        log.debug(JSON.stringify(result, null, 3));
+                                           var willInflateChannelSpecs = (selectedFields.indexOf('channelSpecs') >= 0);
+                                           var willInflateChannelBounds = (selectedFields.indexOf('channelBounds') >= 0);
 
-                                        //if (result) {
-                                        //   if (util.isArray(result) && result.length > 0) {
-                                        //      if ("channelBounds" in result[0]) {
-                                        //         result.map(function() {
-                                        //
-                                        //         });
-                                        //         result.channelBounds = JSON.parse(result.channelBounds);
-                                        //      }
-                                        //
-                                        //   }
-                                        //}
-                                        return res.jsendSuccess(result);
-                                     });
+                                           if (willInflateChannelSpecs || willInflateChannelBounds) {
+                                              feeds.forEach(function(feed) {
+                                                 if (willInflateChannelSpecs) {
+                                                    feed.channelSpecs = JSON.parse(feed.channelSpecs);
+                                                 }
+                                                 if (willInflateChannelBounds) {
+                                                    feed.channelBounds = JSON.parse(feed.channelBounds);
+                                                 }
+                                              });
+                                           }
+                                           log.debug(JSON.stringify(feeds, null, 3));
+
+                                           return res.jsendSuccess(feeds);
+                                        });
+                 })(req, res, next);
               });
 
    // for uploads authenticated using the user's OAuth2 access token in the header
