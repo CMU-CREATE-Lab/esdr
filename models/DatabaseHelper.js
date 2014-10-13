@@ -1,7 +1,11 @@
+var flow = require('nimble');
 var DatabaseError = require('../lib/errors').DatabaseError;
 var DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
+var log = require('log4js').getLogger();
 
 module.exports = function(pool) {
+   var SELECT_PREFIX = "SELECT ";
+
    var self = this;
 
    this.execute = function(query, params, callback) {
@@ -36,6 +40,133 @@ module.exports = function(pool) {
          }
          callback(null, null);
       })
+   };
+
+   this.findWithLimit = function(query, params, callback) {
+      if (query && query.toUpperCase().indexOf(SELECT_PREFIX) == 0) {
+
+         // modify the query by inserting SQL_CALC_FOUND_ROWS
+         query = "SELECT SQL_CALC_FOUND_ROWS " + query.slice(SELECT_PREFIX.length);
+
+         var connection = null;
+         var rows = null;
+         var totalCount = null;
+         var error = null;
+         var hasError = function() {
+            return error != null;
+         };
+
+         flow.series(
+               [
+                  // get the connection
+                  function(done) {
+                     //log.debug("findWithLimit(): 1) Getting the connection");
+                     pool.getConnection(function(err, newConnection) {
+                        if (err) {
+                           error = err;
+                        }
+                        else {
+                           connection = newConnection;
+                        }
+                        done();
+                     });
+                  },
+
+                  // begin the transaction
+                  function(done) {
+                     if (!hasError()) {
+                        //log.debug("findWithLimit(): 2) Beginning the transaction");
+                        connection.beginTransaction(function(err) {
+                           if (err) {
+                              error = err;
+                           }
+                           done();
+                        });
+                     }
+                     else {
+                        done();
+                     }
+                  },
+
+                  // first execute the query with the SQL_CALC_FOUND_ROWS command included
+                  function(done) {
+                     if (!hasError()) {
+                        //log.debug("findWithLimit(): 3) Execute the query");
+                        connection.query(query,
+                                         params,
+                                         function(err, foundRows) {
+                                            if (err) {
+                                               error = err;
+                                            }
+                                            else {
+                                               rows = foundRows;
+                                            }
+                                            done();
+                                         });
+                     }
+                     else {
+                        done();
+                     }
+                  },
+
+                  // now call SELECT FOUND_ROWS() to determine the number of rows found had there been no LIMIT clause
+                  function(done) {
+                     if (!hasError() && rows) {
+                        //log.debug("findWithLimit(): 4) determining number of rows that would have been found with a LIMIT clause");
+
+                        connection.query("SELECT FOUND_ROWS() AS numFoundRows",
+                                         [],
+                                         function(err, result) {
+                                            if (err) {
+                                               error = err;
+                                            }
+                                            else {
+                                               totalCount = result[0].numFoundRows;
+                                            }
+                                            done();
+                                         });
+                     }
+                     else {
+                        done();
+                     }
+                  }
+               ],
+
+               // handle outcome
+               function() {
+                  //log.debug("findWithLimit(): 5) All done, now checking status and performing commit/rollback as necessary!");
+                  if (hasError() || rows == null) {
+                     connection.rollback(function() {
+                        connection.release();
+                        log.error("findWithLimit():    An error occurred while executing the find query, rolled back the transaction. Error:" + error);
+                        callback(error);
+                     });
+                  }
+                  else {
+                     //log.debug("findWithLimit():    No errors while executing find query, committing...");
+                     connection.commit(function(err) {
+                        if (err) {
+                           log.error("findWithLimit():    Failed to commit the transaction after executing find query");
+
+                           // rollback and then release the connection
+                           connection.rollback(function() {
+                              connection.release();
+                              callback(err);
+                           });
+                        }
+                        else {
+                           connection.release();
+                           //log.debug("findWithLimit():    Commit successful!");
+                           callback(null, {totalCount: totalCount, rows:rows});
+                        }
+                     });
+                  }
+               }
+         );
+      }
+      else {
+         return callback(new Error("Query must be non-null and start with 'SELECT '."));
+      }
    };
 
    this.getConnection = function(callback) {
