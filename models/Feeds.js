@@ -344,7 +344,6 @@ module.exports = function(databaseHelper) {
    this.findFeeds = function(queryString, authUserId, callback) {
 
       query2query.parse(queryString, function(err, queryParts) {
-         //log.debug("Feeds.findFeeds(userId: " + authUserId + "): QUERY PARTS: " + JSON.stringify(queryParts, null, 3));
 
          if (err) {
             return callback(err);
@@ -377,24 +376,29 @@ module.exports = function(databaseHelper) {
                   queryParts.orderByClause,
                   queryParts.limitClause
          ].join(' ');
-         log.debug(restrictedSql + (queryParts.whereValues.length > 0 ? " [where values: " + queryParts.whereValues + "]" : ""));
+         log.debug("Feeds.findFeeds(): " + restrictedSql + (queryParts.whereValues.length > 0 ? " [where values: " + queryParts.whereValues + "]" : ""));
 
-         databaseHelper.execute(restrictedSql, queryParts.whereValues, function(err, feeds) {
+         // use findWithLimit so we can also get a count of the total number of records that would have been returned
+         // had there been no LIMIT clause included in the query
+         databaseHelper.findWithLimit(restrictedSql, queryParts.whereValues, function(err, result) {
             if (err) {
                return callback(err);
             }
 
+            // copy in the offset
+            result.offset = queryParts.offset;
+
             // now that we have the feeds, we need to manually remove the apiKey field (if selected) from all feeds
             // which the user does not own.
             if (authUserId != null && apiKeyIndex >= 0) {
-               feeds.forEach(function(feed) {
+               result.rows.forEach(function(feed) {
                   if (feed.userId != authUserId) {
                      delete feed.apiKey;
                   }
                });
             }
 
-            return callback(null, feeds, queryParts.selectFields);
+            return callback(null, result, queryParts.selectFields);
          });
       });
    };

@@ -19,7 +19,7 @@ module.exports = function(FeedModel, feedRouteHelper) {
 
                     FeedModel.findFeeds(req.query,
                                         user ? user.id : null,
-                                        function(err, feeds, selectedFields) {
+                                        function(err, result, selectedFields) {
                                            if (err) {
                                               log.error(JSON.stringify(err, null, 3));
                                               // See if the error contains a JSend data object.  If so, pass it on through.
@@ -35,7 +35,7 @@ module.exports = function(FeedModel, feedRouteHelper) {
                                            var willInflateChannelBounds = (selectedFields.indexOf('channelBounds') >= 0);
 
                                            if (willInflateChannelSpecs || willInflateChannelBounds) {
-                                              feeds.forEach(function(feed) {
+                                              result.rows.forEach(function(feed) {
                                                  if (willInflateChannelSpecs) {
                                                     feed.channelSpecs = JSON.parse(feed.channelSpecs);
                                                  }
@@ -44,9 +44,9 @@ module.exports = function(FeedModel, feedRouteHelper) {
                                                  }
                                               });
                                            }
-                                           log.debug(JSON.stringify(feeds, null, 3));
+                                           log.debug(JSON.stringify(result, null, 3));
 
-                                           return res.jsendSuccess(feeds);
+                                           return res.jsendSuccess(result);
                                         });
                  })(req, res, next);
               });

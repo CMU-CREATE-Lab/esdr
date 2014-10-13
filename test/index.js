@@ -2746,7 +2746,7 @@ describe("ESDR", function() {
                   describe("Find Feeds", function() {
 
                      // TODO...
-                     
+
                      it("Should be able to find all public feeds without authentication", function(done) {
                         agent(url)
                               .get("/api/v1/feeds")
@@ -2759,8 +2759,12 @@ describe("ESDR", function() {
                                       res.body.should.have.property('code', httpStatus.OK);
                                       res.body.should.have.property('status', 'success');
                                       res.body.should.have.property('data');
-                                      res.body.data.should.have.length(1);
-                                      res.body.data[0].should.have.property("isPublic", 1);
+                                      res.body.data.should.have.property('totalCount', 1);
+                                      res.body.data.should.have.property('offset', 0);
+                                      res.body.data.should.have.property('rows');
+                                      res.body.data.rows.should.have.length(1);
+                                      res.body.data.rows.should.have.length(1);
+                                      res.body.data.rows[0].should.have.property("isPublic", 1);
 
                                       done();
                                    });
