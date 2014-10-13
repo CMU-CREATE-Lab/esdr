@@ -2743,6 +2743,31 @@ describe("ESDR", function() {
 
                   });      // end Upload
 
+                  describe("Find Feeds", function() {
+
+                     // TODO...
+                     
+                     it("Should be able to find all public feeds without authentication", function(done) {
+                        agent(url)
+                              .get("/api/v1/feeds")
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.OK);
+                                      res.body.should.have.property('code', httpStatus.OK);
+                                      res.body.should.have.property('status', 'success');
+                                      res.body.should.have.property('data');
+                                      res.body.data.should.have.length(1);
+                                      res.body.data[0].should.have.property("isPublic", 1);
+
+                                      done();
+                                   });
+                     });
+
+                  });
+
                   describe("Get Info", function() {
                      var channelInfoFeed1a = {
                         "channels" : {
@@ -3250,6 +3275,7 @@ describe("ESDR", function() {
                      });      // end API Key Authentication
 
                   });      // end Get Tile
+
                });      // end Feeds
             });      // end Devices
          });      // end Products
