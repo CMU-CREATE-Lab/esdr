@@ -117,8 +117,6 @@ var JSON_SCHEMA = {
 
 module.exports = function(databaseHelper) {
 
-   var self = this;
-
    this.jsonSchema = JSON_SCHEMA;
 
    this.initialize = function(callback) {
