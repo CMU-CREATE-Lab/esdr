@@ -383,8 +383,9 @@ module.exports = function(databaseHelper) {
                return callback(err);
             }
 
-            // copy in the offset
+            // copy in the offset and limit
             result.offset = queryParts.offset;
+            result.limit = queryParts.limit;
 
             // now that we have the feeds, we need to manually remove the apiKey field (if selected) from all feeds
             // which the user does not own.
