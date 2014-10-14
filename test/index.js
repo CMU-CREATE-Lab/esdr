@@ -1824,7 +1824,7 @@ describe("ESDR", function() {
                });
 
                it("Should be able to create some more devices for user 1 and user 2", function(done) {
-                  var createDevice = function(accessToken, device, done) {
+                  var createDevice = function(accessToken, device, deviceKey, done) {
                      agent(url)
                            .post("/api/v1/products/" + testProduct1.name + "/devices")
                            .set({
@@ -1843,19 +1843,20 @@ describe("ESDR", function() {
                                    res.body.data.should.have.property('id');
                                    res.body.data.should.have.property('serialNumber', device.serialNumber);
 
+                                   deviceIds[deviceKey] = res.body.data.id;
                                    done();
                                 });
                   };
 
                   flow.series([
                                  function(stepDone) {
-                                    createDevice(accessTokens.testUser1.access_token, testDevice2, stepDone);
+                                    createDevice(accessTokens.testUser1.access_token, testDevice2, "testDevice2", stepDone);
                                  },
                                  function(stepDone) {
-                                    createDevice(accessTokens.testUser1.access_token, testDevice3, stepDone);
+                                    createDevice(accessTokens.testUser1.access_token, testDevice3, "testDevice3", stepDone);
                                  },
                                  function(stepDone) {
-                                    createDevice(accessTokens.testUser2.access_token, testDevice4, stepDone);
+                                    createDevice(accessTokens.testUser2.access_token, testDevice4, "testDevice4", stepDone);
                                  }
                               ], done);
                });
@@ -2743,35 +2744,6 @@ describe("ESDR", function() {
 
                   });      // end Upload
 
-                  describe("Find Feeds", function() {
-
-                     // TODO...
-
-                     it("Should be able to find all public feeds without authentication", function(done) {
-                        agent(url)
-                              .get("/api/v1/feeds")
-                              .end(function(err, res) {
-                                      if (err) {
-                                         return done(err);
-                                      }
-
-                                      res.should.have.property('status', httpStatus.OK);
-                                      res.body.should.have.property('code', httpStatus.OK);
-                                      res.body.should.have.property('status', 'success');
-                                      res.body.should.have.property('data');
-                                      res.body.data.should.have.property('totalCount', 1);
-                                      res.body.data.should.have.property('offset', 0);
-                                      res.body.data.should.have.property('rows');
-                                      res.body.data.rows.should.have.length(1);
-                                      res.body.data.rows.should.have.length(1);
-                                      res.body.data.rows[0].should.have.property("isPublic", 1);
-
-                                      done();
-                                   });
-                     });
-
-                  });
-
                   describe("Get Info", function() {
                      var channelInfoFeed1a = {
                         "channels" : {
@@ -3279,6 +3251,276 @@ describe("ESDR", function() {
                      });      // end API Key Authentication
 
                   });      // end Get Tile
+
+                  describe("Find Feeds", function() {
+
+                     var createdFeeds = [];
+
+                     // create some more feeds
+                     before(function(initDone) {
+                        var createFeed = function(deviceId, feedName, isPublic, owningUserAccessToken, callback) {
+                           var feed = {
+                              name : feedName,
+                              exposure : "indoor",
+                              isPublic : isPublic,
+                              isMobile : false,
+                              latitude : 40 + Math.random(),
+                              longitude : -79 + Math.random()
+                           };
+                           agent(url)
+                                 .post("/api/v1/devices/" + deviceId + "/feeds")
+                                 .set({
+                                         Authorization : "Bearer " + owningUserAccessToken
+                                      })
+                                 .send(feed)
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return initDone(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.CREATED);
+                                         res.body.should.have.property('code', httpStatus.CREATED);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+                                         res.body.data.should.have.property('id');
+                                         res.body.data.should.have.property('apiKey');
+                                         res.body.data.should.have.property('apiKeyReadOnly');
+
+                                         feed.id = res.body.data.id;
+                                         feed.apiKey = res.body.data.apiKey;
+                                         feed.apiKeyReadOnly = res.body.data.apiKeyReadOnly;
+
+                                         createdFeeds.push(feed);
+                                         callback(null, feed);
+                                      });
+
+                        };
+
+                        flow.series([
+                                       function(done) {
+                                          createFeed(deviceIds.testDevice3,
+                                                     "Public Test Feed 1 for Device 3 owned by User 1",
+                                                     true,
+                                                     accessTokens.testUser1.access_token,
+                                                     done);
+                                       },
+                                       function(done) {
+                                          createFeed(deviceIds.testDevice3,
+                                                     "Public Test Feed 2 for Device 3 owned by User 1",
+                                                     true,
+                                                     accessTokens.testUser1.access_token,
+                                                     done);
+                                       },
+                                       function(done) {
+                                          createFeed(deviceIds.testDevice4,
+                                                     "Public Test Feed 1 for Device 4 owned by User 2",
+                                                     true,
+                                                     accessTokens.testUser2.access_token,
+                                                     done);
+                                       },
+                                       function(done) {
+                                          createFeed(deviceIds.testDevice4,
+                                                     "Public Test Feed 2 for Device 4 owned by User 2",
+                                                     true,
+                                                     accessTokens.testUser2.access_token,
+                                                     done);
+                                       },
+                                       function(done) {
+                                          createFeed(deviceIds.testDevice4,
+                                                     "Private Test Feed 1 for Device 4 owned by User 2",
+                                                     false,
+                                                     accessTokens.testUser2.access_token,
+                                                     done);
+                                       },
+                                       function(done) {
+                                          createFeed(deviceIds.testDevice4,
+                                                     "Private Test Feed 2 for Device 4 owned by User 2",
+                                                     false,
+                                                     accessTokens.testUser2.access_token,
+                                                     done);
+                                       }
+                                    ],
+                                    initDone);
+                     });
+
+                     it("Should be able to find all public feeds without authentication", function(done) {
+                        agent(url)
+                              .get("/api/v1/feeds")
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.OK);
+                                      res.body.should.have.property('code', httpStatus.OK);
+                                      res.body.should.have.property('status', 'success');
+                                      res.body.should.have.property('data');
+                                      res.body.data.should.have.property('totalCount', 5);
+                                      res.body.data.should.have.property('offset', 0);
+                                      res.body.data.should.have.property('rows');
+                                      res.body.data.rows.should.have.length(5);
+                                      res.body.data.rows.forEach(function(feed) {
+                                         feed.should.have.property("isPublic", 1);
+                                      });
+
+                                      done();
+                                   });
+                     });
+
+                     it("Should be able to apply limit and offset to found feeds", function(done) {
+                        agent(url)
+                              .get("/api/v1/feeds?offset=2&limit=2")
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.OK);
+                                      res.body.should.have.property('code', httpStatus.OK);
+                                      res.body.should.have.property('status', 'success');
+                                      res.body.should.have.property('data');
+                                      res.body.data.should.have.property('totalCount', 5);
+                                      res.body.data.should.have.property('offset', 2);
+                                      res.body.data.should.have.property('rows');
+                                      res.body.data.rows.should.have.length(2);
+                                      res.body.data.rows.forEach(function(feed) {
+                                         feed.should.have.property("isPublic", 1);
+                                      });
+
+                                      done();
+                                   });
+                     });
+
+                     it("Should be able to order feeds based on multiple criteria", function(done) {
+                        agent(url)
+                              .get("/api/v1/feeds?fields=id,name,userId&orderBy=userId,-id")
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.OK);
+                                      res.body.should.have.property('code', httpStatus.OK);
+                                      res.body.should.have.property('status', 'success');
+                                      res.body.should.have.property('data');
+                                      res.body.data.should.have.property('totalCount', 5);
+                                      res.body.data.should.have.property('offset', 0);
+                                      res.body.data.should.have.property('rows');
+                                      res.body.data.rows.should.have.length(5);
+                                      var previousFeedId = null;
+                                      var previousUserId = null;
+                                      res.body.data.rows.forEach(function(feed) {
+                                         if (feed.userId != previousUserId) {
+                                            if (previousUserId != null) {
+                                               (feed.userId >= previousUserId).should.be.true;
+                                            }
+                                            previousFeedId = feed.id;
+                                            previousUserId = feed.userId;
+                                         }
+                                         else {
+                                            // feed IDs should be in descending order
+                                            (feed.id <= previousFeedId).should.be.true;
+                                            // user IDs should be in ascending order
+                                            (feed.userId >= previousUserId).should.be.true;
+                                         }
+                                      });
+
+                                      done();
+                                   });
+                     });
+
+                     it("Should be able to find all feeds visible to user 1 with authentication", function(done) {
+                        agent(url)
+                              .get("/api/v1/feeds?fields=id,name,deviceId,userId,productId,isPublic,apiKey,apiKeyReadOnly")
+                              .set({
+                                      Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                   })
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.OK);
+                                      res.body.should.have.property('code', httpStatus.OK);
+                                      res.body.should.have.property('status', 'success');
+                                      res.body.should.have.property('data');
+
+                                      res.body.data.should.have.property('totalCount', 6);
+                                      res.body.data.should.have.property('offset', 0);
+                                      res.body.data.should.have.property('rows');
+                                      res.body.data.rows.should.have.length(6);
+                                      res.body.data.rows.forEach(function(feed) {
+                                         var isOwnedByUser = feed.userId == accessTokens.testUser1.userId;
+
+                                         // should only return feeds that are owned by the user or are public
+                                         (isOwnedByUser || feed.isPublic == 1).should.be.true;
+
+                                         // we should only get the apiKey if owned by the user.
+                                         if (isOwnedByUser) {
+                                            feed.should.have.property('apiKey');
+                                         }
+                                         else {
+                                            feed.should.not.have.property('apiKey');
+                                         }
+                                         feed.should.have.property('apiKeyReadOnly');
+                                      });
+                                      done();
+                                   });
+                     });
+
+                     it("Querying for private feeds should only return feeds owned by the authenticated user", function(done) {
+                        agent(url)
+                              .get("/api/v1/feeds?fields=id,name,deviceId,userId,productId,isPublic,apiKey,apiKeyReadOnly&where=isPublic=false")
+                              .set({
+                                      Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                   })
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.OK);
+                                      res.body.should.have.property('code', httpStatus.OK);
+                                      res.body.should.have.property('status', 'success');
+                                      res.body.should.have.property('data');
+
+                                      res.body.data.should.have.property('totalCount', 2);
+                                      res.body.data.should.have.property('offset', 0);
+                                      res.body.data.should.have.property('rows');
+                                      res.body.data.rows.should.have.length(2);
+                                      res.body.data.rows.forEach(function(feed) {
+                                         feed.should.have.property('userId', accessTokens.testUser2.userId);
+                                         feed.should.have.property('isPublic', 0);
+                                         feed.should.have.property('apiKey');
+                                         feed.should.have.property('apiKeyReadOnly');
+                                      });
+                                      done();
+                                   });
+                     });
+
+                     it("Querying for private feeds should return nothing if unauthenticated", function(done) {
+                        agent(url)
+                              .get("/api/v1/feeds?fields=id,name,deviceId,userId,productId,isPublic,apiKey,apiKeyReadOnly&where=isPublic=false")
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.OK);
+                                      res.body.should.have.property('code', httpStatus.OK);
+                                      res.body.should.have.property('status', 'success');
+                                      res.body.should.have.property('data');
+
+                                      res.body.data.should.have.property('totalCount', 0);
+                                      res.body.data.should.have.property('offset', 0);
+                                      res.body.data.should.have.property('rows');
+                                      res.body.data.rows.should.have.length(0);
+
+                                      done();
+                                   });
+                     });
+
+                  });      // END Find Feeds
 
                });      // end Feeds
             });      // end Devices
