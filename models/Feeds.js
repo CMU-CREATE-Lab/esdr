@@ -6,7 +6,7 @@ var createRandomHexToken = require('../lib/token').createRandomHexToken;
 var ValidationError = require('../lib/errors').ValidationError;
 var httpStatus = require('http-status');
 var BodyTrackDatastore = require('bodytrack-datastore');
-var Query2Query = require('../lib/Query2Query');
+var Query2Query = require('query2query');
 
 var config = require('../config');
 
