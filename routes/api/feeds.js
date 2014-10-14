@@ -44,7 +44,6 @@ module.exports = function(FeedModel, feedRouteHelper) {
                                                  }
                                               });
                                            }
-                                           log.debug(JSON.stringify(result, null, 3));
 
                                            return res.jsendSuccess(result);
                                         });
