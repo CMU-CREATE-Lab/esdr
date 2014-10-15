@@ -4196,6 +4196,26 @@ describe("ESDR", function() {
                });
             });
 
+            it("Should fail to create a product with a name that doesn't contain at least one letter", function(done) {
+               var invalidProduct = shallowClone(testProduct3);
+               invalidProduct.name = "4242";
+
+               db.products.create(invalidProduct, null, function(err, product) {
+
+                  assert.notEqual(err, null);
+                  assert.equal(product, null);
+
+                  err.should.have.property('data');
+                  err.data.should.have.length(1);
+                  err.data[0].should.have.property('instanceContext', '#/name');
+                  err.data[0].should.have.property('constraintName', 'pattern');
+                  err.data[0].should.have.property('kind', 'StringValidationError');
+                  err.data[0].should.have.property('testedValue', invalidProduct.name);
+
+                  done();
+               });
+            });
+
             it("Should be able to create a product with a non-null creator", function(done) {
                db.products.create(testProduct4, userIds.testUser1, function(err, product) {
                   if (err) {

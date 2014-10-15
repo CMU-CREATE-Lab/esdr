@@ -47,7 +47,7 @@ var JSON_SCHEMA = {
    "properties" : {
       "name" : {
          "type" : "string",
-         "pattern" : "^[a-zA-Z0-9_]+$",
+         "pattern" : "^(?=.*[a-zA-Z])([a-zA-Z0-9_]+)$",   // must contain at least one letter
          "minLength" : 3,
          "maxLength" : 255
       },
