@@ -3,7 +3,6 @@ var JaySchema = require('jayschema');
 var jsonValidator = new JaySchema();
 var ValidationError = require('../lib/errors').ValidationError;
 var Query2Query = require('query2query');
-
 var log = require('log4js').getLogger();
 
 var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Products` ( " +
@@ -129,10 +128,24 @@ module.exports = function(databaseHelper) {
     * <code>null</code> is returned to the callback.
     *
     * @param {string} name name of the product to find.
+    * @param {string|array} fieldsToSelect comma-delimited string or array of strings of field names to select.
     * @param {function} callback function with signature <code>callback(err, product)</code>
     */
-   this.findByName = function(name, callback) {
-      findProduct("SELECT * FROM Products WHERE name=?", [name], callback);
+   this.findByName = function(name, fieldsToSelect, callback) {
+      findProduct(fieldsToSelect, 'name', name, callback);
+   };
+
+   /**
+    * Tries to find the product with the given <code>id</code> and returns it to the given <code>callback</code>. If
+    * successful, the product is returned as the 2nd argument to the <code>callback</code> function.  If unsuccessful,
+    * <code>null</code> is returned to the callback.
+    *
+    * @param {string} id ID of the product to find.
+    * @param {string|array} fieldsToSelect comma-delimited string or array of strings of field names to select.
+    * @param {function} callback function with signature <code>callback(err, product)</code>
+    */
+   this.findById = function(id, fieldsToSelect, callback) {
+      findProduct(fieldsToSelect, 'id', id, callback);
    };
 
    this.findProducts = function(queryString, callback) {
@@ -162,14 +175,21 @@ module.exports = function(databaseHelper) {
                         MAX_FOUND_PRODUCTS);
    };
 
-   var findProduct = function(query, params, callback) {
-      databaseHelper.findOne(query, params, function(err, product) {
+   var findProduct = function(fieldsToSelect, whereField, whereValue, callback) {
+      query2query.parse({fields : fieldsToSelect}, function(err, queryParts) {
          if (err) {
-            log.error("Error trying to find product: " + err);
             return callback(err);
          }
 
-         return callback(null, product);
-      });
+         var sql = queryParts.selectClause + " FROM Products WHERE " + whereField + "=?";
+         databaseHelper.findOne(sql, [whereValue], function(err, product) {
+            if (err) {
+               log.error("Error trying to find product with " + whereField + " [" + whereValue + "]: " + err);
+               return callback(err);
+            }
+
+            return callback(null, product);
+         });
+      }, 1);
    };
 };

@@ -1718,6 +1718,65 @@ describe("ESDR", function() {
                           });
             });
 
+            var product1Id = null;
+
+            it("Should be able to get a product by name and specify which fields to return", function(done) {
+               agent(url)
+                     .get("/api/v1/products/" + testProduct1.name + "?fields=id,name,defaultChannelSpecs")
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', httpStatus.OK);
+                             res.body.should.have.property('code', httpStatus.OK);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('id');
+                             res.body.data.should.have.property('name', testProduct1.name);
+                             res.body.data.should.have.not.property('prettyName');
+                             res.body.data.should.have.not.property('vendor');
+                             res.body.data.should.have.not.property('description');
+                             res.body.data.should.have.not.property('creatorUserId');
+                             res.body.data.should.have.property('defaultChannelSpecs');
+                             should(res.body.data.defaultChannelSpecs).eql(testProduct1.defaultChannelSpecs); // deep equal
+                             res.body.data.should.have.not.property('created');
+                             res.body.data.should.have.not.property('modified');
+
+                             // remember the ID so we can use it below
+                             product1Id = res.body.data.id;
+
+                             done();
+                          });
+            });
+
+            it("Should be able to get a product by ID and specify which fields to return", function(done) {
+               agent(url)
+                     .get("/api/v1/products/" + product1Id + "?fields=id,name,defaultChannelSpecs")
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', httpStatus.OK);
+                             res.body.should.have.property('code', httpStatus.OK);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('id');
+                             res.body.data.should.have.property('name', testProduct1.name);
+                             res.body.data.should.have.not.property('prettyName');
+                             res.body.data.should.have.not.property('vendor');
+                             res.body.data.should.have.not.property('description');
+                             res.body.data.should.have.not.property('creatorUserId');
+                             res.body.data.should.have.property('defaultChannelSpecs');
+                             should(res.body.data.defaultChannelSpecs).eql(testProduct1.defaultChannelSpecs); // deep equal
+                             res.body.data.should.have.not.property('created');
+                             res.body.data.should.have.not.property('modified');
+
+                             done();
+                          });
+            });
+
             it("Should be able to list all products", function(done) {
                agent(url)
                      .get("/api/v1/products")
@@ -4233,7 +4292,7 @@ describe("ESDR", function() {
             });
 
             it("Should be able to find a product by name", function(done) {
-               db.products.findByName(testProduct3.name, function(err, product) {
+               db.products.findByName(testProduct3.name, null, function(err, product) {
                   if (err) {
                      return done(err);
                   }
@@ -4249,6 +4308,28 @@ describe("ESDR", function() {
 
                   // do a deep equal
                   should(JSON.parse(product.defaultChannelSpecs)).eql(testProduct3.defaultChannelSpecs);
+
+                  done();
+               });
+            });
+
+            it("Should be able to find a product by ID", function(done) {
+               db.products.findById(productInsertIds.testProduct4, null, function(err, product) {
+                  if (err) {
+                     return done(err);
+                  }
+
+                  product.should.have.property('id', productInsertIds.testProduct4);
+                  product.should.have.property('name', testProduct4.name);
+                  product.should.have.property('prettyName', testProduct4.prettyName);
+                  product.should.have.property('vendor', testProduct4.vendor);
+                  product.should.have.property('description', testProduct4.description);
+                  product.should.have.property('creatorUserId', userIds.testUser1);
+                  product.should.have.property('created');
+                  product.should.have.property('modified');
+
+                  // do a deep equal
+                  should(JSON.parse(product.defaultChannelSpecs)).eql(testProduct4.defaultChannelSpecs);
 
                   done();
                });

@@ -4,6 +4,7 @@ var passport = require('passport');
 var ValidationError = require('../../lib/errors').ValidationError;
 var DuplicateRecordError = require('../../lib/errors').DuplicateRecordError;
 var httpStatus = require('http-status');
+var S = require('string');
 var log = require('log4js').getLogger();
 
 module.exports = function(ProductModel, DeviceModel) {
@@ -69,27 +70,29 @@ module.exports = function(ProductModel, DeviceModel) {
                });
 
    // get details for a specific product
-   router.get('/:productName',
+   router.get('/:productNameOrId',
               function(req, res, next) {
-                 var productName = req.params.productName;
-                 log.debug("Received GET for product [" + productName + "]");
+                 var productNameOrId = req.params.productNameOrId;
+                 log.debug("Received GET for product [" + productNameOrId + "]");
 
-                 findProductByName(res, productName, function(product) {
+                 findProductByNameOrId(res, productNameOrId, req.query.fields, function(product) {
                     // inflate the channel specs JSON text into an object
-                    product.defaultChannelSpecs = JSON.parse(product.defaultChannelSpecs);
+                    if ('defaultChannelSpecs' in product) {
+                       product.defaultChannelSpecs = JSON.parse(product.defaultChannelSpecs);
+                    }
                     return res.jsendSuccess(product); // HTTP 200 OK
                  });
               });
 
    // get all devices for the given product owned by the authenticated user (TODO: do we need this method?)
-   router.get('/:productName/devices',
+   router.get('/:productNameOrId/devices',
               passport.authenticate('bearer', { session : false }),
               function(req, res, next) {
-                 var productName = req.params.productName;
-                 log.debug("Received GET to list all devices for product [" + productName + "] owned by user [" + req.user.id + "]");
+                 var productNameOrId = req.params.productNameOrId;
+                 log.debug("Received GET to list all devices for product [" + productNameOrId + "] owned by user [" + req.user.id + "]");
 
-                 findProductByName(res, productName, function(product) {
-                    log.debug("Found product [" + productName + "], will now find matching devices for this user...");
+                 findProductByNameOrId(res, productNameOrId, ['id'], function(product) {
+                    log.debug("Found product [" + productNameOrId + "], will now find matching devices for this user...");
                     DeviceModel.findByProductIdForUser(product.id, req.user.id, function(err, devices) {
                        if (err) {
                           var message = "Error while trying to find devices with product ID [" + product.id + "] for user [" + req.user.id + "]";
@@ -103,14 +106,14 @@ module.exports = function(ProductModel, DeviceModel) {
               });
 
    // create a new device
-   router.post('/:productName/devices',
+   router.post('/:productNameOrId/devices',
                passport.authenticate('bearer', { session : false }),
                function(req, res, next) {
-                  var productName = req.params.productName;
-                  log.debug("Received POST to create a new device for product [" + productName + "]");
+                  var productNameOrId = req.params.productNameOrId;
+                  log.debug("Received POST to create a new device for product [" + productNameOrId + "]");
 
-                  findProductByName(res, productName, function(product) {
-                     log.debug("Found product [" + productName + "], will now create the device...");
+                  findProductByNameOrId(res, productNameOrId, ['id'], function(product) {
+                     log.debug("Found product [" + productNameOrId + "], will now create the device...");
                      var newDevice = req.body;
                      DeviceModel.create(newDevice, product.id, req.user.id, function(err, result) {
                         if (err) {
@@ -118,7 +121,7 @@ module.exports = function(ProductModel, DeviceModel) {
                               return res.jsendClientValidationError("Validation failure", err.data);   // HTTP 422 Unprocessable Entity
                            }
                            if (err instanceof DuplicateRecordError) {
-                              log.debug("Serial number [" + newDevice.serialNumber + "] for product [" + productName + "] already in use!");
+                              log.debug("Serial number [" + newDevice.serialNumber + "] for product [" + productNameOrId + "] already in use!");
                               return res.jsendClientError("Serial number already in use.", {serialNumber : newDevice.serialNumber}, httpStatus.CONFLICT);  // HTTP 409 Conflict
                            }
 
@@ -138,19 +141,19 @@ module.exports = function(ProductModel, DeviceModel) {
                });
 
    // get info for a specific device (requires auth)
-   router.get('/:productName/devices/:serialNumber',
+   router.get('/:productNameOrId/devices/:serialNumber',
               passport.authenticate('bearer', { session : false }),
               function(req, res, next) {
-                 var productName = req.params.productName;
+                 var productNameOrId = req.params.productNameOrId;
                  var serialNumber = req.params.serialNumber;
-                 log.debug("Received GET for product [" + productName + "] and device [" + serialNumber + "]");
+                 log.debug("Received GET for product [" + productNameOrId + "] and device [" + serialNumber + "]");
 
-                 findProductByName(res, productName, function(product) {
+                 findProductByNameOrId(res, productNameOrId, ['id'], function(product) {
 
                     // we know the product is valid, so now look for matching devices
                     DeviceModel.findByProductIdAndSerialNumberForUser(product.id, serialNumber, req.user.id, function(err, device) {
                        if (err) {
-                          var message = "Error while trying to find device with serial number [" + serialNumber + "] for product [" + productName + "]";
+                          var message = "Error while trying to find device with serial number [" + serialNumber + "] for product [" + productNameOrId + "]";
                           log.error(message + ": " + err);
                           return res.jsendServerError(message);
                        }
@@ -165,10 +168,14 @@ module.exports = function(ProductModel, DeviceModel) {
                  });
               });
 
-   var findProductByName = function(res, productName, successCallback) {
-      ProductModel.findByName(productName, function(err1, product) {
+   var findProductByNameOrId = function(res, productNameOrId, fieldsToSelect, successCallback) {
+      var isId = S(productNameOrId).isNumeric();
+      var methodName = isId ? "findById" : "findByName";
+      var fieldName = isId ? "ID" : "name";
+
+      ProductModel[methodName](productNameOrId, fieldsToSelect, function(err1, product) {
          if (err1) {
-            var message = "Error while trying to find product with name [" + productName + "]";
+            var message = "Error while trying to find product with " + fieldName + " [" + productNameOrId + "]";
             log.error(message + ": " + err1);
             return res.jsendServerError(message);
          }
@@ -178,7 +185,7 @@ module.exports = function(ProductModel, DeviceModel) {
             return successCallback(product);
          }
          else {
-            return res.jsendClientError("Unknown or invalid product name", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
+            return res.jsendClientError("Unknown or invalid product " + fieldName, null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
          }
       });
    };
