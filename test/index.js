@@ -1718,6 +1718,90 @@ describe("ESDR", function() {
                           });
             });
 
+            it("Should be able to list all products", function(done) {
+               agent(url)
+                     .get("/api/v1/products")
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', httpStatus.OK);
+                             res.body.should.have.property('code', httpStatus.OK);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('totalCount', 2);
+                             res.body.data.should.have.property('offset', 0);
+                             res.body.data.should.have.property('limit', 100);
+                             res.body.data.should.have.property('rows');
+                             res.body.data.rows.should.have.length(2);
+
+                             done();
+                          });
+            });
+
+            it("Should be able to find products by name", function(done) {
+               agent(url)
+                     .get("/api/v1/products?where=name=cattfish_v1&fields=id,name")
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', httpStatus.OK);
+                             res.body.should.have.property('code', httpStatus.OK);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('totalCount', 1);
+                             res.body.data.should.have.property('offset', 0);
+                             res.body.data.should.have.property('limit', 100);
+                             res.body.data.should.have.property('rows');
+                             res.body.data.rows.should.have.length(1);
+                             res.body.data.rows[0].should.have.property('id');
+                             res.body.data.rows[0].should.have.property('name', 'cattfish_v1');
+                             res.body.data.rows[0].should.not.have.property('prettyName');
+                             res.body.data.rows[0].should.not.have.property('vendor');
+                             res.body.data.rows[0].should.not.have.property('description');
+                             res.body.data.rows[0].should.not.have.property('creatorUserId');
+                             res.body.data.rows[0].should.not.have.property('defaultChannelSpecs');
+                             res.body.data.rows[0].should.not.have.property('created');
+                             res.body.data.rows[0].should.not.have.property('modified');
+
+                             done();
+                          });
+            });
+
+            it("Should be able to query for products and have them returned in a specified order", function(done) {
+               agent(url)
+                     .get("/api/v1/products?fields=id,name&orderBy=-id")
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', httpStatus.OK);
+                             res.body.should.have.property('code', httpStatus.OK);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('totalCount', 2);
+                             res.body.data.should.have.property('offset', 0);
+                             res.body.data.should.have.property('limit', 100);
+                             res.body.data.should.have.property('rows');
+                             res.body.data.rows.should.have.length(2);
+
+                             // make sure the IDs are in descending order
+                             var previousId = null;
+                             res.body.data.rows.forEach(function(product) {
+                                if (previousId != null) {
+                                   (product.id < previousId).should.be.true;
+                                }
+                                previousId = product.id;
+                             });
+
+                             done();
+                          });
+            });
+
             describe("Devices", function() {
 
                var deviceIds = {};

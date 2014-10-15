@@ -8,7 +8,34 @@ var log = require('log4js').getLogger();
 
 module.exports = function(ProductModel, DeviceModel) {
 
-   // TODO: add a method to get all products
+   router.get('/',
+              function(req, res, next) {
+
+                 ProductModel.findProducts(req.query, function(err, result, selectedFields) {
+                    if (err) {
+                       log.error(JSON.stringify(err, null, 3));
+                       // See if the error contains a JSend data object.  If so, pass it on through.
+                       if (typeof err.data !== 'undefined' &&
+                           typeof err.data.code !== 'undefined' &&
+                           typeof err.data.status !== 'undefined') {
+                          return res.jsendPassThrough(err.data);
+                       }
+                       return res.jsendServerError("Failed to get products", null);
+                    }
+
+                    // inflate the channel specs, if selected
+                    if ((selectedFields.indexOf('defaultChannelSpecs') >= 0)) {
+                       result.rows.forEach(function(product) {
+                          product.defaultChannelSpecs = JSON.parse(product.defaultChannelSpecs);
+                       });
+                    }
+
+                    log.debug(JSON.stringify(result, null, 3));
+
+                    return res.jsendSuccess(result);
+
+                 });
+              });
 
    // create a product
    router.post('/',

@@ -2,6 +2,8 @@ var trimAndCopyPropertyIfNonEmpty = require('../lib/objectUtils').trimAndCopyPro
 var JaySchema = require('jayschema');
 var jsonValidator = new JaySchema();
 var ValidationError = require('../lib/errors').ValidationError;
+var Query2Query = require('query2query');
+
 var log = require('log4js').getLogger();
 
 var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Products` ( " +
@@ -16,9 +18,26 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Products` ( " +
                          "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
                          "PRIMARY KEY (`id`), " +
                          "UNIQUE KEY `unique_name` (`name`), " +
+                         "KEY `prettyName` (`prettyName`), " +
+                         "KEY `vendor` (`vendor`), " +
                          "KEY `creatorUserId` (`creatorUserId`), " +
+                         "KEY `created` (`created`), " +
+                         "KEY `modified` (`modified`), " +
                          "CONSTRAINT `products_creatorUserId_fk_1` FOREIGN KEY (`creatorUserId`) REFERENCES `Users` (`id`) " +
                          ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
+
+var MAX_FOUND_PRODUCTS = 100;
+
+var query2query = new Query2Query();
+query2query.addField('id', true, true, false, Query2Query.types.INTEGER);
+query2query.addField('name', true, true, false);
+query2query.addField('prettyName', true, true, false);
+query2query.addField('vendor', true, true, true);
+query2query.addField('description', false, false, true);
+query2query.addField('creatorUserId', true, true, true, Query2Query.types.INTEGER);
+query2query.addField('defaultChannelSpecs', false, false, false);
+query2query.addField('created', true, true, false, Query2Query.types.DATETIME);
+query2query.addField('modified', true, true, false, Query2Query.types.DATETIME);
 
 var JSON_SCHEMA = {
    "$schema" : "http://json-schema.org/draft-04/schema#",
@@ -114,6 +133,33 @@ module.exports = function(databaseHelper) {
     */
    this.findByName = function(name, callback) {
       findProduct("SELECT * FROM Products WHERE name=?", [name], callback);
+   };
+
+   this.findProducts = function(queryString, callback) {
+      query2query.parse(queryString, function(err, queryParts) {
+
+                           if (err) {
+                              return callback(err);
+                           }
+
+                           var sql = queryParts.sql("Products");
+                           log.debug("Products.findProducts(): " + sql + (queryParts.whereValues.length > 0 ? " [where values: " + queryParts.whereValues + "]" : ""));
+
+                           // use findWithLimit so we can also get a count of the total number of records that would have been returned
+                           // had there been no LIMIT clause included in the query
+                           databaseHelper.findWithLimit(sql, queryParts.whereValues, function(err, result) {
+                              if (err) {
+                                 return callback(err);
+                              }
+
+                              // copy in the offset and limit
+                              result.offset = queryParts.offset;
+                              result.limit = queryParts.limit;
+
+                              return callback(null, result, queryParts.selectFields);
+                           });
+                        },
+                        MAX_FOUND_PRODUCTS);
    };
 
    var findProduct = function(query, params, callback) {
