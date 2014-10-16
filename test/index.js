@@ -8,6 +8,8 @@ var httpStatus = require('http-status');
 var log = require('log4js').getLogger();
 var Database = require("../models/Database");
 var DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
+var JSendError = require('jsend-utils').JSendError;
+var JSendClientError = require('jsend-utils').JSendClientError;
 var fs = require('fs');
 var deleteDir = require('rimraf');
 
@@ -1536,6 +1538,8 @@ describe("ESDR", function() {
 
          describe("Products", function() {
 
+            var productIds = {};
+
             it("Should be able to create a new product", function(done) {
                agent(url)
                      .post("/api/v1/products")
@@ -1552,7 +1556,11 @@ describe("ESDR", function() {
                              res.body.should.have.property('code', httpStatus.CREATED);
                              res.body.should.have.property('status', 'success');
                              res.body.should.have.property('data');
+                             res.body.data.should.have.property('id');
                              res.body.data.should.have.property('name', testProduct1.name);
+
+                             // remember the product ID
+                             productIds.testProduct1 = res.body.data.id;
 
                              done();
                           });
@@ -1574,7 +1582,11 @@ describe("ESDR", function() {
                              res.body.should.have.property('code', httpStatus.CREATED);
                              res.body.should.have.property('status', 'success');
                              res.body.should.have.property('data');
+                             res.body.data.should.have.property('id');
                              res.body.data.should.have.property('name', testProduct2.name);
+
+                             // remember the product ID
+                             productIds.testProduct2 = res.body.data.id;
 
                              done();
                           });
@@ -1718,8 +1730,6 @@ describe("ESDR", function() {
                           });
             });
 
-            var product1Id = null;
-
             it("Should be able to get a product by name and specify which fields to return", function(done) {
                agent(url)
                      .get("/api/v1/products/" + testProduct1.name + "?fields=id,name,defaultChannelSpecs")
@@ -1743,16 +1753,13 @@ describe("ESDR", function() {
                              res.body.data.should.have.not.property('created');
                              res.body.data.should.have.not.property('modified');
 
-                             // remember the ID so we can use it below
-                             product1Id = res.body.data.id;
-
                              done();
                           });
             });
 
             it("Should be able to get a product by ID and specify which fields to return", function(done) {
                agent(url)
-                     .get("/api/v1/products/" + product1Id + "?fields=id,name,defaultChannelSpecs")
+                     .get("/api/v1/products/" + productIds.testProduct1 + "?fields=id,name,defaultChannelSpecs")
                      .end(function(err, res) {
                              if (err) {
                                 return done(err);
@@ -2004,9 +2011,76 @@ describe("ESDR", function() {
                               ], done);
                });
 
+               it("Should fail to find a device by product name and serial number by a user who doesn't own it", function(done) {
+                  agent(url)
+                        .get("/api/v1/products/" + testProduct1.name + "/devices/" + testDevice4.serialNumber)
+                        .set({
+                                Authorization : "Bearer " + accessTokens.testUser1.access_token
+                             })
+                        .end(function(err, res) {
+                                if (err) {
+                                   return done(err);
+                                }
+
+                                // TODO: this should really return FORBIDDEN
+                                res.should.have.property('status', httpStatus.NOT_FOUND);
+                                res.body.should.have.property('code', httpStatus.NOT_FOUND);
+                                res.body.should.have.property('status', 'error');
+                                res.body.should.have.property('data');
+
+                                done();
+                             });
+               });
+
+               it("Should be able to find a device by ID by the user who owns it", function(done) {
+                  agent(url)
+                        .get("/api/v1/devices/" + deviceIds.testDevice4 + "?fields=id,serialNumber,userId")
+                        .set({
+                                Authorization : "Bearer " + accessTokens.testUser2.access_token
+                             })
+                        .end(function(err, res) {
+                                if (err) {
+                                   return done(err);
+                                }
+
+                                res.should.have.property('status', httpStatus.OK);
+                                res.body.should.have.property('code', httpStatus.OK);
+                                res.body.should.have.property('status', 'success');
+                                res.body.should.have.property('data');
+                                res.body.data.should.have.property('id');
+                                res.body.data.should.have.property('serialNumber', testDevice4.serialNumber);
+                                res.body.data.should.have.property('userId', createdUsers.testUser2.id);
+                                res.body.data.should.not.have.property('productId');
+                                res.body.data.should.not.have.property('created');
+                                res.body.data.should.not.have.property('modified');
+
+                                done();
+                             });
+               });
+
+               it("Should fail to find a device by ID by a user who doesn't own it", function(done) {
+                  agent(url)
+                        .get("/api/v1/devices/" + deviceIds.testDevice4 + "?fields=id,serialNumber,userId")
+                        .set({
+                                Authorization : "Bearer " + accessTokens.testUser1.access_token
+                             })
+                        .end(function(err, res) {
+                                if (err) {
+                                   return done(err);
+                                }
+
+                                res.should.have.property('status', httpStatus.FORBIDDEN);
+                                res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                res.body.should.have.property('status', 'error');
+                                res.body.should.have.property('data');
+
+                                done();
+                             });
+               });
+
                it("Should be able to find all devices for a particular product owned by the auth'd user (user 1)", function(done) {
                   agent(url)
-                        .get("/api/v1/products/" + testProduct1.name + "/devices")
+                        .get("/api/v1/devices?where=productId=" + productIds.testProduct1)
                         .set({
                                 Authorization : "Bearer " + accessTokens.testUser1.access_token
                              })
@@ -2019,25 +2093,29 @@ describe("ESDR", function() {
                                 res.body.should.have.property('code', httpStatus.OK);
                                 res.body.should.have.property('status', 'success');
                                 res.body.should.have.property('data');
-                                res.body.data.should.have.length(3);
-                                res.body.data[0].should.have.property('id');
-                                res.body.data[0].should.have.property('serialNumber', testDevice1.serialNumber);
-                                res.body.data[0].should.have.property('productId');
-                                res.body.data[0].should.have.property('userId', createdUsers.testUser1.id);
-                                res.body.data[0].should.have.property('created');
-                                res.body.data[0].should.have.property('modified');
-                                res.body.data[1].should.have.property('id');
-                                res.body.data[1].should.have.property('serialNumber', testDevice2.serialNumber);
-                                res.body.data[1].should.have.property('productId');
-                                res.body.data[1].should.have.property('userId', createdUsers.testUser1.id);
-                                res.body.data[1].should.have.property('created');
-                                res.body.data[1].should.have.property('modified');
-                                res.body.data[2].should.have.property('id');
-                                res.body.data[2].should.have.property('serialNumber', testDevice3.serialNumber);
-                                res.body.data[2].should.have.property('productId');
-                                res.body.data[2].should.have.property('userId', createdUsers.testUser1.id);
-                                res.body.data[2].should.have.property('created');
-                                res.body.data[2].should.have.property('modified');
+                                res.body.data.should.have.property('totalCount', 3);
+                                res.body.data.should.have.property('offset', 0);
+                                res.body.data.should.have.property('limit', 100);
+                                res.body.data.should.have.property('rows');
+                                res.body.data.rows.should.have.length(3);
+                                res.body.data.rows[0].should.have.property('id');
+                                res.body.data.rows[0].should.have.property('serialNumber', testDevice1.serialNumber);
+                                res.body.data.rows[0].should.have.property('productId', productIds.testProduct1);
+                                res.body.data.rows[0].should.have.property('userId', createdUsers.testUser1.id);
+                                res.body.data.rows[0].should.have.property('created');
+                                res.body.data.rows[0].should.have.property('modified');
+                                res.body.data.rows[1].should.have.property('id');
+                                res.body.data.rows[1].should.have.property('serialNumber', testDevice2.serialNumber);
+                                res.body.data.rows[1].should.have.property('productId', productIds.testProduct1);
+                                res.body.data.rows[1].should.have.property('userId', createdUsers.testUser1.id);
+                                res.body.data.rows[1].should.have.property('created');
+                                res.body.data.rows[1].should.have.property('modified');
+                                res.body.data.rows[2].should.have.property('id');
+                                res.body.data.rows[2].should.have.property('serialNumber', testDevice3.serialNumber);
+                                res.body.data.rows[2].should.have.property('productId', productIds.testProduct1);
+                                res.body.data.rows[2].should.have.property('userId', createdUsers.testUser1.id);
+                                res.body.data.rows[2].should.have.property('created');
+                                res.body.data.rows[2].should.have.property('modified');
 
                                 done();
                              });
@@ -2045,7 +2123,7 @@ describe("ESDR", function() {
 
                it("Should be able to find all devices for a particular product owned by the auth'd user (user 2)", function(done) {
                   agent(url)
-                        .get("/api/v1/products/" + testProduct1.name + "/devices")
+                        .get("/api/v1/devices?fields=id,serialNumber,userId,productId&where=productId=" + productIds.testProduct1)
                         .set({
                                 Authorization : "Bearer " + accessTokens.testUser2.access_token
                              })
@@ -2058,19 +2136,19 @@ describe("ESDR", function() {
                                 res.body.should.have.property('code', httpStatus.OK);
                                 res.body.should.have.property('status', 'success');
                                 res.body.should.have.property('data');
-                                res.body.data.should.have.length(2);
-                                res.body.data[0].should.have.property('id');
-                                res.body.data[0].should.have.property('serialNumber', testDevice1.serialNumber);
-                                res.body.data[0].should.have.property('productId');
-                                res.body.data[0].should.have.property('userId', createdUsers.testUser2.id);
-                                res.body.data[0].should.have.property('created');
-                                res.body.data[0].should.have.property('modified');
-                                res.body.data[1].should.have.property('id');
-                                res.body.data[1].should.have.property('serialNumber', testDevice4.serialNumber);
-                                res.body.data[1].should.have.property('productId');
-                                res.body.data[1].should.have.property('userId', createdUsers.testUser2.id);
-                                res.body.data[1].should.have.property('created');
-                                res.body.data[1].should.have.property('modified');
+                                res.body.data.should.have.property('totalCount', 2);
+                                res.body.data.should.have.property('offset', 0);
+                                res.body.data.should.have.property('limit', 100);
+                                res.body.data.should.have.property('rows');
+                                res.body.data.rows.should.have.length(2);
+                                res.body.data.rows[0].should.have.property('id');
+                                res.body.data.rows[0].should.have.property('serialNumber', testDevice1.serialNumber);
+                                res.body.data.rows[0].should.have.property('productId', productIds.testProduct1);
+                                res.body.data.rows[0].should.have.property('userId', createdUsers.testUser2.id);
+                                res.body.data.rows[1].should.have.property('id');
+                                res.body.data.rows[1].should.have.property('serialNumber', testDevice4.serialNumber);
+                                res.body.data.rows[1].should.have.property('productId', productIds.testProduct1);
+                                res.body.data.rows[1].should.have.property('userId', createdUsers.testUser2.id);
 
                                 done();
                              });
@@ -2078,7 +2156,7 @@ describe("ESDR", function() {
 
                it("Should fail to find any devices for a particular product if the auth'd user (user 1) has no devices for that product", function(done) {
                   agent(url)
-                        .get("/api/v1/products/" + testProduct2.name + "/devices")
+                        .get("/api/v1/devices?fields=id,userId,productId&where=productId=" + productIds.testProduct2)
                         .set({
                                 Authorization : "Bearer " + accessTokens.testUser1.access_token
                              })
@@ -2091,7 +2169,11 @@ describe("ESDR", function() {
                                 res.body.should.have.property('code', httpStatus.OK);
                                 res.body.should.have.property('status', 'success');
                                 res.body.should.have.property('data');
-                                res.body.data.should.have.length(0);
+                                res.body.data.should.have.property('totalCount', 0);
+                                res.body.data.should.have.property('offset', 0);
+                                res.body.data.should.have.property('limit', 100);
+                                res.body.data.should.have.property('rows');
+                                res.body.data.rows.should.have.length(0);
 
                                 done();
                              });
@@ -2099,7 +2181,7 @@ describe("ESDR", function() {
 
                it("Should fail to find any devices for a particular product if the auth'd user (user 2) has no devices for that product", function(done) {
                   agent(url)
-                        .get("/api/v1/products/" + testProduct2.name + "/devices")
+                        .get("/api/v1/devices?fields=id,userId,productId&where=productId=" + productIds.testProduct2)
                         .set({
                                 Authorization : "Bearer " + accessTokens.testUser2.access_token
                              })
@@ -2112,7 +2194,11 @@ describe("ESDR", function() {
                                 res.body.should.have.property('code', httpStatus.OK);
                                 res.body.should.have.property('status', 'success');
                                 res.body.should.have.property('data');
-                                res.body.data.should.have.length(0);
+                                res.body.data.should.have.property('totalCount', 0);
+                                res.body.data.should.have.property('offset', 0);
+                                res.body.data.should.have.property('limit', 100);
+                                res.body.data.should.have.property('rows');
+                                res.body.data.rows.should.have.length(0);
 
                                 done();
                              });
@@ -2120,7 +2206,7 @@ describe("ESDR", function() {
 
                it("Should fail to find any devices for a particular product if auth is invalid", function(done) {
                   agent(url)
-                        .get("/api/v1/products/" + testProduct1.name + "/devices")
+                        .get("/api/v1/devices?fields=id&where=productId=" + productIds.testProduct1)
                         .set({
                                 Authorization : "Bearer " + "bogus"
                              })
@@ -2291,7 +2377,7 @@ describe("ESDR", function() {
 
                   it("Should be able to get the public feeds for a device, without authorization", function(done) {
                      agent(url)
-                           .get("/api/v1/devices/" + deviceIds.testDevice1 + "/feeds")
+                           .get("/api/v1/feeds?where=deviceId=" + deviceIds.testDevice1)
                            .end(function(err, res) {
                                    if (err) {
                                       return done(err);
@@ -2301,27 +2387,30 @@ describe("ESDR", function() {
                                    res.body.should.have.property('code', httpStatus.OK);
                                    res.body.should.have.property('status', 'success');
                                    res.body.should.have.property('data');
-                                   res.body.data.should.have.length(1);
-                                   res.body.data[0].should.have.property('name', testFeed1a.name);
-                                   res.body.data[0].should.have.property('deviceId', deviceIds.testDevice1);
-                                   res.body.data[0].should.have.property('userId', accessTokens.testUser1.userId);
-                                   res.body.data[0].should.have.property('exposure', testFeed1a.exposure);
-                                   res.body.data[0].should.have.property('isPublic', testFeed1a.isPublic);
-                                   res.body.data[0].should.have.property('isMobile', testFeed1a.isMobile);
-                                   res.body.data[0].should.have.property('latitude', testFeed1a.latitude);
-                                   res.body.data[0].should.have.property('longitude', testFeed1a.longitude);
-                                   res.body.data[0].should.have.property('channelSpecs');
-                                   res.body.data[0].should.have.property('created');
-                                   res.body.data[0].should.have.property('modified');
+                                   res.body.data.should.have.property('totalCount', 1);
+                                   res.body.data.should.have.property('offset', 0);
+                                   res.body.data.should.have.property('rows');
+                                   res.body.data.rows.should.have.length(1);
+                                   res.body.data.rows[0].should.have.property('name', testFeed1a.name);
+                                   res.body.data.rows[0].should.have.property('deviceId', deviceIds.testDevice1);
+                                   res.body.data.rows[0].should.have.property('userId', accessTokens.testUser1.userId);
+                                   res.body.data.rows[0].should.have.property('exposure', testFeed1a.exposure);
+                                   res.body.data.rows[0].should.have.property('isPublic', testFeed1a.isPublic);
+                                   res.body.data.rows[0].should.have.property('isMobile', testFeed1a.isMobile);
+                                   res.body.data.rows[0].should.have.property('latitude', testFeed1a.latitude);
+                                   res.body.data.rows[0].should.have.property('longitude', testFeed1a.longitude);
+                                   res.body.data.rows[0].should.have.property('channelSpecs');
+                                   res.body.data.rows[0].should.have.property('created');
+                                   res.body.data.rows[0].should.have.property('modified');
 
                                    // end user never needs to know the datastoreId
-                                   res.body.data[0].should.not.have.property('datastoreId');
+                                   res.body.data.rows[0].should.not.have.property('datastoreId');
 
                                    // shouldn't get the apiKey if not auth'd
-                                   res.body.data[0].should.not.have.property('apiKey');
+                                   res.body.data.rows[0].should.not.have.property('apiKey');
 
                                    // SHOULD get the apiKeyReadOnly, even if not auth'd
-                                   res.body.data[0].should.have.property('apiKeyReadOnly');
+                                   res.body.data.rows[0].should.have.property('apiKeyReadOnly');
 
                                    done();
                                 });
@@ -2329,7 +2418,7 @@ describe("ESDR", function() {
 
                   it("Should be able to get the public and private feeds for a device, with authorization", function(done) {
                      agent(url)
-                           .get("/api/v1/devices/" + deviceIds.testDevice1 + "/feeds")
+                           .get("/api/v1/feeds?where=deviceId=" + deviceIds.testDevice1)
                            .set({
                                    Authorization : "Bearer " + accessTokens.testUser1.access_token
                                 })
@@ -2342,36 +2431,39 @@ describe("ESDR", function() {
                                    res.body.should.have.property('code', httpStatus.OK);
                                    res.body.should.have.property('status', 'success');
                                    res.body.should.have.property('data');
-                                   res.body.data.should.have.length(2);
-                                   res.body.data[0].should.have.property('name', testFeed1a.name);
-                                   res.body.data[0].should.have.property('deviceId', deviceIds.testDevice1);
-                                   res.body.data[0].should.have.property('userId', accessTokens.testUser1.userId);
-                                   res.body.data[0].should.have.property('apiKey');
-                                   res.body.data[0].should.have.property('apiKeyReadOnly');
-                                   res.body.data[0].should.have.property('exposure', testFeed1a.exposure);
-                                   res.body.data[0].should.have.property('isPublic', testFeed1a.isPublic);
-                                   res.body.data[0].should.have.property('isMobile', testFeed1a.isMobile);
-                                   res.body.data[0].should.have.property('latitude', testFeed1a.latitude);
-                                   res.body.data[0].should.have.property('longitude', testFeed1a.longitude);
-                                   res.body.data[0].should.have.property('channelSpecs');
-                                   res.body.data[0].should.have.property('created');
-                                   res.body.data[0].should.have.property('modified');
-                                   res.body.data[0].should.not.have.property('datastoreId');
+                                   res.body.data.should.have.property('totalCount', 2);
+                                   res.body.data.should.have.property('offset', 0);
+                                   res.body.data.should.have.property('rows');
+                                   res.body.data.rows.should.have.length(2);
+                                   res.body.data.rows[0].should.have.property('name', testFeed1a.name);
+                                   res.body.data.rows[0].should.have.property('deviceId', deviceIds.testDevice1);
+                                   res.body.data.rows[0].should.have.property('userId', accessTokens.testUser1.userId);
+                                   res.body.data.rows[0].should.have.property('apiKey');
+                                   res.body.data.rows[0].should.have.property('apiKeyReadOnly');
+                                   res.body.data.rows[0].should.have.property('exposure', testFeed1a.exposure);
+                                   res.body.data.rows[0].should.have.property('isPublic', testFeed1a.isPublic);
+                                   res.body.data.rows[0].should.have.property('isMobile', testFeed1a.isMobile);
+                                   res.body.data.rows[0].should.have.property('latitude', testFeed1a.latitude);
+                                   res.body.data.rows[0].should.have.property('longitude', testFeed1a.longitude);
+                                   res.body.data.rows[0].should.have.property('channelSpecs');
+                                   res.body.data.rows[0].should.have.property('created');
+                                   res.body.data.rows[0].should.have.property('modified');
+                                   res.body.data.rows[0].should.not.have.property('datastoreId');
 
-                                   res.body.data[1].should.have.property('name', testFeed1b.name);
-                                   res.body.data[1].should.have.property('deviceId', deviceIds.testDevice1);
-                                   res.body.data[1].should.have.property('userId', accessTokens.testUser1.userId);
-                                   res.body.data[1].should.have.property('apiKey');
-                                   res.body.data[1].should.have.property('apiKeyReadOnly');
-                                   res.body.data[1].should.have.property('exposure', testFeed1b.exposure);
-                                   res.body.data[1].should.have.property('isPublic', testFeed1b.isPublic);
-                                   res.body.data[1].should.have.property('isMobile', testFeed1b.isMobile);
-                                   res.body.data[1].should.have.property('latitude', testFeed1b.latitude);
-                                   res.body.data[1].should.have.property('longitude', testFeed1b.longitude);
-                                   res.body.data[1].should.have.property('channelSpecs');
-                                   res.body.data[1].should.have.property('created');
-                                   res.body.data[1].should.have.property('modified');
-                                   res.body.data[1].should.not.have.property('datastoreId');
+                                   res.body.data.rows[1].should.have.property('name', testFeed1b.name);
+                                   res.body.data.rows[1].should.have.property('deviceId', deviceIds.testDevice1);
+                                   res.body.data.rows[1].should.have.property('userId', accessTokens.testUser1.userId);
+                                   res.body.data.rows[1].should.have.property('apiKey');
+                                   res.body.data.rows[1].should.have.property('apiKeyReadOnly');
+                                   res.body.data.rows[1].should.have.property('exposure', testFeed1b.exposure);
+                                   res.body.data.rows[1].should.have.property('isPublic', testFeed1b.isPublic);
+                                   res.body.data.rows[1].should.have.property('isMobile', testFeed1b.isMobile);
+                                   res.body.data.rows[1].should.have.property('latitude', testFeed1b.latitude);
+                                   res.body.data.rows[1].should.have.property('longitude', testFeed1b.longitude);
+                                   res.body.data.rows[1].should.have.property('channelSpecs');
+                                   res.body.data.rows[1].should.have.property('created');
+                                   res.body.data.rows[1].should.have.property('modified');
+                                   res.body.data.rows[1].should.not.have.property('datastoreId');
 
                                    done();
                                 });
@@ -2379,7 +2471,7 @@ describe("ESDR", function() {
 
                   it("Should be able to get only the public feeds for a device, with incorrect authorization", function(done) {
                      agent(url)
-                           .get("/api/v1/devices/" + deviceIds.testDevice1 + "/feeds")
+                           .get("/api/v1/feeds?where=deviceId=" + deviceIds.testDevice1)
                            .set({
                                    Authorization : "Bearer " + accessTokens.testUser2.access_token
                                 })
@@ -2392,27 +2484,30 @@ describe("ESDR", function() {
                                    res.body.should.have.property('code', httpStatus.OK);
                                    res.body.should.have.property('status', 'success');
                                    res.body.should.have.property('data');
-                                   res.body.data.should.have.length(1);
-                                   res.body.data[0].should.have.property('name', testFeed1a.name);
-                                   res.body.data[0].should.have.property('deviceId', deviceIds.testDevice1);
-                                   res.body.data[0].should.have.property('userId', accessTokens.testUser1.userId);
-                                   res.body.data[0].should.have.property('exposure', testFeed1a.exposure);
-                                   res.body.data[0].should.have.property('isPublic', testFeed1a.isPublic);
-                                   res.body.data[0].should.have.property('isMobile', testFeed1a.isMobile);
-                                   res.body.data[0].should.have.property('latitude', testFeed1a.latitude);
-                                   res.body.data[0].should.have.property('longitude', testFeed1a.longitude);
-                                   res.body.data[0].should.have.property('channelSpecs');
-                                   res.body.data[0].should.have.property('created');
-                                   res.body.data[0].should.have.property('modified');
+                                   res.body.data.should.have.property('totalCount', 1);
+                                   res.body.data.should.have.property('offset', 0);
+                                   res.body.data.should.have.property('rows');
+                                   res.body.data.rows.should.have.length(1);
+                                   res.body.data.rows[0].should.have.property('name', testFeed1a.name);
+                                   res.body.data.rows[0].should.have.property('deviceId', deviceIds.testDevice1);
+                                   res.body.data.rows[0].should.have.property('userId', accessTokens.testUser1.userId);
+                                   res.body.data.rows[0].should.have.property('exposure', testFeed1a.exposure);
+                                   res.body.data.rows[0].should.have.property('isPublic', testFeed1a.isPublic);
+                                   res.body.data.rows[0].should.have.property('isMobile', testFeed1a.isMobile);
+                                   res.body.data.rows[0].should.have.property('latitude', testFeed1a.latitude);
+                                   res.body.data.rows[0].should.have.property('longitude', testFeed1a.longitude);
+                                   res.body.data.rows[0].should.have.property('channelSpecs');
+                                   res.body.data.rows[0].should.have.property('created');
+                                   res.body.data.rows[0].should.have.property('modified');
 
                                    // end user never needs to know the datastoreId
-                                   res.body.data[0].should.not.have.property('datastoreId');
+                                   res.body.data.rows[0].should.not.have.property('datastoreId');
 
                                    // shouldn't get the apiKey if not auth'd
-                                   res.body.data[0].should.not.have.property('apiKey');
+                                   res.body.data.rows[0].should.not.have.property('apiKey');
 
                                    // SHOULD get the apiKeyReadOnly, even if not auth'd
-                                   res.body.data[0].should.have.property('apiKeyReadOnly');
+                                   res.body.data.rows[0].should.have.property('apiKeyReadOnly');
 
                                    done();
                                 });
@@ -4355,8 +4450,8 @@ describe("ESDR", function() {
                   });
                });
 
-               it("Should be able to find a device by ID", function(done) {
-                  db.devices.findById(deviceInsertIds.testDevice5, function(err, device) {
+               it("Should be able to find a device by ID and user ID", function(done) {
+                  db.devices.findByIdForUser(deviceInsertIds.testDevice5, userIds.testUser1, null, function(err, device) {
                      if (err) {
                         return done(err);
                      }
@@ -4372,21 +4467,33 @@ describe("ESDR", function() {
                   });
                });
 
+               it("Should be able to find a device by ID and user ID if the user ID is wrong", function(done) {
+                  db.devices.findByIdForUser(deviceInsertIds.testDevice5, userIds.testUser2, null, function(err, device) {
+                     assert.notEqual(err, null);
+                     (err instanceof JSendError).should.be.true;
+                     (err instanceof JSendClientError).should.be.true;
+                     err.should.have.property('data');
+                     err.data.should.have.property('code', httpStatus.FORBIDDEN);
+                     err.data.should.have.property('status', 'error');
+                     done();
+                  });
+               });
+
                it("Should be able to find a device by product ID, serial number, and user ID", function(done) {
                   db.devices.findByProductIdAndSerialNumberForUser(productInsertIds.testProduct3,
                                                                    testDevice5.serialNumber,
                                                                    userIds.testUser1,
-                                                                   function(err, devices) {
+                                                                   function(err, device) {
                                                                       if (err) {
                                                                          return done(err);
                                                                       }
 
-                                                                      devices.should.have.property('id', deviceInsertIds.testDevice5);
-                                                                      devices.should.have.property('serialNumber', testDevice5.serialNumber);
-                                                                      devices.should.have.property('productId', productInsertIds.testProduct3);
-                                                                      devices.should.have.property('userId', userIds.testUser1);
-                                                                      devices.should.have.property('created');
-                                                                      devices.should.have.property('modified');
+                                                                      device.should.have.property('id', deviceInsertIds.testDevice5);
+                                                                      device.should.have.property('serialNumber', testDevice5.serialNumber);
+                                                                      device.should.have.property('productId', productInsertIds.testProduct3);
+                                                                      device.should.have.property('userId', userIds.testUser1);
+                                                                      device.should.have.property('created');
+                                                                      device.should.have.property('modified');
 
                                                                       done();
                                                                    });

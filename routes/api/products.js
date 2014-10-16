@@ -31,8 +31,6 @@ module.exports = function(ProductModel, DeviceModel) {
                        });
                     }
 
-                    log.debug(JSON.stringify(result, null, 3));
-
                     return res.jsendSuccess(result);
 
                  });
@@ -64,6 +62,7 @@ module.exports = function(ProductModel, DeviceModel) {
                                          log.debug("Created new product [" + result.name + "] with id [" + result.insertId + "] ");
 
                                          res.jsendSuccess({
+                                                             id : result.insertId,
                                                              name : result.name
                                                           }, httpStatus.CREATED); // HTTP 201 Created
                                       });
@@ -84,27 +83,6 @@ module.exports = function(ProductModel, DeviceModel) {
                  });
               });
 
-   // get all devices for the given product owned by the authenticated user (TODO: do we need this method?)
-   router.get('/:productNameOrId/devices',
-              passport.authenticate('bearer', { session : false }),
-              function(req, res, next) {
-                 var productNameOrId = req.params.productNameOrId;
-                 log.debug("Received GET to list all devices for product [" + productNameOrId + "] owned by user [" + req.user.id + "]");
-
-                 findProductByNameOrId(res, productNameOrId, ['id'], function(product) {
-                    log.debug("Found product [" + productNameOrId + "], will now find matching devices for this user...");
-                    DeviceModel.findByProductIdForUser(product.id, req.user.id, function(err, devices) {
-                       if (err) {
-                          var message = "Error while trying to find devices with product ID [" + product.id + "] for user [" + req.user.id + "]";
-                          log.error(message + ": " + err);
-                          return res.jsendServerError(message);
-                       }
-
-                       return res.jsendSuccess(devices, httpStatus.OK); // HTTP 200 OK
-                    });
-                 });
-              });
-
    // create a new device
    router.post('/:productNameOrId/devices',
                passport.authenticate('bearer', { session : false }),
@@ -112,7 +90,7 @@ module.exports = function(ProductModel, DeviceModel) {
                   var productNameOrId = req.params.productNameOrId;
                   log.debug("Received POST to create a new device for product [" + productNameOrId + "]");
 
-                  findProductByNameOrId(res, productNameOrId, ['id'], function(product) {
+                  findProductByNameOrId(res, productNameOrId, 'id', function(product) {
                      log.debug("Found product [" + productNameOrId + "], will now create the device...");
                      var newDevice = req.body;
                      DeviceModel.create(newDevice, product.id, req.user.id, function(err, result) {
@@ -140,7 +118,7 @@ module.exports = function(ProductModel, DeviceModel) {
                   });
                });
 
-   // get info for a specific device (requires auth)
+   // get info for a specific device (requires auth) // TODO: Add ability to specify selected fields
    router.get('/:productNameOrId/devices/:serialNumber',
               passport.authenticate('bearer', { session : false }),
               function(req, res, next) {
@@ -148,7 +126,7 @@ module.exports = function(ProductModel, DeviceModel) {
                  var serialNumber = req.params.serialNumber;
                  log.debug("Received GET for product [" + productNameOrId + "] and device [" + serialNumber + "]");
 
-                 findProductByNameOrId(res, productNameOrId, ['id'], function(product) {
+                 findProductByNameOrId(res, productNameOrId, 'id', function(product) {
 
                     // we know the product is valid, so now look for matching devices
                     DeviceModel.findByProductIdAndSerialNumberForUser(product.id, serialNumber, req.user.id, function(err, device) {
