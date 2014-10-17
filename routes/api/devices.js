@@ -8,12 +8,12 @@ var log = require('log4js').getLogger();
 
 module.exports = function(DeviceModel, FeedModel) {
 
-   // for requesting lists of devices, optionally matching specified criteria and sort order
+   // find devices
    router.get('/',
               passport.authenticate('bearer', { session : false }),
               function(req, res, next) {
-                 DeviceModel.findForUser(req.query,
-                                         req.user.id,
+                 DeviceModel.findForUser(req.user.id,
+                                         req.query,
                                          function(err, result, selectedFields) {
                                             if (err) {
                                                log.error(JSON.stringify(err, null, 3));

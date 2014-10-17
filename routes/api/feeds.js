@@ -6,7 +6,7 @@ var log = require('log4js').getLogger();
 
 module.exports = function(FeedModel, feedRouteHelper) {
 
-   // for requesting lists of feeds, optionally matching specified criteria and sort order
+   // for searching for feeds, optionally matching specified criteria and sort order
    router.get('/',
               function(req, res, next) {
                  passport.authenticate('bearer', function(err, user, info) {
@@ -16,36 +16,36 @@ module.exports = function(FeedModel, feedRouteHelper) {
                        return res.jsendServerError(message);
                     }
 
-                    FeedModel.findFeeds(req.query,
-                                        user ? user.id : null,
-                                        function(err, result, selectedFields) {
-                                           if (err) {
-                                              log.error(JSON.stringify(err, null, 3));
-                                              // See if the error contains a JSend data object.  If so, pass it on through.
-                                              if (typeof err.data !== 'undefined' &&
-                                                  typeof err.data.code !== 'undefined' &&
-                                                  typeof err.data.status !== 'undefined') {
-                                                 return res.jsendPassThrough(err.data);
-                                              }
-                                              return res.jsendServerError("Failed to get feeds", null);
-                                           }
+                    FeedModel.find(user ? user.id : null,
+                                   req.query,
+                                   function(err, result, selectedFields) {
+                                      if (err) {
+                                         log.error(JSON.stringify(err, null, 3));
+                                         // See if the error contains a JSend data object.  If so, pass it on through.
+                                         if (typeof err.data !== 'undefined' &&
+                                             typeof err.data.code !== 'undefined' &&
+                                             typeof err.data.status !== 'undefined') {
+                                            return res.jsendPassThrough(err.data);
+                                         }
+                                         return res.jsendServerError("Failed to get feeds", null);
+                                      }
 
-                                           var willInflateChannelSpecs = (selectedFields.indexOf('channelSpecs') >= 0);
-                                           var willInflateChannelBounds = (selectedFields.indexOf('channelBounds') >= 0);
+                                      var willInflateChannelSpecs = (selectedFields.indexOf('channelSpecs') >= 0);
+                                      var willInflateChannelBounds = (selectedFields.indexOf('channelBounds') >= 0);
 
-                                           if (willInflateChannelSpecs || willInflateChannelBounds) {
-                                              result.rows.forEach(function(feed) {
-                                                 if (willInflateChannelSpecs) {
-                                                    feed.channelSpecs = JSON.parse(feed.channelSpecs);
-                                                 }
-                                                 if (willInflateChannelBounds) {
-                                                    feed.channelBounds = JSON.parse(feed.channelBounds);
-                                                 }
-                                              });
-                                           }
+                                      if (willInflateChannelSpecs || willInflateChannelBounds) {
+                                         result.rows.forEach(function(feed) {
+                                            if (willInflateChannelSpecs) {
+                                               feed.channelSpecs = JSON.parse(feed.channelSpecs);
+                                            }
+                                            if (willInflateChannelBounds) {
+                                               feed.channelBounds = JSON.parse(feed.channelBounds);
+                                            }
+                                         });
+                                      }
 
-                                           return res.jsendSuccess(result);
-                                        });
+                                      return res.jsendSuccess(result);
+                                   });
                  })(req, res, next);
               });
 
@@ -73,7 +73,6 @@ module.exports = function(FeedModel, feedRouteHelper) {
    // NOT: for private feeds, this will be slower than authenticating with the feed's apiKey or apiKeyReadOnly because
    // we have to make an extra call to the database to authenticate the user so we can determine whether she has access
    // to the private feed.
-   // TODO: allow filtering by min/max time
    router.get('/:feedId',
               function(req, res, next) {
                  var feedId = req.params.feedId;

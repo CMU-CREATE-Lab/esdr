@@ -339,7 +339,7 @@ module.exports = function(databaseHelper) {
       );
    };
 
-   this.findFeeds = function(queryString, authUserId, callback) {
+   this.find = function(authUserId, queryString, callback) {
 
       query2query.parse(queryString, function(err, queryParts) {
 
@@ -400,10 +400,6 @@ module.exports = function(databaseHelper) {
             return callback(null, result, queryParts.selectFields);
          });
       });
-   };
-
-   this.findFeedsForDevice = function(deviceId, callback) {
-      databaseHelper.execute("SELECT *, concat('feed_',id) AS datastoreId FROM Feeds WHERE deviceId=?", [deviceId], callback);
    };
 
    this.findById = function(id, callback) {

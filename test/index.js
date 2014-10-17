@@ -1936,9 +1936,10 @@ describe("ESDR", function() {
                                 res.body.should.have.property('code', httpStatus.OK);
                                 res.body.should.have.property('status', 'success');
                                 res.body.should.have.property('data');
+
                                 res.body.data.should.have.property('id');
                                 res.body.data.should.have.property('serialNumber', testDevice1.serialNumber);
-                                res.body.data.should.have.property('productId');
+                                res.body.data.should.have.property('productId', productIds.testProduct1);
                                 res.body.data.should.have.property('userId', createdUsers.testUser1.id);
                                 res.body.data.should.have.property('created');
                                 res.body.data.should.have.property('modified');
@@ -1947,9 +1948,36 @@ describe("ESDR", function() {
                              });
                });
 
+               it("Should be able to find a device by product ID and serial number by the user who owns it (user 1)", function(done) {
+                  agent(url)
+                        .get("/api/v1/products/" + productIds.testProduct1 + "/devices/" + testDevice1.serialNumber + "?fields=id,serialNumber,productId,userId")
+                        .set({
+                                Authorization : "Bearer " + accessTokens.testUser1.access_token
+                             })
+                        .end(function(err, res) {
+                                if (err) {
+                                   return done(err);
+                                }
+
+                                res.should.have.property('status', httpStatus.OK);
+                                res.body.should.have.property('code', httpStatus.OK);
+                                res.body.should.have.property('status', 'success');
+                                res.body.should.have.property('data');
+
+                                res.body.data.should.have.property('id');
+                                res.body.data.should.have.property('serialNumber', testDevice1.serialNumber);
+                                res.body.data.should.have.property('productId', productIds.testProduct1);
+                                res.body.data.should.have.property('userId', createdUsers.testUser1.id);
+                                res.body.data.should.not.have.property('created');
+                                res.body.data.should.not.have.property('modified');
+
+                                done();
+                             });
+               });
+
                it("Should be able to find a device by product name and serial number by the user who owns it (user 2)", function(done) {
                   agent(url)
-                        .get("/api/v1/products/" + testProduct1.name + "/devices/" + testDevice1.serialNumber)
+                        .get("/api/v1/products/" + testProduct1.name + "/devices/" + testDevice1.serialNumber + "?fields=id,serialNumber,productId,userId")
                         .set({
                                 Authorization : "Bearer " + accessTokens.testUser2.access_token
                              })
@@ -1964,7 +1992,33 @@ describe("ESDR", function() {
                                 res.body.should.have.property('data');
                                 res.body.data.should.have.property('id');
                                 res.body.data.should.have.property('serialNumber', testDevice1.serialNumber);
-                                res.body.data.should.have.property('productId');
+                                res.body.data.should.have.property('productId', productIds.testProduct1);
+                                res.body.data.should.have.property('userId', createdUsers.testUser2.id);
+                                res.body.data.should.not.have.property('created');
+                                res.body.data.should.not.have.property('modified');
+
+                                done();
+                             });
+               });
+
+               it("Should be able to find a device by product ID and serial number by the user who owns it (user 2)", function(done) {
+                  agent(url)
+                        .get("/api/v1/products/" + productIds.testProduct1 + "/devices/" + testDevice1.serialNumber)
+                        .set({
+                                Authorization : "Bearer " + accessTokens.testUser2.access_token
+                             })
+                        .end(function(err, res) {
+                                if (err) {
+                                   return done(err);
+                                }
+
+                                res.should.have.property('status', httpStatus.OK);
+                                res.body.should.have.property('code', httpStatus.OK);
+                                res.body.should.have.property('status', 'success');
+                                res.body.should.have.property('data');
+                                res.body.data.should.have.property('id');
+                                res.body.data.should.have.property('serialNumber', testDevice1.serialNumber);
+                                res.body.data.should.have.property('productId', productIds.testProduct1);
                                 res.body.data.should.have.property('userId', createdUsers.testUser2.id);
                                 res.body.data.should.have.property('created');
                                 res.body.data.should.have.property('modified');
@@ -2022,7 +2076,6 @@ describe("ESDR", function() {
                                    return done(err);
                                 }
 
-                                // TODO: this should really return FORBIDDEN
                                 res.should.have.property('status', httpStatus.NOT_FOUND);
                                 res.body.should.have.property('code', httpStatus.NOT_FOUND);
                                 res.body.should.have.property('status', 'error');
@@ -4483,6 +4536,7 @@ describe("ESDR", function() {
                   db.devices.findByProductIdAndSerialNumberForUser(productInsertIds.testProduct3,
                                                                    testDevice5.serialNumber,
                                                                    userIds.testUser1,
+                                                                   'id,serialNumber,productId,userId',
                                                                    function(err, device) {
                                                                       if (err) {
                                                                          return done(err);
@@ -4492,8 +4546,8 @@ describe("ESDR", function() {
                                                                       device.should.have.property('serialNumber', testDevice5.serialNumber);
                                                                       device.should.have.property('productId', productInsertIds.testProduct3);
                                                                       device.should.have.property('userId', userIds.testUser1);
-                                                                      device.should.have.property('created');
-                                                                      device.should.have.property('modified');
+                                                                      device.should.not.have.property('created');
+                                                                      device.should.not.have.property('modified');
 
                                                                       done();
                                                                    });

@@ -23,7 +23,6 @@ module.exports = function(FeedModel, feedRouteHelper) {
               });
 
    // for getting info about a feed, authenticated using the feed's API Key in the request header
-   // TODO: allow filtering by min/max time
    router.get('/',
               passport.authenticate('localapikey', { session : false }),
               function(req, res, next) {

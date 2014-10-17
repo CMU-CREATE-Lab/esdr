@@ -9,33 +9,6 @@ var log = require('log4js').getLogger();
 
 module.exports = function(ProductModel, DeviceModel) {
 
-   router.get('/',
-              function(req, res, next) {
-
-                 ProductModel.findProducts(req.query, function(err, result, selectedFields) {
-                    if (err) {
-                       log.error(JSON.stringify(err, null, 3));
-                       // See if the error contains a JSend data object.  If so, pass it on through.
-                       if (typeof err.data !== 'undefined' &&
-                           typeof err.data.code !== 'undefined' &&
-                           typeof err.data.status !== 'undefined') {
-                          return res.jsendPassThrough(err.data);
-                       }
-                       return res.jsendServerError("Failed to get products", null);
-                    }
-
-                    // inflate the channel specs, if selected
-                    if ((selectedFields.indexOf('defaultChannelSpecs') >= 0)) {
-                       result.rows.forEach(function(product) {
-                          product.defaultChannelSpecs = JSON.parse(product.defaultChannelSpecs);
-                       });
-                    }
-
-                    return res.jsendSuccess(result);
-
-                 });
-              });
-
    // create a product
    router.post('/',
                passport.authenticate('bearer', { session : false }),
@@ -67,6 +40,34 @@ module.exports = function(ProductModel, DeviceModel) {
                                                           }, httpStatus.CREATED); // HTTP 201 Created
                                       });
                });
+
+   // find products
+   router.get('/',
+              function(req, res, next) {
+
+                 ProductModel.find(req.query, function(err, result, selectedFields) {
+                    if (err) {
+                       log.error(JSON.stringify(err, null, 3));
+                       // See if the error contains a JSend data object.  If so, pass it on through.
+                       if (typeof err.data !== 'undefined' &&
+                           typeof err.data.code !== 'undefined' &&
+                           typeof err.data.status !== 'undefined') {
+                          return res.jsendPassThrough(err.data);
+                       }
+                       return res.jsendServerError("Failed to get products", null);
+                    }
+
+                    // inflate the channel specs, if selected
+                    if ((selectedFields.indexOf('defaultChannelSpecs') >= 0)) {
+                       result.rows.forEach(function(product) {
+                          product.defaultChannelSpecs = JSON.parse(product.defaultChannelSpecs);
+                       });
+                    }
+
+                    return res.jsendSuccess(result);
+
+                 });
+              });
 
    // get details for a specific product
    router.get('/:productNameOrId',
@@ -118,18 +119,18 @@ module.exports = function(ProductModel, DeviceModel) {
                   });
                });
 
-   // get info for a specific device (requires auth) // TODO: Add ability to specify selected fields
+   // get info for a specific device by product name/ID and device serial number (requires auth)
    router.get('/:productNameOrId/devices/:serialNumber',
               passport.authenticate('bearer', { session : false }),
               function(req, res, next) {
                  var productNameOrId = req.params.productNameOrId;
                  var serialNumber = req.params.serialNumber;
-                 log.debug("Received GET for product [" + productNameOrId + "] and device [" + serialNumber + "]");
+                 log.debug("Received GET for product [" + productNameOrId + "] and device [" + serialNumber + "] for user [" + req.user.id + "]");
 
                  findProductByNameOrId(res, productNameOrId, 'id', function(product) {
 
                     // we know the product is valid, so now look for matching devices
-                    DeviceModel.findByProductIdAndSerialNumberForUser(product.id, serialNumber, req.user.id, function(err, device) {
+                    DeviceModel.findByProductIdAndSerialNumberForUser(product.id, serialNumber, req.user.id, req.query.fields, function(err, device) {
                        if (err) {
                           var message = "Error while trying to find device with serial number [" + serialNumber + "] for product [" + productNameOrId + "]";
                           log.error(message + ": " + err);

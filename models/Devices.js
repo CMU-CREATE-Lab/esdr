@@ -141,15 +141,22 @@ module.exports = function(databaseHelper) {
     * @param {number} productId id of the product to find.
     * @param {number} serialNumber serial number of the device to find.
     * @param {number} userId id of the user owning this device.
+    * @param {string|array} fieldsToSelect comma-delimited string or array of strings of field names to select.
     * @param {function} callback function with signature <code>callback(err, device)</code>
     */
-   this.findByProductIdAndSerialNumberForUser = function(productId, serialNumber, userId, callback) {
-      findDevice("SELECT * FROM Devices WHERE productId=? AND serialNumber=? AND userId=?",
-                 [productId, serialNumber, userId],
-                 callback);
+   this.findByProductIdAndSerialNumberForUser = function(productId, serialNumber, userId, fieldsToSelect, callback) {
+      query2query.parse({fields : fieldsToSelect}, function(err, queryParts) {
+         if (err) {
+            return callback(err);
+         }
+
+         findDevice(queryParts.selectClause + " FROM Devices WHERE productId=? AND serialNumber=? AND userId=?",
+                    [productId, serialNumber, userId],
+                    callback);
+      });
    };
 
-   this.findForUser = function(queryString, userId, callback) {
+   this.findForUser = function(userId, queryString, callback) {
       query2query.parse(queryString,
                         function(err, queryParts) {
 

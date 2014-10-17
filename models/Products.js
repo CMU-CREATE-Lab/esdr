@@ -148,7 +148,7 @@ module.exports = function(databaseHelper) {
       findProduct(fieldsToSelect, 'id', id, callback);
    };
 
-   this.findProducts = function(queryString, callback) {
+   this.find = function(queryString, callback) {
       query2query.parse(queryString, function(err, queryParts) {
 
                            if (err) {
@@ -190,6 +190,6 @@ module.exports = function(databaseHelper) {
 
             return callback(null, product);
          });
-      }, 1);
+      });
    };
 };
