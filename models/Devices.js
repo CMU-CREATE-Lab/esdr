@@ -111,25 +111,27 @@ module.exports = function(databaseHelper) {
          }
 
          var sql = "SELECT " + queryParts.select + ",userId FROM Devices WHERE id=?";
-         findDevice(sql, [deviceId], function(err, device) {
-            if (err) {
-               return callback(err);
-            }
+         databaseHelper.findOne(sql,
+                                [deviceId],
+                                function(err, device) {
+                                   if (err) {
+                                      return callback(err);
+                                   }
 
-            if (device) {
-               // return an error if the user doesn't own this device
-               if (device.userId != authUserId) {
-                  return callback(new JSendClientError("Access denied", null, httpStatus.FORBIDDEN));
-               }
+                                   if (device) {
+                                      // return an error if the user doesn't own this device
+                                      if (device.userId != authUserId) {
+                                         return callback(new JSendClientError("Access denied", null, httpStatus.FORBIDDEN));
+                                      }
 
-               // if the user didn't select the userId, don't return it to them
-               if (queryParts.selectFields.indexOf('userId') < 0) {
-                  delete device.userId;
-               }
-            }
+                                      // if the user didn't select the userId, don't return it to them
+                                      if (queryParts.selectFields.indexOf('userId') < 0) {
+                                         delete device.userId;
+                                      }
+                                   }
 
-            return callback(null, device);
-         });
+                                   return callback(null, device);
+                                });
       });
    };
 
@@ -150,9 +152,9 @@ module.exports = function(databaseHelper) {
             return callback(err);
          }
 
-         findDevice(queryParts.selectClause + " FROM Devices WHERE productId=? AND serialNumber=? AND userId=?",
-                    [productId, serialNumber, userId],
-                    callback);
+         databaseHelper.findOne(queryParts.selectClause + " FROM Devices WHERE productId=? AND serialNumber=? AND userId=?",
+                                [productId, serialNumber, userId],
+                                callback);
       });
    };
 
@@ -196,16 +198,5 @@ module.exports = function(databaseHelper) {
                            });
                         },
                         MAX_FOUND_DEVICES);
-   };
-
-   var findDevice = function(query, params, callback) {
-      databaseHelper.findOne(query, params, function(err, device) {
-         if (err) {
-            log.error("Error trying to find device: " + err);
-            return callback(err);
-         }
-
-         return callback(null, device);
-      });
    };
 };
