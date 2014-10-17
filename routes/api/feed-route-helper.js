@@ -42,8 +42,7 @@ module.exports = function(FeedModel) {
          feed.channelBounds = JSON.parse(feed.channelBounds);
       }
 
-      // Remove the datastoreId and API Key. No need to reveal either here.
-      delete feed.datastoreId;
+      // Remove the API Key. No need to reveal it here.
       delete feed.apiKey;
 
       return res.jsendSuccess(feed, httpStatus.OK); // HTTP 200 OK

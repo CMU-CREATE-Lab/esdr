@@ -171,7 +171,6 @@ module.exports = function(databaseHelper) {
 
                                       return callback(null, {
                                          insertId : result.insertId,
-                                         datastoreId : "feed_" + result.insertId,
                                          apiKey : feed.apiKey,
                                          apiKeyReadOnly : feed.apiKeyReadOnly
                                       });
@@ -183,7 +182,7 @@ module.exports = function(databaseHelper) {
 
    this.getTile = function(feed, channelName, level, offset, callback) {
       datastore.getTile(feed.userId,
-                        feed.datastoreId,
+                        getDatastoreId(feed),
                         channelName,
                         level,
                         offset,
@@ -210,6 +209,10 @@ module.exports = function(databaseHelper) {
                         });
    };
 
+   var getDatastoreId = function(feed) {
+      return "feed_" + feed.id;
+   };
+
    var createEmptyTile = function(level, offset) {
       return {
          "data" : [],
@@ -224,8 +227,9 @@ module.exports = function(databaseHelper) {
    };
 
    this.importData = function(feed, data, callback) {
+      var datastoreId = getDatastoreId(feed);
       datastore.importJson(feed.userId,
-                           feed.datastoreId,
+                           datastoreId,
                            data,
                            function(err, importResult) {
                               if (err) {
@@ -272,7 +276,7 @@ module.exports = function(databaseHelper) {
                               // optionally update the channel bounds, min/max times, and last upload time in the DB.
                               datastore.getInfo({
                                                    userId : feed.userId,
-                                                   deviceName : feed.datastoreId
+                                                   deviceName : datastoreId
                                                 },
                                                 function(err, info) {
                                                    if (err) {
@@ -295,7 +299,7 @@ module.exports = function(databaseHelper) {
 
                                                       // Iterate over each of the channels in the info from the datastore
                                                       // and copy to our bounds object.
-                                                      var deviceAndChannelPrefixLength = (feed.datastoreId + ".").length;
+                                                      var deviceAndChannelPrefixLength = (datastoreId + ".").length;
                                                       bounds.channelBounds.channels = {};
                                                       Object.keys(info.channel_specs).forEach(function(deviceAndChannel) {
                                                          var channelName = deviceAndChannel.slice(deviceAndChannelPrefixLength);
@@ -403,10 +407,10 @@ module.exports = function(databaseHelper) {
    };
 
    this.findById = function(id, callback) {
-      databaseHelper.findOne("SELECT *, concat('feed_',id) AS datastoreId FROM Feeds WHERE id=?", [id], callback);
+      databaseHelper.findOne("SELECT * FROM Feeds WHERE id=?", [id], callback);
    };
 
    this.findByApiKey = function(apiKey, callback) {
-      databaseHelper.findOne("SELECT *, concat('feed_',id) AS datastoreId FROM Feeds WHERE apiKey=? OR apiKeyReadOnly=?", [apiKey, apiKey], callback);
+      databaseHelper.findOne("SELECT * FROM Feeds WHERE apiKey=? OR apiKeyReadOnly=?", [apiKey, apiKey], callback);
    };
 };

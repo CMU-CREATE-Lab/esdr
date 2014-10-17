@@ -2456,9 +2456,6 @@ describe("ESDR", function() {
                                    res.body.data.rows[0].should.have.property('created');
                                    res.body.data.rows[0].should.have.property('modified');
 
-                                   // end user never needs to know the datastoreId
-                                   res.body.data.rows[0].should.not.have.property('datastoreId');
-
                                    // shouldn't get the apiKey if not auth'd
                                    res.body.data.rows[0].should.not.have.property('apiKey');
 
@@ -2501,7 +2498,6 @@ describe("ESDR", function() {
                                    res.body.data.rows[0].should.have.property('channelSpecs');
                                    res.body.data.rows[0].should.have.property('created');
                                    res.body.data.rows[0].should.have.property('modified');
-                                   res.body.data.rows[0].should.not.have.property('datastoreId');
 
                                    res.body.data.rows[1].should.have.property('name', testFeed1b.name);
                                    res.body.data.rows[1].should.have.property('deviceId', deviceIds.testDevice1);
@@ -2516,7 +2512,6 @@ describe("ESDR", function() {
                                    res.body.data.rows[1].should.have.property('channelSpecs');
                                    res.body.data.rows[1].should.have.property('created');
                                    res.body.data.rows[1].should.have.property('modified');
-                                   res.body.data.rows[1].should.not.have.property('datastoreId');
 
                                    done();
                                 });
@@ -2552,9 +2547,6 @@ describe("ESDR", function() {
                                    res.body.data.rows[0].should.have.property('channelSpecs');
                                    res.body.data.rows[0].should.have.property('created');
                                    res.body.data.rows[0].should.have.property('modified');
-
-                                   // end user never needs to know the datastoreId
-                                   res.body.data.rows[0].should.not.have.property('datastoreId');
 
                                    // shouldn't get the apiKey if not auth'd
                                    res.body.data.rows[0].should.not.have.property('apiKey');
@@ -3111,7 +3103,6 @@ describe("ESDR", function() {
 
                         // should NOT have these properties
                         res.body.data.should.not.have.property('apiKey');
-                        res.body.data.should.not.have.property('datastoreId');
                      };
 
                      describe("OAuth2 Authentication", function() {
@@ -4564,7 +4555,6 @@ describe("ESDR", function() {
                         }
 
                         feed.should.have.property('insertId');
-                        feed.should.have.property('datastoreId');
                         feed.should.have.property('apiKey');
                         feed.should.have.property('apiKeyReadOnly');
 
