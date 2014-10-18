@@ -20,6 +20,8 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Devices` ( " +
                          "KEY `serialNumber` (`serialNumber`), " +
                          "KEY `productId` (`productId`), " +
                          "KEY `userId` (`userId`), " +
+                         "KEY `created` (`created`), " +
+                         "KEY `modified` (`modified`), " +
                          "CONSTRAINT `devices_productId_fk_1` FOREIGN KEY (`productId`) REFERENCES `Products` (`id`), " +
                          "CONSTRAINT `devices_userId_fk_1` FOREIGN KEY (`userId`) REFERENCES `Users` (`id`) " +
                          ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
