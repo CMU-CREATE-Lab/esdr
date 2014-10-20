@@ -353,7 +353,7 @@ module.exports = function(databaseHelper) {
 
          // We need to be really careful about security here!  Restrict the WHERE clause to allow returning
          // only the public feeds, or feeds owned by the authenticated user (if any).
-         var additionalWhereExpression = "(isPublic = true) ";
+         var additionalWhereExpression = "(isPublic = true)";
          if (authUserId != null) {
             additionalWhereExpression = "(" + additionalWhereExpression + " OR (userId = " + authUserId + "))";
          }
