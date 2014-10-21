@@ -21,8 +21,12 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Users` ( " +
                          "`resetPasswordExpiration` timestamp, " +
                          "PRIMARY KEY (`id`), " +
                          "UNIQUE KEY `unique_email` (`email`), " +
-                         "UNIQUE KEY `unique_verificationToken` (`verificationToken`), " +
-                         "UNIQUE KEY `unique_resetPasswordToken` (`resetPasswordToken`) " +
+                         "KEY `displayName` (`displayName`), " +
+                         "KEY `created` (`created`), " +
+                         "KEY `modified` (`modified`), " +
+                         "KEY `verified` (`verified`), " +
+                         "UNIQUE KEY `unique_resetPasswordToken` (`resetPasswordToken`), " +
+                         "UNIQUE KEY `unique_verificationToken` (`verificationToken`) " +
                          ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
 
 var EMAIL_ATTRS = {
