@@ -161,14 +161,14 @@ if (!window['superagent']) {
           * - complete() [optional]
           *
           * @param {string|int} productNameOrId Name or ID of the product for this device
-          * @param {string} deviceSerialNumber Serial number of the device
+          * @param {obj} device Details for the new device (name and serialNumber)
           * @param {obj} callbacks
           */
-         create : function(productNameOrId, deviceSerialNumber, callbacks) {
+         create : function(productNameOrId, device, callbacks) {
             superagent
                   .post(ESDR_API_ROOT_URL + "/products/" + productNameOrId + "/devices")
                   .set(authorizationHeader)
-                  .send({serialNumber : deviceSerialNumber})
+                  .send(device)
                   .end(createResponseHandler(callbacks));
          },
 
