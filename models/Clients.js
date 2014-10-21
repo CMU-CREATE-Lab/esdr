@@ -14,8 +14,12 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Clients` ( " +
                          "`verificationUrl` varchar(512) NOT NULL, " +
                          "`resetPasswordUrl` varchar(512) NOT NULL, " +
                          "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
+                         "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
                          "PRIMARY KEY (`id`), " +
-                         "UNIQUE KEY `unique_clientName` (`clientName`) " +
+                         "KEY `displayName` (`displayName`), " +
+                         "UNIQUE KEY `unique_clientName` (`clientName`), " +
+                         "KEY `created` (`created`), " +
+                         "KEY `modified` (`modified`) " +
                          ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
 
 var JSON_SCHEMA = {
