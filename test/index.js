@@ -81,6 +81,13 @@ describe("ESDR", function() {
       description : 'The CATTfish v4 water temperature and conductivity sensor.',
       defaultChannelSpecs : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "&mu;S/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }, "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" }, "humidity" : { "prettyName" : "Humidity", "units" : "%" }}
    };
+   var testProduct5 = {
+      name : 'cattfish_v5',
+      prettyName : 'CATTfish v5',
+      vendor : 'CMU CREATE Lab',
+      description : 'The CATTfish v5 water temperature and conductivity sensor.',
+      defaultChannelSpecs : { "conductivity" : { "prettyName" : "Conductivity", "units" : "&mu;S/cm" }}
+   };
    var testDevice1 = {
       serialNumber : 'TESTDEVICE1'
    };
@@ -1540,7 +1547,7 @@ describe("ESDR", function() {
 
             var productIds = {};
 
-            it("Should be able to create a new product", function(done) {
+            it("Should be able to create a new product (with authentication)", function(done) {
                agent(url)
                      .post("/api/v1/products")
                      .set({
@@ -1587,6 +1594,29 @@ describe("ESDR", function() {
 
                              // remember the product ID
                              productIds.testProduct2 = res.body.data.id;
+
+                             done();
+                          });
+            });
+
+            it("Should be able to create a new product (without authentication)", function(done) {
+               agent(url)
+                     .post("/api/v1/products")
+                     .send(testProduct3)
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', httpStatus.CREATED);
+                             res.body.should.have.property('code', httpStatus.CREATED);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('id');
+                             res.body.data.should.have.property('name', testProduct3.name);
+
+                             // remember the product ID
+                             productIds.testProduct3 = res.body.data.id;
 
                              done();
                           });
@@ -1796,11 +1826,11 @@ describe("ESDR", function() {
                              res.body.should.have.property('code', httpStatus.OK);
                              res.body.should.have.property('status', 'success');
                              res.body.should.have.property('data');
-                             res.body.data.should.have.property('totalCount', 2);
+                             res.body.data.should.have.property('totalCount', 3);
                              res.body.data.should.have.property('offset', 0);
                              res.body.data.should.have.property('limit', 100);
                              res.body.data.should.have.property('rows');
-                             res.body.data.rows.should.have.length(2);
+                             res.body.data.rows.should.have.length(3);
 
                              done();
                           });
@@ -1849,11 +1879,11 @@ describe("ESDR", function() {
                              res.body.should.have.property('code', httpStatus.OK);
                              res.body.should.have.property('status', 'success');
                              res.body.should.have.property('data');
-                             res.body.data.should.have.property('totalCount', 2);
+                             res.body.data.should.have.property('totalCount', 3);
                              res.body.data.should.have.property('offset', 0);
                              res.body.data.should.have.property('limit', 100);
                              res.body.data.should.have.property('rows');
-                             res.body.data.rows.should.have.length(2);
+                             res.body.data.rows.should.have.length(3);
 
                              // make sure the IDs are in descending order
                              var previousId = null;
@@ -4379,13 +4409,13 @@ describe("ESDR", function() {
          describe("Products", function() {
 
             it("Should be able to create a product with a null creator", function(done) {
-               db.products.create(testProduct3, null, function(err, product) {
+               db.products.create(testProduct4, null, function(err, product) {
                   if (err) {
                      return done(err);
                   }
 
                   product.should.have.property('insertId');
-                  product.should.have.property('name', testProduct3.name);
+                  product.should.have.property('name', testProduct4.name);
 
                   // remember the insert ID
                   productInsertIds.testProduct3 = product.insertId;
@@ -4395,7 +4425,7 @@ describe("ESDR", function() {
             });
 
             it("Should fail to create a product with a name that doesn't contain at least one letter", function(done) {
-               var invalidProduct = shallowClone(testProduct3);
+               var invalidProduct = shallowClone(testProduct4);
                invalidProduct.name = "4242";
 
                db.products.create(invalidProduct, null, function(err, product) {
@@ -4415,60 +4445,60 @@ describe("ESDR", function() {
             });
 
             it("Should be able to create a product with a non-null creator", function(done) {
-               db.products.create(testProduct4, userIds.testUser1, function(err, product) {
+               db.products.create(testProduct5, userIds.testUser1, function(err, product) {
                   if (err) {
                      return done(err);
                   }
 
                   product.should.have.property('insertId');
-                  product.should.have.property('name', testProduct4.name);
+                  product.should.have.property('name', testProduct5.name);
 
                   // remember the insert ID
-                  productInsertIds.testProduct4 = product.insertId;
+                  productInsertIds.testProduct5 = product.insertId;
 
                   done();
                });
             });
 
             it("Should be able to find a product by name", function(done) {
-               db.products.findByName(testProduct3.name, null, function(err, product) {
+               db.products.findByName(testProduct4.name, null, function(err, product) {
                   if (err) {
                      return done(err);
                   }
 
                   product.should.have.property('id', productInsertIds.testProduct3);
-                  product.should.have.property('name', testProduct3.name);
-                  product.should.have.property('prettyName', testProduct3.prettyName);
-                  product.should.have.property('vendor', testProduct3.vendor);
-                  product.should.have.property('description', testProduct3.description);
+                  product.should.have.property('name', testProduct4.name);
+                  product.should.have.property('prettyName', testProduct4.prettyName);
+                  product.should.have.property('vendor', testProduct4.vendor);
+                  product.should.have.property('description', testProduct4.description);
                   product.should.have.property('creatorUserId', null);
                   product.should.have.property('created');
                   product.should.have.property('modified');
 
                   // do a deep equal
-                  should(JSON.parse(product.defaultChannelSpecs)).eql(testProduct3.defaultChannelSpecs);
+                  should(JSON.parse(product.defaultChannelSpecs)).eql(testProduct4.defaultChannelSpecs);
 
                   done();
                });
             });
 
             it("Should be able to find a product by ID", function(done) {
-               db.products.findById(productInsertIds.testProduct4, null, function(err, product) {
+               db.products.findById(productInsertIds.testProduct5, null, function(err, product) {
                   if (err) {
                      return done(err);
                   }
 
-                  product.should.have.property('id', productInsertIds.testProduct4);
-                  product.should.have.property('name', testProduct4.name);
-                  product.should.have.property('prettyName', testProduct4.prettyName);
-                  product.should.have.property('vendor', testProduct4.vendor);
-                  product.should.have.property('description', testProduct4.description);
+                  product.should.have.property('id', productInsertIds.testProduct5);
+                  product.should.have.property('name', testProduct5.name);
+                  product.should.have.property('prettyName', testProduct5.prettyName);
+                  product.should.have.property('vendor', testProduct5.vendor);
+                  product.should.have.property('description', testProduct5.description);
                   product.should.have.property('creatorUserId', userIds.testUser1);
                   product.should.have.property('created');
                   product.should.have.property('modified');
 
                   // do a deep equal
-                  should(JSON.parse(product.defaultChannelSpecs)).eql(testProduct4.defaultChannelSpecs);
+                  should(JSON.parse(product.defaultChannelSpecs)).eql(testProduct5.defaultChannelSpecs);
 
                   done();
                });
