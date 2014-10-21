@@ -134,6 +134,15 @@ if (!window['superagent']) {
          };
       };
 
+      // trims and makes sure it starts with a question mark
+      var sanitizeQueryString = function(queryString){
+         queryString = (queryString || "").trim();
+         if (queryString.length > 0 && queryString.lastIndexOf('?', 0) !== 0) {
+            queryString = "?" + queryString;
+         }
+         return queryString;
+      };
+
       this.products = {};
 
       this.devices = {
@@ -160,6 +169,29 @@ if (!window['superagent']) {
                   .post(ESDR_API_ROOT_URL + "/products/" + productNameOrId + "/devices")
                   .set(authorizationHeader)
                   .send({serialNumber : deviceSerialNumber})
+                  .end(createResponseHandler(callbacks));
+         },
+
+         /**
+          * Find devices owned by the user according to the parameters specified in the given query string.
+          *
+          * Required callbacks:
+          * - success(feeds)
+          * - unauthorized()
+          * - validationError(errors)
+          * - error(responseBody, httpStatusCode)
+          * - failure(err, httpStatusCode)
+          *
+          * Optional callbacks:
+          * - complete() [optional]
+          *
+          * @param queryString
+          * @param callbacks
+          */
+         find : function(queryString, callbacks) {
+            superagent
+                  .get(ESDR_API_ROOT_URL + "/devices" + sanitizeQueryString(queryString))
+                  .set(authorizationHeader)
                   .end(createResponseHandler(callbacks));
          },
 
@@ -236,12 +268,8 @@ if (!window['superagent']) {
           * @param callbacks
           */
          find : function(queryString, callbacks) {
-            queryString = (queryString || "").trim();
-            if (queryString.length > 0 && queryString.lastIndexOf('?', 0) !== 0) {
-               queryString = "?" + queryString;
-            }
             superagent
-                  .get(ESDR_API_ROOT_URL + "/feeds" + queryString)
+                  .get(ESDR_API_ROOT_URL + "/feeds" + sanitizeQueryString(queryString))
                   .set(authorizationHeader)
                   .end(createResponseHandler(callbacks));
          },
