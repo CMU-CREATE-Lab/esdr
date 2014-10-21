@@ -89,6 +89,7 @@ describe("ESDR", function() {
       defaultChannelSpecs : { "conductivity" : { "prettyName" : "Conductivity", "units" : "&mu;S/cm" }}
    };
    var testDevice1 = {
+      name : 'My Awesome Device',
       serialNumber : 'TESTDEVICE1'
    };
    var testDevice2 = {
@@ -1919,6 +1920,7 @@ describe("ESDR", function() {
                                 res.body.should.have.property('status', 'success');
                                 res.body.should.have.property('data');
                                 res.body.data.should.have.property('id');
+                                res.body.data.should.have.property('name', testDevice1.name);
                                 res.body.data.should.have.property('serialNumber', testDevice1.serialNumber);
 
                                 // remember this ID
@@ -1945,6 +1947,7 @@ describe("ESDR", function() {
                                 res.body.should.have.property('status', 'success');
                                 res.body.should.have.property('data');
                                 res.body.data.should.have.property('id');
+                                res.body.data.should.have.property('name', testDevice1.name);
                                 res.body.data.should.have.property('serialNumber', testDevice1.serialNumber);
 
                                 done();
@@ -1968,6 +1971,7 @@ describe("ESDR", function() {
                                 res.body.should.have.property('data');
 
                                 res.body.data.should.have.property('id');
+                                res.body.data.should.have.property('name', testDevice1.name);
                                 res.body.data.should.have.property('serialNumber', testDevice1.serialNumber);
                                 res.body.data.should.have.property('productId', productIds.testProduct1);
                                 res.body.data.should.have.property('userId', createdUsers.testUser1.id);
@@ -1980,7 +1984,7 @@ describe("ESDR", function() {
 
                it("Should be able to find a device by product ID and serial number by the user who owns it (user 1)", function(done) {
                   agent(url)
-                        .get("/api/v1/products/" + productIds.testProduct1 + "/devices/" + testDevice1.serialNumber + "?fields=id,serialNumber,productId,userId")
+                        .get("/api/v1/products/" + productIds.testProduct1 + "/devices/" + testDevice1.serialNumber + "?fields=id,name,serialNumber,productId,userId")
                         .set({
                                 Authorization : "Bearer " + accessTokens.testUser1.access_token
                              })
@@ -1995,6 +1999,7 @@ describe("ESDR", function() {
                                 res.body.should.have.property('data');
 
                                 res.body.data.should.have.property('id');
+                                res.body.data.should.have.property('name', testDevice1.name);
                                 res.body.data.should.have.property('serialNumber', testDevice1.serialNumber);
                                 res.body.data.should.have.property('productId', productIds.testProduct1);
                                 res.body.data.should.have.property('userId', createdUsers.testUser1.id);
@@ -2024,6 +2029,7 @@ describe("ESDR", function() {
                                 res.body.data.should.have.property('serialNumber', testDevice1.serialNumber);
                                 res.body.data.should.have.property('productId', productIds.testProduct1);
                                 res.body.data.should.have.property('userId', createdUsers.testUser2.id);
+                                res.body.data.should.not.have.property('name');
                                 res.body.data.should.not.have.property('created');
                                 res.body.data.should.not.have.property('modified');
 
@@ -2047,6 +2053,7 @@ describe("ESDR", function() {
                                 res.body.should.have.property('status', 'success');
                                 res.body.should.have.property('data');
                                 res.body.data.should.have.property('id');
+                                res.body.data.should.have.property('name', testDevice1.name);
                                 res.body.data.should.have.property('serialNumber', testDevice1.serialNumber);
                                 res.body.data.should.have.property('productId', productIds.testProduct1);
                                 res.body.data.should.have.property('userId', createdUsers.testUser2.id);
@@ -2075,6 +2082,7 @@ describe("ESDR", function() {
                                    res.body.should.have.property('status', 'success');
                                    res.body.should.have.property('data');
                                    res.body.data.should.have.property('id');
+                                   res.body.data.should.not.have.property('name');
                                    res.body.data.should.have.property('serialNumber', device.serialNumber);
 
                                    deviceIds[deviceKey] = res.body.data.id;
@@ -2133,6 +2141,7 @@ describe("ESDR", function() {
                                 res.body.data.should.have.property('id');
                                 res.body.data.should.have.property('serialNumber', testDevice4.serialNumber);
                                 res.body.data.should.have.property('userId', createdUsers.testUser2.id);
+                                res.body.data.should.not.have.property('name');
                                 res.body.data.should.not.have.property('productId');
                                 res.body.data.should.not.have.property('created');
                                 res.body.data.should.not.have.property('modified');
@@ -2182,18 +2191,21 @@ describe("ESDR", function() {
                                 res.body.data.should.have.property('rows');
                                 res.body.data.rows.should.have.length(3);
                                 res.body.data.rows[0].should.have.property('id');
+                                res.body.data.rows[0].should.have.property('name', testDevice1.name);
                                 res.body.data.rows[0].should.have.property('serialNumber', testDevice1.serialNumber);
                                 res.body.data.rows[0].should.have.property('productId', productIds.testProduct1);
                                 res.body.data.rows[0].should.have.property('userId', createdUsers.testUser1.id);
                                 res.body.data.rows[0].should.have.property('created');
                                 res.body.data.rows[0].should.have.property('modified');
                                 res.body.data.rows[1].should.have.property('id');
+                                res.body.data.rows[1].should.have.property('name', testDevice2.name);
                                 res.body.data.rows[1].should.have.property('serialNumber', testDevice2.serialNumber);
                                 res.body.data.rows[1].should.have.property('productId', productIds.testProduct1);
                                 res.body.data.rows[1].should.have.property('userId', createdUsers.testUser1.id);
                                 res.body.data.rows[1].should.have.property('created');
                                 res.body.data.rows[1].should.have.property('modified');
                                 res.body.data.rows[2].should.have.property('id');
+                                res.body.data.rows[2].should.have.property('name', testDevice3.name);
                                 res.body.data.rows[2].should.have.property('serialNumber', testDevice3.serialNumber);
                                 res.body.data.rows[2].should.have.property('productId', productIds.testProduct1);
                                 res.body.data.rows[2].should.have.property('userId', createdUsers.testUser1.id);
@@ -2225,10 +2237,12 @@ describe("ESDR", function() {
                                 res.body.data.should.have.property('rows');
                                 res.body.data.rows.should.have.length(2);
                                 res.body.data.rows[0].should.have.property('id');
+                                res.body.data.rows[0].should.not.have.property('name');
                                 res.body.data.rows[0].should.have.property('serialNumber', testDevice1.serialNumber);
                                 res.body.data.rows[0].should.have.property('productId', productIds.testProduct1);
                                 res.body.data.rows[0].should.have.property('userId', createdUsers.testUser2.id);
                                 res.body.data.rows[1].should.have.property('id');
+                                res.body.data.rows[1].should.not.have.property('name');
                                 res.body.data.rows[1].should.have.property('serialNumber', testDevice4.serialNumber);
                                 res.body.data.rows[1].should.have.property('productId', productIds.testProduct1);
                                 res.body.data.rows[1].should.have.property('userId', createdUsers.testUser2.id);

@@ -10,6 +10,7 @@ var log = require('log4js').getLogger();
 
 var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Devices` ( " +
                          "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
+                         "`name` varchar(255) DEFAULT NULL, " +
                          "`serialNumber` varchar(255) NOT NULL, " +
                          "`productId` bigint(20) NOT NULL, " +
                          "`userId` bigint(20) NOT NULL, " +
@@ -17,6 +18,7 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Devices` ( " +
                          "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
                          "PRIMARY KEY (`id`), " +
                          "UNIQUE KEY `serialNumber_productId_userId_index` (`serialNumber`,`productId`,`userId`), " +
+                         "KEY `name` (`name`), " +
                          "KEY `serialNumber` (`serialNumber`), " +
                          "KEY `productId` (`productId`), " +
                          "KEY `userId` (`userId`), " +
@@ -30,6 +32,7 @@ var MAX_FOUND_DEVICES = 100;
 
 var query2query = new Query2Query();
 query2query.addField('id', true, true, false, Query2Query.types.INTEGER);
+query2query.addField('name', true, true, true);
 query2query.addField('serialNumber', true, true, false);
 query2query.addField('productId', true, true, false, Query2Query.types.INTEGER);
 query2query.addField('userId', false, false, false, Query2Query.types.INTEGER);
@@ -42,6 +45,11 @@ var JSON_SCHEMA = {
    "description" : "An ESDR device",
    "type" : "object",
    "properties" : {
+      "name" : {
+         "type" : "string",
+         "minLength" : 0,
+         "maxLength" : 255
+      },
       "serialNumber" : {
          "type" : "string",
          "pattern" : "^[a-zA-Z0-9_\\+\\-\\,\\:]+$",   // alphanumeric and _ + - , :
@@ -73,6 +81,7 @@ module.exports = function(databaseHelper) {
          productId : productId,
          userId : userId
       };
+      trimAndCopyPropertyIfNonEmpty(deviceDetails, device, "name");
       trimAndCopyPropertyIfNonEmpty(deviceDetails, device, "serialNumber");
 
       // now validate
@@ -90,6 +99,7 @@ module.exports = function(databaseHelper) {
             return callback(null, {
                insertId : result.insertId,
                // include these because they might have been modified by the trimming
+               name : device.name,
                serialNumber : device.serialNumber
             });
          });

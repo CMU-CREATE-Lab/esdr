@@ -21,7 +21,7 @@ module.exports = function(ProductModel, DeviceModel) {
 
                      var userId = user ? user.id : null;
                      var newProduct = req.body;
-                     log.debug("Received POST from user ID [" +userId + "] to create product [" + (newProduct && newProduct.name ? newProduct.name : null) + "]");
+                     log.debug("Received POST from user ID [" + userId + "] to create product [" + (newProduct && newProduct.name ? newProduct.name : null) + "]");
                      ProductModel.create(newProduct,
                                          userId,
                                          function(err, result) {
@@ -121,6 +121,7 @@ module.exports = function(ProductModel, DeviceModel) {
 
                         return res.jsendSuccess({
                                                    id : result.insertId,
+                                                   name : result.name,
                                                    serialNumber : result.serialNumber
                                                 }, httpStatus.CREATED); // HTTP 201 Created
                      });
