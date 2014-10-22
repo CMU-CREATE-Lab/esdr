@@ -7,24 +7,22 @@ var ValidationError = require('../../lib/errors').ValidationError;
 var httpStatus = require('http-status');
 var log = require('log4js').getLogger();
 
-module.exports = function(UserModel, ClientModel) {
+module.exports = function(UserModel) {
 
    router.post('/',
-               function(req, res) {
-                  var userEmail = (req.body.user) ? req.body.user.email : null;
-                  var theClient = req.body.client;
+               function(req, res, next) {
+                  var userEmail = req.body.email;
 
-                  // The client is required--try to authenticate it
                   if (userEmail) {
-                     if (theClient) {
-                        ClientModel.findByNameAndSecret(theClient.clientName, theClient.clientSecret, function(err, client) {
-                           if (err) {
-                              return res.jsendServerError("Error while authenticating client [" + theClient.clientName + "]");
-                           }
-                           if (!client) {
-                              return res.jsendClientError("Failed to authenticate client.", {clientName : theClient.clientName}, httpStatus.UNAUTHORIZED);  // HTTP 401 Unauthorized
-                           }
+                     // The client is required--try to authenticate it
+                     passport.authenticate('basic', function(err, client) {
+                        if (err) {
+                           var message = "Error while authenticating the client";
+                           log.error(message + ": " + err);
+                           return res.jsendServerError(message);
+                        }
 
+                        if (client) {
                            // try to create the reset password token
                            UserModel.createResetPasswordToken(userEmail, function(err, token) {
                               if (err) {
@@ -54,13 +52,13 @@ module.exports = function(UserModel, ClientModel) {
                                  return res.jsendSuccess(obj, httpStatus.CREATED);  // HTTP 201 Created
                               }
 
-                              return res.jsendClientError("Unknown email address", {email : userEmail}, httpStatus.BAD_REQUEST);  // HTTP 400 Bad Request
+                              return res.jsendClientError("Unknown or invalid email address", {email : userEmail}, httpStatus.BAD_REQUEST);
                            });
-                        });
-                     }
-                     else {
-                        return res.jsendClientValidationError("Client not specified.", null);  // HTTP 422 Unprocessable Entity
-                     }
+                        }
+                        else {
+                           return res.jsendClientError("Authentication failed.", null, httpStatus.UNAUTHORIZED);  // HTTP 401 Unauthorized
+                        }
+                     })(req, res, next);
                   }
                   else {
                      return res.jsendClientValidationError("Email address not specified.", null);  // HTTP 422 Unprocessable Entity
