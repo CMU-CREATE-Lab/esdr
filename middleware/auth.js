@@ -60,7 +60,7 @@ module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {
                      return done(null, false, { message : 'Unknown user' });
                   }
 
-                  var info = { scope : '*' };
+                  var info = { scope : '*', token: token };
                   done(null, user, info);
                });
             });
