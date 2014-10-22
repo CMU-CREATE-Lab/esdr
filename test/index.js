@@ -1029,7 +1029,8 @@ describe("ESDR", function() {
             it("Should be able to request that the verification token be sent again (after creation, before verification)", function(done) {
                agent(url)
                      .post("/api/v1/user-verification")
-                     .send({user : {email : testUser1.email}, client : testClient})
+                     .auth(testClient.clientName, testClient.clientSecret)
+                     .send({email : testUser1.email})
                      .end(function(err, res) {
                              if (err) {
                                 return done(err);
@@ -1091,7 +1092,8 @@ describe("ESDR", function() {
             it("Should be able to request that the verification token be sent again (after creation, after verification)", function(done) {
                agent(url)
                      .post("/api/v1/user-verification")
-                     .send({user : {email : testUser1.email}, client : testClient})
+                     .auth(testClient.clientName, testClient.clientSecret)
+                     .send({email : testUser1.email})
                      .end(function(err, res) {
                              if (err) {
                                 return done(err);
@@ -1109,11 +1111,12 @@ describe("ESDR", function() {
                           });
             });
 
-            it("Verification should return the same thing if called again", function(done) {
+            it("Should return the same thing if a request to send the verification token is made again", function(done) {
 
                agent(url)
                      .post("/api/v1/user-verification")
-                     .send({user : {email : testUser1.email}, client : testClient})
+                     .auth(testClient.clientName, testClient.clientSecret)
+                     .send({email : testUser1.email})
                      .end(function(err, res) {
                              if (err) {
                                 return done(err);
@@ -1124,6 +1127,48 @@ describe("ESDR", function() {
                              res.body.should.have.property('status', 'success');
                              res.body.should.have.property('data');
                              res.body.data.should.have.property('isVerified', true);
+
+                             done();
+                          });
+
+            });
+
+            it("A request for the verification token to be sent should not require client authentication", function(done) {
+
+               agent(url)
+                     .post("/api/v1/user-verification")
+                     .send({email : testUser1.email})
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', httpStatus.OK);
+                             res.body.should.have.property('code', httpStatus.OK);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('isVerified', true);
+
+                             done();
+                          });
+
+            });
+
+            it("A request for the verification token to be sent should fail if the client authentication is invalid", function(done) {
+
+               agent(url)
+                     .post("/api/v1/user-verification")
+                     .auth(testClient.clientName, "bogus")
+                     .send({email : testUser1.email})
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', httpStatus.UNAUTHORIZED);
+                             res.body.should.have.property('code', httpStatus.UNAUTHORIZED);
+                             res.body.should.have.property('status', 'error');
+                             res.body.should.have.property('data');
 
                              done();
                           });
@@ -1172,7 +1217,8 @@ describe("ESDR", function() {
                var unknownUser = {email : 'unknown@unknown.com'};
                agent(url)
                      .post("/api/v1/user-verification")
-                     .send({user : {email : unknownUser.email}, client : testClient})
+                     .auth(testClient.clientName, testClient.clientSecret)
+                     .send({email : unknownUser.email})
                      .end(function(err, res) {
                              if (err) {
                                 return done(err);
@@ -1192,7 +1238,7 @@ describe("ESDR", function() {
             it("Should fail when requesting that the verification token be sent again but the email address is not given", function(done) {
                agent(url)
                      .post("/api/v1/user-verification")
-                     .send({user : {}, client : testClient})
+                     .send({})
                      .end(function(err, res) {
                              if (err) {
                                 return done(err);
@@ -1206,27 +1252,7 @@ describe("ESDR", function() {
                              done();
                           });
             });
-
-            it("Should fail when requesting that the verification token be sent again but the client is not given", function(done) {
-               agent(url)
-                     .post("/api/v1/user-verification")
-                     .send({user : {email : testUser1.email} })
-                     .end(function(err, res) {
-                             if (err) {
-                                return done(err);
-                             }
-
-                             res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
-                             res.body.should.have.property('code', httpStatus.UNPROCESSABLE_ENTITY);
-                             res.body.should.have.property('status', 'error');
-                             res.body.should.have.property('data', null);
-
-                             done();
-                          });
-            });
-
          });
-
       });
 
       describe("Reset Password Request", function() {
