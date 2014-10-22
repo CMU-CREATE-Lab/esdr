@@ -8,7 +8,7 @@ var DuplicateRecordError = require('../../lib/errors').DuplicateRecordError;
 var httpStatus = require('http-status');
 var log = require('log4js').getLogger();
 
-module.exports = function(UserModel, ClientModel) {
+module.exports = function(UserModel) {
 
    /**
     * Creates the given user, optionally on behalf of the client specified in the Authorization header using Basic auth.

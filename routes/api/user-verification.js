@@ -7,7 +7,7 @@ var ValidationError = require('../../lib/errors').ValidationError;
 var httpStatus = require('http-status');
 var log = require('log4js').getLogger();
 
-module.exports = function(UserModel, ClientModel) {
+module.exports = function(UserModel) {
 
    /**
     * For requesting that the user verification email (sent upon account creation) be sent again, optionally on behalf
