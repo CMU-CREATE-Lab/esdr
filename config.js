@@ -40,11 +40,12 @@ config.defaults({
                       "binDirectory" : "./datastore/bin",
                       "dataDirectory" : "./datastore/data-development"
                    },
+                   "default-client" : {
+                      "displayName" : "ESDR",
+                      "email" : "esdr-admin@cmucreatelab.org",
+                      "verificationUrl" : "http://localhost:3000/verification/:verificationToken"
+                   },
                    "mail" : {
-                      "sender" : {
-                         "name" : "ESDR Admin",
-                         "email" : "esdr-admin@cmucreatelab.org"
-                      },
                       "smtp" : {
                          "host" : "smtp.host.name.here",
                          "port" : 587,

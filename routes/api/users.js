@@ -11,23 +11,18 @@ var log = require('log4js').getLogger();
 module.exports = function(UserModel, ClientModel) {
 
    /**
-    * Creates the given user on behalf of the given client (if any). After the user is created, an email will be sent
-    * to the user (if configured to do so, depending on the current Node runtime environment).  By default, the email
-    * will be sent from an ESDR email account, and will include an URL in the ESDR web site which the user can use to
-    * verify her/his account.  Specifying the client is only necessary if you wish to override the default sender email
-    * and verification link and use the email and link for the client instead.
+    * Creates the given user, optionally on behalf of the client specified in the Authorization header using Basic auth.
+    * After the user is created, an email will be sent to the user (if configured to do so, depending on the current
+    * Node runtime environment).  By default, the email will be sent from an ESDR email account, and will include an URL
+    * in the ESDR web site which the user can use to verify her/his account.  Specifying the client is only necessary if
+    * you wish to override the default sender email and verification link and use the email and link for the client
+    * instead.
     *
     * The submitted JSON must use the following schema:
     *
     * {
-    *    "client" : {
-    *       "clientName" : "CLIENT_ID",
-    *       "clientSecret" : "CLIENT_SECRET"
-    *    },
-    *    "user" : {
-    *       "email" : "EMAIL_ADDRESS",
-    *       "password" : "PASSWORD"
-    *    }
+    *    "email" : "EMAIL_ADDRESS",
+    *    "password" : "PASSWORD"
     * }
     *
     * Possible JSend responses:
@@ -38,22 +33,14 @@ module.exports = function(UserModel, ClientModel) {
     * - Server Error 500: an unexpected error occurred
     */
    router.post('/',
-               function(req, res) {
-                  var user = req.body.user || {};
-                  var theClient = req.body.client;
+               function(req, res, next) {
+                  var user = req.body;
+                  if (user) {
+                     var willAuthenticateClient = ("authorization" in req.headers);
+                     log.debug("POST /users: willAuthenticateClient=[" + willAuthenticateClient + "]");
+                     log.debug("POST /users: req.headers: " + JSON.stringify(req.headers, null, 3));
 
-                  // if they specified the client, then try to authenticate
-                  if (theClient) {
-                     ClientModel.findByNameAndSecret(theClient.clientName, theClient.clientSecret, function(err, client) {
-                        if (err) {
-                           return res.jsendServerError("Error while authenticating client [" + theClient.clientName + "]");
-                        }
-                        if (!client) {
-                           return res.jsendClientError("Failed to authenticate client.", {client : {clientName : theClient.clientName}}, httpStatus.UNAUTHORIZED);  // HTTP 401 Unauthorized
-                        }
-
-                        log.debug("Received POST to create user [" + (user && user.email ? user.email : null) + "]");
-
+                     var createUser = function(user, client) {
                         UserModel.create(user,
                                          function(err, result) {
                                             if (err) {
@@ -94,10 +81,32 @@ module.exports = function(UserModel, ClientModel) {
 
                                             return res.jsendSuccess(obj, httpStatus.CREATED); // HTTP 201 Created
                                          });
-                     });
+
+                     };
+
+                     if (willAuthenticateClient) {
+                        // try to authenticate the client
+                        passport.authenticate('basic', function(err, client) {
+                           if (err) {
+                              var message = "Error while authenticating to get the client";
+                              log.error(message + ": " + err);
+                              return res.jsendServerError(message);
+                           }
+
+                           if (client) {
+                              return createUser(user, client);
+                           }
+
+                           return res.jsendClientError("Authentication failed.", null, httpStatus.UNAUTHORIZED);  // HTTP 401 Unauthorized
+
+                        })(req, res, next);
+                     }
+                     else {
+                        return createUser(user);
+                     }
                   }
                   else {
-                     return res.jsendClientValidationError("Client not specified.", null);  // HTTP 422 Unprocessable Entity
+                     return res.jsendClientValidationError("user not specified.", null);  // HTTP 422 Unprocessable Entity
                   }
                });
 
@@ -109,7 +118,7 @@ module.exports = function(UserModel, ClientModel) {
                  // `BearerStrategy`.  It is typically used to indicate scope of the token,
                  // and used in access control checks.  For illustrative purposes, this
                  // example simply returns the user and authInfo in the response.
-                 res.json({ user: req.user, authInfo: req.authInfo })
+                 res.json({ user : req.user, authInfo : req.authInfo })
               }
    );
 
