@@ -37,8 +37,6 @@ module.exports = function(UserModel, ClientModel) {
                   var user = req.body;
                   if (user) {
                      var willAuthenticateClient = ("authorization" in req.headers);
-                     log.debug("POST /users: willAuthenticateClient=[" + willAuthenticateClient + "]");
-                     log.debug("POST /users: req.headers: " + JSON.stringify(req.headers, null, 3));
 
                      var createUser = function(user, client) {
                         UserModel.create(user,
