@@ -36,9 +36,7 @@ module.exports = function(UserModel, ClientModel) {
                function(req, res, next) {
                   var user = req.body;
                   if (user) {
-                     var willAuthenticateClient = ("authorization" in req.headers);
-
-                     var createUser = function(user, client) {
+                     var createUser = function(client) {
                         UserModel.create(user,
                                          function(err, result) {
                                             if (err) {
@@ -82,7 +80,8 @@ module.exports = function(UserModel, ClientModel) {
 
                      };
 
-                     if (willAuthenticateClient) {
+                     // see whether the caller specified the client by using the Authorization header
+                     if (("authorization" in req.headers)) {
                         // try to authenticate the client
                         passport.authenticate('basic', function(err, client) {
                            if (err) {
@@ -92,7 +91,7 @@ module.exports = function(UserModel, ClientModel) {
                            }
 
                            if (client) {
-                              return createUser(user, client);
+                              return createUser(client);
                            }
 
                            return res.jsendClientError("Authentication failed.", null, httpStatus.UNAUTHORIZED);  // HTTP 401 Unauthorized
@@ -100,7 +99,7 @@ module.exports = function(UserModel, ClientModel) {
                         })(req, res, next);
                      }
                      else {
-                        return createUser(user);
+                        return createUser();
                      }
                   }
                   else {
