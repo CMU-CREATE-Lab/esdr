@@ -108,8 +108,8 @@ module.exports = function(UserModel, ClientModel) {
                  // req.authInfo is set using the `info` argument supplied by
                  // `BearerStrategy`.  It is typically used to indicate scope of the token,
                  // and used in access control checks.  For illustrative purposes, this
-                 // example simply returns the scope in the response.
-                 res.json({ id : req.user.id, email : req.user.email, scope : req.authInfo.scope })
+                 // example simply returns the user and authInfo in the response.
+                 res.json({ user: req.user, authInfo: req.authInfo })
               }
    );
 
