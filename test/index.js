@@ -3924,6 +3924,33 @@ describe("ESDR", function() {
                     });
       });
 
+      it("Should be able to request access and refresh tokens using Basic auth for the client ID and secret", function(done) {
+         agent(url)
+               .post("/oauth/token")
+               .auth(testClient.clientName, testClient.clientSecret)
+               .send({
+                        grant_type : "password",
+                        username : testUser1.email,
+                        password : testUser1.password
+                     })
+               .end(function(err, res) {
+                       if (err) {
+                          return done(err);
+                       }
+
+                       res.should.have.property('status', httpStatus.OK);
+                       res.body.should.have.property('access_token');
+                       res.body.should.have.property('refresh_token');
+                       res.body.should.have.property('expires_in', config.get("security:tokenLifeSecs"));
+                       res.body.should.have.property('token_type', "Bearer");
+
+                       // remember these tokens
+                       tokens = res.body;
+
+                       done();
+                    });
+      });
+
       it("Should not be able to request access and refresh tokens with an invalid client ID", function(done) {
          agent(url)
                .post("/oauth/token")
