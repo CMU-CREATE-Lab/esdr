@@ -1263,7 +1263,8 @@ describe("ESDR", function() {
          it("Should be able to request a password reset token", function(done) {
             agent(url)
                   .post("/api/v1/password-reset")
-                  .send({user : {email : testUser1.email}, client : testClient})
+                  .auth(testClient.clientName, testClient.clientSecret)
+                  .send({email : testUser1.email})
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -1285,7 +1286,8 @@ describe("ESDR", function() {
          it("Should be able to request a password reset token again, and get a different token", function(done) {
             agent(url)
                   .post("/api/v1/password-reset")
-                  .send({user : {email : testUser1.email}, client : testClient})
+                  .auth(testClient.clientName, testClient.clientSecret)
+                  .send({email : testUser1.email})
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -1412,27 +1414,10 @@ describe("ESDR", function() {
             });
          });
 
-         it("Should fail to request a password reset token if user is not specified", function(done) {
-            agent(url)
-                  .post("/api/v1/password-reset")
-                  .send({client : testClient})
-                  .end(function(err, res) {
-                          if (err) {
-                             return done(err);
-                          }
-
-                          res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
-                          res.body.should.have.property('code', httpStatus.UNPROCESSABLE_ENTITY);
-                          res.body.should.have.property('status', 'error');
-                          res.body.should.have.property('data', null);
-                          done();
-                       });
-         });
-
          it("Should fail to request a password reset token if email is not specified", function(done) {
             agent(url)
                   .post("/api/v1/password-reset")
-                  .send({user : {foo : "bar"}, client : testClient})
+                  .auth(testClient.clientName, testClient.clientSecret)
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -1450,7 +1435,8 @@ describe("ESDR", function() {
             var invalidEmail = {email : 'invalid'};
             agent(url)
                   .post("/api/v1/password-reset")
-                  .send({user : {email : invalidEmail.email}, client : testClient})
+                  .auth(testClient.clientName, testClient.clientSecret)
+                  .send({email : invalidEmail.email})
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -1470,7 +1456,8 @@ describe("ESDR", function() {
             var unknownUser = {email : 'unknown@unknown.com'};
             agent(url)
                   .post("/api/v1/password-reset")
-                  .send({user : {email : unknownUser.email}, client : testClient})
+                  .auth(testClient.clientName, testClient.clientSecret)
+                  .send({email : unknownUser.email})
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -1486,15 +1473,10 @@ describe("ESDR", function() {
                        });
          });
 
-         it("Should fail to request a password reset token for an invalid client", function(done) {
-            var bogusClient = {
-               displayName : "Bogus Client",
-               clientName : "bogus_client",
-               clientSecret : "I am bogus"
-            };
+         it("Should fail to request a password reset token if the client auth is not provided", function(done) {
             agent(url)
                   .post("/api/v1/password-reset")
-                  .send({user : {email : testUser1.email}, client : bogusClient})
+                  .send({email : testUser1.email})
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -1503,8 +1485,30 @@ describe("ESDR", function() {
                           res.should.have.property('status', httpStatus.UNAUTHORIZED);
                           res.body.should.have.property('code', httpStatus.UNAUTHORIZED);
                           res.body.should.have.property('status', 'error');
-                          res.body.should.have.property('data');
-                          res.body.data.should.have.property('clientName', bogusClient.clientName);
+                          res.body.should.have.property('data', null);
+                          done();
+                       });
+         });
+
+         it("Should fail to request a password reset token for an invalid client", function(done) {
+            var bogusClient = {
+               displayName : "Bogus Client",
+               clientName : "bogus_client",
+               clientSecret : "I am bogus"
+            };
+            agent(url)
+                  .post("/api/v1/password-reset")
+                  .auth(bogusClient.clientName, bogusClient.clientSecret)
+                  .send({email : testUser1.email})
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', httpStatus.UNAUTHORIZED);
+                          res.body.should.have.property('code', httpStatus.UNAUTHORIZED);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data', null);
                           done();
                        });
          });
