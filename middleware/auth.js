@@ -17,6 +17,8 @@ module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {
          if (!client) {
             return callback(null, false);
          }
+         // don't ever need to expose the secret
+         delete client.clientSecret;
 
          return callback(null, client);
       });
@@ -60,7 +62,10 @@ module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {
                      return done(null, false, { message : 'Unknown user' });
                   }
 
-                  var info = { scope : '*', token: token };
+                  // don't ever need to expose the password
+                  delete user.password;
+
+                  var info = { scope : '*', token : token };
                   done(null, user, info);
                });
             });
