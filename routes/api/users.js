@@ -85,7 +85,7 @@ module.exports = function(UserModel, ClientModel) {
                         // try to authenticate the client
                         passport.authenticate('basic', function(err, client) {
                            if (err) {
-                              var message = "Error while authenticating to get the client";
+                              var message = "Error while authenticating the client";
                               log.error(message + ": " + err);
                               return res.jsendServerError(message);
                            }
