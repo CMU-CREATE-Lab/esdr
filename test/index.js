@@ -4074,7 +4074,7 @@ describe("ESDR", function() {
 
       it("Should be able to access a protected resource with the access token", function(done) {
          agent(url)
-               .get("/api/v1/users")
+               .get("/api/v1/users/" + createdUsers.testUser1.id)
                .set({
                        Authorization : "Bearer " + tokens.access_token
                     })
@@ -4090,7 +4090,7 @@ describe("ESDR", function() {
 
       it("Should not be able to access a protected resource without the access token", function(done) {
          agent(url)
-               .get("/api/v1/users")
+               .get("/api/v1/users/" + createdUsers.testUser1.id)
                .end(function(err, res) {
                        if (err) {
                           return done(err);
@@ -4104,7 +4104,7 @@ describe("ESDR", function() {
 
       it("Should not be able to access a protected resource with an invalid access token", function(done) {
          agent(url)
-               .get("/api/v1/users")
+               .get("/api/v1/users/" + createdUsers.testUser1.id)
                .set({
                        Authorization : "Bearer bogus"
                     })
@@ -4151,7 +4151,7 @@ describe("ESDR", function() {
 
       it("Should be able to access a protected resource with the new access token", function(done) {
          agent(url)
-               .get("/api/v1/users")
+               .get("/api/v1/users/" + createdUsers.testUser1.id)
                .set({
                        Authorization : "Bearer " + newTokens.access_token
                     })
@@ -4167,7 +4167,7 @@ describe("ESDR", function() {
 
       it("Should not be able to access a protected resource with the old access token", function(done) {
          agent(url)
-               .get("/api/v1/users")
+               .get("/api/v1/users/" + createdUsers.testUser1.id)
                .set({
                        Authorization : "Bearer " + tokens.access_token
                     })
@@ -4241,6 +4241,83 @@ describe("ESDR", function() {
 
                        done();
                     });
+      });
+
+      describe("Get User Info", function() {
+
+         it("Should be able to get user info with valid access token", function(done) {
+            agent(url)
+                  .get("/api/v1/users/" + createdUsers.testUser1.id + "?fields=id,email,displayName")
+                  .set({
+                          Authorization : "Bearer " + newTokens.access_token
+                       })
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+                          res.should.have.property('status', httpStatus.OK);
+                          res.body.should.have.property('code', httpStatus.OK);
+                          res.body.should.have.property('status', 'success');
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.property('id', createdUsers.testUser1.id);
+                          res.body.data.should.have.property('email', createdUsers.testUser1.email);
+                          res.body.data.should.have.property('displayName', createdUsers.testUser1.displayName);
+
+                          done();
+                       });
+         });
+
+         it("Should fail to get user info for another user with valid access token", function(done) {
+            agent(url)
+                  .get("/api/v1/users/" + createdUsers.testUser2.id + "?fields=id,email,displayName")
+                  .set({
+                          Authorization : "Bearer " + newTokens.access_token
+                       })
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', httpStatus.FORBIDDEN);
+                          res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data');
+
+                          done();
+                       });
+         });
+
+         it("Should fail to get user info without an access token", function(done) {
+            agent(url)
+                  .get("/api/v1/users/" + createdUsers.testUser1.id)
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', httpStatus.UNAUTHORIZED);
+
+                          done();
+                       });
+         });
+
+         it("Should fail to get user info with an invalid access token", function(done) {
+            agent(url)
+                  .get("/api/v1/users/" + createdUsers.testUser1.id)
+                  .set({
+                          Authorization : "Bearer " + "bogus"
+                       })
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', httpStatus.UNAUTHORIZED);
+
+                          done();
+                       });
+         });
+
       });
 
    });

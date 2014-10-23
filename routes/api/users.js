@@ -107,15 +107,24 @@ module.exports = function(UserModel) {
                   }
                });
 
-   // TODO: this is just a placeholder for testing...
-   router.get('/',
+   router.get('/:userId',
               passport.authenticate('bearer', { session : false }),
               function(req, res) {
-                 // req.authInfo is set using the `info` argument supplied by
-                 // `BearerStrategy`.  It is typically used to indicate scope of the token,
-                 // and used in access control checks.  For illustrative purposes, this
-                 // example simply returns the user and authInfo in the response.
-                 res.json({ user : req.user, authInfo : req.authInfo })
+
+                 if (req.params.userId == req.user.id) {
+                    UserModel.filterFields(req.user, req.query.fields, function(err, user) {
+                       if (err) {
+                          var message = "Error while finding the user";
+                          log.error(message + ": " + err);
+                          return res.jsendServerError(message);
+                       }
+
+                       return res.jsendSuccess(user); // HTTP 200 OK
+                    });
+                 }
+                 else {
+                    return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 401 Unauthorized
+                 }
               }
    );
 

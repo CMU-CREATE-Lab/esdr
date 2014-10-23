@@ -5,6 +5,7 @@ var trimAndCopyPropertyIfNonEmpty = require('../lib/objectUtils').trimAndCopyPro
 var JaySchema = require('jayschema');
 var jsonValidator = new JaySchema();
 var ValidationError = require('../lib/errors').ValidationError;
+var Query2Query = require('query2query');
 var log = require('log4js').getLogger();
 
 var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Users` ( " +
@@ -28,6 +29,14 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Users` ( " +
                          "UNIQUE KEY `unique_resetPasswordToken` (`resetPasswordToken`), " +
                          "UNIQUE KEY `unique_verificationToken` (`verificationToken`) " +
                          ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
+
+var query2query = new Query2Query();
+query2query.addField('id', true, true, false, Query2Query.types.INTEGER);
+query2query.addField('email', true, true, false);
+query2query.addField('displayName', true, true, true);
+query2query.addField('created', true, true, false, Query2Query.types.DATETIME);
+query2query.addField('modified', true, true, false, Query2Query.types.DATETIME);
+query2query.addField('verified', true, true, false, Query2Query.types.DATETIME);
 
 var EMAIL_ATTRS = {
    "type" : "string",
@@ -284,6 +293,22 @@ module.exports = function(databaseHelper) {
       });
    };
 
+   this.filterFields = function(user, fieldsToSelect, callback) {
+      query2query.parse({fields : fieldsToSelect}, function(err, queryParts) {
+         if (err) {
+            return callback(err);
+         }
+
+         var filteredUser = {};
+         queryParts.selectFields.forEach(function(fieldName) {
+            if (fieldName in user) {
+               filteredUser[fieldName] = user[fieldName];
+            }
+         });
+
+         callback(null, filteredUser);
+      });
+   };
    var isValidPassword = function(user, clearTextPassword) {
       return bcrypt.compareSync(clearTextPassword, user.password);
    };
