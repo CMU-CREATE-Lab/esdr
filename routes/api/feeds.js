@@ -57,7 +57,7 @@ module.exports = function(FeedModel, feedRouteHelper) {
                  log.debug("Received PUT to upload data for feed ID [" + feedId + "] (OAuth2 access token authentication)");
 
                  // find the feed
-                 findFeedById(res, feedId, function(feed) {
+                 findFeedById(res, feedId, 'id,userId', function(feed) {
                     // Now make sure this user has access to upload to this feed and, if so, continue with the upload
                     if (req.user.id == feed.userId) {
                        return feedRouteHelper.importData(res, feed, req.body);
@@ -80,7 +80,7 @@ module.exports = function(FeedModel, feedRouteHelper) {
                  log.debug("Received GET to get info for feed [" + feedId + "]");
 
                  // find the feed
-                 findFeedById(res, feedId, function(feed) {
+                 findFeedById(res, feedId, null, function(feed) {
                     // Allow access to the tile if the feed is public
                     if (feed.isPublic) {
                        return feedRouteHelper.getInfo(res, feed);
@@ -122,10 +122,8 @@ module.exports = function(FeedModel, feedRouteHelper) {
                  var level = req.params.level;
                  var offset = req.params.offset;
 
-                 log.debug("Received GET to get tile for channel [" + channelName + "] in feed [" + feedId + "] with level.offset [" + level + "." + offset + "]");
-
                  // find the feed
-                 findFeedById(res, feedId, function(feed) {
+                 findFeedById(res, feedId, 'id,userId,isPublic', function(feed) {
                     // Allow access to the tile if the feed is public
                     if (feed.isPublic) {
                        return feedRouteHelper.getTile(res, feed, channelName, level, offset);
@@ -155,8 +153,8 @@ module.exports = function(FeedModel, feedRouteHelper) {
                  });
               });
 
-   var findFeedById = function(res, feedId, successCallback) {
-      FeedModel.findById(feedId, function(err, feed) {
+   var findFeedById = function(res, feedId, fieldsToSelect, successCallback) {
+      FeedModel.findById(feedId, fieldsToSelect, function(err, feed) {
          if (err) {
             var message = "Error while trying to find feed with ID [" + feedId + "]";
             log.error(message + ": " + err);

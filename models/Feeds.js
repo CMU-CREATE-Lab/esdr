@@ -406,8 +406,31 @@ module.exports = function(databaseHelper) {
       });
    };
 
-   this.findById = function(id, callback) {
-      databaseHelper.findOne("SELECT * FROM Feeds WHERE id=?", [id], callback);
+   /**
+    * Tries to find the feed with the given <code>id</code> and returns it to the given <code>callback</code>. If
+    * successful, the feed is returned as the 2nd argument to the <code>callback</code> function.  If unsuccessful,
+    * <code>null</code> is returned to the callback.
+    *
+    * @param {string} id ID of the feed to find.
+    * @param {string|array} fieldsToSelect comma-delimited string or array of strings of field names to select.
+    * @param {function} callback function with signature <code>callback(err, feed)</code>
+    */
+   this.findById = function(id, fieldsToSelect, callback) {
+      query2query.parse({fields : fieldsToSelect}, function(err, queryParts) {
+         if (err) {
+            return callback(err);
+         }
+
+         var sql = queryParts.selectClause + " FROM Feeds WHERE id=?";
+         databaseHelper.findOne(sql, [id], function(err, product) {
+            if (err) {
+               log.error("Error trying to find product with id [" + id + "]: " + err);
+               return callback(err);
+            }
+
+            return callback(null, product);
+         });
+      });
    };
 
    this.findByApiKey = function(apiKey, callback) {
