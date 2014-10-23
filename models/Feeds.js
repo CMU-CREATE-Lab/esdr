@@ -436,4 +436,21 @@ module.exports = function(databaseHelper) {
    this.findByApiKey = function(apiKey, callback) {
       databaseHelper.findOne("SELECT * FROM Feeds WHERE apiKey=? OR apiKeyReadOnly=?", [apiKey, apiKey], callback);
    };
+
+   this.filterFields = function(feed, fieldsToSelect, callback) {
+      query2query.parse({fields : fieldsToSelect}, function(err, queryParts) {
+         if (err) {
+            return callback(err);
+         }
+
+         var filteredFeed = {};
+         queryParts.selectFields.forEach(function(fieldName) {
+            if (fieldName in feed) {
+               filteredFeed[fieldName] = feed[fieldName];
+            }
+         });
+
+         callback(null, filteredFeed);
+      });
+   };
 };

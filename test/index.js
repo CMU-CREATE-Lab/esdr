@@ -3159,7 +3159,7 @@ describe("ESDR", function() {
                         "maxTimeSecs" : 1382054188
                      };
 
-                     var validateSuccessfulInfoFetch = function(res, feedId, testFeed, channelInfo) {
+                     var validateSuccessfulInfoFetch = function(res, feedId, testFeed, channelInfo, shouldBeAllowedToSeeApiKey) {
                         res.should.have.property('status', httpStatus.OK);
                         res.body.should.have.property('code', httpStatus.OK);
                         res.body.should.have.property('status', 'success');
@@ -3182,8 +3182,11 @@ describe("ESDR", function() {
                         should(res.body.data.channelSpecs).eql(testProduct1.defaultChannelSpecs); // deep equal
                         should(res.body.data.channelBounds).eql(channelInfo); // deep equal
 
-                        // should NOT have these properties
-                        res.body.data.should.not.have.property('apiKey');
+                        if (shouldBeAllowedToSeeApiKey) {
+                           res.body.data.should.have.property('apiKey');
+                        } else {
+                           res.body.data.should.not.have.property('apiKey');
+                        }
                      };
 
                      describe("OAuth2 Authentication", function() {
@@ -3195,7 +3198,7 @@ describe("ESDR", function() {
                                             return done(err);
                                          }
 
-                                         validateSuccessfulInfoFetch(res, feeds.testFeed1a.id, testFeed1a, channelInfoFeed1a);
+                                         validateSuccessfulInfoFetch(res, feeds.testFeed1a.id, testFeed1a, channelInfoFeed1a, false);
                                          done();
                                       });
                         });
@@ -3211,7 +3214,7 @@ describe("ESDR", function() {
                                             return done(err);
                                          }
 
-                                         validateSuccessfulInfoFetch(res, feeds.testFeed1a.id, testFeed1a, channelInfoFeed1a);
+                                         validateSuccessfulInfoFetch(res, feeds.testFeed1a.id, testFeed1a, channelInfoFeed1a, true);
                                          done();
                                       });
                         });
@@ -3227,7 +3230,7 @@ describe("ESDR", function() {
                                             return done(err);
                                          }
 
-                                         validateSuccessfulInfoFetch(res, feeds.testFeed1a.id, testFeed1a, channelInfoFeed1a);
+                                         validateSuccessfulInfoFetch(res, feeds.testFeed1a.id, testFeed1a, channelInfoFeed1a, false);
                                          done();
                                       });
                         });
@@ -3259,7 +3262,7 @@ describe("ESDR", function() {
                                             return done(err);
                                          }
 
-                                         validateSuccessfulInfoFetch(res, feeds.testFeed1b.id, testFeed1b, channelInfoFeed1b);
+                                         validateSuccessfulInfoFetch(res, feeds.testFeed1b.id, testFeed1b, channelInfoFeed1b, true);
                                          done();
                                       });
                         });
@@ -3298,7 +3301,7 @@ describe("ESDR", function() {
                                             return done(err);
                                          }
 
-                                         validateSuccessfulInfoFetch(res, feeds.testFeed1a.id, testFeed1a, channelInfoFeed1a);
+                                         validateSuccessfulInfoFetch(res, feeds.testFeed1a.id, testFeed1a, channelInfoFeed1a, true);
                                          done();
                                       });
                         });
@@ -3314,7 +3317,7 @@ describe("ESDR", function() {
                                             return done(err);
                                          }
 
-                                         validateSuccessfulInfoFetch(res, feeds.testFeed1a.id, testFeed1a, channelInfoFeed1a);
+                                         validateSuccessfulInfoFetch(res, feeds.testFeed1a.id, testFeed1a, channelInfoFeed1a, false);
                                          done();
                                       });
                         });
@@ -3330,7 +3333,7 @@ describe("ESDR", function() {
                                             return done(err);
                                          }
 
-                                         validateSuccessfulInfoFetch(res, feeds.testFeed1b.id, testFeed1b, channelInfoFeed1b);
+                                         validateSuccessfulInfoFetch(res, feeds.testFeed1b.id, testFeed1b, channelInfoFeed1b, true);
                                          done();
                                       });
                         });
@@ -3346,7 +3349,7 @@ describe("ESDR", function() {
                                             return done(err);
                                          }
 
-                                         validateSuccessfulInfoFetch(res, feeds.testFeed1b.id, testFeed1b, channelInfoFeed1b);
+                                         validateSuccessfulInfoFetch(res, feeds.testFeed1b.id, testFeed1b, channelInfoFeed1b, false);
                                          done();
                                       });
                         });

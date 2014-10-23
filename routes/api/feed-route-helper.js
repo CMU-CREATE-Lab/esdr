@@ -27,20 +27,26 @@ module.exports = function(FeedModel) {
       }
    };
 
-   this.getInfo = function(res, feed) {
+   /**
+    * Assumes the given feed has already been filtered by the route handler to include only fields requested by the
+    * caller.
+    */
+   this.getInfo = function(res, filteredFeed, willPreventSelectionOfApiKey) {
       // inflate the JSON fields into objects
-      if (feed.channelSpecs) {
-         feed.channelSpecs = JSON.parse(feed.channelSpecs);
+      if ("channelSpecs" in filteredFeed) {
+         filteredFeed.channelSpecs = JSON.parse(filteredFeed.channelSpecs);
       }
 
-      if (feed.channelBounds) {
-         feed.channelBounds = JSON.parse(feed.channelBounds);
+      if ("channelBounds" in filteredFeed) {
+         filteredFeed.channelBounds = JSON.parse(filteredFeed.channelBounds);
       }
 
-      // Remove the API Key. No need to reveal it here.
-      delete feed.apiKey;
+      // delete the API key if not allowed to see it
+      if (willPreventSelectionOfApiKey) {
+         delete filteredFeed.apiKey;
+      }
 
-      return res.jsendSuccess(feed, httpStatus.OK); // HTTP 200 OK
+      return res.jsendSuccess(filteredFeed, httpStatus.OK); // HTTP 200 OK
    };
 
    this.getTile = function(res, feed, channelName, level, offset) {

@@ -27,9 +27,15 @@ module.exports = function(FeedModel, feedRouteHelper) {
               passport.authenticate('localapikey', { session : false }),
               function(req, res, next) {
                  var feed = req.authInfo.feed;
-
                  log.debug("Received GET to get info for in feed [" + feed.id + "] (feed API Key authentication)");
-                 return feedRouteHelper.getInfo(res, feed);
+
+                 FeedModel.filterFields(feed, req.query.fields, function(err, filteredFeed) {
+                    if (err) {
+                       return res.jsendServerError("Failed to get feed: " + err.message, null);
+                    }
+
+                    return feedRouteHelper.getInfo(res, filteredFeed, req.authInfo.isReadOnly);
+                 });
               });
 
    // for tile requests authenticated using the feed's API Key in the header
