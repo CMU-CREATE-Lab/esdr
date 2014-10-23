@@ -1,0 +1,43 @@
+<script language="JavaScript" type="text/javascript">
+   $(document).ready(function() {
+      var handleVerificationSuccess = function() {
+         $("#verificationSuccess").show();
+      };
+
+      var handleVerificationFailure = function() {
+         $("#verificationFailure").show();
+      };
+
+      var verificationToken = "{{verificationToken}}";
+      if (verificationToken && verificationToken.length > 0) {
+         superagent
+               .put("/api/v1/user-verification")
+               .send({token : verificationToken})
+               .end(function(err, res) {
+                       if (res && res.body.data && res.body.data.isVerified) {
+                          handleVerificationSuccess();
+                       }
+                       else {
+                          handleVerificationFailure();
+                       }
+                    });
+      }
+      else {
+         handleVerificationFailure();
+      }
+   });
+
+</script>
+<div class="main_container">
+   <div class="content_container">
+      <div class="page_title">
+         Account Verification
+      </div>
+      <div id="verificationSuccess" class="page_instructions" style="display:none">
+         Thank you for verifying your account.
+      </div>
+      <div id="verificationFailure" class="page_instructions" style="display:none">
+         Sorry, we could not verify the account because the verification token is invalid.
+      </div>
+   </div>
+</div>

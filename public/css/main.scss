@@ -1,0 +1,32 @@
+$BACKGROUND_COLOR: #5c5c5c;
+$BODY_TEXT_COLOR: #1c1c1e;
+$CONTENT_BACKGROUND_COLOR: #f8f8f8;
+$BODY_WIDTH: 1020px;
+$BODY_HORIZONTAL_MARGIN_WIDTH:50px;
+
+body {
+   font-family: 'Open Sans', 'Helvetica', sans-serif !important;
+   font-weight: 400 !important;
+   font-size: 16px !important;
+   color: $BODY_TEXT_COLOR;
+   background-color: $BACKGROUND_COLOR;
+}
+
+.main_container {
+   background: $CONTENT_BACKGROUND_COLOR;
+   width: $BODY_WIDTH;
+   margin-left: auto;
+   margin-right: auto;
+   padding-top: 70px;
+   padding-bottom: 70px
+}
+
+.content_container {
+   margin-left: $BODY_HORIZONTAL_MARGIN_WIDTH;
+   margin-right: $BODY_HORIZONTAL_MARGIN_WIDTH;
+}
+
+.page_title {
+   font-size: 24px !important;
+   margin-bottom: 20px;
+}

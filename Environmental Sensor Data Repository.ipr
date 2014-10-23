@@ -69,6 +69,13 @@
         </inspection_tool>
         <inspection_tool class="SubtractionInCompareTo" enabled="true" level="WARNING" enabled_by_default="true" />
         <inspection_tool class="SuspiciousIndentAfterControlStatement" enabled="true" level="WARNING" enabled_by_default="true" />
+        <inspection_tool class="TaskInspection" enabled="true" level="INFO" enabled_by_default="true">
+          <option name="suppressedTasks">
+            <set>
+              <option value="SCSS" />
+            </set>
+          </option>
+        </inspection_tool>
         <inspection_tool class="VariableNotUsedInsideIf" enabled="true" level="WARNING" enabled_by_default="true" />
       </profile>
     </profiles>
@@ -78,7 +85,7 @@
   </component>
   <component name="JavaScriptLibraryMappings">
     <file url="file://$PROJECT_DIR$" libraries="{EnvironmentalSensorDataRepository node_modules}" />
-    <file url="PROJECT" libraries="{EnvironmentalSensorDataRepository node_modules, Node.js v0.10.30 Core Modules, mocha-DefinitelyTyped, nconf-DefinitelyTyped, should-DefinitelyTyped}" />
+    <file url="PROJECT" libraries="{EnvironmentalSensorDataRepository node_modules, Node.js v0.10.30 Core Modules, Superagent, jQuery 1.11.1, mocha-DefinitelyTyped, nconf-DefinitelyTyped, should-DefinitelyTyped}" />
     <includedPredefinedLibrary name="Node.js Globals" />
   </component>
   <component name="ProjectModuleManager">
@@ -102,6 +109,31 @@
       </properties>
       <CLASSES>
         <root url="file://$PROJECT_DIR$/node_modules" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
+    <library name="jQuery 1.11.1" type="javaScript">
+      <properties>
+        <sourceFilesUrls>
+          <item url="file://$PROJECT_DIR$/public/lib/jquery/jquery-1.11.1.js" />
+        </sourceFilesUrls>
+      </properties>
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/public/lib/jquery/jquery-1.11.1.js" />
+        <root url="file://$PROJECT_DIR$/public/lib/jquery/jquery-1.11.1.min.js" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
+    <library name="Superagent" type="javaScript">
+      <properties>
+        <sourceFilesUrls>
+          <item url="file://$PROJECT_DIR$/public/lib/superagent/superagent.js" />
+        </sourceFilesUrls>
+      </properties>
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/public/lib/superagent/superagent.js" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />

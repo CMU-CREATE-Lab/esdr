@@ -11,6 +11,8 @@
     <orderEntry type="library" name="mocha-DefinitelyTyped" level="application" />
     <orderEntry type="library" name="should-DefinitelyTyped" level="application" />
     <orderEntry type="library" name="Node.js v0.10.30 Core Modules" level="application" />
+    <orderEntry type="library" name="Superagent" level="project" />
+    <orderEntry type="library" name="jQuery 1.11.1" level="project" />
   </component>
 </module>
 

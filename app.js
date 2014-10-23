@@ -7,6 +7,7 @@ var log = require('log4js').getLogger();
 log.info("Environment: " + app.get('env'));
 
 var config = require('./config');
+var expressHandlebars = require('express-handlebars');
 var path = require('path');
 var favicon = require('serve-favicon');
 var compress = require('compression');
@@ -46,6 +47,32 @@ Database.create(function(err, db) {
 
       // configure the app
       try {
+         // VIEW -------------------------------------------------------------------------------------------------------------
+
+         // setup view engine
+         var viewsDir = path.join(__dirname, 'views');
+         app.set('views', viewsDir);
+         var handlebars = expressHandlebars.create({
+                                                      extname : '.hbs',
+                                                      defaultLayout : 'main-layout',
+                                                      layoutsDir : path.join(viewsDir, "layouts"),
+                                                      partialsDir : path.join(viewsDir, "partials"),
+                                                      helpers : {
+                                                         // Got this from http://stackoverflow.com/a/9405113
+                                                         ifEqual : function(v1, v2, options) {
+                                                            if (v1 === v2) {
+                                                               return options.fn(this);
+                                                            }
+                                                            return options.inverse(this);
+                                                         }
+                                                      }
+                                                   });
+
+         app.engine('hbs', handlebars.engine);
+         app.set('view engine', '.hbs');
+         app.set('view cache', app.get('env') === 'production');           // only cache views in production
+         log.info("View cache enabled = " + app.enabled('view cache'));
+
          // MIDDLEWARE -------------------------------------------------------------------------------------------------
          var oauthServer = require('./middleware/oauth2')(db.users, db.tokens);   // create and configure OAuth2 server
          var error_handlers = require('./middleware/error_handlers');
