@@ -41,7 +41,6 @@ module.exports = function(FeedModel, feedRouteHelper) {
                  var level = req.params.level;
                  var offset = req.params.offset;
 
-                 log.debug("Received GET to get tile for channel [" + channelName + "] in feed [" + feed.id + "] with level.offset [" + level + "." + offset + "](feed API Key authentication)");
                  return feedRouteHelper.getTile(res, feed, channelName, level, offset);
               });
 
