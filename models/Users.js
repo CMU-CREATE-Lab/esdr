@@ -309,6 +309,7 @@ module.exports = function(databaseHelper) {
          callback(null, filteredUser);
       });
    };
+
    var isValidPassword = function(user, clearTextPassword) {
       return bcrypt.compareSync(clearTextPassword, user.password);
    };
