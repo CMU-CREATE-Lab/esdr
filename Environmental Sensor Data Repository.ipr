@@ -69,13 +69,6 @@
         </inspection_tool>
         <inspection_tool class="SubtractionInCompareTo" enabled="true" level="WARNING" enabled_by_default="true" />
         <inspection_tool class="SuspiciousIndentAfterControlStatement" enabled="true" level="WARNING" enabled_by_default="true" />
-        <inspection_tool class="TaskInspection" enabled="true" level="INFO" enabled_by_default="true">
-          <option name="suppressedTasks">
-            <set>
-              <option value="SCSS" />
-            </set>
-          </option>
-        </inspection_tool>
         <inspection_tool class="VariableNotUsedInsideIf" enabled="true" level="WARNING" enabled_by_default="true" />
       </profile>
     </profiles>
@@ -95,6 +88,28 @@
   </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" assert-keyword="true" jdk-15="true">
     <output url="file://$PROJECT_DIR$/out" />
+  </component>
+  <component name="ProjectTasksOptions">
+    <TaskOptions isEnabled="true">
+      <option name="arguments" value="$FileName$ $FileNameWithoutExtension$.css" />
+      <option name="checkSyntaxErrors" value="false" />
+      <option name="description" value="Compiles .scss files into .css files" />
+      <option name="exitCodeBehavior" value="ERROR" />
+      <option name="fileExtension" value="scss" />
+      <option name="immediateSync" value="true" />
+      <option name="name" value="SCSS" />
+      <option name="output" value="$FileNameWithoutExtension$.css" />
+      <option name="outputFilters">
+        <array />
+      </option>
+      <option name="outputFromStdout" value="false" />
+      <option name="passParentEnvs" value="true" />
+      <option name="program" value="$PROJECT_DIR$/node_modules/node-sass/bin/node-sass" />
+      <option name="scopeName" value="Project CSS Files" />
+      <option name="trackOnlyRoot" value="true" />
+      <option name="workingDir" value="$FileDir$" />
+      <envs />
+    </TaskOptions>
   </component>
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
