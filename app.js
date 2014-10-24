@@ -79,9 +79,6 @@ Database.create(function(err, db) {
 
          // setup middleware
          app.use(favicon(path.join(__dirname, 'public/favicon.ico')));     // favicon serving
-         app.use(cors({
-                         origin : '*'
-                      }));
          app.use(requestLogger('dev'));      // request logging
          app.use(compress());                // enables gzip compression
          app.use(bodyParser.urlencoded({ extended : true }));     // form parsing
@@ -101,6 +98,13 @@ Database.create(function(err, db) {
          // create the FeedRouteHelper
          var FeedRouteHelper = require('./routes/api/feed-route-helper');
          var feedRouteHelper = new FeedRouteHelper(db.feeds);
+
+         // define CORS options and apply CORS to specific route groups
+         var CORS_OPTIONS = {
+            origin : '*'
+         };
+         app.use('/oauth/*', cors(CORS_OPTIONS));
+         app.use('/api/v1/*', cors(CORS_OPTIONS));
 
          // configure routing
          app.use('/oauth', require('./routes/oauth')(oauthServer));
