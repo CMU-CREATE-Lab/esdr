@@ -43,13 +43,13 @@ module.exports = {
 
                   if (conn) {
                      conn.query("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?",
-                                [config.get("database:username")],
+                                [config.get("database:database")],
                                 function(err1, rows) {
                                    if (err1) {
                                       errors.push(new Error("Error trying to query for the database: " + err1));
                                    }
                                    else {
-                                      if (!(rows && rows.length > 0 && rows[0]['SCHEMA_NAME'] == config.get("database:username"))) {
+                                      if (!(rows && rows.length > 0 && rows[0]['SCHEMA_NAME'] == config.get("database:database"))) {
                                          errors.push(new Error("Could not find the database."));
                                       }
                                    }
