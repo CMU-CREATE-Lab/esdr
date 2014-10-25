@@ -67,5 +67,5 @@ Development
 ===========
 To generate the CSS from the SCSS template, do:
 
-   npm run-script gen-css
+    npm run-script gen-css
 
