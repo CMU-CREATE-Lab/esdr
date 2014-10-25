@@ -35,7 +35,7 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Feeds` ( " +
                          "`channelBounds` text DEFAULT NULL, " +
                          "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
                          "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
-                         "`lastUpload` timestamp DEFAULT 0, " +
+                         "`lastUpload` timestamp NOT NULL DEFAULT 0, " +
                          "`minTimeSecs` double DEFAULT NULL, " +
                          "`maxTimeSecs` double DEFAULT NULL, " +
                          "PRIMARY KEY (`id`), " +

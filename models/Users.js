@@ -17,9 +17,9 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Users` ( " +
                          "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
                          "`verificationToken` varchar(64) NOT NULL, " +
                          "`isVerified` boolean DEFAULT 0, " +
-                         "`verified` timestamp, " +
+                         "`verified` timestamp NOT NULL DEFAULT 0, " +
                          "`resetPasswordToken` varchar(64) DEFAULT NULL, " +
-                         "`resetPasswordExpiration` timestamp, " +
+                         "`resetPasswordExpiration` timestamp NOT NULL DEFAULT 0, " +
                          "PRIMARY KEY (`id`), " +
                          "UNIQUE KEY `unique_email` (`email`), " +
                          "KEY `displayName` (`displayName`), " +
