@@ -3,7 +3,7 @@ var bcrypt = require('bcrypt');
 var JaySchema = require('jayschema');
 var jsonValidator = new JaySchema();
 var ValidationError = require('../lib/errors').ValidationError;
-var log = require('log4js').getLogger();
+var log = require('log4js').getLogger('esdr:models:clients');
 
 var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Clients` ( " +
                          "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +

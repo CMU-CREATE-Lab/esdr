@@ -3,7 +3,10 @@ var express = require('express');
 var cors = require('cors');
 var app = express();
 
-var log = require('log4js').getLogger();
+var log4js = require('log4js');
+log4js.configure('log4js-config-'+app.get('env')+'.json');
+var log = log4js.getLogger('esdr');
+
 log.info("Environment: " + app.get('env'));
 
 var config = require('./config');

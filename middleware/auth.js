@@ -3,7 +3,7 @@ var BasicStrategy = require('passport-http').BasicStrategy;
 var ClientPasswordStrategy = require('passport-oauth2-client-password').Strategy;
 var BearerStrategy = require('passport-http-bearer').Strategy;
 var LocalAPIKeyStrategy = require('passport-localapikey-update').Strategy;
-var log = require('log4js').getLogger();
+var log = require('log4js').getLogger('esdr:middleware:auth');
 
 module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {
 

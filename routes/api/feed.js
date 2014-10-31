@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 var passport = require('passport');
 var httpStatus = require('http-status');
-var log = require('log4js').getLogger();
+var log = require('log4js').getLogger('esdr:routes:api:feed');
 
 module.exports = function(FeedModel, feedRouteHelper) {
 

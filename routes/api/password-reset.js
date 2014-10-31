@@ -5,7 +5,7 @@ var passport = require('passport');
 var Mailer = require('../../lib/mailer');
 var ValidationError = require('../../lib/errors').ValidationError;
 var httpStatus = require('http-status');
-var log = require('log4js').getLogger();
+var log = require('log4js').getLogger('esdr:routes:api:password-reset');
 
 module.exports = function(UserModel) {
 

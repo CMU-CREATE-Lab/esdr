@@ -1,0 +1,10 @@
+{
+   "mail" : {
+      "smtp" : {
+         "host" : "smtp.host.name.here",
+         "port" : 587,
+         "login" : "login",
+         "password" : "password"
+      }
+   }
+}

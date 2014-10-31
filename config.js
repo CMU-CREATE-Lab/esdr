@@ -1,5 +1,5 @@
 var config = require('nconf');
-var log = require('log4js').getLogger();
+var log = require('log4js').getLogger('esdr:config');
 
 var nodeEnvironment = process.env.NODE_ENV || "development";
 var configFile = './config-' + nodeEnvironment + '.json';

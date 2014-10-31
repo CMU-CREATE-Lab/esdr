@@ -1,6 +1,6 @@
 var oauth2orize = require('oauth2orize');
 var config = require('../config');
-var log = require('log4js').getLogger();
+var log = require('log4js').getLogger('esdr:middleware:oauth2');
 
 module.exports = function(UserModel, TokenModel) {
    var server = oauth2orize.createServer();

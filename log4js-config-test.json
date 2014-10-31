@@ -1,0 +1,15 @@
+{
+   "replaceConsole" : true,
+   "appenders" : [
+      {
+         "type" : "console",
+         "layout" : {
+            "type" : "pattern",
+            "pattern" : "%d{ABSOLUTE} [%[%p%]] %c - %m"
+         }
+      }
+   ],
+   "levels" : {
+      "[all]" : "DEBUG"
+   }
+}

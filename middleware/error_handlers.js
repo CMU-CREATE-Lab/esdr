@@ -1,5 +1,5 @@
 var httpStatus = require('http-status');
-var log = require('log4js').getLogger();
+var log = require('log4js').getLogger('esdr:middleware:error_handlers');
 
 module.exports = {
    http404 : function(req, res, next) {

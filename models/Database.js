@@ -10,7 +10,7 @@ var Devices = require('./Devices.js');
 var Feeds = require('./Feeds.js');
 
 var config = require('../config');
-var log = require('log4js').getLogger();
+var log = require('log4js').getLogger('esdr:models:database');
 
 module.exports = {
    create : function(callback) {

@@ -6,7 +6,7 @@ var Query2Query = require('query2query');
 var util = require('util');
 var JSendClientError = require('jsend-utils').JSendClientError;
 var httpStatus = require('http-status');
-var log = require('log4js').getLogger();
+var log = require('log4js').getLogger('esdr:models:devices');
 
 var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Devices` ( " +
                          "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +

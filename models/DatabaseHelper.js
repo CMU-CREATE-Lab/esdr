@@ -1,7 +1,7 @@
 var flow = require('nimble');
 var DatabaseError = require('../lib/errors').DatabaseError;
 var DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
-var log = require('log4js').getLogger();
+var log = require('log4js').getLogger('esdr:models:databasehelper');
 
 module.exports = function(pool) {
    var SELECT_PREFIX = "SELECT ";

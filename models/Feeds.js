@@ -16,7 +16,7 @@ var datastore = new BodyTrackDatastore({
                                           dataDir : config.get("datastore:dataDirectory")
                                        });
 
-var log = require('log4js').getLogger();
+var log = require('log4js').getLogger('esdr:models:feeds');
 
 var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Feeds` ( " +
                          "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +

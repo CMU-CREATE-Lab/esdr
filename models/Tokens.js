@@ -1,7 +1,7 @@
 var flow = require('nimble');
 var config = require('../config');
 var createRandomHexToken = require('../lib/token').createRandomHexToken;
-var log = require('log4js').getLogger();
+var log = require('log4js').getLogger('esdr:models:tokens');
 
 var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Tokens` ( " +
                          "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +

@@ -3,6 +3,7 @@
 datastore
 node_modules
 out
+logs/*.log
 
 config-production.json
 mail-config-development.json

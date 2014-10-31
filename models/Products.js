@@ -3,7 +3,7 @@ var JaySchema = require('jayschema');
 var jsonValidator = new JaySchema();
 var ValidationError = require('../lib/errors').ValidationError;
 var Query2Query = require('query2query');
-var log = require('log4js').getLogger();
+var log = require('log4js').getLogger('esdr:models:products');
 
 var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Products` ( " +
                          "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +

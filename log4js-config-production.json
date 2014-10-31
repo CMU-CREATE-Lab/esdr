@@ -1,0 +1,25 @@
+{
+   "replaceConsole": true,
+   "appenders" : [
+      {
+         "type" : "console",
+         "layout" : {
+            "type" : "pattern",
+            "pattern" : "%d{ABSOLUTE} [%[%p%]] %c - %m"
+         }
+      },
+      {
+         "type" : "dateFile",
+         "filename" : "./logs/esdr",
+         "pattern" : "-yyyy-MM-dd.log",
+         "alwaysIncludePattern" : true,
+         "layout" : {
+            "type" : "pattern",
+            "pattern" : "%d [%[%p%]] %c - %m"
+         }
+      }
+   ],
+   "levels" : {
+      "[all]":"DEBUG"
+   }
+}

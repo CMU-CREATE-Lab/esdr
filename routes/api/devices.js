@@ -4,7 +4,7 @@ var passport = require('passport');
 var ValidationError = require('../../lib/errors').ValidationError;
 var httpStatus = require('http-status');
 var JSendError = require('jsend-utils').JSendError;
-var log = require('log4js').getLogger();
+var log = require('log4js').getLogger('esdr:routes:api:devices');
 
 module.exports = function(DeviceModel, FeedModel) {
 
