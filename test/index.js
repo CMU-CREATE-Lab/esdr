@@ -5,13 +5,16 @@ var mysql = require('mysql');
 var config = require('../config');
 var flow = require('nimble');
 var httpStatus = require('http-status');
-var log = require('log4js').getLogger('esdr:test');
 var Database = require("../models/Database");
 var DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
 var JSendError = require('jsend-utils').JSendError;
 var JSendClientError = require('jsend-utils').JSendClientError;
 var fs = require('fs');
 var deleteDir = require('rimraf');
+
+var log4js = require('log4js');
+log4js.configure('log4js-config-test.json');
+var log = log4js.getLogger('esdr:test');
 
 describe("ESDR", function() {
    var url = "http://localhost:3001";
@@ -391,6 +394,7 @@ describe("ESDR", function() {
                              return done(err);
                           }
 
+                                      log.info(res.body);
                           res.should.have.property('status', httpStatus.CONFLICT);
                           res.body.should.have.property('code', httpStatus.CONFLICT);
                           res.body.should.have.property('status', 'error');
