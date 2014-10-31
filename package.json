@@ -15,7 +15,7 @@
   "dependencies": {
     "bcrypt": "^0.8.0",
     "body-parser": "^1.8.3",
-    "bodytrack-datastore": "^1.0.1",
+    "bodytrack-datastore": "^1.0.3",
     "compression": "^1.1.0",
     "cors": "^2.4.2",
     "express": "^4.9.3",
