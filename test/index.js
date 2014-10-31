@@ -394,7 +394,6 @@ describe("ESDR", function() {
                              return done(err);
                           }
 
-                                      log.info(res.body);
                           res.should.have.property('status', httpStatus.CONFLICT);
                           res.body.should.have.property('code', httpStatus.CONFLICT);
                           res.body.should.have.property('status', 'error');
