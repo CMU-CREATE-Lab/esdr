@@ -1,4 +1,5 @@
 var config = require('nconf');
+var path = require('path');
 var log = require('log4js').getLogger('esdr:config');
 
 var nodeEnvironment = process.env.NODE_ENV || "development";
@@ -15,6 +16,7 @@ config.defaults({
                    "server" : {
                       "port" : 3000
                    },
+                   "httpAccessLogDirectory" : path.join(__dirname, './logs/access.log'),
                    "resetPasswordToken" : {
                       "willReturnViaApi" : false,
                       "willEmailToUser" : true

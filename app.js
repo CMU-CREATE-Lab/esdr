@@ -4,10 +4,8 @@ var cors = require('cors');
 var app = express();
 
 var log4js = require('log4js');
-log4js.configure('log4js-config-'+app.get('env')+'.json');
+log4js.configure('log4js-config-' + app.get('env') + '.json');
 var log = log4js.getLogger('esdr');
-
-log.info("Environment: " + app.get('env'));
 
 var config = require('./config');
 var expressHandlebars = require('express-handlebars');
@@ -19,6 +17,8 @@ var bodyParser = require('body-parser');
 var passport = require('passport');
 var Database = require("./models/Database");
 var BodyTrackDatastore = require('bodytrack-datastore');
+
+log.info("Environment: " + app.get('env'));
 
 // instantiate the datastore
 var datastore = new BodyTrackDatastore({
@@ -80,9 +80,21 @@ Database.create(function(err, db) {
          var oauthServer = require('./middleware/oauth2')(db.users, db.tokens);   // create and configure OAuth2 server
          var error_handlers = require('./middleware/error_handlers');
 
-         // setup middleware
          app.use(favicon(path.join(__dirname, 'public/favicon.ico')));     // favicon serving
-         app.use(requestLogger('dev'));      // request logging
+
+         // set up HTTP request logging
+         if (app.get('env') == 'development') {
+            // create a write stream (in append mode)
+            var fs = require('fs');
+            var httpAccessLogDirectory = config.get("httpAccessLogDirectory");
+            log.info("HTTP access log: " + httpAccessLogDirectory);
+            var accessLogStream = fs.createWriteStream(httpAccessLogDirectory, {flags : 'a'});
+            app.use(requestLogger('combined', {stream : accessLogStream}));
+         }
+         else {
+            app.use(requestLogger('dev'));      // simple request logging for non-production use
+         }
+
          app.use(compress());                // enables gzip compression
          app.use(bodyParser.urlencoded({ extended : true }));     // form parsing
          app.use(bodyParser.json());         // json body parsing
