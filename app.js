@@ -83,7 +83,7 @@ Database.create(function(err, db) {
          app.use(favicon(path.join(__dirname, 'public/favicon.ico')));     // favicon serving
 
          // set up HTTP request logging
-         if (app.get('env') == 'development') {
+         if (app.get('env') == 'production') {
             // create a write stream (in append mode)
             var fs = require('fs');
             var httpAccessLogDirectory = config.get("httpAccessLogDirectory");
