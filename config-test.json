@@ -2,6 +2,10 @@
    "server" : {
       "port" : 3001
    },
+   "esdrClient" : {
+      "resetPasswordUrl" : "http://localhost:3001/password-reset/:resetPasswordToken",
+      "verificationUrl" : "http://localhost:3001/verification/:verificationToken"
+   },
    "resetPasswordToken" : {
       "willReturnViaApi" : true,
       "willEmailToUser" : false

@@ -9,6 +9,8 @@ var Products = require('./Products.js');
 var Devices = require('./Devices.js');
 var Feeds = require('./Feeds.js');
 
+var DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
+
 var config = require('../config');
 var log = require('log4js').getLogger('esdr:models:database');
 
@@ -205,6 +207,23 @@ module.exports = {
                         }
 
                         done();
+                     });
+                  }
+                  else {
+                     done();
+                  }
+               },
+
+               // create the ESDR client, if necessary
+               function(done) {
+                  if (!hasErrors()) {
+                     log.info("9) Ensuring the ESDR client exists.");
+                     db.clients.create(config.get("esdrClient"), function(err, creationResult) {
+                        if (err && !(err instanceof DuplicateRecordError)) {
+                           errors.push(err);
+                        } else {
+                           done();
+                        }
                      });
                   }
                   else {

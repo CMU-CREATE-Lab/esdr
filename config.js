@@ -16,6 +16,14 @@ config.defaults({
                    "server" : {
                       "port" : 3000
                    },
+                   "esdrClient" : {
+                      "displayName" : "ESDR",
+                      "clientName" : "ESDR",
+                      "clientSecret" : "What I cannot create, I do not understand.",
+                      "email" : "esdr-admin@cmucreatelab.org",
+                      "resetPasswordUrl" : "http://localhost:3000/password-reset/:resetPasswordToken",
+                      "verificationUrl" : "http://localhost:3000/verification/:verificationToken"
+                   },
                    "httpAccessLogDirectory" : path.join(__dirname, './logs/access.log'),
                    "resetPasswordToken" : {
                       "willReturnViaApi" : false,
@@ -41,11 +49,6 @@ config.defaults({
                    "datastore" : {
                       "binDirectory" : "./datastore/bin",
                       "dataDirectory" : "./datastore/data-development"
-                   },
-                   "default-client" : {
-                      "displayName" : "ESDR",
-                      "email" : "esdr-admin@cmucreatelab.org",
-                      "verificationUrl" : "http://localhost:3000/verification/:verificationToken"
                    },
                    "mail" : {
                       "smtp" : {
