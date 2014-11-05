@@ -218,19 +218,40 @@ module.exports = {
                function(done) {
                   if (!hasErrors()) {
                      log.info("9) Ensuring the ESDR client exists.");
-                     db.clients.create(config.get("esdrClient"), function(err, creationResult) {
-                        if (err && !(err instanceof DuplicateRecordError)) {
-                           errors.push(err);
-                        } else {
-                           done();
-                        }
-                     });
+                     var esdrClient = config.get("esdrClient");
+                     db.clients.findByNameAndSecret(esdrClient.clientName,
+                                                    esdrClient.clientSecret,
+                                                    function(err, foundClient) {
+                                                       if (err) {
+                                                          errors.push(err);
+                                                          done();
+                                                       }
+                                                       else {
+                                                          if (foundClient) {
+                                                             log.info("   Found client [" + esdrClient.clientName + "] with ID [" + foundClient.id + "]");
+                                                             config.set("esdrClient:id", foundClient.id);
+                                                             done();
+                                                          }
+                                                          else {
+                                                             log.info("   Client [" + esdrClient.clientName + "] not found, creating...");
+                                                             db.clients.create(esdrClient, function(err, creationResult) {
+                                                                if (err && !(err instanceof DuplicateRecordError)) {
+                                                                   errors.push(err);
+                                                                }
+                                                                else {
+                                                                   log.info("   Client [" + esdrClient.clientName + "] created with ID [" + creationResult.insertId + "]");
+                                                                   config.set("esdrClient:id", creationResult.insertId);
+                                                                }
+                                                                done();
+                                                             });
+                                                          }
+                                                       }
+                                                    });
                   }
                   else {
                      done();
                   }
                }
-
             ],
             function() {
 

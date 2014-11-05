@@ -118,7 +118,8 @@ Database.create(function(err, db) {
                             rolling : false,
                             //secure: true,   // TODO: enable this once https is enabled
                             saveUninitialized : true,
-                            resave : true
+                            resave : true,
+                            unset : "destroy"
                          }));
          app.use(passport.initialize());                                   // initialize passport (must come AFTER session middleware)
          app.use(passport.session());                                      // enable session support for passport
@@ -159,7 +160,7 @@ Database.create(function(err, db) {
          // configure routing
          app.use('/signup', require('./routes/signup'));
          app.use('/login', require('./routes/login')(oauthServer));
-         app.use('/logout', require('./routes/logout')(db.users));
+         app.use('/logout', require('./routes/logout')(db.tokens));
          app.use('/verification', require('./routes/verification'));
          app.use('/password-reset', require('./routes/password-reset'));
 
