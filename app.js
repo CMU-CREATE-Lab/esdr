@@ -80,6 +80,7 @@ Database.create(function(err, db) {
          log.info("View cache enabled = " + app.enabled('view cache'));
 
          // MIDDLEWARE -------------------------------------------------------------------------------------------------
+
          var oauthServer = require('./middleware/oauth2')(db.users, db.tokens);   // create and configure OAuth2 server
          var error_handlers = require('./middleware/error_handlers');
 
@@ -104,68 +105,97 @@ Database.create(function(err, db) {
             // catch invalid JSON error (found at http://stackoverflow.com/a/15819808/703200)
             res.status(400).json({status : "fail", data : "invalid JSON"})
          });
-         app.use(cookieParser());            // cookie parsing--MUST come before setting up session middleware!
-         app.use(session({                   // configure support for storing sessions in the database
-                            key : config.get("cookie:name"),
-                            secret : config.get("cookie:secret"),
-                            store : new SessionStore({
-                                                        host : config.get("database:host"),
-                                                        port : config.get("database:port"),
-                                                        database : config.get("database:database"),
-                                                        user : config.get("database:username"),
-                                                        password : config.get("database:password")
-                                                     }),
-                            rolling : false,
-                            //secure: true,   // TODO: enable this once https is enabled
-                            saveUninitialized : true,
-                            resave : true,
-                            unset : "destroy"
-                         }));
-         app.use(passport.initialize());                                   // initialize passport (must come AFTER session middleware)
-         app.use(passport.session());                                      // enable session support for passport
-         app.use(function(req, res, next) {
-            log.debug("req.isAuthenticated()=[" + req.isAuthenticated() + "]");
-            res.locals.isAuthenticated = req.isAuthenticated();
-
-            if (req.isAuthenticated()) {
-               res.locals.user = {
-                  id : req.user.id
-               };
-               delete req.session.redirectToAfterLogin;
-               delete res.locals.redirectToAfterLogin;
-            }
-            else {
-               // expose the redirectToAfterLogin page to the view
-               res.locals.redirectToAfterLogin = req.session.redirectToAfterLogin;
-            }
-
-            next();
-         });
-         app.use(require('./middleware/accessToken').refreshAccessToken());
 
          // configure passport
          require('./middleware/auth')(db.clients, db.users, db.tokens, db.feeds);
 
-         // ROUTING ----------------------------------------------------------------------------------------------------
+         // CUSTOM MIDDLEWARE ------------------------------------------------------------------------------------------
+
+         // define the various middleware required for routes which need session support
+         var sessionSupport = [
+            function(req, res, next) {
+               log.debug("SESSION SUPPORT");
+               next();
+            },
+            cookieParser(),                  // cookie parsing--MUST come before setting up session middleware!
+            session({                        // configure support for storing sessions in the database
+                       key : config.get("cookie:name"),
+                       secret : config.get("cookie:secret"),
+                       store : new SessionStore({
+                                                   host : config.get("database:host"),
+                                                   port : config.get("database:port"),
+                                                   database : config.get("database:database"),
+                                                   user : config.get("database:username"),
+                                                   password : config.get("database:password")
+                                                }),
+                       rolling : false,
+                       //secure: true,   // TODO: enable this once https is enabled
+                       saveUninitialized : true,
+                       resave : true,
+                       unset : "destroy"
+                    }),
+            passport.initialize(),           // initialize passport (must come AFTER session middleware)
+            passport.session(),              // enable session support for passport
+            function(req, res, next) {
+               log.debug("req.isAuthenticated()=[" + req.isAuthenticated() + "]");
+               res.locals.isAuthenticated = req.isAuthenticated();
+
+               if (req.isAuthenticated()) {
+                  res.locals.user = {
+                     id : req.user.id
+                  };
+                  delete req.session.redirectToAfterLogin;
+                  delete res.locals.redirectToAfterLogin;
+               }
+               else {
+                  // expose the redirectToAfterLogin page to the view
+                  res.locals.redirectToAfterLogin = req.session.redirectToAfterLogin;
+               }
+
+               next();
+            },
+            require('./middleware/accessToken').refreshAccessToken()
+         ];
+
+         // define the various middleware required for routes which don't need (and should not have!) session support
+         var noSessionSupport = [
+            function(req, res, next) {
+               log.debug("NO SESSION SUPPORT");
+               next();
+            },
+            passport.initialize()         // initialize passport
+         ];
 
          // create the FeedRouteHelper
          var FeedRouteHelper = require('./routes/api/feed-route-helper');
          var feedRouteHelper = new FeedRouteHelper(db.feeds);
 
          // define CORS options and apply CORS to specific route groups
-         var CORS_OPTIONS = {
-            origin : '*'
+         var corsSupport = cors({
+                                   origin : '*'
+                                });
+
+         // ensure the user is authenticated before serving up the page
+         var ensureAuthenticated = function(req, res, next) {
+            if (req.isAuthenticated()) {
+               return next();
+            }
+            // remember where the user was trying to go and then redirect to the login page
+            req.session.redirectToAfterLogin = req.originalUrl;
+            res.redirect('/login')
          };
 
-         // configure routing
-         app.use('/signup', require('./routes/signup'));
-         app.use('/login', require('./routes/login')(oauthServer));
-         app.use('/logout', require('./routes/logout')(db.tokens));
-         app.use('/verification', require('./routes/verification'));
-         app.use('/password-reset', require('./routes/password-reset'));
+         // ROUTING ----------------------------------------------------------------------------------------------------
 
-         app.use('/oauth/*', cors(CORS_OPTIONS));
-         app.use('/api/v1/*', cors(CORS_OPTIONS));
+         // configure routing
+         app.use('/signup', sessionSupport, require('./routes/signup'));
+         app.use('/login', sessionSupport, require('./routes/login')(oauthServer));
+         app.use('/logout', sessionSupport, require('./routes/logout')(db.tokens));
+         app.use('/verification', sessionSupport, require('./routes/verification'));
+         app.use('/password-reset', sessionSupport, require('./routes/password-reset'));
+
+         app.use('/oauth/*', noSessionSupport, corsSupport);
+         app.use('/api/v1/*', noSessionSupport, corsSupport);
 
          app.use('/oauth', require('./routes/oauth')(oauthServer));
          app.use('/api/v1/clients', require('./routes/api/clients')(db.clients));
@@ -177,16 +207,7 @@ Database.create(function(err, db) {
          app.use('/api/v1/user-verification', require('./routes/api/user-verification')(db.users));
          app.use('/api/v1/password-reset', require('./routes/api/password-reset')(db.users));
 
-         // ensure the user is authenticated before serving up the page
-         var ensureAuthenticated = function(req, res, next) {
-            if (req.isAuthenticated()) {
-               return next();
-            }
-            // remember where the user was trying to go and then redirect to the login page
-            req.session.redirectToAfterLogin = req.originalUrl;
-            res.redirect('/login')
-         };
-         app.use('/', ensureAuthenticated, require('./routes/index'));
+         app.use('/', sessionSupport, ensureAuthenticated, require('./routes/index'));
 
          // ERROR HANDLERS ---------------------------------------------------------------------------------------------
 
