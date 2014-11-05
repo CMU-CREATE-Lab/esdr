@@ -22,7 +22,7 @@ config.defaults({
                       "apiRootUrl" : "http://localhost:3000/api/v1"
                    },
                    "cookie" : {
-                      "name" : "sid",
+                      "name" : "esdr_sid",
                       "secret" : "Thou art my heaven, and I thine eremite."
                    },
                    "esdrClient" : {
