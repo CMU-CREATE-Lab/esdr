@@ -135,7 +135,7 @@ if (!window['superagent']) {
       };
 
       // trims and makes sure it starts with a question mark
-      var sanitizeQueryString = function(queryString){
+      var sanitizeQueryString = function(queryString) {
          queryString = (queryString || "").trim();
          if (queryString.length > 0 && queryString.lastIndexOf('?', 0) !== 0) {
             queryString = "?" + queryString;
@@ -297,7 +297,7 @@ if (!window['superagent']) {
             superagent
                   .put(ESDR_API_ROOT_URL + "/feed")
                   .set({
-                          ApiKey : apiKey
+                          FeedApiKey : apiKey
                        })
                   .send(data)
                   .end(createResponseHandler(callbacks));
@@ -328,7 +328,7 @@ if (!window['superagent']) {
             superagent
                   .get(ESDR_API_ROOT_URL + "/feed/channels/" + channelName + "/tiles/" + level + "." + offset)
                   .set({
-                          ApiKey : apiKey
+                          FeedApiKey : apiKey
                        })
                   .end(createResponseHandler(callbacks));
          }

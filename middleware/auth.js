@@ -145,6 +145,10 @@ module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {
     * This strategy is used to authenticate requests for feeds.
     */
    passport.use('feed-apikey', new LocalAPIKeyStrategy(
+         {
+            apiKeyHeader : "feedapikey",
+            apiKeyField : "feedapikey"
+         },
          function(apiKey, done) {
             FeedModel.findByApiKey(apiKey, function(err1, feed) {
                if (err1) {

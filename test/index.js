@@ -2780,7 +2780,7 @@ describe("ESDR", function() {
                         agent(url)
                               .put("/api/v1/feed")
                               .set({
-                                      ApiKey : feeds.testFeed1a.apiKey
+                                      FeedApiKey : feeds.testFeed1a.apiKey
                                    })
                               .send({})
                               .end(function(err, res) {
@@ -2803,7 +2803,7 @@ describe("ESDR", function() {
                         agent(url)
                               .put("/api/v1/feed")
                               .set({
-                                      ApiKey : feeds.testFeed1a.apiKeyReadOnly
+                                      FeedApiKey : feeds.testFeed1a.apiKeyReadOnly
                                    })
                               .send({})
                               .end(function(err, res) {
@@ -2847,7 +2847,7 @@ describe("ESDR", function() {
                         agent(url)
                               .put("/api/v1/feed")
                               .set({
-                                      ApiKey : feeds.testFeed1a.apiKey
+                                      FeedApiKey : feeds.testFeed1a.apiKey
                                    })
                               .send(testFeed1aData1)
                               .end(function(err, res) {
@@ -2876,7 +2876,7 @@ describe("ESDR", function() {
                         agent(url)
                               .put("/api/v1/feed")
                               .set({
-                                      ApiKey : feeds.testFeed1a.apiKeyReadOnly
+                                      FeedApiKey : feeds.testFeed1a.apiKeyReadOnly
                                    })
                               .send(testFeed1aData1)
                               .end(function(err, res) {
@@ -2897,7 +2897,7 @@ describe("ESDR", function() {
                         agent(url)
                               .put("/api/v1/feed")
                               .set({
-                                      ApiKey : "bogus"
+                                      FeedApiKey : "bogus"
                                    })
                               .end(function(err, res) {
                                       if (err) {
@@ -3318,7 +3318,7 @@ describe("ESDR", function() {
                            agent(url)
                                  .get("/api/v1/feed")
                                  .set({
-                                         ApiKey : feeds.testFeed1a.apiKey
+                                         FeedApiKey : feeds.testFeed1a.apiKey
                                       })
                                  .end(function(err, res) {
                                          if (err) {
@@ -3334,7 +3334,7 @@ describe("ESDR", function() {
                            agent(url)
                                  .get("/api/v1/feed")
                                  .set({
-                                         ApiKey : feeds.testFeed1a.apiKeyReadOnly
+                                         FeedApiKey : feeds.testFeed1a.apiKeyReadOnly
                                       })
                                  .end(function(err, res) {
                                          if (err) {
@@ -3350,7 +3350,7 @@ describe("ESDR", function() {
                            agent(url)
                                  .get("/api/v1/feed")
                                  .set({
-                                         ApiKey : feeds.testFeed1b.apiKey
+                                         FeedApiKey : feeds.testFeed1b.apiKey
                                       })
                                  .end(function(err, res) {
                                          if (err) {
@@ -3366,7 +3366,7 @@ describe("ESDR", function() {
                            agent(url)
                                  .get("/api/v1/feed")
                                  .set({
-                                         ApiKey : feeds.testFeed1b.apiKeyReadOnly
+                                         FeedApiKey : feeds.testFeed1b.apiKeyReadOnly
                                       })
                                  .end(function(err, res) {
                                          if (err) {
@@ -3382,7 +3382,7 @@ describe("ESDR", function() {
                            agent(url)
                                  .get("/api/v1/feed")
                                  .set({
-                                         ApiKey : "bogus"
+                                         FeedApiKey : "bogus"
                                       })
                                  .end(function(err, res) {
                                          if (err) {
@@ -3533,7 +3533,7 @@ describe("ESDR", function() {
                            agent(url)
                                  .get("/api/v1/feed/channels/temperature/tiles/10.2633")
                                  .set({
-                                         ApiKey : feeds.testFeed1a.apiKey
+                                         FeedApiKey : feeds.testFeed1a.apiKey
                                       })
                                  .end(function(err, res) {
                                          if (err) {
@@ -3553,7 +3553,7 @@ describe("ESDR", function() {
                            agent(url)
                                  .get("/api/v1/feed/channels/temperature/tiles/10.2633")
                                  .set({
-                                         ApiKey : feeds.testFeed1a.apiKeyReadOnly
+                                         FeedApiKey : feeds.testFeed1a.apiKeyReadOnly
                                       })
                                  .end(function(err, res) {
                                          if (err) {
@@ -3573,7 +3573,7 @@ describe("ESDR", function() {
                            agent(url)
                                  .get("/api/v1/feed/channels/temperature/tiles/10.2634")
                                  .set({
-                                         ApiKey : feeds.testFeed1b.apiKey
+                                         FeedApiKey : feeds.testFeed1b.apiKey
                                       })
                                  .end(function(err, res) {
                                          if (err) {
@@ -3593,7 +3593,7 @@ describe("ESDR", function() {
                            agent(url)
                                  .get("/api/v1/feed/channels/temperature/tiles/10.2634")
                                  .set({
-                                         ApiKey : feeds.testFeed1b.apiKeyReadOnly
+                                         FeedApiKey : feeds.testFeed1b.apiKeyReadOnly
                                       })
                                  .end(function(err, res) {
                                          if (err) {
@@ -3613,7 +3613,7 @@ describe("ESDR", function() {
                            agent(url)
                                  .get("/api/v1/feed/channels/temperature/tiles/10.2633")
                                  .set({
-                                         ApiKey : "bogus"
+                                         FeedApiKey : "bogus"
                                       })
                                  .end(function(err, res) {
                                          if (err) {
