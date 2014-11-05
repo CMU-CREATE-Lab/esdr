@@ -1,43 +1,117 @@
 <script language="JavaScript" type="text/javascript">
    $(document).ready(function() {
-      var handleVerificationSuccess = function() {
-         $("#verificationSuccess").show();
-      };
+      {{#if verificationToken}}
+         var handleVerificationSuccess = function() {
+            $("#verificationSuccess").show();
+         };
 
-      var handleVerificationFailure = function() {
-         $("#verificationFailure").show();
-      };
+         var handleVerificationFailure = function() {
+            $("#verificationFailure").show();
+         };
 
-      var verificationToken = "{{verificationToken}}";
-      if (verificationToken && verificationToken.length > 0) {
-         superagent
-               .put("/api/v1/user-verification")
-               .send({token : verificationToken})
-               .end(function(err, res) {
-                       if (res && res.body.data && res.body.data.isVerified) {
-                          handleVerificationSuccess();
-                       }
-                       else {
-                          handleVerificationFailure();
-                       }
-                    });
-      }
-      else {
-         handleVerificationFailure();
-      }
+         var verificationToken = "{{verificationToken}}";
+         if (verificationToken && verificationToken.length > 0) {
+            superagent
+                  .put("{{apiRootUrl}}/user-verification")
+                  .send({token : verificationToken})
+                  .end(function(err, res) {
+                          if (res && res.body.data && res.body.data.isVerified) {
+                             handleVerificationSuccess();
+                          }
+                          else {
+                             handleVerificationFailure();
+                          }
+                       });
+         }
+         else {
+            handleVerificationFailure();
+         }
+      {{else}}
+         $("#verification_email").focus();
+      {{/if}}
    });
 
+      {{#unless verificationToken}}
+      function submitVerificationForm() {
+         var messages = new org.cmucreatelab.esdr.Messages();
+         var form = $("#verification_form");
+         var errorMessagesElement = $("#verification_error_messages");
+         var successMessagesElement = $("#verification_success_messages");
+         errorMessagesElement.empty().hide();
+         successMessagesElement.empty().hide();
+
+         var emailElement = $("#verification_email");
+         var email = emailElement.val().trim();
+
+         if (email.length < 1) {
+            messages.add("Please enter your email address.");
+         }
+
+         if (messages.isEmpty()) {
+            setFormEnabled(form, false);
+            superagent
+                  .post("{{apiRootUrl}}/user-verification")
+                  .send({email : email})
+                  .end(function(err, res) {
+                          setFormEnabled(form, true);
+                          console.log(JSON.stringify(res.body, null, 3));
+                          if (res.status == 200) {
+                             form.hide();
+                             messages.add('Your account is already verified. You may <a href="/login">log in</a>.');
+                             messages.render(successMessagesElement);
+                          }
+                          else if (res.status == 201) {
+                             form.hide();
+                             messages.add("Please check your email for instructions on how to verify your account.");
+                             messages.render(successMessagesElement);
+                          }
+                          else {
+                             if (res.status == 422) {
+                                messages.add("Sorry, that doesn't appear to be a valid email address.");
+                             }
+                             else {
+                                messages.add("Sorry, we don't recognize that email address.");
+                             }
+                             emailElement.focus();
+                             messages.render(errorMessagesElement);
+                          }
+                       });
+         }
+         else {
+            messages.render(errorMessagesElement);
+         }
+
+         return false;
+      }
+      {{/unless}}
+
 </script>
-<div class="main_container">
-   <div class="content_container">
-      <div class="page_title">
+<div class="main_container panel panel-default">
+   <div class="content_container panel-body">
+      <h2>
          Account Verification
-      </div>
-      <div id="verificationSuccess" class="page_instructions" style="display:none">
-         Thank you for verifying your account.
-      </div>
-      <div id="verificationFailure" class="page_instructions" style="display:none">
-         Sorry, we could not verify the account because the verification token is invalid.
-      </div>
+      </h2>
+      {{#if verificationToken}}
+         <div id="verificationSuccess" class="page_instructions" style="display:none">
+            Thank you for verifying your account. You may now <a href="/login">log in</a>.
+         </div>
+         <div id="verificationFailure" class="page_instructions" style="display:none">
+            Sorry, we could not verify the account.
+         </div>
+      {{else}}
+         <div class="page_instructions">
+            Please enter your email address. We will send you an email with instructions on how to verify your account.
+         </div>
+         <div id="verification_error_messages" class="form_messages alert alert-danger"></div>
+         <div id="verification_success_messages" class="form_messages alert alert-success"></div>
+         <form role="form" id="verification_form" onsubmit="return submitVerificationForm();">
+            <div class="form-group">
+               <input type="email" class="form-control" id="verification_email" name="verification_email" placeholder="Email address"/>
+            </div>
+            <div class="pull-right">
+               <button type="submit" class="btn btn-default">{{#if resetPasswordToken}}Change Password{{else}}Submit{{/if}}</button>
+            </div>
+         </form>
+      {{/if}}
    </div>
 </div>

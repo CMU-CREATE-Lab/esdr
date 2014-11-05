@@ -1,11 +1,78 @@
 var passport = require('passport');
+var LocalStrategy = require('passport-local').Strategy;
 var BasicStrategy = require('passport-http').BasicStrategy;
 var ClientPasswordStrategy = require('passport-oauth2-client-password').Strategy;
 var BearerStrategy = require('passport-http-bearer').Strategy;
 var LocalAPIKeyStrategy = require('passport-localapikey-update').Strategy;
+var config = require('../config');
+var httpStatus = require('http-status');
+var superagent = require('superagent');
 var log = require('log4js').getLogger('esdr:middleware:auth');
 
 module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {
+
+   passport.use(new LocalStrategy({
+                                     usernameField : 'email',
+                                     passwordField : 'password'
+                                  },
+                                  function(email, password, done) {
+                                     log.debug("Oauth to ESDR for login of user [" + email + "]");
+                                     superagent
+                                           .post(config.get("server:rootUrl") + "/oauth/token")
+                                           .type('form')
+                                           .send({
+                                                    grant_type : 'password',
+                                                    client_id : config.get("esdrClient:clientName"),
+                                                    client_secret : config.get("esdrClient:clientSecret"),
+                                                    username : email,
+                                                    password : password
+                                                 })
+                                           .end(function(err, res) {
+                                                   if (err) {
+                                                      log.error("   ESDR oauth failed for user [" + email + "]: " + err);
+                                                      return done(err, false);
+                                                   }
+
+                                                   try {
+                                                      if (res.statusCode === httpStatus.OK) {
+                                                         var tokenResponse = res.body;
+                                                         var user = {
+                                                            id : tokenResponse.userId,
+                                                            lastLogin : new Date(),
+                                                            accessToken : tokenResponse.access_token,
+                                                            refreshToken : tokenResponse.refresh_token,
+                                                            accessTokenExpiration : new Date(new Date().getTime() + (tokenResponse.expires_in * 1000))
+                                                         };
+                                                         return done(null, user);
+                                                      }
+                                                      else if (res.statusCode === httpStatus.UNAUTHORIZED ||
+                                                               res.statusCode === httpStatus.FORBIDDEN) {
+                                                         return done(null, false);
+                                                      }
+                                                      else {
+                                                         log.error("LocalStrategy: ESDR oauth for user [" + email + "] failed due to unknown error.  HTTP status [" + res.statusCode + "]");
+                                                         return done(null, false);
+                                                      }
+                                                   }
+                                                   catch (e) {
+                                                      log.error("LocalStrategy: Unexpected exception while trying to authenticate user [" + email + "] with ESDR: " + e);
+                                                      return done(null, false);
+                                                   }
+                                                });
+                                  }
+   ));
+
+   passport.serializeUser(function(user, done) {
+      log.trace("serializing user " + user.id);
+      done(null, user.id);
+   });
+
+   passport.deserializeUser(function(id, done) {
+      UserModel.findById(id, function(err, user) {
+         log.trace("deserializing user " + id);
+         done(err, user);
+      });
+   });
 
    var authenticateClient = function(clientName, clientSecret, callback) {
       log.debug("auth.authenticateClient(" + clientName + "))");

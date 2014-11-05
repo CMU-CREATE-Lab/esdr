@@ -14,7 +14,16 @@ config.add('global', { type : 'file', file : configFile });
 
 config.defaults({
                    "server" : {
-                      "port" : 3000
+                      "port" : 3000,
+                      "rootUrl" : "http://localhost:3000",
+                      "apiRootUrl" : "http://localhost:3000/api/v1"
+                   },
+                   "esdr" : {
+                      "apiRootUrl" : "http://localhost:3000/api/v1"
+                   },
+                   "cookie" : {
+                      "name" : "sid",
+                      "secret" : "Thou art my heaven, and I thine eremite."
                    },
                    "esdrClient" : {
                       "displayName" : "ESDR",

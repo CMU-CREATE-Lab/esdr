@@ -1,0 +1,102 @@
+<script language="JavaScript" type="text/javascript">
+   $(document).ready(function() {
+      $("#login_email").focus();
+   });
+
+   function submitLoginForm(formElementId, emailElementId, passwordElementId, messagesElementId, redirectToAfterLogin, successHandler, unauthorizedHandler) {
+      console.log("In the form!");
+      var messages = new org.cmucreatelab.esdr.Messages();
+      var messagesElement = $("#" + messagesElementId);
+      var form = $("#" + formElementId);
+      var emailElement = $("#" + emailElementId);
+      var passwordElement = $("#" + passwordElementId);
+      var email = emailElement.val().trim();
+      var password = passwordElement.val();
+
+      messagesElement.empty().hide();
+
+      var user = {
+         email : email,
+         password : password
+      };
+
+      // perform simple validation
+      if (user.password.length <= 0) {
+         messages.add("Password is required.");
+         passwordElement.focus();
+      }
+      if (user.email.length <= 0) {
+         messages.add("Email address is required.");
+         emailElement.focus();
+      }
+
+      var defaultSuccessHandler = function() {
+         if (redirectToAfterLogin && redirectToAfterLogin.length > 0) {
+            window.location.href = redirectToAfterLogin;
+         }
+         else {
+            window.location.href = '/';
+         }
+      };
+
+      var defaultUnauthorizedHandler = function(messages) {
+         messages.add('Login failed. Please double-check your login below and make sure you have ' +
+                      'activated your account by clicking the link in the verification email we sent ' +
+                      'when you signed up. If you don\'t have the email, you can <a href="/verification">request a new one</a>.');
+      };
+
+      successHandler = successHandler || defaultSuccessHandler;
+      unauthorizedHandler = unauthorizedHandler || defaultUnauthorizedHandler;
+
+      if (messages.isEmpty()) {
+         setFormEnabled(form, false);
+         superagent
+               .post("/login")
+               .send(user)
+               .end(function(err, res) {
+                       setFormEnabled(form, true);
+                       console.log(JSON.stringify(res.body, null, 3));
+                       if (res.status == 200) {
+                          successHandler(res.body.data);
+                       }
+                       else if (res.status == 401) {
+                          unauthorizedHandler(messages);
+                       }
+                       else {
+                          messages.add("Login failed due to an unexpected error.  Please try again later.");
+                       }
+                       emailElement.focus();
+                       messages.render(messagesElement);
+                    });
+      }
+      else {
+         messages.render(messagesElement);
+      }
+
+      return false;
+   }
+</script>
+<div class="main_container panel panel-default">
+   <div class="content_container panel-body">
+      <h2>
+         Environmental Sensor Data Repository (ESDR)
+      </h2>
+      <div class="page_instructions">
+         Welcome to ESDR, a free-to-use and <a href="https://github.com/CMU-CREATE-Lab/esdr" target="_blank">open-source</a>
+         repository for storing and visualizing environmental sensor data.  Please log in to begin.
+         Need an account? <a href="/signup">Sign up!</a>
+      </div>
+      <form id="login_form" onsubmit="return submitLoginForm('login_form','login_email','login_password','login_messages','{{{redirectToAfterLogin}}}');return false;">
+         <div id="login_messages" class="form_messages alert alert-danger"></div>
+         <div class="form-group">
+            <input type="email" class="form-control" id="login_email" name="login_email" placeholder="Email address"/></div>
+         <div class="form-group">
+            <input type="password" class="form-control" id="login_password" name="login_password" placeholder="Password"/>
+         </div>
+         <div class="form-group">
+            <button type="submit" class="btn btn-default pull-right">Log In</button>
+            <a href="/password-reset">Forgot your password?</a>
+         </div>
+      </form>
+   </div>
+</div>

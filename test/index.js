@@ -1476,9 +1476,28 @@ describe("ESDR", function() {
                        });
          });
 
-         it("Should fail to request a password reset token if the client auth is not provided", function(done) {
+         it("A request for a password reset token to be sent should not require client authentication", function(done) {
             agent(url)
                   .post("/api/v1/password-reset")
+                  .send({email : testUser1.email})
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', httpStatus.CREATED);
+                          res.body.should.have.property('code', httpStatus.CREATED);
+                          res.body.should.have.property('status', 'success');
+                          res.body.should.have.property('data');
+                          done();
+                       });
+         });
+
+         it("A request for a password reset token to be sent should fail if the client authentication is invalid", function(done) {
+
+            agent(url)
+                  .post("/api/v1/password-reset")
+                  .auth(testClient.clientName, "bogus")
                   .send({email : testUser1.email})
                   .end(function(err, res) {
                           if (err) {
@@ -1488,7 +1507,8 @@ describe("ESDR", function() {
                           res.should.have.property('status', httpStatus.UNAUTHORIZED);
                           res.body.should.have.property('code', httpStatus.UNAUTHORIZED);
                           res.body.should.have.property('status', 'error');
-                          res.body.should.have.property('data', null);
+                          res.body.should.have.property('data');
+
                           done();
                        });
          });
@@ -3187,7 +3207,8 @@ describe("ESDR", function() {
 
                         if (shouldBeAllowedToSeeApiKey) {
                            res.body.data.should.have.property('apiKey');
-                        } else {
+                        }
+                        else {
                            res.body.data.should.not.have.property('apiKey');
                         }
                      };
