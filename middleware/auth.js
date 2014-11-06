@@ -18,7 +18,7 @@ module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {
                                   function(email, password, done) {
                                      log.debug("Oauth to ESDR for login of user [" + email + "]");
                                      superagent
-                                           .post(config.get("server:rootUrl") + "/oauth/token")
+                                           .post(config.get("esdr:oauthRootUrl"))
                                            .type('form')
                                            .send({
                                                     grant_type : 'password',

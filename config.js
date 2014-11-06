@@ -14,12 +14,13 @@ config.add('global', { type : 'file', file : configFile });
 
 config.defaults({
                    "server" : {
-                      "port" : 3000,
-                      "rootUrl" : "http://localhost:3000",
-                      "apiRootUrl" : "http://localhost:3000/api/v1"
+                      "port" : 3000
                    },
                    "esdr" : {
-                      "apiRootUrl" : "http://localhost:3000/api/v1"
+                      // the URL a client (e.g. web browser) must use to access the ESDR REST API
+                      "apiRootUrl" : "http://localhost:3000/api/v1",
+                      // the URL that the ESDR server must use to access itself for OAuth (should be localhost)
+                      "oauthRootUrl" : "http://localhost:3000/oauth/token"
                    },
                    "cookie" : {
                       "name" : "esdr_sid",

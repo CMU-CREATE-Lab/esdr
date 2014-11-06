@@ -1,11 +1,10 @@
 {
    "server" : {
-      "port" : 3001,
-      "rootUrl" : "http://localhost:3001",
-      "apiRootUrl" : "http://localhost:3001/api/v1"
+      "port" : 3001
    },
    "esdr" : {
-      "apiRootUrl" : "http://localhost:3001/api/v1"
+      "apiRootUrl" : "http://localhost:3001/api/v1",
+      "oauthRootUrl" : "http://localhost:3001/oauth/token"
    },
    "esdrClient" : {
       "resetPasswordUrl" : "http://localhost:3001/password-reset/:resetPasswordToken",

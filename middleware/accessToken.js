@@ -22,7 +22,7 @@ module.exports.refreshAccessToken = function() {
                log.debug("Refreshing access token...");
 
                superagent
-                     .post(config.get("server:rootUrl") + "/oauth/token")
+                     .post(config.get("esdr:oauthRootUrl"))
                      .type('form')
                      .send({
                               grant_type : 'refresh_token',
