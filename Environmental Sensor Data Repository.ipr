@@ -77,6 +77,9 @@
     <file url="PROJECT" libraries="{EnvironmentalSensorDataRepository node_modules, Node.js v0.10.30 Core Modules, Superagent, jQuery 1.11.1, mocha-DefinitelyTyped, nconf-DefinitelyTyped, should-DefinitelyTyped}" />
     <includedPredefinedLibrary name="Node.js Globals" />
   </component>
+  <component name="ProjectDictionaryState">
+    <dictionary name="chris" />
+  </component>
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/Environmental Sensor Data Repository.iml" filepath="$PROJECT_DIR$/Environmental Sensor Data Repository.iml" />
