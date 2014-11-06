@@ -225,7 +225,7 @@ module.exports = function(databaseHelper) {
 
          // if not null, then check expiration
          if (token) {
-            var isExpired = Math.round((Date.now() - new Date(token.created).getTime()) / 1000) > config.get('security:tokenLifeSecs');
+            var isExpired = Math.round((Date.now() - new Date(token.created).getTime()) / 1000) > config.get("security:tokenLifeSecs");
             if (isExpired) {
                databaseHelper.execute("DELETE FROM Tokens WHERE id=?", [token.id], function(err) {
                   if (err) {
