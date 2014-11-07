@@ -1,13 +1,20 @@
+var RunMode = require('./lib/RunMode');
+if (!RunMode.isValid()) {
+   console.log("FATAL ERROR: Unknown NODE_ENV '" + process.env.NODE_ENV + "'. Must be one of: " + RunMode.getValidModes());
+   process.exit(0);
+}
+
 // dependencies
 var express = require('express');
-var cors = require('cors');
 var app = express();
 
 var log4js = require('log4js');
-log4js.configure('log4js-config-' + app.get('env') + '.json');
+log4js.configure('log4js-config-' + RunMode.get() + '.json');
 var log = log4js.getLogger('esdr');
+log.info("Run Mode: " + RunMode.get());
 
 var config = require('./config');
+var cors = require('cors');
 var expressHandlebars = require('express-handlebars');
 var path = require('path');
 var favicon = require('serve-favicon');
@@ -21,7 +28,6 @@ var cookieParser = require('cookie-parser');
 var session = require('express-session');
 var SessionStore = require('express-mysql-session');
 
-log.info("Environment: " + app.get('env'));
 
 // instantiate the datastore
 var datastore = new BodyTrackDatastore({
@@ -76,7 +82,7 @@ Database.create(function(err, db) {
 
          app.engine('hbs', handlebars.engine);
          app.set('view engine', '.hbs');
-         app.set('view cache', app.get('env') === 'production');           // only cache views in production
+         app.set('view cache', RunMode.isProduction());           // only cache views in production
          log.info("View cache enabled = " + app.enabled('view cache'));
 
          // MIDDLEWARE -------------------------------------------------------------------------------------------------
@@ -88,22 +94,22 @@ Database.create(function(err, db) {
          app.use(compress());                // enables gzip compression
          app.use(express.static(path.join(__dirname, 'public')));          // static file serving
          // set up HTTP request logging
-         if (app.get('env') == 'production') {
+         if (RunMode.isProduction()) {
             // create a write stream (in append mode)
             var fs = require('fs');
             var httpAccessLogDirectory = config.get("httpAccessLogDirectory");
             log.info("HTTP access log: " + httpAccessLogDirectory);
-            var accessLogStream = fs.createWriteStream(httpAccessLogDirectory, {flags : 'a'});
-            app.use(requestLogger('combined', {stream : accessLogStream}));
+            var accessLogStream = fs.createWriteStream(httpAccessLogDirectory, { flags : 'a' });
+            app.use(requestLogger('combined', { stream : accessLogStream }));
          }
          else {
-            app.use(requestLogger('dev'));      // simple request logging for non-production use
+            app.use(requestLogger('dev'));      // simple request logging when in non-production mode
          }
          app.use(bodyParser.urlencoded({ extended : true }));     // form parsing
          app.use(bodyParser.json());         // json body parsing
          app.use(function(error, req, res, next) { // function MUST have arity 4 here!
             // catch invalid JSON error (found at http://stackoverflow.com/a/15819808/703200)
-            res.status(400).json({status : "fail", data : "invalid JSON"})
+            res.status(400).json({ status : "fail", data : "invalid JSON" })
          });
 
          // configure passport
@@ -207,7 +213,7 @@ Database.create(function(err, db) {
          app.use(error_handlers.http404);
 
          // dev and prod should handle errors differently: e.g. don't show stacktraces in prod
-         app.use((app.get('env') === 'development') ? error_handlers.development : error_handlers.production);
+         app.use(RunMode.isProduction() ? error_handlers.prod : error_handlers.dev);
 
          // ------------------------------------------------------------------------------------------------------------
 

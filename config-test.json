@@ -21,7 +21,7 @@
    "database" : {
       "host" : "localhost",
       "database" : "esdr_test",
-      "username" : "esdr",
+      "username" : "esdr_test",
       "password" : "password",
       "pool" : {
          "connectionLimit" : 10

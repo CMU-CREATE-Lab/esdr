@@ -3,8 +3,8 @@ To run these tests, do the following first:
 1) In mysql, execute the following to create the test database and esdr user:
 
       CREATE DATABASE IF NOT EXISTS esdr_test;
-      GRANT ALL PRIVILEGES ON esdr_test.* To 'esdr'@'localhost' IDENTIFIED BY 'password';
-      GRANT SELECT,INSERT,UPDATE,DELETE,CREATE ON esdr_test.* TO 'esdr'@'localhost';
+      GRANT ALL PRIVILEGES ON esdr_test.* To 'esdr_test'@'localhost' IDENTIFIED BY 'password';
+      GRANT SELECT,INSERT,UPDATE,DELETE,CREATE ON esdr_test.* TO 'esdr_test'@'localhost';
 
 2) Run the server in test mode, like this:
 

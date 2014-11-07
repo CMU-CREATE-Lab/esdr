@@ -8,14 +8,14 @@ module.exports = {
       res.jsendClientError("Resource not found", null, statusCode);
    },
 
-   development : function(err, req, res, next) {
+   dev : function(err, req, res, next) {
       log.debug("In DEV error handler!");
       log.error(err);
       var statusCode = err.status || httpStatus.INTERNAL_SERVER_ERROR;
       return res.jsendServerError(err.message, null, statusCode);
    },
 
-   production : function(err, req, res, next) {
+   prod : function(err, req, res, next) {
       log.debug("In PROD error handler!");
       log.error(err);
       var statusCode = err.status || httpStatus.INTERNAL_SERVER_ERROR;

@@ -1,8 +1,8 @@
 {
    "database" : {
       "host" : "localhost",
-      "database" : "esdr",
-      "username" : "esdr",
+      "database" : "esdr_dev",
+      "username" : "esdr_dev",
       "password" : "password",
       "pool" : {
          "connectionLimit" : 10

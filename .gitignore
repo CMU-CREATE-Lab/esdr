@@ -5,6 +5,6 @@ node_modules
 out
 logs/*.log
 
-config-production.json
-mail-config-development.json
-mail-config-production.json
+config-prod.json
+mail-config-dev.json
+mail-config-prod.json

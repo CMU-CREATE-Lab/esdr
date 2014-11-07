@@ -1,10 +1,10 @@
 var config = require('nconf');
 var path = require('path');
 var log = require('log4js').getLogger('esdr:config');
+var RunMode = require('./lib/RunMode');
 
-var nodeEnvironment = process.env.NODE_ENV || "development";
-var configFile = './config-' + nodeEnvironment + '.json';
-var mailConfigFile = './mail-config-' + nodeEnvironment + '.json';
+var configFile = './config-' + RunMode.get() + '.json';
+var mailConfigFile = './mail-config-' + RunMode.get() + '.json';
 log.info("Using config file:      " + configFile);
 log.info("Using mail config file: " + mailConfigFile);
 
@@ -58,7 +58,7 @@ config.defaults({
                    },
                    "datastore" : {
                       "binDirectory" : "./datastore/bin",
-                      "dataDirectory" : "./datastore/data-development"
+                      "dataDirectory" : "./datastore/data-dev"
                    },
                    "mail" : {
                       "smtp" : {
