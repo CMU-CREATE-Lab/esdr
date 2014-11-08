@@ -28,7 +28,6 @@ var cookieParser = require('cookie-parser');
 var session = require('express-session');
 var SessionStore = require('express-mysql-session');
 
-
 // instantiate the datastore
 var datastore = new BodyTrackDatastore({
                                           binDir : config.get("datastore:binDirectory"),
@@ -100,6 +99,11 @@ Database.create(function(err, db) {
             var httpAccessLogDirectory = config.get("httpAccessLogDirectory");
             log.info("HTTP access log: " + httpAccessLogDirectory);
             var accessLogStream = fs.createWriteStream(httpAccessLogDirectory, { flags : 'a' });
+
+            // get the correct remote address from the X-Forwarded-For header
+            requestLogger.token('remote-addr', function(req) {
+               return req.headers['x-forwarded-for'];
+            });
             app.use(requestLogger('combined', { stream : accessLogStream }));
          }
          else {
