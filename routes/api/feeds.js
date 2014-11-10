@@ -11,7 +11,7 @@ module.exports = function(FeedModel, feedRouteHelper) {
               function(req, res, next) {
                  passport.authenticate('bearer', function(err, user, info) {
                     if (err) {
-                       var message = "Error while authenticating to get feed list";
+                       var message = "Error while authenticating to find feeds";
                        log.error(message + ": " + err);
                        return res.jsendServerError(message);
                     }
