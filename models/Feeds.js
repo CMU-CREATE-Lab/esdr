@@ -363,7 +363,8 @@ module.exports = function(databaseHelper) {
          }
 
          // More security! Now disallow selection of the apiKey if not authenticated.  If authenticated, then we'll
-         // need to manually remove the apiKey field after we fetch the feeds from the database (see below).
+         // need to manually remove the apiKey field from feeds not owned by the auth'd user after we fetch the feeds
+         // from the database (see below).
          var apiKeyIndex = queryParts.selectFields.indexOf('apiKey');
          if (authUserId == null && apiKeyIndex >= 0) {
             // remove the apiKey field from the array
