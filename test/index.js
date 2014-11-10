@@ -43,11 +43,28 @@ describe("ESDR", function() {
       displayName : "    Test User Trimming   "
    };
    var testClient = {
-      displayName : "Test Client",
-      clientName : "test_client",
-      clientSecret : "I've got a secret / I've been hiding / Under my skin",
-      resetPasswordUrl : "http://localhost:3333/password-reset/:resetPasswordToken",
-      verificationUrl : "http://localhost:3333/user-verification/:verificationToken"
+      displayName : "Test Client 1",
+      clientName : "test_client_1",
+      email : "test1@test.com",
+      clientSecret : "I am test client 1",
+      resetPasswordUrl : "http://test-client-1.com:3333/password-reset/:resetPasswordToken",
+      verificationUrl : "http://test-client-1.com:3333/user-verification/:verificationToken"
+   };
+   var testClient2 = {
+      displayName : "Test Client 2",
+      clientName : "test_client_2",
+      email : "test2@test.com",
+      clientSecret : "I am test client 2",
+      resetPasswordUrl : "http://test-client-2.com:3333/password-reset/:resetPasswordToken",
+      verificationUrl : "http://test-client-2.com:3333/user-verification/:verificationToken"
+   };
+   var testClient3 = {
+      displayName : "Test Client 3",
+      clientName : "test_client_3",
+      email : "test3@test.com",
+      clientSecret : "I am test client 3",
+      resetPasswordUrl : "http://test-client-3.com:3333/password-reset/:resetPasswordToken",
+      verificationUrl : "http://test-client-3.com:3333/user-verification/:verificationToken"
    };
    var testClientNeedsTrimming = {
       displayName : "   Test Client Trimming  ",
@@ -61,35 +78,52 @@ describe("ESDR", function() {
       prettyName : 'CATTfish v1',
       vendor : 'CMU CREATE Lab',
       description : 'The CATTfish v1 water temperature and conductivity sensor.',
-      defaultChannelSpecs : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "&mu;S/cm" }, "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" }}
+      defaultChannelSpecs : {
+         "temperature" : { "prettyName" : "Temperature", "units" : "C" },
+         "conductivity" : { "prettyName" : "Conductivity", "units" : "&mu;S/cm" },
+         "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" }
+      }
    };
    var testProduct2 = {
       name : 'cattfish_v2',
       prettyName : 'CATTfish v2',
       vendor : 'CMU CREATE Lab',
       description : 'The CATTfish v2 water temperature and conductivity sensor.',
-      defaultChannelSpecs : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "&mu;S/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }}
+      defaultChannelSpecs : {
+         "temperature" : { "prettyName" : "Temperature", "units" : "C" },
+         "conductivity" : { "prettyName" : "Conductivity", "units" : "&mu;S/cm" },
+         "error_codes" : { "prettyName" : "Error Codes", "units" : null }
+      }
    };
    var testProduct3 = {
       name : 'cattfish_v3',
       prettyName : 'CATTfish v3',
       vendor : 'CMU CREATE Lab',
       description : 'The CATTfish v3 water temperature and conductivity sensor.',
-      defaultChannelSpecs : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "&mu;S/cm" }}
+      defaultChannelSpecs : {
+         "temperature" : { "prettyName" : "Temperature", "units" : "C" },
+         "conductivity" : { "prettyName" : "Conductivity", "units" : "&mu;S/cm" }
+      }
    };
    var testProduct4 = {
       name : 'cattfish_v4',
       prettyName : 'CATTfish v4',
       vendor : 'CMU CREATE Lab',
       description : 'The CATTfish v4 water temperature and conductivity sensor.',
-      defaultChannelSpecs : { "temperature" : { "prettyName" : "Temperature", "units" : "C" }, "conductivity" : { "prettyName" : "Conductivity", "units" : "&mu;S/cm" }, "error_codes" : { "prettyName" : "Error Codes", "units" : null }, "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" }, "humidity" : { "prettyName" : "Humidity", "units" : "%" }}
+      defaultChannelSpecs : {
+         "temperature" : { "prettyName" : "Temperature", "units" : "C" },
+         "conductivity" : { "prettyName" : "Conductivity", "units" : "&mu;S/cm" },
+         "error_codes" : { "prettyName" : "Error Codes", "units" : null },
+         "battery_voltage" : { "prettyName" : "Battery Voltage", "units" : "V" },
+         "humidity" : { "prettyName" : "Humidity", "units" : "%" }
+      }
    };
    var testProduct5 = {
       name : 'cattfish_v5',
       prettyName : 'CATTfish v5',
       vendor : 'CMU CREATE Lab',
       description : 'The CATTfish v5 water temperature and conductivity sensor.',
-      defaultChannelSpecs : { "conductivity" : { "prettyName" : "Conductivity", "units" : "&mu;S/cm" }}
+      defaultChannelSpecs : { "conductivity" : { "prettyName" : "Conductivity", "units" : "&mu;S/cm" } }
    };
    var testDevice1 = {
       name : 'My Awesome Device',
@@ -197,18 +231,18 @@ describe("ESDR", function() {
 
    var testFeed1aTile10_2633 = {
       "data" : [
-         [ 1380472357, 18.6, 0, 1 ],
-         [ 1380556690, 18.3, 0, 1 ],
-         [ 1380643808, 19.5, 0, 1 ],
-         [ 1380725507, 19.6, 0, 1 ],
-         [ 1380752155, 20, 0, 1 ],
-         [ 1380836116, 20.7, 0, 1 ],
-         [ 1380883999, 21.1, 0, 1 ],
-         [ 1380909922, 20.3, 0, 1 ],
-         [ 1380922452, 19.5, 0, 1 ],
-         [ 1380969641, 21.8, 0, 1 ]
+         [1380472357, 18.6, 0, 1],
+         [1380556690, 18.3, 0, 1],
+         [1380643808, 19.5, 0, 1],
+         [1380725507, 19.6, 0, 1],
+         [1380752155, 20, 0, 1],
+         [1380836116, 20.7, 0, 1],
+         [1380883999, 21.1, 0, 1],
+         [1380909922, 20.3, 0, 1],
+         [1380922452, 19.5, 0, 1],
+         [1380969641, 21.8, 0, 1]
       ],
-      "fields" : [ "time", "mean", "stddev", "count" ],
+      "fields" : ["time", "mean", "stddev", "count"],
       "level" : 10,
       "offset" : 2633,
       "type" : "value"
@@ -320,7 +354,7 @@ describe("ESDR", function() {
                                     });
                                  },
                                  function(done) {
-                                    connection.query("DELETE FROM Users", function(err) {
+                                    connection.query("DELETE FROM Clients WHERE clientName <> 'ESDR'", function(err) {
                                        if (err) {
                                           throw err;
                                        }
@@ -329,14 +363,14 @@ describe("ESDR", function() {
                                     });
                                  },
                                  function(done) {
-                                    connection.query("DELETE FROM Clients", function(err) {
+                                    connection.query("DELETE FROM Users", function(err) {
                                        if (err) {
                                           throw err;
                                        }
 
                                        done();
                                     });
-                                 }
+                                 },
                               ],
                               initDone);
                });
@@ -346,7 +380,7 @@ describe("ESDR", function() {
    });
 
    describe("REST API", function() {
-      describe("Clients", function() {
+      describe("Clients (without authentication)", function() {
          it("Should be able to create a new client", function(done) {
             agent(url)
                   .post("/api/v1/clients")
@@ -406,7 +440,7 @@ describe("ESDR", function() {
          it("Should fail to create a new client with missing required values", function(done) {
             agent(url)
                   .post("/api/v1/clients")
-                  .send({ })
+                  .send({})
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -1033,7 +1067,7 @@ describe("ESDR", function() {
                agent(url)
                      .post("/api/v1/user-verification")
                      .auth(testClient.clientName, testClient.clientSecret)
-                     .send({email : testUser1.email})
+                     .send({ email : testUser1.email })
                      .end(function(err, res) {
                              if (err) {
                                 return done(err);
@@ -1056,7 +1090,7 @@ describe("ESDR", function() {
 
                agent(url)
                      .put("/api/v1/user-verification")
-                     .send({token : verificationTokens.testUser1})
+                     .send({ token : verificationTokens.testUser1 })
                      .end(function(err, res) {
                              if (err) {
                                 return done(err);
@@ -1076,7 +1110,7 @@ describe("ESDR", function() {
 
                agent(url)
                      .put("/api/v1/user-verification")
-                     .send({token : verificationTokens.testUser2})
+                     .send({ token : verificationTokens.testUser2 })
                      .end(function(err, res) {
                              if (err) {
                                 return done(err);
@@ -1096,7 +1130,7 @@ describe("ESDR", function() {
                agent(url)
                      .post("/api/v1/user-verification")
                      .auth(testClient.clientName, testClient.clientSecret)
-                     .send({email : testUser1.email})
+                     .send({ email : testUser1.email })
                      .end(function(err, res) {
                              if (err) {
                                 return done(err);
@@ -1119,7 +1153,7 @@ describe("ESDR", function() {
                agent(url)
                      .post("/api/v1/user-verification")
                      .auth(testClient.clientName, testClient.clientSecret)
-                     .send({email : testUser1.email})
+                     .send({ email : testUser1.email })
                      .end(function(err, res) {
                              if (err) {
                                 return done(err);
@@ -1140,7 +1174,7 @@ describe("ESDR", function() {
 
                agent(url)
                      .post("/api/v1/user-verification")
-                     .send({email : testUser1.email})
+                     .send({ email : testUser1.email })
                      .end(function(err, res) {
                              if (err) {
                                 return done(err);
@@ -1162,7 +1196,7 @@ describe("ESDR", function() {
                agent(url)
                      .post("/api/v1/user-verification")
                      .auth(testClient.clientName, "bogus")
-                     .send({email : testUser1.email})
+                     .send({ email : testUser1.email })
                      .end(function(err, res) {
                              if (err) {
                                 return done(err);
@@ -1200,7 +1234,7 @@ describe("ESDR", function() {
 
                agent(url)
                      .put("/api/v1/user-verification")
-                     .send({token : "bogus_token"})
+                     .send({ token : "bogus_token" })
                      .end(function(err, res) {
                              if (err) {
                                 return done(err);
@@ -1217,11 +1251,11 @@ describe("ESDR", function() {
             });
 
             it("Should fail when requesting that the verification token be sent again for an unknown user", function(done) {
-               var unknownUser = {email : 'unknown@unknown.com'};
+               var unknownUser = { email : 'unknown@unknown.com' };
                agent(url)
                      .post("/api/v1/user-verification")
                      .auth(testClient.clientName, testClient.clientSecret)
-                     .send({email : unknownUser.email})
+                     .send({ email : unknownUser.email })
                      .end(function(err, res) {
                              if (err) {
                                 return done(err);
@@ -1232,7 +1266,7 @@ describe("ESDR", function() {
                              res.body.should.have.property('status', 'error');
                              res.body.should.have.property('data');
                              res.body.should.have.property('data');
-                             should(res.body.data).eql({email : unknownUser.email});
+                             should(res.body.data).eql({ email : unknownUser.email });
 
                              done();
                           });
@@ -1267,7 +1301,7 @@ describe("ESDR", function() {
             agent(url)
                   .post("/api/v1/password-reset")
                   .auth(testClient.clientName, testClient.clientSecret)
-                  .send({email : testUser1.email})
+                  .send({ email : testUser1.email })
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -1290,7 +1324,7 @@ describe("ESDR", function() {
             agent(url)
                   .post("/api/v1/password-reset")
                   .auth(testClient.clientName, testClient.clientSecret)
-                  .send({email : testUser1.email})
+                  .send({ email : testUser1.email })
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -1313,7 +1347,7 @@ describe("ESDR", function() {
          it("Should fail to set the password if the reset password token is missing", function(done) {
             agent(url)
                   .put("/api/v1/password-reset")
-                  .send({password : newPassword})
+                  .send({ password : newPassword })
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -1331,7 +1365,7 @@ describe("ESDR", function() {
          it("Should fail to set the password using an invalid reset password token", function(done) {
             agent(url)
                   .put("/api/v1/password-reset")
-                  .send({password : newPassword, token : "bogus"})
+                  .send({ password : newPassword, token : "bogus" })
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -1350,7 +1384,7 @@ describe("ESDR", function() {
             var invalidPassword = "a";
             agent(url)
                   .put("/api/v1/password-reset")
-                  .send({password : invalidPassword, token : resetPasswordToken})
+                  .send({ password : invalidPassword, token : resetPasswordToken })
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -1374,7 +1408,7 @@ describe("ESDR", function() {
          it("Should be able to set the password using the reset password token", function(done) {
             agent(url)
                   .put("/api/v1/password-reset")
-                  .send({password : newPassword, token : resetPasswordToken})
+                  .send({ password : newPassword, token : resetPasswordToken })
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -1435,11 +1469,11 @@ describe("ESDR", function() {
          });
 
          it("Should fail to request a password reset token for an invalid email", function(done) {
-            var invalidEmail = {email : 'invalid'};
+            var invalidEmail = { email : 'invalid' };
             agent(url)
                   .post("/api/v1/password-reset")
                   .auth(testClient.clientName, testClient.clientSecret)
-                  .send({email : invalidEmail.email})
+                  .send({ email : invalidEmail.email })
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -1456,11 +1490,11 @@ describe("ESDR", function() {
          });
 
          it("Should fail to request a password reset token for an unknown email", function(done) {
-            var unknownUser = {email : 'unknown@unknown.com'};
+            var unknownUser = { email : 'unknown@unknown.com' };
             agent(url)
                   .post("/api/v1/password-reset")
                   .auth(testClient.clientName, testClient.clientSecret)
-                  .send({email : unknownUser.email})
+                  .send({ email : unknownUser.email })
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -1479,7 +1513,7 @@ describe("ESDR", function() {
          it("A request for a password reset token to be sent should not require client authentication", function(done) {
             agent(url)
                   .post("/api/v1/password-reset")
-                  .send({email : testUser1.email})
+                  .send({ email : testUser1.email })
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -1498,7 +1532,7 @@ describe("ESDR", function() {
             agent(url)
                   .post("/api/v1/password-reset")
                   .auth(testClient.clientName, "bogus")
-                  .send({email : testUser1.email})
+                  .send({ email : testUser1.email })
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -1522,7 +1556,7 @@ describe("ESDR", function() {
             agent(url)
                   .post("/api/v1/password-reset")
                   .auth(bogusClient.clientName, bogusClient.clientSecret)
-                  .send({email : testUser1.email})
+                  .send({ email : testUser1.email })
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -1540,7 +1574,7 @@ describe("ESDR", function() {
 
             agent(url)
                   .post("/api/v1/password-reset")
-                  .send({user : {email : testUser1.email}})
+                  .send({ user : { email : testUser1.email } })
                   .end(function(err, res) {
                           if (err) {
                              return done(err);
@@ -1556,7 +1590,7 @@ describe("ESDR", function() {
 
       });   // end Reset Password Request
 
-      describe("Products, Devices, and Feeds", function() {
+      describe("Clients, Products, Devices, and Feeds", function() {
 
          var accessTokens = {};
 
@@ -1602,6 +1636,52 @@ describe("ESDR", function() {
                            }
                         ],
                         initDone);
+         });
+
+         describe("Clients (with authentication)", function() {
+            it("Should be able to create a new client (with valid authentication)", function(done) {
+               agent(url)
+                     .post("/api/v1/clients")
+                     .set({
+                             Authorization : "Bearer " + accessTokens.testUser1.access_token
+                          })
+                     .send(testClient2)
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', httpStatus.CREATED);
+                             res.body.should.have.property('code', httpStatus.CREATED);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('displayName', testClient2.displayName);
+                             res.body.data.should.have.property('clientName', testClient2.clientName);
+                             done();
+                          });
+            });
+
+            it("Should be able to create a new client (with bogus authentication)", function(done) {
+               agent(url)
+                     .post("/api/v1/clients")
+                     .set({
+                             Authorization : "Bearer " + "bogus"
+                          })
+                     .send(testClient3)
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', httpStatus.CREATED);
+                             res.body.should.have.property('code', httpStatus.CREATED);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('displayName', testClient3.displayName);
+                             res.body.data.should.have.property('clientName', testClient3.clientName);
+                             done();
+                          });
+            });
          });
 
          describe("Products", function() {
@@ -3947,7 +4027,7 @@ describe("ESDR", function() {
       it("Should be able to request access and refresh tokens after verifying the user", function(done) {
          agent(url)
                .put("/api/v1/user-verification")
-               .send({token : verificationTokens.testUser3})
+               .send({ token : verificationTokens.testUser3 })
                .end(function(err, res) {
                        if (err) {
                           return done(err);
@@ -4352,7 +4432,7 @@ describe("ESDR", function() {
    describe("Database", function() {
       describe("Clients", function() {
          it("Should not be able to create the same client again", function(done) {
-            db.clients.create(testClient, function(err, result) {
+            db.clients.create(testClient, null, function(err, result) {
                (err != null).should.be.true;
                (result == null).should.be.true;
                (err instanceof DuplicateRecordError).should.be.true;

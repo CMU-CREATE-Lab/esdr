@@ -13,13 +13,16 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Clients` ( " +
                          "`email` varchar(255) DEFAULT NULL, " +
                          "`verificationUrl` varchar(512) NOT NULL, " +
                          "`resetPasswordUrl` varchar(512) NOT NULL, " +
+                         "`creatorUserId` bigint(20) DEFAULT NULL, " +
                          "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
                          "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
                          "PRIMARY KEY (`id`), " +
                          "KEY `displayName` (`displayName`), " +
                          "UNIQUE KEY `unique_clientName` (`clientName`), " +
+                         "KEY `creatorUserId` (`creatorUserId`), " +
                          "KEY `created` (`created`), " +
-                         "KEY `modified` (`modified`) " +
+                         "KEY `modified` (`modified`), " +
+                         "CONSTRAINT `clients_creatorUserId_fk_1` FOREIGN KEY (`creatorUserId`) REFERENCES `Users` (`id`) " +
                          ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
 
 var JSON_SCHEMA = {
@@ -78,9 +81,10 @@ module.exports = function(databaseHelper) {
       });
    };
 
-   this.create = function(clientDetails, callback) {
+   this.create = function(clientDetails, creatorUserId, callback) {
       // first build a copy and trim some fields
       var client = {
+         creatorUserId : creatorUserId,
          clientSecret : clientDetails.clientSecret
       };
       trimAndCopyPropertyIfNonEmpty(clientDetails, client, "displayName");

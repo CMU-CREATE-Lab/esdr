@@ -234,7 +234,7 @@ module.exports = {
                                                           }
                                                           else {
                                                              log.info("   Client [" + esdrClient.clientName + "] not found, creating...");
-                                                             db.clients.create(esdrClient, function(err, creationResult) {
+                                                             db.clients.create(esdrClient, null, function(err, creationResult) {
                                                                 if (err && !(err instanceof DuplicateRecordError)) {
                                                                    errors.push(err);
                                                                 }
