@@ -121,6 +121,10 @@ Database.create(function(err, db) {
 
          // CUSTOM MIDDLEWARE ------------------------------------------------------------------------------------------
 
+         if (RunMode.isProduction()) {
+            app.set('trust proxy', 1) // trust first proxy
+         }
+
          // define the various middleware required for routes which need session support
          var sessionSupport = [
             cookieParser(),                  // cookie parsing--MUST come before setting up session middleware!
@@ -135,7 +139,11 @@ Database.create(function(err, db) {
                                                    password : config.get("database:password")
                                                 }),
                        rolling : false,
-                       //secure: true,   // TODO: enable this once https is enabled
+                       cookie : {
+                          httpOnly : true,
+                          secure : RunMode.isProduction()   // enable secure cookies in production, which uses HTTPS
+                       },
+                       proxy : RunMode.isProduction(),       // we use a proxy in production
                        saveUninitialized : true,
                        resave : true,
                        unset : "destroy"
