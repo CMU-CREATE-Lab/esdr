@@ -3,6 +3,8 @@ var bcrypt = require('bcrypt');
 var JaySchema = require('jayschema');
 var jsonValidator = new JaySchema();
 var ValidationError = require('../lib/errors').ValidationError;
+var Query2Query = require('query2query');
+var config = require('../config');
 var log = require('log4js').getLogger('esdr:models:clients');
 
 var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Clients` ( " +
@@ -10,20 +12,37 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Clients` ( " +
                          "`displayName` varchar(255) NOT NULL, " +
                          "`clientName` varchar(255) NOT NULL, " +
                          "`clientSecret` varchar(255) NOT NULL, " +
-                         "`email` varchar(255) DEFAULT NULL, " +
+                         "`email` varchar(255) NOT NULL, " +
                          "`verificationUrl` varchar(512) NOT NULL, " +
                          "`resetPasswordUrl` varchar(512) NOT NULL, " +
                          "`creatorUserId` bigint(20) DEFAULT NULL, " +
+                         "`isPublic` boolean DEFAULT 0, " +
                          "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
                          "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
                          "PRIMARY KEY (`id`), " +
                          "KEY `displayName` (`displayName`), " +
                          "UNIQUE KEY `unique_clientName` (`clientName`), " +
+                         "KEY `email` (`email`), " +
                          "KEY `creatorUserId` (`creatorUserId`), " +
+                         "KEY `isPublic` (`isPublic`), " +
                          "KEY `created` (`created`), " +
                          "KEY `modified` (`modified`), " +
                          "CONSTRAINT `clients_creatorUserId_fk_1` FOREIGN KEY (`creatorUserId`) REFERENCES `Users` (`id`) " +
                          ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
+
+var MAX_FOUND_CLIENTS = 100;
+
+var query2query = new Query2Query();
+query2query.addField('id', true, true, false, Query2Query.types.INTEGER);
+query2query.addField('displayName', true, true, false);
+query2query.addField('clientName', true, true, false);
+query2query.addField('email', true, true, false);
+query2query.addField('verificationUrl', false, false, false);
+query2query.addField('resetPasswordUrl', false, false, false);
+query2query.addField('creatorUserId', true, true, true, Query2Query.types.INTEGER);
+query2query.addField('isPublic', true, true, false, Query2Query.types.BOOLEAN);
+query2query.addField('created', true, true, false, Query2Query.types.DATETIME);
+query2query.addField('modified', true, true, false, Query2Query.types.DATETIME);
 
 var JSON_SCHEMA = {
    "$schema" : "http://json-schema.org/draft-04/schema#",
@@ -61,9 +80,12 @@ var JSON_SCHEMA = {
          "type" : "string",
          "minLength" : 10,
          "maxLength" : 512
+      },
+      "isPublic" : {
+         "type" : "boolean"
       }
    },
-   "required" : ["displayName", "clientName", "clientSecret", "verificationUrl", "resetPasswordUrl"]
+   "required" : ["displayName", "clientName", "clientSecret", "email", "verificationUrl", "resetPasswordUrl"]
 };
 
 module.exports = function(databaseHelper) {
@@ -85,13 +107,25 @@ module.exports = function(databaseHelper) {
       // first build a copy and trim some fields
       var client = {
          creatorUserId : creatorUserId,
-         clientSecret : clientDetails.clientSecret
+         clientSecret : clientDetails.clientSecret,
+         isPublic : !!clientDetails.isPublic
       };
       trimAndCopyPropertyIfNonEmpty(clientDetails, client, "displayName");
       trimAndCopyPropertyIfNonEmpty(clientDetails, client, "clientName");
       trimAndCopyPropertyIfNonEmpty(clientDetails, client, "email");
       trimAndCopyPropertyIfNonEmpty(clientDetails, client, "verificationUrl");
       trimAndCopyPropertyIfNonEmpty(clientDetails, client, "resetPasswordUrl");
+
+      // use the ESDR email, verificationUrl and resetPasswordUrl if not provided
+      if (!("email" in client)) {
+         client.email = config.get("esdrClient:email");
+      }
+      if (!("verificationUrl" in client)) {
+         client.verificationUrl = config.get("esdrClient:verificationUrl");
+      }
+      if (!("resetPasswordUrl" in client)) {
+         client.resetPasswordUrl = config.get("esdrClient:resetPasswordUrl");
+      }
 
       // now validate
       jsonValidator.validate(client, JSON_SCHEMA, function(err1) {
@@ -122,6 +156,68 @@ module.exports = function(databaseHelper) {
 
          });
       });
+   };
+
+   this.find = function(authUserId, queryString, callback) {
+      query2query.parse(queryString, function(err, queryParts) {
+
+                           if (err) {
+                              return callback(err);
+                           }
+
+                           // Build the restricted SQL query.  Note that we manually add the isPublic and creatorUserId
+                           // fields to the SELECT statement.  This is so we can filter out the the email,
+                           // verificationUrl, and resetPasswordUrl if the client record is not public or not owned by
+                           // the auth'd user.  We'll remove them from the results below if not requested by user.
+                           var restrictedSql = [
+                              "SELECT " + queryParts.selectFields.join(',') + ",isPublic,creatorUserId",
+                              "FROM Clients",
+                              queryParts.whereClause,
+                              queryParts.orderByClause,
+                              queryParts.limitClause
+                           ].join(' ');
+                           log.debug("Clients.find(): " + restrictedSql + (queryParts.whereValues.length > 0 ? " [where values: " + queryParts.whereValues + "]" : ""));
+
+                           // Use findWithLimit so we can also get a count of the total number of records that would
+                           // have been returned had there been no LIMIT clause included in the query
+                           databaseHelper.findWithLimit(restrictedSql, queryParts.whereValues, function(err, result) {
+                              if (err) {
+                                 return callback(err);
+                              }
+
+                              // copy in the offset and limit
+                              result.offset = queryParts.offset;
+                              result.limit = queryParts.limit;
+
+                              // if the user didn't explicitly select the isPublic and creatorUserId, then we'll want to
+                              // strip those fields from the response
+                              var willDeleteIsPublicField = (queryParts.selectFields.indexOf('isPublic') < 0);
+                              var willDeleteCreatorUserIdField = (queryParts.selectFields.indexOf('creatorUserId') < 0);
+
+                              // For every found client, do the following:
+                              // 1) if the client is private or not owned by the auth'd user, then remove the email,
+                              //    verificationUrl, and resetPasswordUrl fields
+                              // 2) if the user didn't ask for the isPublic field, remove it
+                              // 3) if the user didn't ask for the creatorUserId field, remove it
+                              result.rows.forEach(function(row) {
+                                 if (!row.isPublic && (authUserId == null || (row.creatorUserId != authUserId))) {
+                                    delete row.email;
+                                    delete row.verificationUrl;
+                                    delete row.resetPasswordUrl;
+                                 }
+
+                                 if (willDeleteIsPublicField) {
+                                    delete row.isPublic;
+                                 }
+                                 if (willDeleteCreatorUserIdField) {
+                                    delete row.creatorUserId;
+                                 }
+                              });
+
+                              return callback(null, result, queryParts.selectFields);
+                           });
+                        },
+                        MAX_FOUND_CLIENTS);
    };
 
    /**

@@ -61,10 +61,8 @@ describe("ESDR", function() {
    var testClient3 = {
       displayName : "Test Client 3",
       clientName : "test_client_3",
-      email : "test3@test.com",
       clientSecret : "I am test client 3",
-      resetPasswordUrl : "http://test-client-3.com:3333/password-reset/:resetPasswordToken",
-      verificationUrl : "http://test-client-3.com:3333/user-verification/:verificationToken"
+      isPublic : true
    };
    var testClientNeedsTrimming = {
       displayName : "   Test Client Trimming  ",
@@ -1682,6 +1680,167 @@ describe("ESDR", function() {
                              done();
                           });
             });
+
+            it("Creating a client without specifying the email, verificationUrl, or resetPasswordUrl should result in the client getting the defaults", function(done) {
+               agent(url)
+                     .get("/api/v1/clients?where=clientName=" + testClient3.clientName)
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', httpStatus.OK);
+                             res.body.should.have.property('code', httpStatus.OK);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('totalCount', 1);
+                             res.body.data.should.have.property('offset', 0);
+                             res.body.data.should.have.property('limit', 100);
+                             res.body.data.should.have.property('rows');
+                             res.body.data.rows.should.have.length(1);
+
+                             res.body.data.rows[0].should.have.property('email', config.get("esdrClient:email"));
+                             res.body.data.rows[0].should.have.property('verificationUrl', config.get("esdrClient:verificationUrl"));
+                             res.body.data.rows[0].should.have.property('resetPasswordUrl', config.get("esdrClient:resetPasswordUrl"));
+                             done();
+                          });
+            });
+
+            it("Should be able to create find clients (without authentication) and only see all fields for public clients", function(done) {
+               agent(url)
+                     .get("/api/v1/clients")
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', httpStatus.OK);
+                             res.body.should.have.property('code', httpStatus.OK);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('totalCount', 5);
+                             res.body.data.should.have.property('offset', 0);
+                             res.body.data.should.have.property('limit', 100);
+                             res.body.data.should.have.property('rows');
+                             res.body.data.rows.should.have.length(5);
+                             res.body.data.rows.forEach(function(row) {
+                                row.should.have.property('id');
+                                row.should.have.property('displayName');
+                                row.should.have.property('clientName');
+
+                                row.should.have.property('creatorUserId');
+                                row.should.have.property('isPublic');
+                                row.should.have.property('created');
+                                row.should.have.property('modified');
+
+                                if (row['isPublic']) {
+                                   row.should.have.property('email');
+                                   row.should.have.property('verificationUrl');
+                                   row.should.have.property('resetPasswordUrl');
+                                }
+                                else {
+                                   row.should.not.have.property('email');
+                                   row.should.not.have.property('verificationUrl');
+                                   row.should.not.have.property('resetPasswordUrl');
+                                }
+                             });
+
+                             done();
+                          });
+            });
+
+            it("Should be able to create find clients (with authentication) and see all fields for public clients and clients owned by testUser1", function(done) {
+               agent(url)
+                     .get("/api/v1/clients")
+                     .set({
+                             Authorization : "Bearer " + accessTokens.testUser1.access_token
+                          })
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', httpStatus.OK);
+                             res.body.should.have.property('code', httpStatus.OK);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('totalCount', 5);
+                             res.body.data.should.have.property('offset', 0);
+                             res.body.data.should.have.property('limit', 100);
+                             res.body.data.should.have.property('rows');
+                             res.body.data.rows.should.have.length(5);
+                             res.body.data.rows.forEach(function(row) {
+                                row.should.have.property('id');
+                                row.should.have.property('displayName');
+                                row.should.have.property('clientName');
+
+                                row.should.have.property('creatorUserId');
+                                row.should.have.property('isPublic');
+                                row.should.have.property('created');
+                                row.should.have.property('modified');
+
+                                if (row['isPublic'] || accessTokens.testUser1.userId == row.creatorUserId) {
+                                   row.should.have.property('email');
+                                   row.should.have.property('verificationUrl');
+                                   row.should.have.property('resetPasswordUrl');
+                                }
+                                else {
+                                   row.should.not.have.property('email');
+                                   row.should.not.have.property('verificationUrl');
+                                   row.should.not.have.property('resetPasswordUrl');
+                                }
+                             });
+
+                             done();
+                          });
+            });
+
+            it("Should be able to create find clients (with authentication) and see all fields for public clients and clients owned by testUser2", function(done) {
+               agent(url)
+                     .get("/api/v1/clients")
+                     .set({
+                             Authorization : "Bearer " + accessTokens.testUser2.access_token
+                          })
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', httpStatus.OK);
+                             res.body.should.have.property('code', httpStatus.OK);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('totalCount', 5);
+                             res.body.data.should.have.property('offset', 0);
+                             res.body.data.should.have.property('limit', 100);
+                             res.body.data.should.have.property('rows');
+                             res.body.data.rows.should.have.length(5);
+                             res.body.data.rows.forEach(function(row) {
+                                row.should.have.property('id');
+                                row.should.have.property('displayName');
+                                row.should.have.property('clientName');
+
+                                row.should.have.property('creatorUserId');
+                                row.should.have.property('isPublic');
+                                row.should.have.property('created');
+                                row.should.have.property('modified');
+
+                                if (row['isPublic'] || accessTokens.testUser2.userId == row.creatorUserId) {
+                                   row.should.have.property('email');
+                                   row.should.have.property('verificationUrl');
+                                   row.should.have.property('resetPasswordUrl');
+                                }
+                                else {
+                                   row.should.not.have.property('email');
+                                   row.should.not.have.property('verificationUrl');
+                                   row.should.not.have.property('resetPasswordUrl');
+                                }
+                             });
+
+                             done();
+                          });
+            });
+
          });
 
          describe("Products", function() {
@@ -3734,7 +3893,7 @@ describe("ESDR", function() {
                               exposure : "indoor",
                               isPublic : isPublic,
                               isMobile : false,
-                              latitude : 40 + Math.random(),
+                              latitude :  40 + Math.random(),
                               longitude : -79 + Math.random()
                            };
                            agent(url)

@@ -32,7 +32,8 @@ config.defaults({
                       "clientSecret" : "What I cannot create, I do not understand.",
                       "email" : "esdr-admin@cmucreatelab.org",
                       "resetPasswordUrl" : "http://localhost:3000/password-reset/:resetPasswordToken",
-                      "verificationUrl" : "http://localhost:3000/verification/:verificationToken"
+                      "verificationUrl" : "http://localhost:3000/verification/:verificationToken",
+                      "isPublic" : true
                    },
                    "httpAccessLogDirectory" : path.join(__dirname, './logs/access.log'),
                    "resetPasswordToken" : {
