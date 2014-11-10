@@ -362,9 +362,9 @@ module.exports = function(databaseHelper) {
             whereClause += " AND (" + queryParts.where + ")";
          }
 
-         // More security! Now disallow selection of the apiKey if not authenticated.  If authenticated, then we'll
-         // need to manually remove the apiKey field from feeds not owned by the auth'd user after we fetch the feeds
-         // from the database (see below).
+         // More security! Now disallow selection of the apiKey if not authenticated.  If the user IS authenticated,
+         // then we'll need to manually remove the apiKey field from feeds not owned by the auth'd user after we fetch
+         // the feeds from the database (see below).
          var apiKeyIndex = queryParts.selectFields.indexOf('apiKey');
          if (authUserId == null && apiKeyIndex >= 0) {
             // remove the apiKey field from the array
@@ -379,7 +379,7 @@ module.exports = function(databaseHelper) {
                   queryParts.orderByClause,
                   queryParts.limitClause
          ].join(' ');
-         log.debug("Feeds.findFeeds(): " + restrictedSql + (queryParts.whereValues.length > 0 ? " [where values: " + queryParts.whereValues + "]" : ""));
+         log.debug("Feeds.find(): " + restrictedSql + (queryParts.whereValues.length > 0 ? " [where values: " + queryParts.whereValues + "]" : ""));
 
          // use findWithLimit so we can also get a count of the total number of records that would have been returned
          // had there been no LIMIT clause included in the query
