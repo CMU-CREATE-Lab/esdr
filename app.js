@@ -8,6 +8,10 @@ if (!RunMode.isValid()) {
 var express = require('express');
 var app = express();
 
+// put this up here, above the log4js config, because the BodyTrackDatastore does its own log4js configuration and it
+// was stomping on my config
+var BodyTrackDatastore = require('bodytrack-datastore');
+
 var log4js = require('log4js');
 log4js.configure('log4js-config-' + RunMode.get() + '.json');
 var log = log4js.getLogger('esdr');
@@ -23,7 +27,6 @@ var requestLogger = require('morgan');
 var bodyParser = require('body-parser');
 var passport = require('passport');
 var Database = require("./models/Database");
-var BodyTrackDatastore = require('bodytrack-datastore');
 var cookieParser = require('cookie-parser');
 var session = require('express-session');
 var SessionStore = require('express-mysql-session');
