@@ -7,8 +7,7 @@
          "pattern" : "-yyyy-MM-dd.log",
          "alwaysIncludePattern" : true,
          "layout" : {
-            "type" : "pattern",
-            "pattern" : "%d [%[%p%]] %c - %m"
+            "type" : "basic"
          }
       }
    ],
