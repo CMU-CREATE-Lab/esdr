@@ -1,7 +1,7 @@
 var RunMode = require('./lib/RunMode');
 if (!RunMode.isValid()) {
    console.log("FATAL ERROR: Unknown NODE_ENV '" + process.env.NODE_ENV + "'. Must be one of: " + RunMode.getValidModes());
-   process.exit(0);
+   process.exit(1);
 }
 
 // dependencies
