@@ -216,6 +216,7 @@ Database.create(function(err, db) {
          // ROUTING ----------------------------------------------------------------------------------------------------
 
          // configure routing
+         app.use('/', sessionSupport, require('./routes/index'));
          app.use('/signup', sessionSupport, require('./routes/signup'));
          app.use('/login', sessionSupport, require('./routes/login')(oauthServer));
          app.use('/logout', sessionSupport, require('./routes/logout')(db.tokens));
@@ -235,7 +236,7 @@ Database.create(function(err, db) {
          app.use('/api/v1/user-verification', require('./routes/api/user-verification')(db.users));
          app.use('/api/v1/password-reset', require('./routes/api/password-reset')(db.users));
 
-         app.use('/', sessionSupport, ensureAuthenticated, require('./routes/index'));
+         app.use('/home', sessionSupport, ensureAuthenticated, require('./routes/home'));
 
          // ERROR HANDLERS ---------------------------------------------------------------------------------------------
 
