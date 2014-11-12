@@ -30,6 +30,7 @@ var Database = require("./models/Database");
 var cookieParser = require('cookie-parser');
 var session = require('express-session');
 var SessionStore = require('express-mysql-session');
+var httpStatus = require('http-status');
 
 // instantiate the datastore
 var datastore = new BodyTrackDatastore({
@@ -95,7 +96,7 @@ Database.create(function(err, db) {
          app.use(favicon(path.join(__dirname, 'public/favicon.ico')));     // favicon serving
          app.use(compress());                // enables gzip compression
          app.use(express.static(path.join(__dirname, 'public')));          // static file serving
-         // set up HTTP request logging
+         // set up HTTP request logging (do this AFTER the static file serving so we don't log those)
          if (RunMode.isProduction()) {
             // create a write stream (in append mode)
             var fs = require('fs');
@@ -113,10 +114,24 @@ Database.create(function(err, db) {
             app.use(requestLogger('dev'));      // simple request logging when in non-production mode
          }
          app.use(bodyParser.urlencoded({ extended : true }));     // form parsing
-         app.use(bodyParser.json());         // json body parsing
-         app.use(function(error, req, res, next) { // function MUST have arity 4 here!
-            // catch invalid JSON error (found at http://stackoverflow.com/a/15819808/703200)
-            res.status(400).json({ status : "fail", data : "invalid JSON" })
+         app.use(bodyParser.json({ limit : '5mb' }));             // json body parsing (5 MB limit)
+         app.use(function(err, req, res, next) { // function MUST have arity 4 here!
+            // catch body parser error (beefed up version of http://stackoverflow.com/a/15819808/703200)
+            if (err) {
+               var statusCode = err.status || httpStatus.INTERNAL_SERVER_ERROR;
+               var message = err.message || (statusCode < httpStatus.INTERNAL_SERVER_ERROR ? "Bad Request" : "Internal Server Error");
+               var data = err;
+
+               if (statusCode < httpStatus.INTERNAL_SERVER_ERROR) {
+                  res.jsendClientError(message, data, statusCode);
+               }
+               else {
+                  res.jsendServerError(message, data, statusCode);
+               }
+            }
+            else {
+               next();
+            }
          });
 
          // configure passport
