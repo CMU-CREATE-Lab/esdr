@@ -1,7 +1,7 @@
 var config = require('nconf');
 var path = require('path');
 var log = require('log4js').getLogger('esdr:config');
-var RunMode = require('./lib/RunMode');
+var RunMode = require('run-mode');
 
 var configFile = './config-' + RunMode.get() + '.json';
 var mailConfigFile = './mail-config-' + RunMode.get() + '.json';
