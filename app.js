@@ -4,20 +4,16 @@ if (!RunMode.isValid()) {
    process.exit(1);
 }
 
-// dependencies
-var express = require('express');
-var app = express();
-
-// put this up here, above the log4js config, because the BodyTrackDatastore does its own log4js configuration and it
-// was stomping on my config
-var BodyTrackDatastore = require('bodytrack-datastore');
-
 var log4js = require('log4js');
 log4js.configure('log4js-config-' + RunMode.get() + '.json');
 var log = log4js.getLogger('esdr');
 log.info("Run Mode: " + RunMode.get());
 
+// dependencies
 var config = require('./config');
+var BodyTrackDatastore = require('bodytrack-datastore');
+var express = require('express');
+var app = express();
 var cors = require('cors');
 var expressHandlebars = require('express-handlebars');
 var path = require('path');
