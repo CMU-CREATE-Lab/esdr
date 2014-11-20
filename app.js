@@ -141,6 +141,10 @@ Database.create(function(err, db) {
 
          // define the various middleware required for routes which need session support
          var sessionSupport = [
+            function(req, res, next) {
+               log.debug("SESSION SUPPORT!");
+               next();
+            },
             cookieParser(),                  // cookie parsing--MUST come before setting up session middleware!
             session({                        // configure support for storing sessions in the database
                        key : config.get("cookie:name"),
@@ -187,6 +191,10 @@ Database.create(function(err, db) {
 
          // define the various middleware required for routes which don't need (and should not have!) session support
          var noSessionSupport = [
+            function(req, res, next) {
+               log.debug("NO SESSION SUPPORT!");
+               next();
+            },
             passport.initialize()         // initialize passport
          ];
 
@@ -211,14 +219,6 @@ Database.create(function(err, db) {
 
          // ROUTING ----------------------------------------------------------------------------------------------------
 
-         // configure routing
-         app.use('/', sessionSupport, require('./routes/index'));
-         app.use('/signup', sessionSupport, require('./routes/signup'));
-         app.use('/login', sessionSupport, require('./routes/login')(oauthServer));
-         app.use('/logout', sessionSupport, require('./routes/logout')(db.tokens));
-         app.use('/verification', sessionSupport, require('./routes/verification'));
-         app.use('/password-reset', sessionSupport, require('./routes/password-reset'));
-
          app.use('/oauth/*', noSessionSupport, corsSupport);
          app.use('/api/v1/*', noSessionSupport, corsSupport);
 
@@ -232,6 +232,13 @@ Database.create(function(err, db) {
          app.use('/api/v1/user-verification', require('./routes/api/user-verification')(db.users));
          app.use('/api/v1/password-reset', require('./routes/api/password-reset')(db.users));
 
+         // configure routing
+         app.use('/', sessionSupport, require('./routes/index'));
+         app.use('/signup', sessionSupport, require('./routes/signup'));
+         app.use('/login', sessionSupport, require('./routes/login'));
+         app.use('/logout', sessionSupport, require('./routes/logout')(db.tokens));
+         app.use('/verification', sessionSupport, require('./routes/verification'));
+         app.use('/password-reset', sessionSupport, require('./routes/password-reset'));
          app.use('/home', sessionSupport, ensureAuthenticated, require('./routes/home'));
 
          // ERROR HANDLERS ---------------------------------------------------------------------------------------------
