@@ -62,7 +62,7 @@ describe("ESDR", function() {
       displayName : "Test Client 3",
       clientName : "test_client_3",
       clientSecret : "I am test client 3",
-      isPublic : true
+      isPublic : false
    };
    var testClientNeedsTrimming = {
       displayName : "   Test Client Trimming  ",
@@ -1677,6 +1677,27 @@ describe("ESDR", function() {
                              res.body.should.have.property('data');
                              res.body.data.should.have.property('displayName', testClient3.displayName);
                              res.body.data.should.have.property('clientName', testClient3.clientName);
+                             done();
+                          });
+            });
+
+            it("Creating a client without authentication should result in public clients, regardless of whether isPublic was requested to be false", function(done) {
+               agent(url)
+                     .get("/api/v1/clients?whereOr=clientName=test_client_1,clientName=test_client_3&fields=isPublic")
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', httpStatus.OK);
+                             res.body.should.have.property('code', httpStatus.OK);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('totalCount', 2);
+                             res.body.data.should.have.property('rows');
+                             res.body.data.rows.should.have.length(2);
+                             res.body.data.rows[0].should.have.property('isPublic', 1);
+                             res.body.data.rows[1].should.have.property('isPublic', 1);
                              done();
                           });
             });

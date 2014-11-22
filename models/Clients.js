@@ -108,7 +108,8 @@ module.exports = function(databaseHelper) {
       var client = {
          creatorUserId : creatorUserId,
          clientSecret : clientDetails.clientSecret,
-         isPublic : !!clientDetails.isPublic
+         // don't allow private clients if the creating user isn't auth'd
+         isPublic : (typeof creatorUserId === 'undefined' || creatorUserId == null) ? true : !!clientDetails.isPublic
       };
       trimAndCopyPropertyIfNonEmpty(clientDetails, client, "displayName");
       trimAndCopyPropertyIfNonEmpty(clientDetails, client, "clientName");
