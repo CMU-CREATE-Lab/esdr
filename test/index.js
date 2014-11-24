@@ -143,8 +143,8 @@ describe("ESDR", function() {
    var testFeed1a = {
       name : "Newell Simon 3rd Floor Bathroom",
       exposure : "indoor",
-      isPublic : true,
-      isMobile : false,
+      isPublic : 1,
+      isMobile : 0,
       latitude : 40.443403,
       longitude : -79.94564
    };
@@ -152,8 +152,8 @@ describe("ESDR", function() {
    var testFeed1b = {
       name : "Newell Simon 4th Floor Kitchen",
       exposure : "indoor",
-      isPublic : false,
-      isMobile : false,
+      isPublic : 0,
+      isMobile : 0,
       latitude : 40.443493,
       longitude : -79.945721
    };
@@ -161,8 +161,8 @@ describe("ESDR", function() {
    var testFeed3 = {
       name : "Upstairs Bathroom",
       exposure : "indoor",
-      isPublic : false,
-      isMobile : false,
+      isPublic : 0,
+      isMobile : 0,
       latitude : 40.443679814953626,
       longitude : -79.94643892510089
    };
@@ -1395,7 +1395,7 @@ describe("ESDR", function() {
                           res.body.data.should.have.length(1);
                           res.body.data[0].should.have.property('instanceContext', '#/password');
                           res.body.data[0].should.have.property('constraintName', 'minLength');
-                          res.body.data[0].should.have.property('constraintValue', '5');
+                          res.body.data[0].should.have.property('constraintValue', 5);
                           res.body.data[0].should.have.property('testedValue', invalidPassword.length);
                           res.body.data[0].should.have.property('kind', 'StringValidationError');
 
@@ -2511,21 +2511,21 @@ describe("ESDR", function() {
                                 res.body.data.should.have.property('rows');
                                 res.body.data.rows.should.have.length(3);
                                 res.body.data.rows[0].should.have.property('id');
-                                res.body.data.rows[0].should.have.property('name', testDevice1.name);
+                                res.body.data.rows[0].should.have.property('name', testDevice1.name || null);
                                 res.body.data.rows[0].should.have.property('serialNumber', testDevice1.serialNumber);
                                 res.body.data.rows[0].should.have.property('productId', productIds.testProduct1);
                                 res.body.data.rows[0].should.have.property('userId', createdUsers.testUser1.id);
                                 res.body.data.rows[0].should.have.property('created');
                                 res.body.data.rows[0].should.have.property('modified');
                                 res.body.data.rows[1].should.have.property('id');
-                                res.body.data.rows[1].should.have.property('name', testDevice2.name);
+                                res.body.data.rows[1].should.have.property('name', testDevice2.name || null);
                                 res.body.data.rows[1].should.have.property('serialNumber', testDevice2.serialNumber);
                                 res.body.data.rows[1].should.have.property('productId', productIds.testProduct1);
                                 res.body.data.rows[1].should.have.property('userId', createdUsers.testUser1.id);
                                 res.body.data.rows[1].should.have.property('created');
                                 res.body.data.rows[1].should.have.property('modified');
                                 res.body.data.rows[2].should.have.property('id');
-                                res.body.data.rows[2].should.have.property('name', testDevice3.name);
+                                res.body.data.rows[2].should.have.property('name', testDevice3.name || null);
                                 res.body.data.rows[2].should.have.property('serialNumber', testDevice3.serialNumber);
                                 res.body.data.rows[2].should.have.property('productId', productIds.testProduct1);
                                 res.body.data.rows[2].should.have.property('userId', createdUsers.testUser1.id);
