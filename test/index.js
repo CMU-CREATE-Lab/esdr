@@ -4226,6 +4226,213 @@ describe("ESDR", function() {
                                       done();
                                    });
                      });
+                     /*
+                      {
+                      "name": "Public Test Feed 1 for Device 3 owned by User 1",
+                      "exposure": "indoor",
+                      "isPublic": true,
+                      "isMobile": false,
+                      "latitude": 40.15583997196518,
+                      "longitude": -78.05246960627846,
+                      "id": 597,
+                      "apiKey": "3131e08b37a399209941846d899a72ebdcbc533492137546ddd3d7a210d1b6a6",
+                      "apiKeyReadOnly": "a04291d22ee4224755aabc13a98bdd66955374a6eadc2e691db8b74e2412a771"
+                      },
+                      {
+                      "name": "Public Test Feed 2 for Device 3 owned by User 1",
+                      "exposure": "indoor",
+                      "isPublic": true,
+                      "isMobile": false,
+                      "latitude": 40.44235023017973,
+                      "longitude": -78.57938732183538,
+                      "id": 598,
+                      "apiKey": "158872328f07c07591d8d7590e23d496423d6176958bab0b53ec93adc757a3c2",
+                      "apiKeyReadOnly": "7a24e4b8bd82bfb74979460ef4b452703967c35bb335a219aeee3ff94aced838"
+                      },
+                      {
+                      "name": "Public Test Feed 1 for Device 4 owned by User 2",
+                      "exposure": "indoor",
+                      "isPublic": true,
+                      "isMobile": false,
+                      "latitude": 40.44373732362874,
+                      "longitude": -78.35327501525171,
+                      "id": 599,
+                      "apiKey": "2c4b66b59e7acd233a11d8395ff37b7742dfd49f4ae011beca22adfbb659656e",
+                      "apiKeyReadOnly": "ee871b20c4836a048178d293ff78355b2d10e27dff75fc6a4d22cf1ba6f37b57"
+                      },
+                      {
+                      "name": "Public Test Feed 2 for Device 4 owned by User 2",
+                      "exposure": "indoor",
+                      "isPublic": true,
+                      "isMobile": false,
+                      "latitude": 40.108915731776506,
+                      "longitude": -78.41145011410117,
+                      "id": 600,
+                      "apiKey": "df8275d39c4521dca10028e9929def0b1104f3f862738d77c8a09935c1c759f1",
+                      "apiKeyReadOnly": "3c6a2d2194cb14cb19c918bd73278a6fb2dc66290e84c4196d440b1b31911a7e"
+                      },
+                      {
+                      "name": "Private Test Feed 1 for Device 4 owned by User 2",
+                      "exposure": "indoor",
+                      "isPublic": false,
+                      "isMobile": false,
+                      "latitude": 40.06934029026888,
+                      "longitude": -78.83617724617943,
+                      "id": 601,
+                      "apiKey": "4225d470fb580cc3e59a208a0b9596a3c92686ccfe234f46c91e2d49f85ac0cc",
+                      "apiKeyReadOnly": "8d39911be04c8f783dc1ea4d283e410b76f1fb8d3f5736e3a94bcd2ce40af36b"
+                      },
+                      {
+                      "name": "Private Test Feed 2 for Device 4 owned by User 2",
+                      "exposure": "indoor",
+                      "isPublic": false,
+                      "isMobile": false,
+                      "latitude": 40.914596944116056,
+                      "longitude": -78.11789974872954,
+                      "id": 602,
+                      "apiKey": "1b47b99bc44aadc4c31ff96f831c223a563d2b8b08d1483f44e381e400a15c84",
+                      "apiKeyReadOnly": "c676f5a910ccf3f6b2c4c246493833c6e495449e518d22d9b0b2622fec2bf3c1"
+                      }
+
+                      */
+                     // TODO
+                     it("Should be able to provide a read-only feed API key for a public feed to limit search to that single feed", function(done) {
+                        agent(url)
+                              .get("/api/v1/feeds")
+                              .set({
+                                      FeedApiKey : createdFeeds[0].apiKeyReadOnly
+                                   })
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.OK);
+                                      res.body.should.have.property('code', httpStatus.OK);
+                                      res.body.should.have.property('status', 'success');
+                                      res.body.should.have.property('data');
+
+                                      res.body.data.should.have.property('totalCount', 1);
+                                      res.body.data.should.have.property('offset', 0);
+                                      res.body.data.should.have.property('limit', 1);
+                                      res.body.data.should.have.property('rows');
+                                      res.body.data.rows.should.have.length(1);
+                                      res.body.data.rows[0].should.have.property('apiKeyReadOnly', createdFeeds[0].apiKeyReadOnly);
+                                      res.body.data.rows[0].should.not.have.property('apiKey');
+
+                                      done();
+                                   });
+                     });
+
+                     it("Should be able to provide a read-write feed API key for a public feed to limit search to that single feed", function(done) {
+                        agent(url)
+                              .get("/api/v1/feeds")
+                              .set({
+                                      FeedApiKey : createdFeeds[0].apiKey
+                                   })
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.OK);
+                                      res.body.should.have.property('code', httpStatus.OK);
+                                      res.body.should.have.property('status', 'success');
+                                      res.body.should.have.property('data');
+
+                                      res.body.data.should.have.property('totalCount', 1);
+                                      res.body.data.should.have.property('offset', 0);
+                                      res.body.data.should.have.property('limit', 1);
+                                      res.body.data.should.have.property('rows');
+                                      res.body.data.rows.should.have.length(1);
+                                      res.body.data.rows[0].should.have.property('apiKeyReadOnly', createdFeeds[0].apiKeyReadOnly);
+                                      res.body.data.rows[0].should.have.property('apiKey', createdFeeds[0].apiKey);
+
+                                      done();
+                                   });
+                     });
+
+                     it("Should be able to provide a read-only feed API key for a private feed to limit search to that single feed", function(done) {
+                        agent(url)
+                              .get("/api/v1/feeds")
+                              .set({
+                                      FeedApiKey : createdFeeds[4].apiKeyReadOnly
+                                   })
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.OK);
+                                      res.body.should.have.property('code', httpStatus.OK);
+                                      res.body.should.have.property('status', 'success');
+                                      res.body.should.have.property('data');
+
+                                      res.body.data.should.have.property('totalCount', 1);
+                                      res.body.data.should.have.property('offset', 0);
+                                      res.body.data.should.have.property('limit', 1);
+                                      res.body.data.should.have.property('rows');
+                                      res.body.data.rows.should.have.length(1);
+                                      res.body.data.rows[0].should.have.property('apiKeyReadOnly', createdFeeds[4].apiKeyReadOnly);
+                                      res.body.data.rows[0].should.not.have.property('apiKey');
+
+                                      done();
+                                   });
+                     });
+
+                     it("Should be able to provide a read-write feed API key for a private feed to limit search to that single feed", function(done) {
+                        agent(url)
+                              .get("/api/v1/feeds")
+                              .set({
+                                      FeedApiKey : createdFeeds[4].apiKey
+                                   })
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.OK);
+                                      res.body.should.have.property('code', httpStatus.OK);
+                                      res.body.should.have.property('status', 'success');
+                                      res.body.should.have.property('data');
+
+                                      res.body.data.should.have.property('totalCount', 1);
+                                      res.body.data.should.have.property('offset', 0);
+                                      res.body.data.should.have.property('limit', 1);
+                                      res.body.data.should.have.property('rows');
+                                      res.body.data.rows.should.have.length(1);
+                                      res.body.data.rows[0].should.have.property('apiKeyReadOnly', createdFeeds[4].apiKeyReadOnly);
+                                      res.body.data.rows[0].should.have.property('apiKey', createdFeeds[4].apiKey);
+
+                                      done();
+                                   });
+                     });
+
+                     it("Should get empty results if searching with an invalid feed API Key", function(done) {
+                        agent(url)
+                              .get("/api/v1/feeds")
+                              .set({
+                                      FeedApiKey : "bogus"
+                                   })
+                              .end(function(err, res) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      res.should.have.property('status', httpStatus.OK);
+                                      res.body.should.have.property('code', httpStatus.OK);
+                                      res.body.should.have.property('status', 'success');
+                                      res.body.should.have.property('data');
+
+                                      res.body.data.should.have.property('totalCount', 0);
+                                      res.body.data.should.have.property('offset', 0);
+                                      res.body.data.should.have.property('limit', 1);
+                                      res.body.data.should.have.property('rows');
+                                      res.body.data.rows.should.have.length(0);
+
+                                      done();
+                                   });
+                     });
 
                   });      // END Find Feeds
 
