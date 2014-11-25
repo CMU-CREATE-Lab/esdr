@@ -3551,11 +3551,30 @@ describe("ESDR", function() {
                                       });
                         });
 
-                        it("Should fail to get info for a private feed with invalid authentication", function(done) {
+                        it("Should fail to get info for a private feed with valid authentication, but for the wrong user", function(done) {
                            agent(url)
                                  .get("/api/v1/feeds/" + feeds.testFeed1b.id)
                                  .set({
                                          Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                      })
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.FORBIDDEN);
+                                         res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                         res.body.should.have.property('status', 'error');
+                                         res.body.should.have.property('data', null);
+                                         done();
+                                      });
+                        });
+
+                        it("Should fail to get info for a private feed with invalid authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id)
+                                 .set({
+                                         Authorization : "Bearer " + "bogus"
                                       })
                                  .end(function(err, res) {
                                          if (err) {
@@ -3576,7 +3595,7 @@ describe("ESDR", function() {
 
                         it("Should be able to get info for a public feed with valid authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feed")
+                                 .get("/api/v1/feeds/" + feeds.testFeed1a.id)
                                  .set({
                                          FeedApiKey : feeds.testFeed1a.apiKey
                                       })
@@ -3592,7 +3611,7 @@ describe("ESDR", function() {
 
                         it("Should be able to get info for a public feed with valid read-only authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feed")
+                                 .get("/api/v1/feeds/" + feeds.testFeed1a.id)
                                  .set({
                                          FeedApiKey : feeds.testFeed1a.apiKeyReadOnly
                                       })
@@ -3608,7 +3627,7 @@ describe("ESDR", function() {
 
                         it("Should be able to get info for a private feed with valid authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feed")
+                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id)
                                  .set({
                                          FeedApiKey : feeds.testFeed1b.apiKey
                                       })
@@ -3624,7 +3643,7 @@ describe("ESDR", function() {
 
                         it("Should be able to get info for a private feed with valid read-only authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feed")
+                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id)
                                  .set({
                                          FeedApiKey : feeds.testFeed1b.apiKeyReadOnly
                                       })
@@ -3640,7 +3659,7 @@ describe("ESDR", function() {
 
                         it("Should fail to get info for a private feed with invalid authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feed")
+                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id)
                                  .set({
                                          FeedApiKey : "bogus"
                                       })
@@ -3649,14 +3668,30 @@ describe("ESDR", function() {
                                             return done(err);
                                          }
 
-                                         res.should.have.property('status', httpStatus.UNAUTHORIZED);
+                                         res.should.have.property('status', httpStatus.FORBIDDEN);
+                                         done();
+                                      });
+                        });
+
+                        it("Should fail to get info for a private feed with authentication for a different feed", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id)
+                                 .set({
+                                         FeedApiKey : feeds.testFeed1a.apiKey
+                                      })
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.FORBIDDEN);
                                          done();
                                       });
                         });
 
                         it("Should fail to get info for a private feed without authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feed")
+                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id)
                                  .end(function(err, res) {
                                          if (err) {
                                             return done(err);
@@ -3766,11 +3801,30 @@ describe("ESDR", function() {
                                       });
                         });
 
-                        it("Should fail to get a tile from a private feed with invalid authentication", function(done) {
+                        it("Should fail to get a tile from a private feed with valid authentication, but for the wrong user", function(done) {
                            agent(url)
                                  .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/temperature/tiles/10.2634")
                                  .set({
                                          Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                      })
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.FORBIDDEN);
+                                         res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                         res.body.should.have.property('status', 'error');
+                                         res.body.should.have.property('data', null);
+                                         done();
+                                      });
+                        });
+
+                        it("Should fail to get a tile from a private feed with invalid authentication", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/temperature/tiles/10.2634")
+                                 .set({
+                                         Authorization : "Bearer " + "bogus"
                                       })
                                  .end(function(err, res) {
                                          if (err) {
@@ -3791,7 +3845,7 @@ describe("ESDR", function() {
 
                         it("Should be able to get a tile from a public feed with valid authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feed/channels/temperature/tiles/10.2633")
+                                 .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/channels/temperature/tiles/10.2633")
                                  .set({
                                          FeedApiKey : feeds.testFeed1a.apiKey
                                       })
@@ -3811,7 +3865,7 @@ describe("ESDR", function() {
 
                         it("Should be able to get a tile from a public feed with valid read-only authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feed/channels/temperature/tiles/10.2633")
+                                 .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/channels/temperature/tiles/10.2633")
                                  .set({
                                          FeedApiKey : feeds.testFeed1a.apiKeyReadOnly
                                       })
@@ -3831,7 +3885,7 @@ describe("ESDR", function() {
 
                         it("Should be able to get a tile from a private feed with valid authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feed/channels/temperature/tiles/10.2634")
+                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/temperature/tiles/10.2634")
                                  .set({
                                          FeedApiKey : feeds.testFeed1b.apiKey
                                       })
@@ -3851,7 +3905,7 @@ describe("ESDR", function() {
 
                         it("Should be able to get a tile from a private feed with valid read-only authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feed/channels/temperature/tiles/10.2634")
+                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/temperature/tiles/10.2634")
                                  .set({
                                          FeedApiKey : feeds.testFeed1b.apiKeyReadOnly
                                       })
@@ -3869,9 +3923,25 @@ describe("ESDR", function() {
                                       });
                         });
 
+                        it("Should fail to get a tile with valid authentication, but for the wrong user", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/temperature/tiles/10.2633")
+                                 .set({
+                                         FeedApiKey : feeds.testFeed1a.apiKeyReadOnly
+                                      })
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.FORBIDDEN);
+                                         done();
+                                      });
+                        });
+
                         it("Should fail to get a tile with invalid authentication", function(done) {
                            agent(url)
-                                 .get("/api/v1/feed/channels/temperature/tiles/10.2633")
+                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/temperature/tiles/10.2633")
                                  .set({
                                          FeedApiKey : "bogus"
                                       })
@@ -3880,20 +3950,7 @@ describe("ESDR", function() {
                                             return done(err);
                                          }
 
-                                         res.should.have.property('status', httpStatus.UNAUTHORIZED);
-                                         done();
-                                      });
-                        });
-
-                        it("Should fail to get a tile without authentication", function(done) {
-                           agent(url)
-                                 .get("/api/v1/feed/channels/temperature/tiles/10.2633")
-                                 .end(function(err, res) {
-                                         if (err) {
-                                            return done(err);
-                                         }
-
-                                         res.should.have.property('status', httpStatus.UNAUTHORIZED);
+                                         res.should.have.property('status', httpStatus.FORBIDDEN);
                                          done();
                                       });
                         });

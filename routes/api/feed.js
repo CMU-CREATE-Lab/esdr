@@ -22,33 +22,5 @@ module.exports = function(FeedModel, feedRouteHelper) {
                  return feedRouteHelper.importData(res, feed, req.body);
               });
 
-   // for getting info about a feed, authenticated using the feed's API Key in the request header
-   router.get('/',
-              passport.authenticate('feed-apikey', { session : false }),
-              function(req, res, next) {
-                 var feed = req.authInfo.feed;
-                 log.debug("Received GET to get info for in feed [" + feed.id + "] (feed API Key authentication)");
-
-                 FeedModel.filterFields(feed, req.query.fields, function(err, filteredFeed) {
-                    if (err) {
-                       return res.jsendServerError("Failed to get feed: " + err.message, null);
-                    }
-
-                    return feedRouteHelper.getInfo(res, filteredFeed, req.authInfo.isReadOnly);
-                 });
-              });
-
-   // for tile requests authenticated using the feed's API Key in the header
-   router.get('/channels/:channelName/tiles/:level.:offset',
-              passport.authenticate('feed-apikey', { session : false }),
-              function(req, res, next) {
-                 var feed = req.authInfo.feed;
-                 var channelName = req.params.channelName;
-                 var level = req.params.level;
-                 var offset = req.params.offset;
-
-                 return feedRouteHelper.getTile(res, feed, channelName, level, offset);
-              });
-
    return router;
 };
