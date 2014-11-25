@@ -12,7 +12,6 @@ module.exports = function(FeedModel, feedRouteHelper) {
    router.get('/',
               function(req, res, next) {
                  if ("feedapikey" in req.headers) {
-                    log.debug("In here 1");
                     var givenFeedApiKey = req.headers['feedapikey'];
                     FeedModel.findByApiKey(givenFeedApiKey, function(err, feed) {
                        if (err) {
@@ -51,7 +50,6 @@ module.exports = function(FeedModel, feedRouteHelper) {
                     });
                  }
                  else {
-                    log.debug("In here 2");
                     passport.authenticate('bearer', function(err, user) {
                        if (err) {
                           var message = "Error while authenticating to find feeds";
