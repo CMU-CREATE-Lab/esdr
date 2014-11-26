@@ -45,32 +45,6 @@ if (!window['superagent']) {
 }
 //======================================================================================================================
 
-/*
- Products
- --------
- POST  /products - create new product
- GET   /products - search for products (allows field selection)
- GET   /products/:productNameOrId - get details for a specific product (allows field selection)
-
- Devices (auth required for all these)
- -------
- * POST  /products/:productNameOrId/devices - create new device
- * GET   /products/:productNameOrId/devices/:serialNumber - get info for a specific device (allows field selection)
- GET   /devices - search for devices (allows field selection)
- GET   /devices/:deviceId - get details for a specific device (allows field selection)
-
- Feeds
- -----
- * POST  /devices/:deviceId/feeds - create a new feed
- * GET   /feeds - search for feeds (allows field selection)
- PUT   /feeds/:feedId - for uploads authenticated using the user's OAuth2 access token in the header
- GET   /feeds/:feedId - for getting info about a feed, authenticated using the user's OAuth2 access token in the request header (but only if the feed is private)
- GET   /feeds/:feedId/channels/:channelName/tiles/:level.:offset - for tile requests optionally authenticated using the user's OAuth2 access token in the header
- PUT   /feed - for uploads authenticated using the feed's API Key in the header
- GET   /feed - for getting info about a feed, authenticated using the feed's API Key in the request header
- GET   /feed/channels/:channelName/tiles/:level.:offset - for tile requests authenticated using the feed's API Key in the header
- */
-
 (function() {
    var SCRIPT_PATH = "/js/api/v1/org/cmucreatelab/esdr/ESDR.js";
 
@@ -264,13 +238,39 @@ if (!window['superagent']) {
           * Optional callbacks:
           * - complete() [optional]
           *
-          * @param queryString
-          * @param callbacks
+          * @param {string} queryString
+          * @param {obj} callbacks
           */
          find : function(queryString, callbacks) {
             superagent
                   .get(ESDR_API_ROOT_URL + "/feeds" + sanitizeQueryString(queryString))
                   .set(authorizationHeader)
+                  .end(createResponseHandler(callbacks));
+         },
+
+         /**
+          * Find feed with the given API key, with fields optionally filtered according to params in the given query
+          * string.
+          *
+          * Required callbacks:
+          * - success(feeds)
+          * - validationError(errors)
+          * - error(responseBody, httpStatusCode)
+          * - failure(err, httpStatusCode)
+          *
+          * Optional callbacks:
+          * - complete() [optional]
+          *
+          * @param {string} queryString
+          * @param {string} feedApiKey
+          * @param {obj} callbacks
+          */
+         findByApiKey : function(queryString, feedApiKey, callbacks) {
+            superagent
+                  .get(ESDR_API_ROOT_URL + "/feeds" + sanitizeQueryString(queryString))
+                  .set({
+                          FeedApiKey : feedApiKey
+                       })
                   .end(createResponseHandler(callbacks));
          },
 
@@ -306,7 +306,7 @@ if (!window['superagent']) {
 
       this.tiles = {
          /**
-          * Gets a tile for the feed specified by the given <code>apiKey</code>.
+          * Gets a tile for the feed specified by the given <code>feedId</code> and optional <code>apiKey</code>.
           *
           * Required callbacks:
           * - success(creationResult)
@@ -318,15 +318,16 @@ if (!window['superagent']) {
           * Optional callbacks:
           * - complete() [optional]
           *
-          * @param {string} apiKey The feed's API Key (either the read/write or read-only key)
+          * @param {int} feedId The feed's ID
+          * @param {string} apiKey The feed's API Key (either the read/write or read-only key). Optional for public feeds.
           * @param {string} channelName The channel name
           * @param {int} level The tile's level
           * @param {int} offset The tile's offset
           * @param {obj} callbacks
           */
-         get : function(apiKey, channelName, level, offset, callbacks) {
+         get : function(feedId, apiKey, channelName, level, offset, callbacks) {
             superagent
-                  .get(ESDR_API_ROOT_URL + "/feed/channels/" + channelName + "/tiles/" + level + "." + offset)
+                  .get(ESDR_API_ROOT_URL + "/feeds/" + feedId + "/channels/" + channelName + "/tiles/" + level + "." + offset)
                   .set({
                           FeedApiKey : apiKey
                        })
