@@ -249,32 +249,6 @@ if (!window['superagent']) {
          },
 
          /**
-          * Find feed with the given API key, with fields optionally filtered according to params in the given query
-          * string.
-          *
-          * Required callbacks:
-          * - success(feeds)
-          * - validationError(errors)
-          * - error(responseBody, httpStatusCode)
-          * - failure(err, httpStatusCode)
-          *
-          * Optional callbacks:
-          * - complete() [optional]
-          *
-          * @param {string} queryString
-          * @param {string} feedApiKey
-          * @param {obj} callbacks
-          */
-         findByApiKey : function(queryString, feedApiKey, callbacks) {
-            superagent
-                  .get(ESDR_API_ROOT_URL + "/feeds" + sanitizeQueryString(queryString))
-                  .set({
-                          FeedApiKey : feedApiKey
-                       })
-                  .end(createResponseHandler(callbacks));
-         },
-
-         /**
           * Uploads the given data to the feed specifed by the given <code>apiKey</code>.
           *
           * Required callbacks:
