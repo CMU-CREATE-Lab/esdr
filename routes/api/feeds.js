@@ -49,21 +49,49 @@ module.exports = function(FeedModel, feedRouteHelper) {
                  })(req, res, next);
               });
 
-   // for uploads authenticated using the user's OAuth2 access token in the header
+   // For uploads authenticated using the user's OAuth2 access token or the feed's read-write API key in the request header
+   //
+   // NOTE: authenticating with the OAuth2 access token will be slower than authenticating with the feed's apiKey
+   // because we have to make an extra call to the database to authenticate the user so we can determine whether she has
+   // access.
    router.put('/:feedId',
-              passport.authenticate('bearer', { session : false }),
               function(req, res, next) {
                  var feedId = req.params.feedId;
                  log.debug("Received PUT to upload data for feed ID [" + feedId + "] (OAuth2 access token authentication)");
 
                  // find the feed
-                 findFeedById(res, feedId, 'id,userId', function(feed) {
+                 findFeedById(res, feedId, 'id,userId,apiKey', function(feed) {
                     // Now make sure this user has access to upload to this feed and, if so, continue with the upload
-                    if (req.user.id == feed.userId) {
-                       return feedRouteHelper.importData(res, feed, req.body);
+                    if ("feedapikey" in req.headers) {
+                       // Make sure the given feed API key matches the feed's read-write key. If not, forbid upload.
+                       if (feed.apiKey == req.headers['feedapikey']) {
+                          return feedRouteHelper.importData(res, feed, req.body);
+                       }
+                       else {
+                          return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
+                       }
+                    }
+                    else if ("authorization" in req.headers) {
+                       // Authenticate the user to see whether she owns the feed.  If so, then she should be
+                       // granted access to upload to the feed.
+                       passport.authenticate('bearer', function(err, user) {
+                          if (err) {
+                             var message = "Error while authenticating with OAuth2 access token to upload to feed [" + feedId + "]";
+                             log.error(message + ": " + err);
+                             return res.jsendServerError(message);
+                          }
+
+                          // determine access simply by checking ownership
+                          if (feed.userId == user.id) {
+                             return feedRouteHelper.importData(res, feed, req.body);
+                          }
+                          else {
+                             return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
+                          }
+                       })(req, res, next);
                     }
                     else {
-                       return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
+                       return res.jsendClientError("Authentication required.", null, httpStatus.UNAUTHORIZED);  // HTTP 401 Unauthorized
                     }
                  });
               });
@@ -275,4 +303,5 @@ module.exports = function(FeedModel, feedRouteHelper) {
    };
 
    return router;
-};
+}
+;

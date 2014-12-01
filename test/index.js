@@ -3035,359 +3035,504 @@ describe("ESDR", function() {
                   });
 
                   describe("Upload", function() {
+                     describe("To /feeds method", function() {
+                        it("Should fail to upload to a feed if no authentication is provided", function(done) {
+                           agent(url)
+                                 .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                                 .send(testFeed1aData2)
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
 
-                     it("Should be able to upload empty data to a feed using the feed's apiKey to authenticate", function(done) {
-                        agent(url)
-                              .put("/api/v1/feed")
-                              .set({
-                                      FeedApiKey : feeds.testFeed1a.apiKey
-                                   })
-                              .send({})
-                              .end(function(err, res) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                                         res.should.have.property('status', httpStatus.UNAUTHORIZED);
+                                         done();
+                                      });
+                        });
 
-                                      res.should.have.property('status', httpStatus.OK);
-                                      res.body.should.have.property('code', httpStatus.OK);
-                                      res.body.should.have.property('status', 'success');
-                                      res.body.should.have.property('data');
-                                      res.body.data.should.have.property('channelBounds', {});
-                                      res.body.data.should.have.property('importedBounds', {});
+                        describe("With OAuth2 authentication", function() {
+                           it("Should be able to upload empty data to a feed using the user's OAuth2 access token to authenticate", function(done) {
+                              agent(url)
+                                    .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                                    .set({
+                                            Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                         })
+                                    .send({})
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                                      done();
-                                   });
-                     });
+                                            res.should.have.property('status', httpStatus.OK);
+                                            res.body.should.have.property('code', httpStatus.OK);
+                                            res.body.should.have.property('status', 'success');
+                                            res.body.should.have.property('data');
+                                            res.body.data.should.have.property('channelBounds', {});
+                                            res.body.data.should.have.property('importedBounds', {});
 
-                     it("Should fail to upload empty data to a feed using the feed's apiKeyReadOnly to authenticate", function(done) {
-                        agent(url)
-                              .put("/api/v1/feed")
-                              .set({
-                                      FeedApiKey : feeds.testFeed1a.apiKeyReadOnly
-                                   })
-                              .send({})
-                              .end(function(err, res) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                                            done();
+                                         });
+                           });
 
-                                      res.should.have.property('status', httpStatus.FORBIDDEN);
-                                      res.body.should.have.property('code', httpStatus.FORBIDDEN);
-                                      res.body.should.have.property('status', 'error');
-                                      res.body.should.have.property('data', null);
+                           it("Should be able to upload to a public feed using the user's OAuth2 access token to authenticate", function(done) {
+                              agent(url)
+                                    .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                                    .set({
+                                            Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                         })
+                                    .send(testFeed1aData2)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                                      done();
-                                   });
-                     });
+                                            res.should.have.property('status', httpStatus.OK);
+                                            res.body.should.have.property('code', httpStatus.OK);
+                                            res.body.should.have.property('status', 'success');
+                                            res.body.should.have.property('data');
+                                            res.body.data.should.have.property('channelBounds');
+                                            res.body.data.channelBounds.should.have.property('channels');
+                                            res.body.data.channelBounds.should.have.property('minTimeSecs', testFeed1aData2.data[0][0]);
+                                            res.body.data.channelBounds.should.have.property('maxTimeSecs', testFeed1aData2.data[testFeed1aData2.data.length - 1][0]);
+                                            res.body.data.should.have.property('importedBounds');
+                                            res.body.data.importedBounds.should.have.property('channels');
+                                            res.body.data.importedBounds.should.have.property('minTimeSecs', testFeed1aData2.data[0][0]);
+                                            res.body.data.importedBounds.should.have.property('maxTimeSecs', testFeed1aData2.data[testFeed1aData2.data.length - 1][0]);
+                                            done();
+                                         });
+                           });
 
-                     it("Should be able to upload empty data to a feed using the user's OAuth2 access token to authenticate", function(done) {
-                        agent(url)
-                              .put("/api/v1/feeds/" + feeds.testFeed1a.id)
-                              .set({
-                                      Authorization : "Bearer " + accessTokens.testUser1.access_token
-                                   })
-                              .send({})
-                              .end(function(err, res) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                           it("Should be able to upload to a private feed using the user's OAuth2 access token to authenticate", function(done) {
+                              agent(url)
+                                    .put("/api/v1/feeds/" + feeds.testFeed1b.id)
+                                    .set({
+                                            Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                         })
+                                    .send(testFeed1aData2)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                                      res.should.have.property('status', httpStatus.OK);
-                                      res.body.should.have.property('code', httpStatus.OK);
-                                      res.body.should.have.property('status', 'success');
-                                      res.body.should.have.property('data');
-                                      res.body.data.should.have.property('channelBounds', {});
-                                      res.body.data.should.have.property('importedBounds', {});
+                                            res.should.have.property('status', httpStatus.OK);
+                                            res.body.should.have.property('code', httpStatus.OK);
+                                            res.body.should.have.property('status', 'success');
+                                            res.body.should.have.property('data');
 
-                                      done();
-                                   });
-                     });
+                                            res.body.data.should.have.property('channelBounds');
+                                            res.body.data.channelBounds.should.have.property('channels');
+                                            res.body.data.channelBounds.should.have.property('minTimeSecs', testFeed1aData2.data[0][0]);
+                                            res.body.data.channelBounds.should.have.property('maxTimeSecs', testFeed1aData2.data[testFeed1aData2.data.length - 1][0]);
+                                            res.body.data.should.have.property('importedBounds');
+                                            res.body.data.importedBounds.should.have.property('channels');
+                                            res.body.data.importedBounds.should.have.property('minTimeSecs', testFeed1aData2.data[0][0]);
+                                            res.body.data.importedBounds.should.have.property('maxTimeSecs', testFeed1aData2.data[testFeed1aData2.data.length - 1][0]);
+                                            done();
+                                         });
+                           });
 
-                     it("Should be able to upload to a feed using the feed's apiKey to authenticate", function(done) {
-                        agent(url)
-                              .put("/api/v1/feed")
-                              .set({
-                                      FeedApiKey : feeds.testFeed1a.apiKey
-                                   })
-                              .send(testFeed1aData1)
-                              .end(function(err, res) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                           it("Should be able to upload data for a single channel to a feed (this one will affect the min/max times)", function(done) {
+                              agent(url)
+                                    .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                                    .set({
+                                            Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                         })
+                                    .send(testFeed1aData3)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                                      res.should.have.property('status', httpStatus.OK);
-                                      res.body.should.have.property('code', httpStatus.OK);
-                                      res.body.should.have.property('status', 'success');
-                                      res.body.should.have.property('data');
-                                      res.body.data.should.have.property('channelBounds');
-                                      res.body.data.channelBounds.should.have.property('channels');
-                                      res.body.data.channelBounds.should.have.property('minTimeSecs', testFeed1aData1.data[0][0]);
-                                      res.body.data.channelBounds.should.have.property('maxTimeSecs', testFeed1aData1.data[testFeed1aData1.data.length - 1][0]);
-                                      res.body.data.should.have.property('importedBounds');
-                                      res.body.data.importedBounds.should.have.property('channels');
-                                      res.body.data.importedBounds.should.have.property('minTimeSecs', testFeed1aData1.data[0][0]);
-                                      res.body.data.importedBounds.should.have.property('maxTimeSecs', testFeed1aData1.data[testFeed1aData1.data.length - 1][0]);
+                                            res.should.have.property('status', httpStatus.OK);
+                                            res.body.should.have.property('code', httpStatus.OK);
+                                            res.body.should.have.property('status', 'success');
+                                            res.body.should.have.property('data');
 
-                                      done();
-                                   });
-                     });
+                                            res.body.data.should.have.property('channelBounds');
+                                            res.body.data.channelBounds.should.have.property('channels');
+                                            res.body.data.channelBounds.should.have.property('minTimeSecs', testFeed1aData3.data[0][0]);
+                                            res.body.data.channelBounds.should.have.property('maxTimeSecs', testFeed1aData3.data[testFeed1aData3.data.length - 1][0]);
+                                            res.body.data.should.have.property('importedBounds');
+                                            res.body.data.importedBounds.should.have.property('channels');
+                                            res.body.data.importedBounds.should.have.property('minTimeSecs', testFeed1aData3.data[0][0]);
+                                            res.body.data.importedBounds.should.have.property('maxTimeSecs', testFeed1aData3.data[testFeed1aData3.data.length - 1][0]);
+                                            done();
+                                         });
+                           });
 
-                     it("Should fail to upload to a feed using the feed's apiKeyReadOnly to authenticate", function(done) {
-                        agent(url)
-                              .put("/api/v1/feed")
-                              .set({
-                                      FeedApiKey : feeds.testFeed1a.apiKeyReadOnly
-                                   })
-                              .send(testFeed1aData1)
-                              .end(function(err, res) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                           it("Should be able to upload data for a single channel to a feed (this one won't affect the min/max times)", function(done) {
+                              agent(url)
+                                    .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                                    .set({
+                                            Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                         })
+                                    .send(testFeed1aData4)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                                      res.should.have.property('status', httpStatus.FORBIDDEN);
-                                      res.body.should.have.property('code', httpStatus.FORBIDDEN);
-                                      res.body.should.have.property('status', 'error');
-                                      res.body.should.have.property('data', null);
+                                            res.should.have.property('status', httpStatus.OK);
+                                            res.body.should.have.property('code', httpStatus.OK);
+                                            res.body.should.have.property('status', 'success');
+                                            res.body.should.have.property('data');
 
-                                      done();
-                                   });
-                     });
+                                            res.body.data.should.have.property('channelBounds');
+                                            res.body.data.channelBounds.should.have.property('channels');
+                                            res.body.data.channelBounds.should.have.property('minTimeSecs', testFeed1aData3.data[0][0]);
+                                            res.body.data.channelBounds.should.have.property('maxTimeSecs', testFeed1aData3.data[testFeed1aData3.data.length - 1][0]);
+                                            res.body.data.should.have.property('importedBounds');
+                                            res.body.data.importedBounds.should.have.property('channels');
+                                            res.body.data.importedBounds.should.have.property('minTimeSecs', testFeed1aData4.data[0][0]);
+                                            res.body.data.importedBounds.should.have.property('maxTimeSecs', testFeed1aData4.data[testFeed1aData4.data.length - 1][0]);
+                                            done();
+                                         });
+                           });
 
-                     it("Should fail to upload to a feed using an invalid apiKey to authenticate", function(done) {
-                        agent(url)
-                              .put("/api/v1/feed")
-                              .set({
-                                      FeedApiKey : "bogus"
-                                   })
-                              .end(function(err, res) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                           it("Should fail to upload to a public feed using the wrong user's OAuth2 access token to authenticate", function(done) {
+                              agent(url)
+                                    .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                                    .set({
+                                            Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                         })
+                                    .send(testFeed1aData2)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                                      res.should.have.property('status', httpStatus.UNAUTHORIZED);
-                                      done();
-                                   });
-                     });
+                                            res.should.have.property('status', httpStatus.FORBIDDEN);
+                                            res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data', null);
+                                            done();
+                                         });
+                           });
 
-                     it("Should be able to upload to a public feed using the user's OAuth2 access token to authenticate", function(done) {
-                        agent(url)
-                              .put("/api/v1/feeds/" + feeds.testFeed1a.id)
-                              .set({
-                                      Authorization : "Bearer " + accessTokens.testUser1.access_token
-                                   })
-                              .send(testFeed1aData2)
-                              .end(function(err, res) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                           it("Should fail to upload to a private feed using the wrong user's OAuth2 access token to authenticate", function(done) {
+                              agent(url)
+                                    .put("/api/v1/feeds/" + feeds.testFeed1b.id)
+                                    .set({
+                                            Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                         })
+                                    .send(testFeed1aData2)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                                      res.should.have.property('status', httpStatus.OK);
-                                      res.body.should.have.property('code', httpStatus.OK);
-                                      res.body.should.have.property('status', 'success');
-                                      res.body.should.have.property('data');
-                                      res.body.data.should.have.property('channelBounds');
-                                      res.body.data.channelBounds.should.have.property('channels');
-                                      res.body.data.channelBounds.should.have.property('minTimeSecs', testFeed1aData1.data[0][0]);
-                                      res.body.data.channelBounds.should.have.property('maxTimeSecs', testFeed1aData2.data[testFeed1aData2.data.length - 1][0]);
-                                      res.body.data.should.have.property('importedBounds');
-                                      res.body.data.importedBounds.should.have.property('channels');
-                                      res.body.data.importedBounds.should.have.property('minTimeSecs', testFeed1aData2.data[0][0]);
-                                      res.body.data.importedBounds.should.have.property('maxTimeSecs', testFeed1aData2.data[testFeed1aData2.data.length - 1][0]);
-                                      done();
-                                   });
-                     });
+                                            res.should.have.property('status', httpStatus.FORBIDDEN);
+                                            res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data', null);
+                                            done();
+                                         });
+                           });
 
-                     it("Should be able to upload to a private feed using the user's OAuth2 access token to authenticate", function(done) {
-                        agent(url)
-                              .put("/api/v1/feeds/" + feeds.testFeed1b.id)
-                              .set({
-                                      Authorization : "Bearer " + accessTokens.testUser1.access_token
-                                   })
-                              .send(testFeed1aData2)
-                              .end(function(err, res) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                           it("Should fail to upload to a feed using a valid OAuth2 access token but an invalid feed ID", function(done) {
+                              agent(url)
+                                    .put("/api/v1/feeds/" + "0")
+                                    .set({
+                                            Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                         })
+                                    .send(testFeed1aData2)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                                      res.should.have.property('status', httpStatus.OK);
-                                      res.body.should.have.property('code', httpStatus.OK);
-                                      res.body.should.have.property('status', 'success');
-                                      res.body.should.have.property('data');
+                                            res.should.have.property('status', httpStatus.NOT_FOUND);
+                                            res.body.should.have.property('code', httpStatus.NOT_FOUND);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data');
+                                            done();
+                                         });
+                           });
 
-                                      res.body.data.should.have.property('channelBounds');
-                                      res.body.data.channelBounds.should.have.property('channels');
-                                      res.body.data.channelBounds.should.have.property('minTimeSecs', testFeed1aData2.data[0][0]);
-                                      res.body.data.channelBounds.should.have.property('maxTimeSecs', testFeed1aData2.data[testFeed1aData2.data.length - 1][0]);
-                                      res.body.data.should.have.property('importedBounds');
-                                      res.body.data.importedBounds.should.have.property('channels');
-                                      res.body.data.importedBounds.should.have.property('minTimeSecs', testFeed1aData2.data[0][0]);
-                                      res.body.data.importedBounds.should.have.property('maxTimeSecs', testFeed1aData2.data[testFeed1aData2.data.length - 1][0]);
-                                      done();
-                                   });
-                     });
+                           it("Should fail to upload to a feed using an invalid OAuth2 access token to authenticate", function(done) {
+                              agent(url)
+                                    .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                                    .set({
+                                            Authorization : "Bearer " + "bogus"
+                                         })
+                                    .send(testFeed1aData2)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                     it("Should be able to upload data for a single channel to a feed (this one will affect the min/max times)", function(done) {
-                        agent(url)
-                              .put("/api/v1/feeds/" + feeds.testFeed1a.id)
-                              .set({
-                                      Authorization : "Bearer " + accessTokens.testUser1.access_token
-                                   })
-                              .send(testFeed1aData3)
-                              .end(function(err, res) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                                            res.should.have.property('status', httpStatus.FORBIDDEN);
+                                            done();
+                                         });
+                           });
 
-                                      res.should.have.property('status', httpStatus.OK);
-                                      res.body.should.have.property('code', httpStatus.OK);
-                                      res.body.should.have.property('status', 'success');
-                                      res.body.should.have.property('data');
+                        });   // end With OAuth2 authentication
 
-                                      res.body.data.should.have.property('channelBounds');
-                                      res.body.data.channelBounds.should.have.property('channels');
-                                      res.body.data.channelBounds.should.have.property('minTimeSecs', testFeed1aData3.data[0][0]);
-                                      res.body.data.channelBounds.should.have.property('maxTimeSecs', testFeed1aData3.data[testFeed1aData3.data.length - 1][0]);
-                                      res.body.data.should.have.property('importedBounds');
-                                      res.body.data.importedBounds.should.have.property('channels');
-                                      res.body.data.importedBounds.should.have.property('minTimeSecs', testFeed1aData3.data[0][0]);
-                                      res.body.data.importedBounds.should.have.property('maxTimeSecs', testFeed1aData3.data[testFeed1aData3.data.length - 1][0]);
-                                      done();
-                                   });
-                     });
+                        describe("With FeedApiKey authentication", function() {
 
-                     it("Should be able to upload data for a single channel to a feed (this one won't affect the min/max times)", function(done) {
-                        agent(url)
-                              .put("/api/v1/feeds/" + feeds.testFeed1a.id)
-                              .set({
-                                      Authorization : "Bearer " + accessTokens.testUser1.access_token
-                                   })
-                              .send(testFeed1aData4)
-                              .end(function(err, res) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                           it("Should be able to upload empty data to a feed using the feed's apiKey to authenticate", function(done) {
+                              agent(url)
+                                    .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                                    .set({
+                                            FeedApiKey : feeds.testFeed1a.apiKey
+                                         })
+                                    .send({})
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                                      res.should.have.property('status', httpStatus.OK);
-                                      res.body.should.have.property('code', httpStatus.OK);
-                                      res.body.should.have.property('status', 'success');
-                                      res.body.should.have.property('data');
+                                            res.should.have.property('status', httpStatus.OK);
+                                            res.body.should.have.property('code', httpStatus.OK);
+                                            res.body.should.have.property('status', 'success');
+                                            res.body.should.have.property('data');
 
-                                      res.body.data.should.have.property('channelBounds');
-                                      res.body.data.channelBounds.should.have.property('channels');
-                                      res.body.data.channelBounds.should.have.property('minTimeSecs', testFeed1aData3.data[0][0]);
-                                      res.body.data.channelBounds.should.have.property('maxTimeSecs', testFeed1aData3.data[testFeed1aData3.data.length - 1][0]);
-                                      res.body.data.should.have.property('importedBounds');
-                                      res.body.data.importedBounds.should.have.property('channels');
-                                      res.body.data.importedBounds.should.have.property('minTimeSecs', testFeed1aData4.data[0][0]);
-                                      res.body.data.importedBounds.should.have.property('maxTimeSecs', testFeed1aData4.data[testFeed1aData4.data.length - 1][0]);
-                                      done();
-                                   });
-                     });
+                                            done();
+                                         });
+                           });
 
-                     it("Should fail to upload to a public feed using the wrong user's OAuth2 access token to authenticate", function(done) {
-                        agent(url)
-                              .put("/api/v1/feeds/" + feeds.testFeed1a.id)
-                              .set({
-                                      Authorization : "Bearer " + accessTokens.testUser2.access_token
-                                   })
-                              .send(testFeed1aData2)
-                              .end(function(err, res) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                           it("Should be able to upload to a public feed using the feed's apiKey to authenticate", function(done) {
+                              agent(url)
+                                    .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                                    .set({
+                                            FeedApiKey : feeds.testFeed1a.apiKey
+                                         })
+                                    .send(testFeed1aData2)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                                      res.should.have.property('status', httpStatus.FORBIDDEN);
-                                      res.body.should.have.property('code', httpStatus.FORBIDDEN);
-                                      res.body.should.have.property('status', 'error');
-                                      res.body.should.have.property('data', null);
-                                      done();
-                                   });
-                     });
+                                            res.should.have.property('status', httpStatus.OK);
+                                            res.body.should.have.property('code', httpStatus.OK);
+                                            res.body.should.have.property('status', 'success');
+                                            res.body.should.have.property('data');
 
-                     it("Should fail to upload to a private feed using the wrong user's OAuth2 access token to authenticate", function(done) {
-                        agent(url)
-                              .put("/api/v1/feeds/" + feeds.testFeed1b.id)
-                              .set({
-                                      Authorization : "Bearer " + accessTokens.testUser2.access_token
-                                   })
-                              .send(testFeed1aData2)
-                              .end(function(err, res) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                                            done();
+                                         });
+                           });
 
-                                      res.should.have.property('status', httpStatus.FORBIDDEN);
-                                      res.body.should.have.property('code', httpStatus.FORBIDDEN);
-                                      res.body.should.have.property('status', 'error');
-                                      res.body.should.have.property('data', null);
-                                      done();
-                                   });
-                     });
+                           it("Should be able to upload to a private feed using the feed's apiKey to authenticate", function(done) {
+                              agent(url)
+                                    .put("/api/v1/feeds/" + feeds.testFeed1b.id)
+                                    .set({
+                                            FeedApiKey : feeds.testFeed1b.apiKey
+                                         })
+                                    .send(testFeed1aData2)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                     it("Should fail to upload to a feed using a valid OAuth2 access token but an invalid feed ID", function(done) {
-                        agent(url)
-                              .put("/api/v1/feeds/" + "0")
-                              .set({
-                                      Authorization : "Bearer " + accessTokens.testUser1.access_token
-                                   })
-                              .send(testFeed1aData2)
-                              .end(function(err, res) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                                            res.should.have.property('status', httpStatus.OK);
+                                            res.body.should.have.property('code', httpStatus.OK);
+                                            res.body.should.have.property('status', 'success');
+                                            res.body.should.have.property('data');
 
-                                      res.should.have.property('status', httpStatus.NOT_FOUND);
-                                      res.body.should.have.property('code', httpStatus.NOT_FOUND);
-                                      res.body.should.have.property('status', 'error');
-                                      res.body.should.have.property('data');
-                                      done();
-                                   });
-                     });
+                                            done();
+                                         });
+                           });
 
-                     it("Should fail to upload to a feed using an invalid OAuth2 access token to authenticate", function(done) {
-                        agent(url)
-                              .put("/api/v1/feeds/" + feeds.testFeed1a.id)
-                              .set({
-                                      Authorization : "Bearer " + "bogus"
-                                   })
-                              .send(testFeed1aData2)
-                              .end(function(err, res) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                           it("Should be able to upload data for a single channel to a feed", function(done) {
+                              agent(url)
+                                    .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                                    .set({
+                                            FeedApiKey : feeds.testFeed1a.apiKey
+                                         })
+                                    .send(testFeed1aData3)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                                      res.should.have.property('status', httpStatus.UNAUTHORIZED);
-                                      done();
-                                   });
-                     });
+                                            res.should.have.property('status', httpStatus.OK);
+                                            res.body.should.have.property('code', httpStatus.OK);
+                                            res.body.should.have.property('status', 'success');
+                                            res.body.should.have.property('data');
 
-                     it("Should fail to upload to a feed if no apiKey is provided", function(done) {
-                        agent(url)
-                              .put("/api/v1/feed")
-                              .send(testFeed1aData2)
-                              .end(function(err, res) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                                            done();
+                                         });
+                           });
 
-                                      res.should.have.property('status', httpStatus.UNAUTHORIZED);
-                                      done();
-                                   });
-                     });
+                           it("Should fail to upload to a feed using the wrong feed's apiKey to authenticate", function(done) {
+                              agent(url)
+                                    .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                                    .set({
+                                            FeedApiKey : feeds.testFeed1b.apiKey
+                                         })
+                                    .send(testFeed1aData2)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                     it("Should fail to upload to a feed if no OAuth2 access token is provided", function(done) {
-                        agent(url)
-                              .put("/api/v1/feeds/" + feeds.testFeed1a.id)
-                              .send(testFeed1aData2)
-                              .end(function(err, res) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                                            res.should.have.property('status', httpStatus.FORBIDDEN);
+                                            res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data', null);
+                                            done();
+                                         });
+                           });
 
-                                      res.should.have.property('status', httpStatus.UNAUTHORIZED);
-                                      done();
-                                   });
-                     });
+                           it("Should fail to upload to a feed using a valid feed apiKey but an invalid feed ID", function(done) {
+                              agent(url)
+                                    .put("/api/v1/feeds/" + "0")
+                                    .set({
+                                            FeedApiKey : feeds.testFeed1b.apiKey
+                                         })
+                                    .send(testFeed1aData2)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.NOT_FOUND);
+                                            res.body.should.have.property('code', httpStatus.NOT_FOUND);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data');
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to upload to a feed using an invalid feed apiKey to authenticate", function(done) {
+                              agent(url)
+                                    .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                                    .set({
+                                            FeedApiKey : "bogus"
+                                         })
+                                    .send(testFeed1aData2)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.FORBIDDEN);
+                                            done();
+                                         });
+                           });
+
+                        });   // end With FeedApiKey authentication
+
+                     });   // end To /feeds method
+
+                     describe("To /feed method", function() {
+                        it("Should be able to upload empty data to a feed using the feed's apiKey to authenticate", function(done) {
+                           agent(url)
+                                 .put("/api/v1/feed")
+                                 .set({
+                                         FeedApiKey : feeds.testFeed1a.apiKey
+                                      })
+                                 .send({})
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+                                         res.body.data.should.have.property('channelBounds', {});
+                                         res.body.data.should.have.property('importedBounds', {});
+
+                                         done();
+                                      });
+                        });
+
+                        it("Should fail to upload empty data to a feed using the feed's apiKeyReadOnly to authenticate", function(done) {
+                           agent(url)
+                                 .put("/api/v1/feed")
+                                 .set({
+                                         FeedApiKey : feeds.testFeed1a.apiKeyReadOnly
+                                      })
+                                 .send({})
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.FORBIDDEN);
+                                         res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                         res.body.should.have.property('status', 'error');
+                                         res.body.should.have.property('data', null);
+
+                                         done();
+                                      });
+                        });
+
+                        it("Should be able to upload to a feed using the feed's apiKey to authenticate", function(done) {
+                           agent(url)
+                                 .put("/api/v1/feed")
+                                 .set({
+                                         FeedApiKey : feeds.testFeed1a.apiKey
+                                      })
+                                 .send(testFeed1aData1)
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+
+                                         done();
+                                      });
+                        });
+
+                        it("Should fail to upload to a feed using the feed's apiKeyReadOnly to authenticate", function(done) {
+                           agent(url)
+                                 .put("/api/v1/feed")
+                                 .set({
+                                         FeedApiKey : feeds.testFeed1a.apiKeyReadOnly
+                                      })
+                                 .send(testFeed1aData1)
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.FORBIDDEN);
+                                         res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                         res.body.should.have.property('status', 'error');
+                                         res.body.should.have.property('data', null);
+
+                                         done();
+                                      });
+                        });
+
+                        it("Should fail to upload to a feed using an invalid apiKey to authenticate", function(done) {
+                           agent(url)
+                                 .put("/api/v1/feed")
+                                 .set({
+                                         FeedApiKey : "bogus"
+                                      })
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.UNAUTHORIZED);
+                                         done();
+                                      });
+                        });
+
+                        it("Should fail to upload to a feed if no apiKey is provided", function(done) {
+                           agent(url)
+                                 .put("/api/v1/feed")
+                                 .send(testFeed1aData2)
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.UNAUTHORIZED);
+                                         done();
+                                      });
+                        });
+
+                     });   // end To /feed method
 
                   });      // end Upload
 
