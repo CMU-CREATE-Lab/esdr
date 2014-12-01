@@ -22,10 +22,20 @@ module.exports = function(FeedModel, feedRouteHelper) {
                  return feedRouteHelper.importData(res, feed, req.body);
               });
 
-   // TODO: prevent caching
+   var noCache = function(req, res, next) {
+      // Taken from https://github.com/andrewrk/connect-nocache/blob/master/index.js
+      res.setHeader('Cache-Control', 'no-cache, private, no-store, must-revalidate, max-stale=0, post-check=0, pre-check=0');
+
+      // taken from http://stackoverflow.com/a/20429914
+      res.header('Expires', '-1');
+      res.header('Pragma', 'no-cache');
+      next();
+   };
+
    // for getting info about a feed, authenticated using the feed's API Key in the request header
    router.get('/',
               passport.authenticate('feed-apikey', { session : false }),
+              noCache,
               function(req, res, next) {
                  var feed = req.authInfo.feed;
                  log.debug("Received GET to get info for in feed [" + feed.id + "] (feed API Key authentication)");
