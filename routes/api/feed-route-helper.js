@@ -26,4 +26,26 @@ module.exports = function(FeedModel) {
          return res.jsendClientError("No data received", null, httpStatus.BAD_REQUEST);
       }
    };
+
+   /**
+    * Assumes the given feed has already been filtered by the route handler to include only fields requested by the
+    * caller.
+    */
+   this.getInfo = function(res, filteredFeed, willPreventSelectionOfApiKey) {
+      // inflate the JSON fields into objects
+      if ("channelSpecs" in filteredFeed) {
+         filteredFeed.channelSpecs = JSON.parse(filteredFeed.channelSpecs);
+      }
+
+      if ("channelBounds" in filteredFeed) {
+         filteredFeed.channelBounds = JSON.parse(filteredFeed.channelBounds);
+      }
+
+      // delete the API key if not allowed to see it
+      if (willPreventSelectionOfApiKey) {
+         delete filteredFeed.apiKey;
+      }
+
+      return res.jsendSuccess(filteredFeed, httpStatus.OK); // HTTP 200 OK
+   };
 };
