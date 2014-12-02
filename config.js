@@ -24,7 +24,8 @@ config.defaults({
                    },
                    "cookie" : {
                       "name" : "esdr_sid",
-                      "secret" : "Thou art my heaven, and I thine eremite."
+                      "secret" : "Thou art my heaven, and I thine eremite.",
+                      "isSecure" : false
                    },
                    "esdrClient" : {
                       "displayName" : "ESDR",
