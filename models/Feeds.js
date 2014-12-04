@@ -93,7 +93,7 @@ var JSON_SCHEMA = {
          "maxLength" : 255
       },
       "exposure" : {
-         "enum" : [ 'indoor', 'outdoor', 'virtual' ]
+         "enum" : ['indoor', 'outdoor', 'virtual']
       },
       "latitude" : {
          "type" : "number",
@@ -182,7 +182,7 @@ module.exports = function(databaseHelper) {
 
    this.getTile = function(feed, channelName, level, offset, callback) {
       datastore.getTile(feed.userId,
-                        getDatastoreId(feed),
+                        getDatastoreDeviceNameForFeed(feed),
                         channelName,
                         level,
                         offset,
@@ -209,7 +209,7 @@ module.exports = function(databaseHelper) {
                         });
    };
 
-   var getDatastoreId = function(feed) {
+   var getDatastoreDeviceNameForFeed = function(feed) {
       return "feed_" + feed.id;
    };
 
@@ -227,9 +227,9 @@ module.exports = function(databaseHelper) {
    };
 
    this.importData = function(feed, data, callback) {
-      var datastoreId = getDatastoreId(feed);
+      var deviceName = getDatastoreDeviceNameForFeed(feed);
       datastore.importJson(feed.userId,
-                           datastoreId,
+                           deviceName,
                            data,
                            function(err, importResult) {
                               if (err) {
@@ -276,7 +276,7 @@ module.exports = function(databaseHelper) {
                               // optionally update the channel bounds, min/max times, and last upload time in the DB.
                               datastore.getInfo({
                                                    userId : feed.userId,
-                                                   deviceName : datastoreId
+                                                   deviceName : deviceName
                                                 },
                                                 function(err, info) {
                                                    if (err) {
@@ -299,7 +299,7 @@ module.exports = function(databaseHelper) {
 
                                                       // Iterate over each of the channels in the info from the datastore
                                                       // and copy to our bounds object.
-                                                      var deviceAndChannelPrefixLength = (datastoreId + ".").length;
+                                                      var deviceAndChannelPrefixLength = (deviceName + ".").length;
                                                       bounds.channelBounds.channels = {};
                                                       Object.keys(info.channel_specs).forEach(function(deviceAndChannel) {
                                                          var channelName = deviceAndChannel.slice(deviceAndChannelPrefixLength);
@@ -343,6 +343,27 @@ module.exports = function(databaseHelper) {
       );
    };
 
+   /**
+    * Exports the specified channels from the specified feed, optionally filtered with the given filter.  Data is
+    * returned to the callback via an EventEmitter.
+    *
+    * @param {Object} feed
+    * @param {Array} channels
+    * @param {Object} filter
+    * @param {function} callback
+    */
+   this.exportData = function(feed, channels, filter, callback) {
+      filter = filter || {};
+      datastore.export(feed.userId,
+                       getDatastoreDeviceNameForFeed(feed),
+                       channels,
+                       {
+                          minTime : filter.minTime,
+                          maxTime : filter.maxTime
+                       },
+                       callback);
+   };
+
    this.find = function(authUserId, queryString, callback) {
 
       query2query.parse(queryString, function(err, queryParts) {
@@ -373,11 +394,11 @@ module.exports = function(databaseHelper) {
 
          // build the restricted SQL query
          var restrictedSql = [
-                  "SELECT " + queryParts.selectFields.join(','),
-                  "FROM Feeds",
-                  whereClause,
-                  queryParts.orderByClause,
-                  queryParts.limitClause
+            "SELECT " + queryParts.selectFields.join(','),
+            "FROM Feeds",
+            whereClause,
+            queryParts.orderByClause,
+            queryParts.limitClause
          ].join(' ');
          log.debug("Feeds.find(): " + restrictedSql + (queryParts.whereValues.length > 0 ? " [where values: " + queryParts.whereValues + "]" : ""));
 
@@ -417,7 +438,7 @@ module.exports = function(databaseHelper) {
     * @param {function} callback function with signature <code>callback(err, feed)</code>
     */
    this.findById = function(id, fieldsToSelect, callback) {
-      query2query.parse({fields : fieldsToSelect}, function(err, queryParts) {
+      query2query.parse({ fields : fieldsToSelect }, function(err, queryParts) {
          if (err) {
             return callback(err);
          }
@@ -439,7 +460,7 @@ module.exports = function(databaseHelper) {
    };
 
    this.filterFields = function(feed, fieldsToSelect, callback) {
-      query2query.parse({fields : fieldsToSelect}, function(err, queryParts) {
+      query2query.parse({ fields : fieldsToSelect }, function(err, queryParts) {
          if (err) {
             return callback(err);
          }

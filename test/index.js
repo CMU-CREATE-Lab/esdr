@@ -158,6 +158,24 @@ describe("ESDR", function() {
       longitude : -79.945721
    };
 
+   var testFeed2a = {
+      name : "Newell Simon A Level (Public)",
+      exposure : "indoor",
+      isPublic : 1,
+      isMobile : 0,
+      latitude : 40.443493,
+      longitude : -79.945721
+   };
+
+   var testFeed2b = {
+      name : "Newell Simon B Level (Private)",
+      exposure : "indoor",
+      isPublic : 0,
+      isMobile : 0,
+      latitude : 40.443493,
+      longitude : -79.945721
+   };
+
    var testFeed3 = {
       name : "Upstairs Bathroom",
       exposure : "indoor",
@@ -224,6 +242,38 @@ describe("ESDR", function() {
       "data" : [
          [1380752248, 500],
          [1380752359, 501]
+      ]
+   };
+
+   var testFeed2aData = {
+      "channel_names" : ["humidity", "particle_concentration", "annotation"],
+      "data" : [
+         [1414982815, 38, 7.1, null],
+         [1414982833, 38, 11.9, null],
+         [1414982875, 39, 6.9, null],
+         [1414982893, 38, 101.9, "This value is too high"],
+         [1414982935, 38, 7.2, null],
+         [1414982953, 38, 11.4, null],
+         [1414985704, 41, 4.2, null],
+         [1414985719, 0, 0, "Why are these zero?"],
+         [1414985764, 38, 11.3, null],
+         [1414985779, 39, 7.5, null],
+      ]
+   };
+
+   var testFeed2bData = {
+      "channel_names" : ["humidity", "particle_concentration", "annotation"],
+      "data" : [
+         [1414986064, 35, 22.6, null],
+         [1414986079, 34, 20.1, null],
+         [1414986124, 34, 22.8, "Bad smell today!"],
+         [1414986139, 35, 19.5, null],
+         [1414986184, 34, 22.5, null],
+         [1414986199, 34, 18.8, null],
+         [1414986244, 35, 21.7, null],
+         [1414986259, 34, 19.8, null],
+         [1414986304, 34, 22.9, null],
+         [1414986319, 34, 19.5, null]
       ]
    };
 
@@ -4491,6 +4541,436 @@ describe("ESDR", function() {
 
                   });      // END Find Feeds
 
+                  describe("Export", function() {
+                     var userId = 3;
+                     var deviceName = "speck";
+                     var createdFeeds = [];
+
+                     before(function(initDone) {
+
+                        var createFeed = function(deviceId, feed, callback) {
+                           agent(url)
+                                 .post("/api/v1/devices/" + deviceId + "/feeds")
+                                 .set({
+                                         Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                      })
+                                 .send(feed)
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return initDone(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.CREATED);
+                                         res.body.should.have.property('code', httpStatus.CREATED);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+                                         res.body.data.should.have.property('id');
+                                         res.body.data.should.have.property('apiKey');
+                                         res.body.data.should.have.property('apiKeyReadOnly');
+
+                                         feed.id = res.body.data.id;
+                                         feed.apiKey = res.body.data.apiKey;
+                                         feed.apiKeyReadOnly = res.body.data.apiKeyReadOnly;
+
+                                         createdFeeds.push(feed);
+                                         callback(null, feed);
+                                      });
+
+                        };
+
+                        var uploadData = function(feedId, feedData, callback) {
+                           agent(url)
+                                 .put("/api/v1/feeds/" + feedId)
+                                 .set({
+                                         Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                      })
+                                 .send(feedData)
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return initDone(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+                                         res.body.data.should.have.property('channelBounds');
+                                         res.body.data.channelBounds.should.have.property('channels');
+                                         res.body.data.should.have.property('importedBounds');
+                                         res.body.data.importedBounds.should.have.property('channels');
+                                         callback(null, true);
+                                      });
+                        };
+
+                        flow.series([
+                                       function(done) {
+                                          createFeed(deviceIds.testDevice1, testFeed2a, done);
+                                       },
+                                       function(done) {
+                                          createFeed(deviceIds.testDevice1, testFeed2b, done);
+                                       },
+                                       function(done) {
+                                          uploadData(testFeed2a.id, testFeed2aData, done);
+                                       },
+                                       function(done) {
+                                          uploadData(testFeed2b.id, testFeed2bData, done);
+                                       }
+                                    ],
+                                    initDone);
+                     });
+
+                     describe("Public Feeds", function() {
+                        it("Should be able to export a public feed without authentication", function(done) {
+
+                           var feedId = createdFeeds[0].id;
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feedId + "/channels/humidity,particle_concentration,annotation/export")
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.headers.should.have.property('content-disposition', 'attachment; filename=\"export_of_feed_' + feedId + '.csv\"');
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.text.should.equal(
+                                               "EpochTime,feed_" + feedId + ".humidity,feed_" + feedId + ".particle_concentration,feed_" + feedId + ".annotation\n" +
+                                               "1414982815,38,7.1,\n" +
+                                               "1414982833,38,11.9,\n" +
+                                               "1414982875,39,6.9,\n" +
+                                               "1414982893,38,101.9,\"This value is too high\"\n" +
+                                               "1414982935,38,7.2,\n" +
+                                               "1414982953,38,11.4,\n" +
+                                               "1414985704,41,4.2,\n" +
+                                               "1414985719,0,0,\"Why are these zero?\"\n" +
+                                               "1414985764,38,11.3,\n" +
+                                               "1414985779,39,7.5,\n"
+                                         );
+
+                                         done();
+                                      });
+                        });
+
+                        it("Should ignore redundant channels", function(done) {
+
+                           var feedId = createdFeeds[0].id;
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feedId + "/channels/humidity,humidity,particle_concentration,annotation,humidity,particle_concentration/export")
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.headers.should.have.property('content-disposition', 'attachment; filename=\"export_of_feed_' + feedId + '.csv\"');
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.text.should.equal(
+                                               "EpochTime,feed_" + feedId + ".humidity,feed_" + feedId + ".particle_concentration,feed_" + feedId + ".annotation\n" +
+                                               "1414982815,38,7.1,\n" +
+                                               "1414982833,38,11.9,\n" +
+                                               "1414982875,39,6.9,\n" +
+                                               "1414982893,38,101.9,\"This value is too high\"\n" +
+                                               "1414982935,38,7.2,\n" +
+                                               "1414982953,38,11.4,\n" +
+                                               "1414985704,41,4.2,\n" +
+                                               "1414985719,0,0,\"Why are these zero?\"\n" +
+                                               "1414985764,38,11.3,\n" +
+                                               "1414985779,39,7.5,\n"
+                                         );
+
+                                         done();
+                                      });
+                        });
+
+                        it("Should ignore invalid min and max times", function(done) {
+
+                           var feedId = createdFeeds[0].id;
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feedId + "/channels/humidity,humidity,particle_concentration,annotation,humidity,particle_concentration/export?from=foo&to=bar")
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.headers.should.have.property('content-disposition', 'attachment; filename=\"export_of_feed_' + feedId + '.csv\"');
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.text.should.equal(
+                                               "EpochTime,feed_" + feedId + ".humidity,feed_" + feedId + ".particle_concentration,feed_" + feedId + ".annotation\n" +
+                                               "1414982815,38,7.1,\n" +
+                                               "1414982833,38,11.9,\n" +
+                                               "1414982875,39,6.9,\n" +
+                                               "1414982893,38,101.9,\"This value is too high\"\n" +
+                                               "1414982935,38,7.2,\n" +
+                                               "1414982953,38,11.4,\n" +
+                                               "1414985704,41,4.2,\n" +
+                                               "1414985719,0,0,\"Why are these zero?\"\n" +
+                                               "1414985764,38,11.3,\n" +
+                                               "1414985779,39,7.5,\n"
+                                         );
+
+                                         done();
+                                      });
+                        });
+
+                        it("Should fail to export a non-existent feed", function(done) {
+
+                           agent(url)
+                                 .get("/api/v1/feeds/-1/channels/humidity,particle_concentration,annotation/export")
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.NOT_FOUND);
+                                         res.body.should.have.property('code', httpStatus.NOT_FOUND);
+                                         res.body.should.have.property('status', 'error');
+                                         res.body.should.have.property('data');
+
+                                         done();
+                                      });
+                        });
+
+                        it("Should be able to export and limit returned records by max time", function(done) {
+
+                           var feedId = createdFeeds[0].id;
+                           var maxTime = 1414982935;
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feedId + "/channels/humidity,particle_concentration,annotation/export?to=" + maxTime)
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.headers.should.have.property('content-disposition', 'attachment; filename=\"export_of_feed_' + feedId + '_to_time_' + maxTime + '.csv\"');
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.text.should.equal(
+                                               "EpochTime,feed_" + feedId + ".humidity,feed_" + feedId + ".particle_concentration,feed_" + feedId + ".annotation\n" +
+                                               "1414982815,38,7.1,\n" +
+                                               "1414982833,38,11.9,\n" +
+                                               "1414982875,39,6.9,\n" +
+                                               "1414982893,38,101.9,\"This value is too high\"\n" +
+                                               "1414982935,38,7.2,\n"
+                                         );
+
+                                         done();
+                                      });
+                        });
+
+                        it("Should be able to export and limit returned records by min time", function(done) {
+
+                           var feedId = createdFeeds[0].id;
+                           var minTime = 1414982935;
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feedId + "/channels/humidity,particle_concentration,annotation/export?from=" + minTime)
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.headers.should.have.property('content-disposition', 'attachment; filename=\"export_of_feed_' + feedId + '_from_time_' + minTime + '.csv\"');
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.text.should.equal(
+                                               "EpochTime,feed_" + feedId + ".humidity,feed_" + feedId + ".particle_concentration,feed_" + feedId + ".annotation\n" +
+                                               "1414982935,38,7.2,\n" +
+                                               "1414982953,38,11.4,\n" +
+                                               "1414985704,41,4.2,\n" +
+                                               "1414985719,0,0,\"Why are these zero?\"\n" +
+                                               "1414985764,38,11.3,\n" +
+                                               "1414985779,39,7.5,\n"
+                                         );
+
+                                         done();
+                                      });
+                        });
+
+                        it("Should be able to export and limit returned records by min and max time", function(done) {
+
+                           var feedId = createdFeeds[0].id;
+                           var minTime = 1414982935;
+                           var maxTime = 1414982953;
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feedId + "/channels/humidity,particle_concentration,annotation/export?from=" + minTime + "&to=" + maxTime)
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.headers.should.have.property('content-disposition', 'attachment; filename=\"export_of_feed_' + feedId + '_from_time_' + minTime + '_to_' + maxTime + '.csv\"');
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.text.should.equal(
+                                               "EpochTime,feed_" + feedId + ".humidity,feed_" + feedId + ".particle_concentration,feed_" + feedId + ".annotation\n" +
+                                               "1414982935,38,7.2,\n" +
+                                               "1414982953,38,11.4,\n"
+                                         );
+
+                                         done();
+                                      });
+                        });
+
+                        it("Should be able to export and limit returned records by min and max time, even if min and max time values are swapped", function(done) {
+
+                           var feedId = createdFeeds[0].id;
+                           var minTime = 1414982935;
+                           var maxTime = 1414982953;
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feedId + "/channels/humidity,particle_concentration,annotation/export?from=" + maxTime + "&to=" + minTime)
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.headers.should.have.property('content-disposition', 'attachment; filename=\"export_of_feed_' + feedId + '_from_time_' + minTime + '_to_' + maxTime + '.csv\"');
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.text.should.equal(
+                                               "EpochTime,feed_" + feedId + ".humidity,feed_" + feedId + ".particle_concentration,feed_" + feedId + ".annotation\n" +
+                                               "1414982935,38,7.2,\n" +
+                                               "1414982953,38,11.4,\n"
+                                         );
+
+                                         done();
+                                      });
+                        });
+
+                     });      // end Public Feeds
+
+                     describe("Private Feeds", function() {
+                        it("Should fail to export a private feed without authentication", function(done) {
+
+                           var feedId = createdFeeds[1].id;
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feedId + "/channels/humidity,particle_concentration,annotation/export")
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.UNAUTHORIZED);
+                                         res.body.should.have.property('code', httpStatus.UNAUTHORIZED);
+                                         res.body.should.have.property('status', 'error');
+                                         res.body.should.have.property('data');
+
+                                         done();
+                                      });
+                        });
+
+                        describe("OAuth2 Authentication", function() {
+
+                           it("Should be able to export a private feed with valid authentication", function(done) {
+
+                              var feedId = createdFeeds[1].id;
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feedId + "/channels/humidity,particle_concentration,annotation/export")
+                                    .set({
+                                            Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                         })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.headers.should.have.property('content-disposition', 'attachment; filename=\"export_of_feed_' + feedId + '.csv\"');
+                                            res.should.have.property('status', httpStatus.OK);
+                                            res.text.should.equal(
+                                                  "EpochTime,feed_" + feedId + ".humidity,feed_" + feedId + ".particle_concentration,feed_" + feedId + ".annotation\n" +
+                                                  "1414986064,35,22.6,\n" +
+                                                  "1414986079,34,20.1,\n" +
+                                                  "1414986124,34,22.8,\"Bad smell today!\"\n" +
+                                                  "1414986139,35,19.5,\n" +
+                                                  "1414986184,34,22.5,\n" +
+                                                  "1414986199,34,18.8,\n" +
+                                                  "1414986244,35,21.7,\n" +
+                                                  "1414986259,34,19.8,\n" +
+                                                  "1414986304,34,22.9,\n" +
+                                                  "1414986319,34,19.5,\n"
+                                            );
+
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to export a private feed with invalid authentication", function(done) {
+
+                              var feedId = createdFeeds[1].id;
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feedId + "/channels/humidity,particle_concentration,annotation/export")
+                                    .set({
+                                            Authorization : "Bearer " + "bogus"
+                                         })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.FORBIDDEN);
+                                            res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data');
+
+                                            done();
+                                         });
+                           });
+
+                        });      // end OAuth2 Authentication
+
+                        describe("API Key Authentication", function() {
+
+                           it("Should be able to export a private feed with valid authentication", function(done) {
+
+                              var feedId = createdFeeds[1].id;
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feedId + "/channels/humidity,particle_concentration,annotation/export")
+                                    .set({
+                                            FeedApiKey : createdFeeds[1].apiKeyReadOnly
+                                         })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.headers.should.have.property('content-disposition', 'attachment; filename=\"export_of_feed_' + feedId + '.csv\"');
+                                            res.should.have.property('status', httpStatus.OK);
+                                            res.text.should.equal(
+                                                  "EpochTime,feed_" + feedId + ".humidity,feed_" + feedId + ".particle_concentration,feed_" + feedId + ".annotation\n" +
+                                                  "1414986064,35,22.6,\n" +
+                                                  "1414986079,34,20.1,\n" +
+                                                  "1414986124,34,22.8,\"Bad smell today!\"\n" +
+                                                  "1414986139,35,19.5,\n" +
+                                                  "1414986184,34,22.5,\n" +
+                                                  "1414986199,34,18.8,\n" +
+                                                  "1414986244,35,21.7,\n" +
+                                                  "1414986259,34,19.8,\n" +
+                                                  "1414986304,34,22.9,\n" +
+                                                  "1414986319,34,19.5,\n"
+                                            );
+
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to export a private feed with invalid authentication", function(done) {
+
+                              var feedId = createdFeeds[1].id;
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feedId + "/channels/humidity,particle_concentration,annotation/export")
+                                    .set({
+                                            FeedApiKey : "bogus"
+                                         })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.FORBIDDEN);
+                                            res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data');
+
+                                            done();
+                                         });
+                           });
+
+                        });      // end API Key Authentication
+
+                     });      // end Private Feeds
+                  });      // end Export
                });      // end Feeds
             });      // end Devices
          });      // end Products
@@ -5361,6 +5841,6 @@ describe("ESDR", function() {
 
          });      // end Products
 
-      });         // end Products, Devices, and Feeds
-   });            // end Database
-});               // end ESDR
+      });      // end Products, Devices, and Feeds
+   });      // end Database
+});      // end ESDR

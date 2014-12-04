@@ -174,12 +174,10 @@ module.exports = function(FeedModel, feedRouteHelper) {
                              var canSeeFeed = wasGivenReadWriteApiKey ||
                                               req.headers['feedapikey'] == feed.apiKeyReadOnly;
 
-                             process.nextTick(function() {
-                                if (canSeeFeed) {
-                                   return feedRouteHelper.getInfo(res, filteredFeed, !wasGivenReadWriteApiKey);
-                                }
-                                return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
-                             });
+                             if (canSeeFeed) {
+                                return feedRouteHelper.getInfo(res, filteredFeed, !wasGivenReadWriteApiKey);
+                             }
+                             return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
                           }
                           else if ("authorization" in req.headers) {
                              // If they sent an OAuth2 Authorization header, then authenticate the user to see whether
@@ -250,12 +248,10 @@ module.exports = function(FeedModel, feedRouteHelper) {
                           var canSeeFeed = req.headers['feedapikey'] == feed.apiKey ||
                                            req.headers['feedapikey'] == feed.apiKeyReadOnly;
 
-                          process.nextTick(function() {
-                             if (canSeeFeed) {
-                                return getTile(res, feed, channelName, level, offset);
-                             }
-                             return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
-                          });
+                          if (canSeeFeed) {
+                             return getTile(res, feed, channelName, level, offset);
+                          }
+                          return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
                        }
                        else if ("authorization" in req.headers) {
                           // If they sent an OAuth2 Authorization header, then authenticate the user to see whether she
@@ -270,6 +266,172 @@ module.exports = function(FeedModel, feedRouteHelper) {
                              if (user) {
                                 if (user.id == feed.userId) {
                                    return getTile(res, feed, channelName, level, offset);
+                                }
+                             }
+                             return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
+                          })(req, res, next);
+                       }
+                       else {
+                          // Otherwise, deny access.
+                          process.nextTick(function() {
+                             return res.jsendClientError("Authentication required.", null, httpStatus.UNAUTHORIZED);  // HTTP 401 Unauthorized
+                          });
+                       }
+                    }
+                 });
+              });
+
+   /**
+    * Returns <code>true</code> if the given value is a string; returns <code>false</code> otherwise.
+    *
+    * Got this from http://stackoverflow.com/a/9436948/703200
+    */
+   var isString = function(o) {
+      return (typeof o == 'string' || o instanceof String)
+   };
+
+   /**
+    * Trims the given string.  If not a string, returns an empty string.
+    *
+    * @param {string} str the string to be trimmed
+    */
+   var trim = function(str) {
+      if (isString(str)) {
+         return str.trim();
+      }
+      return '';
+   };
+
+   // For exporting one or more channels from a feed
+   // /api/v1/feeds/{feedId}/channels/{channels}/export?from={from}&to={to}
+   router.get('/:feedId/channels/:channels/export',
+              function(req, res, next) {
+                 var feedId = req.params['feedId'];
+
+                 // scrub the channels, removing dupes, but preserving the requested order of the unique ones
+                 var requestedChannels = (req.params.channels || '').split(',').map(trim);
+                 var alreadyIncludedChannels = {};
+                 var channels = requestedChannels.filter(function(channel) {
+                    var isNew = !(channel in alreadyIncludedChannels);
+                    if (isNew) {
+                       alreadyIncludedChannels[channel] = true;
+                    }
+                    return isNew;
+                 });
+
+                 // parse the min and max times
+                 var parseTimeString = function(str) {
+                    if (isString(str)) {
+                       var val = parseFloat(str);
+                       if (isFinite(val)) {
+                          return val;
+                       }
+                    }
+                    return null;
+                 };
+                 var minTime = parseTimeString(req.query.from);
+                 var maxTime = parseTimeString(req.query.to);
+
+                 // swap the times if minTime is greater than maxTime
+                 if (minTime != null && maxTime != null && minTime > maxTime) {
+                    var temp = minTime;
+                    minTime = maxTime;
+                    maxTime = temp;
+                 }
+
+                 // make sure the format is valid (TODO: uncomment and fix this up once the datastore can export JSON)
+                 //var format = (req.query.format || 'csv');
+                 //var contentType;
+                 //if (isString(format)) {
+                 //   format = format.toLowerCase().trim();
+                 //   if (format == 'json') {
+                 //      contentType = 'application/json';
+                 //   }
+                 //   else if (format == 'csv') {
+                 //      contentType = 'text/plain';
+                 //   }
+                 //   else {
+                 //      // TODO: throw error instead
+                 //      contentType = 'text/plain';
+                 //      format = 'csv';
+                 //   }
+                 //}
+                 //else {
+                 //   // TODO: throw error instead
+                 //   contentType = 'text/plain';
+                 //   format = 'csv';
+                 //}
+                 var format = 'csv';
+
+                 // build the filename for the Content-disposition header
+                 var filename = "export_of_feed_" + feedId;
+                 if (minTime != null) {
+                    filename += "_from_time_" + minTime;
+                 }
+                 if (maxTime != null) {
+                    filename += "_to_" + (minTime == null ? "time_" : "") + maxTime;
+                 }
+                 filename += "." + format;
+
+                 // find the feed
+                 findFeedById(res, feedId, 'id,userId,isPublic,apiKey,apiKeyReadOnly', function(feed) {
+
+                    var doExport = function() {
+                       FeedModel.exportData(feed,
+                                            channels,
+                                            {
+                                               minTime : minTime,
+                                               maxTime : maxTime
+                                            },
+                                            function(err, eventEmitter) {
+                                               if (err) {
+                                                  if (err.data && err.data.code == httpStatus.UNPROCESSABLE_ENTITY) {
+                                                     return res.jsendPassThrough(err.data)
+                                                  }
+
+                                                  log.error("Failed to export feed: " + JSON.stringify(err, null, 3));
+                                                  return res.jsendServerError("Failed to export feed", null);
+                                               }
+
+                                               // set the status code, the connection to close, and specify the Content-disposition filename
+                                               res
+                                                     .status(httpStatus.OK)
+                                                     .set("Connection", "close")
+                                                     .attachment(filename);
+
+                                               // pipe the eventEmitter to the response
+                                               return eventEmitter.stdout.pipe(res);
+                                            });
+                    };
+
+                    // Allow access to the tile if the feed is public
+                    if (feed.isPublic) {
+                       return doExport();
+                    }
+                    else {
+                       // if the feed is private, then check for authorization
+                       if ("feedapikey" in req.headers) {
+                          var canSeeFeed = req.headers['feedapikey'] == feed.apiKey ||
+                                           req.headers['feedapikey'] == feed.apiKeyReadOnly;
+
+                          if (canSeeFeed) {
+                             return doExport();
+                          }
+                          return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
+                       }
+                       else if ("authorization" in req.headers) {
+                          // If they sent an OAuth2 Authorization header, then authenticate the user to see whether she
+                          // owns the feed.  If so, then she should be granted access to see a tile.
+                          passport.authenticate('bearer', function(err, user) {
+                             if (err) {
+                                var message = "Error while authenticating with OAuth2 access token to do export for channels [" + channels + "] from feed [" + feedId + "]";
+                                log.error(message + ": " + err);
+                                return res.jsendServerError(message);
+                             }
+
+                             if (user) {
+                                if (user.id == feed.userId) {
+                                   return doExport();
                                 }
                              }
                              return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
