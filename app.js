@@ -131,7 +131,7 @@ Database.create(function(err, db) {
          });
 
          // configure passport
-         require('./middleware/auth')(db.clients, db.users, db.tokens, db.feeds);
+         var authHelper = require('./middleware/auth')(db.clients, db.users, db.tokens, db.feeds);
 
          // CUSTOM MIDDLEWARE ------------------------------------------------------------------------------------------
 
@@ -219,7 +219,7 @@ Database.create(function(err, db) {
          app.use('/api/v1/users', require('./routes/api/users')(db.users));
          app.use('/api/v1/products', require('./routes/api/products')(db.products, db.devices));
          app.use('/api/v1/devices', require('./routes/api/devices')(db.devices, db.feeds));
-         app.use('/api/v1/feed', require('./routes/api/feed')(db.feeds, feedRouteHelper));
+         app.use('/api/v1/feed', require('./routes/api/feed')(db.feeds, feedRouteHelper, authHelper));
          app.use('/api/v1/feeds', require('./routes/api/feeds')(db.feeds, feedRouteHelper));
          app.use('/api/v1/user-verification', require('./routes/api/user-verification')(db.users));
          app.use('/api/v1/password-reset', require('./routes/api/password-reset')(db.users));

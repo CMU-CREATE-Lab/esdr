@@ -11,6 +11,31 @@ var log = require('log4js').getLogger('esdr:middleware:auth');
 
 module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {
 
+   var authHelper = {
+         authenticateByFeedApiKey : function(apiKey, done) {
+            FeedModel.findByApiKey(apiKey, function(err, feed) {
+               if (err) {
+                  return done(err);
+               }
+
+               if (!feed) {
+                  return done(null, false, { message : 'Invalid feed API key' });
+               }
+
+               var user = {
+                  id : feed.userId
+               };
+
+               var info = {
+                  feed : feed,
+                  isReadOnly : feed.apiKeyReadOnly == apiKey
+               };
+
+               return done(null, user, info);
+            });
+         }
+      };
+
    passport.use(new LocalStrategy({
                                      usernameField : 'email',
                                      passwordField : 'password'
@@ -149,27 +174,9 @@ module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {
             apiKeyHeader : "feedapikey",
             apiKeyField : "feedapikey"
          },
-         function(apiKey, done) {
-            FeedModel.findByApiKey(apiKey, function(err1, feed) {
-               if (err1) {
-                  return done(err1);
-               }
-               if (!feed) {
-                  return done(null, false, { message : 'Invalid feed API key' });
-               }
-
-               var user = {
-                  id : feed.userId
-               };
-
-               var info = {
-                  feed : feed,
-                  isReadOnly : feed.apiKeyReadOnly == apiKey
-               };
-
-               return done(null, user, info);
-            });
-         }
+         authHelper.authenticateByFeedApiKey
    ));
+
+   return authHelper;
 };
 

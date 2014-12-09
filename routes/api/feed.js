@@ -4,7 +4,7 @@ var passport = require('passport');
 var httpStatus = require('http-status');
 var log = require('log4js').getLogger('esdr:routes:api:feed');
 
-module.exports = function(FeedModel, feedRouteHelper) {
+module.exports = function(FeedModel, feedRouteHelper, authHelper) {
 
    // for uploads authenticated using the feed's API Key in the header
    router.put('/',
@@ -34,20 +34,42 @@ module.exports = function(FeedModel, feedRouteHelper) {
 
    // for getting info about a feed, authenticated using the feed's API Key in the request header
    router.get('/',
-              passport.authenticate('feed-apikey', { session : false }),
               noCache,
               function(req, res, next) {
-                 var feed = req.authInfo.feed;
-                 log.debug("Received GET to get info for in feed [" + feed.id + "] (feed API Key authentication)");
-
-                 FeedModel.filterFields(feed, req.query.fields, function(err, filteredFeed) {
-                    if (err) {
-                       return res.jsendServerError("Failed to get feed: " + err.message, null);
-                    }
-
-                    return feedRouteHelper.getInfo(res, filteredFeed, req.authInfo.isReadOnly);
-                 });
+                 return getFeedInfo(req.headers['feedapikey'], req, res);
               });
+
+   // for getting info about a feed, authenticated using the feed's API Key in the URL
+   router.get('/:feedApiKey',
+              function(req, res, next) {
+                 return getFeedInfo(req.params['feedApiKey'], req, res);
+              });
+
+   var getFeedInfo = function(feedApiKey, req, res) {
+      authHelper.authenticateByFeedApiKey(feedApiKey, function(err, user, info) {
+         if (err) {
+            var message = "Error while authenticating the feed API key";
+            log.error(message + ": " + err);
+            return res.jsendServerError(message);
+         }
+
+         var feed = info.feed;
+         if (feed) {
+            log.debug("Received GET to get info for in feed [" + feed.id + "] (feed API Key authentication)");
+
+            FeedModel.filterFields(feed, req.query.fields, function(err, filteredFeed) {
+               if (err) {
+                  return res.jsendServerError("Failed to get feed: " + err.message, null);
+               }
+
+               return feedRouteHelper.getInfo(res, filteredFeed, info.isReadOnly);
+            });
+         }
+         else {
+            return res.jsendClientError("Authentication required.", null, httpStatus.UNAUTHORIZED);  // HTTP 401 Unauthorized
+         }
+      });
+   };
 
    return router;
 };
