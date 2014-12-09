@@ -1,6 +1,6 @@
 {
   "name": "environmental-sensor-data-repository",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "description": "Repository for storing and visualizing environmental sensor data",
   "main": "app.js",
