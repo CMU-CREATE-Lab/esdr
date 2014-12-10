@@ -455,8 +455,25 @@ module.exports = function(databaseHelper) {
       });
    };
 
-   this.findByApiKey = function(apiKey, callback) {
-      databaseHelper.findOne("SELECT * FROM Feeds WHERE apiKey=? OR apiKeyReadOnly=?", [apiKey, apiKey], callback);
+   /**
+    * Tries to find the feed with the given read-write or read-only API key and returns it to the given
+    * <code>callback</code>. If successful, the feed is returned as the 2nd argument to the <code>callback</code>
+    * function.  If unsuccessful, <code>null</code> is returned to the callback.
+    *
+    * @param {string} apiKey The read-write or read-only API key of the feed to find.
+    * @param {string|array} fieldsToSelect comma-delimited string or array of strings of field names to select.
+    * @param {function} callback function with signature <code>callback(err, feed)</code>
+    */
+   this.findByApiKey = function(apiKey, fieldsToSelect, callback) {
+      query2query.parse({ fields : fieldsToSelect }, function(err, queryParts) {
+         if (err) {
+            return callback(err);
+         }
+
+         databaseHelper.findOne(queryParts.selectClause + " FROM Feeds WHERE apiKey=? OR apiKeyReadOnly=?",
+                                [apiKey, apiKey],
+                                callback);
+      });
    };
 
    this.filterFields = function(feed, fieldsToSelect, callback) {

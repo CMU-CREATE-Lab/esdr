@@ -13,7 +13,7 @@ module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {
 
    var authHelper = {
          authenticateByFeedApiKey : function(apiKey, done) {
-            FeedModel.findByApiKey(apiKey, function(err, feed) {
+            FeedModel.findByApiKey(apiKey, null, function(err, feed) {
                if (err) {
                   return done(err);
                }

@@ -4990,64 +4990,117 @@ describe("ESDR", function() {
                         });      // end OAuth2 Authentication
 
                         describe("API Key Authentication", function() {
+                           describe("Feed API Key in the request header", function() {
 
-                           it("Should be able to export a private feed with valid authentication", function(done) {
+                              it("Should be able to export a private feed with valid authentication", function(done) {
 
-                              var feedId = createdFeeds[1].id;
-                              agent(url)
-                                    .get("/api/v1/feeds/" + feedId + "/channels/humidity,particle_concentration,annotation/export")
-                                    .set({
-                                            FeedApiKey : createdFeeds[1].apiKeyReadOnly
-                                         })
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
+                                 var feedId = createdFeeds[1].id;
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feedId + "/channels/humidity,particle_concentration,annotation/export")
+                                       .set({
+                                               FeedApiKey : createdFeeds[1].apiKeyReadOnly
+                                            })
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
 
-                                            res.headers.should.have.property('content-disposition', 'attachment; filename=\"export_of_feed_' + feedId + '.csv\"');
-                                            res.should.have.property('status', httpStatus.OK);
-                                            res.text.should.equal(
-                                                  "EpochTime,feed_" + feedId + ".humidity,feed_" + feedId + ".particle_concentration,feed_" + feedId + ".annotation\n" +
-                                                  "1414986064,35,22.6,\n" +
-                                                  "1414986079,34,20.1,\n" +
-                                                  "1414986124,34,22.8,\"Bad smell today!\"\n" +
-                                                  "1414986139,35,19.5,\n" +
-                                                  "1414986184,34,22.5,\n" +
-                                                  "1414986199,34,18.8,\n" +
-                                                  "1414986244,35,21.7,\n" +
-                                                  "1414986259,34,19.8,\n" +
-                                                  "1414986304,34,22.9,\n" +
-                                                  "1414986319,34,19.5,\n"
-                                            );
+                                               res.headers.should.have.property('content-disposition', 'attachment; filename=\"export_of_feed_' + feedId + '.csv\"');
+                                               res.should.have.property('status', httpStatus.OK);
+                                               res.text.should.equal(
+                                                     "EpochTime,feed_" + feedId + ".humidity,feed_" + feedId + ".particle_concentration,feed_" + feedId + ".annotation\n" +
+                                                     "1414986064,35,22.6,\n" +
+                                                     "1414986079,34,20.1,\n" +
+                                                     "1414986124,34,22.8,\"Bad smell today!\"\n" +
+                                                     "1414986139,35,19.5,\n" +
+                                                     "1414986184,34,22.5,\n" +
+                                                     "1414986199,34,18.8,\n" +
+                                                     "1414986244,35,21.7,\n" +
+                                                     "1414986259,34,19.8,\n" +
+                                                     "1414986304,34,22.9,\n" +
+                                                     "1414986319,34,19.5,\n"
+                                               );
 
-                                            done();
-                                         });
-                           });
+                                               done();
+                                            });
+                              });
 
-                           it("Should fail to export a private feed with invalid authentication", function(done) {
+                              it("Should fail to export a private feed with invalid authentication", function(done) {
 
-                              var feedId = createdFeeds[1].id;
-                              agent(url)
-                                    .get("/api/v1/feeds/" + feedId + "/channels/humidity,particle_concentration,annotation/export")
-                                    .set({
-                                            FeedApiKey : "bogus"
-                                         })
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
+                                 var feedId = createdFeeds[1].id;
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feedId + "/channels/humidity,particle_concentration,annotation/export")
+                                       .set({
+                                               FeedApiKey : "bogus"
+                                            })
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
 
-                                            res.should.have.property('status', httpStatus.FORBIDDEN);
-                                            res.body.should.have.property('code', httpStatus.FORBIDDEN);
-                                            res.body.should.have.property('status', 'error');
-                                            res.body.should.have.property('data');
+                                               res.should.have.property('status', httpStatus.FORBIDDEN);
+                                               res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                               res.body.should.have.property('status', 'error');
+                                               res.body.should.have.property('data');
 
-                                            done();
-                                         });
-                           });
+                                               done();
+                                            });
+                              });
 
+                           });      // end Feed API Key in the request header
+
+                           describe("Feed API Key in the URL", function() {
+
+                              it("Should be able to export a private feed with valid authentication", function(done) {
+
+                                 var feedId = createdFeeds[1].id;
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + createdFeeds[1].apiKeyReadOnly + "/channels/humidity,particle_concentration,annotation/export")
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.headers.should.have.property('content-disposition', 'attachment; filename=\"export_of_feed_' + feedId + '.csv\"');
+                                               res.should.have.property('status', httpStatus.OK);
+                                               res.text.should.equal(
+                                                     "EpochTime,feed_" + feedId + ".humidity,feed_" + feedId + ".particle_concentration,feed_" + feedId + ".annotation\n" +
+                                                     "1414986064,35,22.6,\n" +
+                                                     "1414986079,34,20.1,\n" +
+                                                     "1414986124,34,22.8,\"Bad smell today!\"\n" +
+                                                     "1414986139,35,19.5,\n" +
+                                                     "1414986184,34,22.5,\n" +
+                                                     "1414986199,34,18.8,\n" +
+                                                     "1414986244,35,21.7,\n" +
+                                                     "1414986259,34,19.8,\n" +
+                                                     "1414986304,34,22.9,\n" +
+                                                     "1414986319,34,19.5,\n"
+                                               );
+
+                                               done();
+                                            });
+                              });
+
+                              it("Should fail to export a private feed with invalid authentication", function(done) {
+
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + "012345678901234567890123456789012345678901234567890123456789abcd" + "/channels/humidity,particle_concentration,annotation/export")
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.should.have.property('status', httpStatus.NOT_FOUND);
+                                               res.body.should.have.property('code', httpStatus.NOT_FOUND);
+                                               res.body.should.have.property('status', 'error');
+                                               res.body.should.have.property('data');
+
+                                               done();
+                                            });
+                              });
+
+                           });      // end Feed API Key in the URL
                         });      // end API Key Authentication
-
                      });      // end Private Feeds
                   });      // end Export
                });      // end Feeds

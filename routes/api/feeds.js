@@ -281,33 +281,10 @@ module.exports = function(FeedModel, feedRouteHelper) {
                  });
               });
 
-   /**
-    * Returns <code>true</code> if the given value is a string; returns <code>false</code> otherwise.
-    *
-    * Got this from http://stackoverflow.com/a/9436948/703200
-    */
-   var isString = function(o) {
-      return (typeof o == 'string' || o instanceof String)
-   };
-
-   /**
-    * Trims the given string.  If not a string, returns an empty string.
-    *
-    * @param {string} str the string to be trimmed
-    */
-   var trim = function(str) {
-      if (isString(str)) {
-         return str.trim();
-      }
-      return '';
-   };
-
    // For exporting one or more channels from a feed
-   // /api/v1/feeds/{feedId}/channels/{channels}/export?from={from}&to={to}
-   router.get('/:feedId/channels/:channels/export',
+   // /api/v1/feeds/{feedIdOrApiKey}/channels/{channels}/export?from={from}&to={to}
+   router.get('/:feedIdOrApiKey/channels/:channels/export',
               function(req, res, next) {
-                 var feedId = req.params['feedId'];
-
                  // scrub the channels, removing dupes, but preserving the requested order of the unique ones
                  var requestedChannels = (req.params.channels || '').split(',').map(trim);
                  var alreadyIncludedChannels = {};
@@ -363,88 +340,96 @@ module.exports = function(FeedModel, feedRouteHelper) {
                  //}
                  var format = 'csv';
 
-                 // build the filename for the Content-disposition header
-                 var filename = "export_of_feed_" + feedId;
-                 if (minTime != null) {
-                    filename += "_from_time_" + minTime;
-                 }
-                 if (maxTime != null) {
-                    filename += "_to_" + (minTime == null ? "time_" : "") + maxTime;
-                 }
-                 filename += "." + format;
+                 var doExport = function(feed) {
+                    // build the filename for the Content-disposition header
+                    var filename = "export_of_feed_" + feed.id;
+                    if (minTime != null) {
+                       filename += "_from_time_" + minTime;
+                    }
+                    if (maxTime != null) {
+                       filename += "_to_" + (minTime == null ? "time_" : "") + maxTime;
+                    }
+                    filename += "." + format;
 
-                 // find the feed
-                 findFeedById(res, feedId, 'id,userId,isPublic,apiKey,apiKeyReadOnly', function(feed) {
-
-                    var doExport = function() {
-                       FeedModel.exportData(feed,
-                                            channels,
-                                            {
-                                               minTime : minTime,
-                                               maxTime : maxTime
-                                            },
-                                            function(err, eventEmitter) {
-                                               if (err) {
-                                                  if (err.data && err.data.code == httpStatus.UNPROCESSABLE_ENTITY) {
-                                                     return res.jsendPassThrough(err.data)
-                                                  }
-
-                                                  log.error("Failed to export feed: " + JSON.stringify(err, null, 3));
-                                                  return res.jsendServerError("Failed to export feed", null);
+                    // export the data
+                    FeedModel.exportData(feed,
+                                         channels,
+                                         {
+                                            minTime : minTime,
+                                            maxTime : maxTime
+                                         },
+                                         function(err, eventEmitter) {
+                                            if (err) {
+                                               if (err.data && err.data.code == httpStatus.UNPROCESSABLE_ENTITY) {
+                                                  return res.jsendPassThrough(err.data)
                                                }
 
-                                               // set the status code, the connection to close, and specify the Content-disposition filename
-                                               res
-                                                     .status(httpStatus.OK)
-                                                     .set("Connection", "close")
-                                                     .attachment(filename);
+                                               log.error("Failed to export feed: " + JSON.stringify(err, null, 3));
+                                               return res.jsendServerError("Failed to export feed", null);
+                                            }
 
-                                               // pipe the eventEmitter to the response
-                                               return eventEmitter.stdout.pipe(res);
-                                            });
-                    };
+                                            // set the status code, the connection to close, and specify the Content-disposition filename
+                                            res
+                                                  .status(httpStatus.OK)
+                                                  .set("Connection", "close")
+                                                  .attachment(filename);
 
-                    // Allow access to the tile if the feed is public
-                    if (feed.isPublic) {
-                       return doExport();
-                    }
-                    else {
-                       // if the feed is private, then check for authorization
-                       if ("feedapikey" in req.headers) {
-                          var canSeeFeed = req.headers['feedapikey'] == feed.apiKey ||
-                                           req.headers['feedapikey'] == feed.apiKeyReadOnly;
+                                            // pipe the eventEmitter to the response
+                                            return eventEmitter.stdout.pipe(res);
+                                         });
+                 };
 
-                          if (canSeeFeed) {
-                             return doExport();
-                          }
-                          return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
-                       }
-                       else if ("authorization" in req.headers) {
-                          // If they sent an OAuth2 Authorization header, then authenticate the user to see whether she
-                          // owns the feed.  If so, then she should be granted access to see a tile.
-                          passport.authenticate('bearer', function(err, user) {
-                             if (err) {
-                                var message = "Error while authenticating with OAuth2 access token to do export for channels [" + channels + "] from feed [" + feedId + "]";
-                                log.error(message + ": " + err);
-                                return res.jsendServerError(message);
-                             }
+                 var feedIdOrApiKey = req.params['feedIdOrApiKey'];
+                 if (isFeedApiKey(feedIdOrApiKey)) {
+                    findFeedByApiKey(res, feedIdOrApiKey, 'id,userId,isPublic,apiKey,apiKeyReadOnly', doExport);
+                 }
+                 else {
+                    var feedId = feedIdOrApiKey;
 
-                             if (user) {
-                                if (user.id == feed.userId) {
-                                   return doExport();
-                                }
-                             }
-                             return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
-                          })(req, res, next);
+                    findFeedById(res, feedId, 'id,userId,isPublic,apiKey,apiKeyReadOnly', function(feed) {
+
+                       // Allow access to the tile if the feed is public
+                       if (feed.isPublic) {
+                          return doExport(feed);
                        }
                        else {
-                          // Otherwise, deny access.
-                          process.nextTick(function() {
-                             return res.jsendClientError("Authentication required.", null, httpStatus.UNAUTHORIZED);  // HTTP 401 Unauthorized
-                          });
+                          // if the feed is private, then check for authorization
+                          if ("feedapikey" in req.headers) {
+                             var canSeeFeed = req.headers['feedapikey'] == feed.apiKey ||
+                                              req.headers['feedapikey'] == feed.apiKeyReadOnly;
+
+                             if (canSeeFeed) {
+                                return doExport(feed);
+                             }
+                             return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
+                          }
+                          else if ("authorization" in req.headers) {
+                             // If they sent an OAuth2 Authorization header, then authenticate the user to see whether she
+                             // owns the feed.  If so, then she should be granted access to see a tile.
+                             passport.authenticate('bearer', function(err, user) {
+                                if (err) {
+                                   var message = "Error while authenticating with OAuth2 access token to do export for channels [" + channels + "] from feed [" + feedId + "]";
+                                   log.error(message + ": " + err);
+                                   return res.jsendServerError(message);
+                                }
+
+                                if (user) {
+                                   if (user.id == feed.userId) {
+                                      return doExport(feed);
+                                   }
+                                }
+                                return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
+                             })(req, res, next);
+                          }
+                          else {
+                             // Otherwise, deny access.
+                             process.nextTick(function() {
+                                return res.jsendClientError("Authentication required.", null, httpStatus.UNAUTHORIZED);  // HTTP 401 Unauthorized
+                             });
+                          }
                        }
-                    }
-                 });
+                    });
+                 }
               });
 
    var findFeedById = function(res, feedId, fieldsToSelect, successCallback) {
@@ -459,11 +444,54 @@ module.exports = function(FeedModel, feedRouteHelper) {
             return successCallback(feed);
          }
          else {
-            return res.jsendClientError("Unknown or invalid feed ID", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
+            return res.jsendClientError("Unknown or invalid feed", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
          }
       });
    };
 
+   var findFeedByApiKey = function(res, feedApiKey, fieldsToSelect, successCallback) {
+      FeedModel.findByApiKey(feedApiKey, fieldsToSelect, function(err, feed) {
+         if (err) {
+            var message = "Error while trying to find feed with API key [" + feedApiKey + "]";
+            log.error(message + ": " + err);
+            return res.jsendServerError(message);
+         }
+
+         if (feed) {
+            return successCallback(feed);
+         }
+         else {
+            return res.jsendClientError("Unknown or invalid feed", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
+         }
+      });
+   };
+
+   var FEED_API_KEY_REGEX = /^[a-f0-9]{64}$/i;
+   var isFeedApiKey = function(str) {
+      return (isString(str) && FEED_API_KEY_REGEX.test(str));
+      // [^a-f0-9]+
+   };
+
+   /**
+    * Returns <code>true</code> if the given value is a string; returns <code>false</code> otherwise.
+    *
+    * Got this from http://stackoverflow.com/a/9436948/703200
+    */
+   var isString = function(o) {
+      return (typeof o == 'string' || o instanceof String)
+   };
+
+   /**
+    * Trims the given string.  If not a string, returns an empty string.
+    *
+    * @param {string} str the string to be trimmed
+    */
+   var trim = function(str) {
+      if (isString(str)) {
+         return str.trim();
+      }
+      return '';
+   };
+
    return router;
-}
-;
+};
