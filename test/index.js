@@ -3786,6 +3786,22 @@ describe("ESDR", function() {
                                       });
                         });
 
+                        it("Should be able to get info for a public feed with valid authentication, but for the wrong user", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feeds.testFeed1a.id)
+                                 .set({
+                                         Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                      })
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         validateSuccessfulInfoFetch(res, feeds.testFeed1a.id, testFeed1a, channelInfoFeed1a, false);
+                                         done();
+                                      });
+                        });
+
                         it("Should be able to get info for a public feed with invalid authentication", function(done) {
                            agent(url)
                                  .get("/api/v1/feeds/" + feeds.testFeed1a.id)
@@ -3875,8 +3891,8 @@ describe("ESDR", function() {
                      });      // end OAuth2 Authentication
 
                      describe("API Key Authentication", function() {
-                        describe("To /feeds/:feedId method", function() {
-                           it("Should be able to get info for a public feed with valid authentication", function(done) {
+                        describe("Feed API Key in the request header", function() {
+                           it("Should be able to get info for a public feed with valid read-write authentication", function(done) {
                               agent(url)
                                     .get("/api/v1/feeds/" + feeds.testFeed1a.id)
                                     .set({
@@ -3908,7 +3924,39 @@ describe("ESDR", function() {
                                          });
                            });
 
-                           it("Should be able to get info for a private feed with valid authentication", function(done) {
+                           it("Should be able to get info for a public feed with valid read-write authentication, but for the wrong feed", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1a.id)
+                                    .set({
+                                            FeedApiKey : feeds.testFeed1b.apiKey
+                                         })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            validateSuccessfulInfoFetch(res, feeds.testFeed1a.id, testFeed1a, channelInfoFeed1a, false);
+                                            done();
+                                         });
+                           });
+
+                           it("Should be able to get info for a public feed with valid read-only authentication, but for the wrong feed", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1a.id)
+                                    .set({
+                                            FeedApiKey : feeds.testFeed1b.apiKeyReadOnly
+                                         })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            validateSuccessfulInfoFetch(res, feeds.testFeed1a.id, testFeed1a, channelInfoFeed1a, false);
+                                            done();
+                                         });
+                           });
+
+                           it("Should be able to get info for a private feed with valid read-write authentication", function(done) {
                               agent(url)
                                     .get("/api/v1/feeds/" + feeds.testFeed1b.id)
                                     .set({
@@ -3956,11 +4004,27 @@ describe("ESDR", function() {
                                          });
                            });
 
-                           it("Should fail to get info for a private feed with authentication for a different feed", function(done) {
+                           it("Should fail to get info for a private feed with valid read-write authentication, but for the wrong feed", function(done) {
                               agent(url)
                                     .get("/api/v1/feeds/" + feeds.testFeed1b.id)
                                     .set({
                                             FeedApiKey : feeds.testFeed1a.apiKey
+                                         })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.FORBIDDEN);
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to get info for a private feed with valid read-only authentication, but for the wrong feed", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1b.id)
+                                    .set({
+                                            FeedApiKey : feeds.testFeed1a.apiKeyReadOnly
                                          })
                                     .end(function(err, res) {
                                             if (err) {
@@ -3985,182 +4049,75 @@ describe("ESDR", function() {
                                          });
                            });
 
-                        });      // end To /feeds/:feedId method
+                        });      // end Feed API Key in the request header
 
-                        describe("To /feed method", function() {
-                           describe("Feed API Key in the request header", function() {
-                              it("Should be able to get info for a public feed with valid authentication", function(done) {
-                                 agent(url)
-                                       .get("/api/v1/feed")
-                                       .set({
-                                               FeedApiKey : feeds.testFeed1a.apiKey
-                                            })
-                                       .end(function(err, res) {
-                                               if (err) {
-                                                  return done(err);
-                                               }
+                        describe("Feed API Key in the URL", function() {
+                           it("Should be able to get info for a public feed with valid authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1a.apiKey)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                                               validateSuccessfulInfoFetch(res, feeds.testFeed1a.id, testFeed1a, channelInfoFeed1a, true);
-                                               done();
-                                            });
-                              });
+                                            validateSuccessfulInfoFetch(res, feeds.testFeed1a.id, testFeed1a, channelInfoFeed1a, true);
+                                            done();
+                                         });
+                           });
 
-                              it("Should be able to get info for a public feed with valid read-only authentication", function(done) {
-                                 agent(url)
-                                       .get("/api/v1/feed")
-                                       .set({
-                                               FeedApiKey : feeds.testFeed1a.apiKeyReadOnly
-                                            })
-                                       .end(function(err, res) {
-                                               if (err) {
-                                                  return done(err);
-                                               }
+                           it("Should be able to get info for a public feed with valid read-only authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1a.apiKeyReadOnly)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                                               validateSuccessfulInfoFetch(res, feeds.testFeed1a.id, testFeed1a, channelInfoFeed1a, false);
-                                               done();
-                                            });
-                              });
+                                            validateSuccessfulInfoFetch(res, feeds.testFeed1a.id, testFeed1a, channelInfoFeed1a, false);
+                                            done();
+                                         });
+                           });
 
-                              it("Should be able to get info for a private feed with valid authentication", function(done) {
-                                 agent(url)
-                                       .get("/api/v1/feed")
-                                       .set({
-                                               FeedApiKey : feeds.testFeed1b.apiKey
-                                            })
-                                       .end(function(err, res) {
-                                               if (err) {
-                                                  return done(err);
-                                               }
+                           it("Should be able to get info for a private feed with valid authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1b.apiKey)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                                               validateSuccessfulInfoFetch(res, feeds.testFeed1b.id, testFeed1b, channelInfoFeed1b, true);
-                                               done();
-                                            });
-                              });
+                                            validateSuccessfulInfoFetch(res, feeds.testFeed1b.id, testFeed1b, channelInfoFeed1b, true);
+                                            done();
+                                         });
+                           });
 
-                              it("Should be able to get info for a private feed with valid read-only authentication", function(done) {
-                                 agent(url)
-                                       .get("/api/v1/feed")
-                                       .set({
-                                               FeedApiKey : feeds.testFeed1b.apiKeyReadOnly
-                                            })
-                                       .end(function(err, res) {
-                                               if (err) {
-                                                  return done(err);
-                                               }
+                           it("Should be able to get info for a private feed with valid read-only authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1b.apiKeyReadOnly)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                                               validateSuccessfulInfoFetch(res, feeds.testFeed1b.id, testFeed1b, channelInfoFeed1b, false);
-                                               done();
-                                            });
-                              });
+                                            validateSuccessfulInfoFetch(res, feeds.testFeed1b.id, testFeed1b, channelInfoFeed1b, false);
+                                            done();
+                                         });
+                           });
 
-                              it("Should fail to get info for a private feed with invalid authentication", function(done) {
-                                 agent(url)
-                                       .get("/api/v1/feed")
-                                       .set({
-                                               FeedApiKey : "bogus"
-                                            })
-                                       .end(function(err, res) {
-                                               if (err) {
-                                                  return done(err);
-                                               }
-                                               res.should.have.property('status', httpStatus.UNAUTHORIZED);
-                                               done();
-                                            });
-                              });
+                           it("Should fail to get info for a feed with invalid authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + "012345678901234567890123456789012345678901234567890123456789abcd")
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                              it("Should fail to get info for a private feed without authentication", function(done) {
-                                 agent(url)
-                                       .get("/api/v1/feed")
-                                       .end(function(err, res) {
-                                               if (err) {
-                                                  return done(err);
-                                               }
+                                            res.should.have.property('status', httpStatus.NOT_FOUND);
+                                            done();
+                                         });
+                           });
 
-                                               res.should.have.property('status', httpStatus.UNAUTHORIZED);
-                                               done();
-                                            });
-                              });
-                           });      // end Feed API Key in the request header
-
-                           describe("Feed API Key in the URL", function() {
-                              it("Should be able to get info for a public feed with valid authentication", function(done) {
-                                 agent(url)
-                                       .get("/api/v1/feed/" + feeds.testFeed1a.apiKey)
-                                       .end(function(err, res) {
-                                               if (err) {
-                                                  return done(err);
-                                               }
-                                               validateSuccessfulInfoFetch(res, feeds.testFeed1a.id, testFeed1a, channelInfoFeed1a, true);
-                                               done();
-                                            });
-                              });
-
-                              it("Should be able to get info for a public feed with valid read-only authentication", function(done) {
-                                 agent(url)
-                                       .get("/api/v1/feed/" + feeds.testFeed1a.apiKeyReadOnly)
-                                       .end(function(err, res) {
-                                               if (err) {
-                                                  return done(err);
-                                               }
-
-                                               validateSuccessfulInfoFetch(res, feeds.testFeed1a.id, testFeed1a, channelInfoFeed1a, false);
-                                               done();
-                                            });
-                              });
-
-                              it("Should be able to get info for a private feed with valid authentication", function(done) {
-                                 agent(url)
-                                       .get("/api/v1/feed/" + feeds.testFeed1b.apiKey)
-                                       .end(function(err, res) {
-                                               if (err) {
-                                                  return done(err);
-                                               }
-
-                                               validateSuccessfulInfoFetch(res, feeds.testFeed1b.id, testFeed1b, channelInfoFeed1b, true);
-                                               done();
-                                            });
-                              });
-
-                              it("Should be able to get info for a private feed with valid read-only authentication", function(done) {
-                                 agent(url)
-                                       .get("/api/v1/feed/" + feeds.testFeed1b.apiKeyReadOnly)
-                                       .end(function(err, res) {
-                                               if (err) {
-                                                  return done(err);
-                                               }
-
-                                               validateSuccessfulInfoFetch(res, feeds.testFeed1b.id, testFeed1b, channelInfoFeed1b, false);
-                                               done();
-                                            });
-                              });
-
-                              it("Should fail to get info for a private feed with invalid authentication", function(done) {
-                                 agent(url)
-                                       .get("/api/v1/feed/" + "bogus")
-                                       .end(function(err, res) {
-                                               if (err) {
-                                                  return done(err);
-                                               }
-                                               res.should.have.property('status', httpStatus.UNAUTHORIZED);
-                                               done();
-                                            });
-                              });
-
-                              it("Should fail to get info for a private feed without authentication", function(done) {
-                                 agent(url)
-                                       .get("/api/v1/feed/")
-                                       .end(function(err, res) {
-                                               if (err) {
-                                                  return done(err);
-                                               }
-
-                                               res.should.have.property('status', httpStatus.UNAUTHORIZED);
-                                               done();
-                                            });
-                              });
-
-                           });      //end Feed API Key in the URL
-                        });      // end To /feed method
+                        });      // end Feed API Key in the URL
                      });      // end API Key Authentication
                   });      // end Get Info
 
