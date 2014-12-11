@@ -3100,7 +3100,7 @@ describe("ESDR", function() {
                                       });
                         });
 
-                        describe("With OAuth2 authentication", function() {
+                        describe("OAuth2 authentication", function() {
                            it("Should be able to upload empty data to a feed using the user's OAuth2 access token to authenticate", function(done) {
                               agent(url)
                                     .put("/api/v1/feeds/" + feeds.testFeed1a.id)
@@ -3316,9 +3316,9 @@ describe("ESDR", function() {
                                          });
                            });
 
-                        });   // end With OAuth2 authentication
+                        });   // end OAuth2 authentication
 
-                        describe("With FeedApiKey authentication", function() {
+                        describe("FeedApiKey authentication", function() {
 
                            describe("Feed API Key in the request header", function() {
                               it("Should be able to upload empty data to a feed using the feed's apiKey to authenticate", function(done) {
@@ -3550,7 +3550,7 @@ describe("ESDR", function() {
                                             });
                               });
                            });     // end Feed API Key in the URL
-                        });   // end With FeedApiKey authentication
+                        });   // end FeedApiKey authentication
                      });   // end To /feeds method
 
                      describe("To /feed method", function() {
