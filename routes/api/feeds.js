@@ -49,51 +49,20 @@ module.exports = function(FeedModel, feedRouteHelper) {
                  })(req, res, next);
               });
 
-   // For uploads authenticated using the user's OAuth2 access token or the feed's read-write API key in the request header
+   // For uploads authenticated using the user's OAuth2 access token or the feed's read-write API key in the URL or request header
    //
    // NOTE: authenticating with the OAuth2 access token will be slower than authenticating with the feed's apiKey
    // because we have to make an extra call to the database to authenticate the user so we can determine whether she has
    // access.
-   router.put('/:feedId',
+   router.put('/:feedIdOrApiKey',
               function(req, res, next) {
-                 var feedId = req.params.feedId;
-                 log.debug("Received PUT to upload data for feed ID [" + feedId + "] (OAuth2 access token authentication)");
-
-                 // find the feed
-                 findFeedById(res, feedId, 'id,userId,apiKey', function(feed) {
-                    // Now make sure this user has access to upload to this feed and, if so, continue with the upload
-                    if ("feedapikey" in req.headers) {
-                       // Make sure the given feed API key matches the feed's read-write key. If not, forbid upload.
-                       if (feed.apiKey == req.headers['feedapikey']) {
-                          return feedRouteHelper.importData(res, feed, req.body);
-                       }
-                       else {
-                          return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
-                       }
-                    }
-                    else if ("authorization" in req.headers) {
-                       // Authenticate the user to see whether she owns the feed.  If so, then she should be
-                       // granted access to upload to the feed.
-                       passport.authenticate('bearer', function(err, user) {
-                          if (err) {
-                             var message = "Error while authenticating with OAuth2 access token to upload to feed [" + feedId + "]";
-                             log.error(message + ": " + err);
-                             return res.jsendServerError(message);
-                          }
-
-                          // determine access simply by checking ownership
-                          if (feed.userId == user.id) {
-                             return feedRouteHelper.importData(res, feed, req.body);
-                          }
-                          else {
-                             return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
-                          }
-                       })(req, res, next);
-                    }
-                    else {
-                       return res.jsendClientError("Authentication required.", null, httpStatus.UNAUTHORIZED);  // HTTP 401 Unauthorized
-                    }
-                 });
+                 findFeedByIdOrApiKey(req.params.feedIdOrApiKey,
+                                      'id,userId,apiKey',
+                                      false,
+                                      function(feed) {
+                                         return feedRouteHelper.importData(res, feed, req.body);
+                                      },
+                                      req, res, next);
               });
 
    // For getting info about a feed, optionally authenticated using the user's OAuth2 access token or the feed's
@@ -210,75 +179,33 @@ module.exports = function(FeedModel, feedRouteHelper) {
               });
 
    // For tile requests, optionally authenticated using the user's OAuth2 access token or the feed's read-write or
-   // read-only API key in the request header.
+   // read-only API key in the URL or request header.
    //
    // NOTE: for a private feed, authenticating with the OAuth2 access token will be slower than authenticating with
    // either of the feed's API keys because we have to make an extra call to the database to authenticate the user so we
    // can determine whether she has access.
-   router.get('/:feedId/channels/:channelName/tiles/:level.:offset',
+   router.get('/:feedIdOrApiKey/channels/:channelName/tiles/:level.:offset',
               function(req, res, next) {
-                 var feedId = req.params.feedId;
+                 var feedIdOrApiKey = req.params.feedIdOrApiKey;
                  var channelName = req.params.channelName;
                  var level = req.params.level;
                  var offset = req.params.offset;
 
-                 // find the feed
-                 findFeedById(res, feedId, 'id,userId,isPublic,apiKey,apiKeyReadOnly', function(feed) {
+                 findFeedByIdOrApiKey(feedIdOrApiKey,
+                                      'id,userId,isPublic,apiKey,apiKeyReadOnly',
+                                      true,
+                                      function(feed) {
+                                         FeedModel.getTile(feed, channelName, level, offset, function(err, tile) {
+                                            if (err) {
+                                               if (err.data && err.data.code == httpStatus.UNPROCESSABLE_ENTITY) {
+                                                  return res.jsendPassThrough(err.data);
+                                               }
+                                               return res.jsendServerError(err.message, null);
+                                            }
 
-                    var getTile = function() {
-                       FeedModel.getTile(feed, channelName, level, offset, function(err, tile) {
-                          if (err) {
-                             if (err.data && err.data.code == httpStatus.UNPROCESSABLE_ENTITY) {
-                                return res.jsendPassThrough(err.data);
-                             }
-                             return res.jsendServerError(err.message, null);
-                          }
-
-                          res.jsendSuccess(tile);
-                       });
-                    };
-
-                    // Allow access to the tile if the feed is public
-                    if (feed.isPublic) {
-                       return getTile(res, feed, channelName, level, offset);
-                    }
-                    else {
-                       // if the feed is private, then check for authorization
-                       if ("feedapikey" in req.headers) {
-                          var canSeeFeed = req.headers['feedapikey'] == feed.apiKey ||
-                                           req.headers['feedapikey'] == feed.apiKeyReadOnly;
-
-                          if (canSeeFeed) {
-                             return getTile(res, feed, channelName, level, offset);
-                          }
-                          return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
-                       }
-                       else if ("authorization" in req.headers) {
-                          // If they sent an OAuth2 Authorization header, then authenticate the user to see whether she
-                          // owns the feed.  If so, then she should be granted access to see a tile.
-                          passport.authenticate('bearer', function(err, user) {
-                             if (err) {
-                                var message = "Error while authenticating with OAuth2 access token to get tile for channel [" + channelName + "] in feed [" + feedId + "] with level.offset [" + level + "." + offset + "]";
-                                log.error(message + ": " + err);
-                                return res.jsendServerError(message);
-                             }
-
-                             if (user) {
-                                if (user.id == feed.userId) {
-                                   return getTile(res, feed, channelName, level, offset);
-                                }
-                             }
-                             return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
-                          })(req, res, next);
-                       }
-                       else {
-                          // Otherwise, deny access.
-                          process.nextTick(function() {
-                             return res.jsendClientError("Authentication required.", null, httpStatus.UNAUTHORIZED);  // HTTP 401 Unauthorized
-                          });
-                       }
-                    }
-                 });
+                                            res.jsendSuccess(tile);
+                                         });
+                                      }, req, res, next)
               });
 
    // For exporting one or more channels from a feed
@@ -340,96 +267,48 @@ module.exports = function(FeedModel, feedRouteHelper) {
                  //}
                  var format = 'csv';
 
-                 var doExport = function(feed) {
-                    // build the filename for the Content-disposition header
-                    var filename = "export_of_feed_" + feed.id;
-                    if (minTime != null) {
-                       filename += "_from_time_" + minTime;
-                    }
-                    if (maxTime != null) {
-                       filename += "_to_" + (minTime == null ? "time_" : "") + maxTime;
-                    }
-                    filename += "." + format;
+                 findFeedByIdOrApiKey(req.params['feedIdOrApiKey'],
+                                      'id,userId,isPublic,apiKey,apiKeyReadOnly',
+                                      true,
+                                      function(feed) {
+                                         // build the filename for the Content-disposition header
+                                         var filename = "export_of_feed_" + feed.id;
+                                         if (minTime != null) {
+                                            filename += "_from_time_" + minTime;
+                                         }
+                                         if (maxTime != null) {
+                                            filename += "_to_" + (minTime == null ? "time_" : "") + maxTime;
+                                         }
+                                         filename += "." + format;
 
-                    // export the data
-                    FeedModel.exportData(feed,
-                                         channels,
-                                         {
-                                            minTime : minTime,
-                                            maxTime : maxTime
-                                         },
-                                         function(err, eventEmitter) {
-                                            if (err) {
-                                               if (err.data && err.data.code == httpStatus.UNPROCESSABLE_ENTITY) {
-                                                  return res.jsendPassThrough(err.data)
-                                               }
+                                         // export the data
+                                         FeedModel.exportData(feed,
+                                                              channels,
+                                                              {
+                                                                 minTime : minTime,
+                                                                 maxTime : maxTime
+                                                              },
+                                                              function(err, eventEmitter) {
+                                                                 if (err) {
+                                                                    if (err.data && err.data.code == httpStatus.UNPROCESSABLE_ENTITY) {
+                                                                       return res.jsendPassThrough(err.data)
+                                                                    }
 
-                                               log.error("Failed to export feed: " + JSON.stringify(err, null, 3));
-                                               return res.jsendServerError("Failed to export feed", null);
-                                            }
+                                                                    log.error("Failed to export feed: " + JSON.stringify(err, null, 3));
+                                                                    return res.jsendServerError("Failed to export feed", null);
+                                                                 }
 
-                                            // set the status code, the connection to close, and specify the Content-disposition filename
-                                            res
-                                                  .status(httpStatus.OK)
-                                                  .set("Connection", "close")
-                                                  .attachment(filename);
+                                                                 // set the status code, the connection to close, and specify the Content-disposition filename
+                                                                 res
+                                                                       .status(httpStatus.OK)
+                                                                       .set("Connection", "close")
+                                                                       .attachment(filename);
 
-                                            // pipe the eventEmitter to the response
-                                            return eventEmitter.stdout.pipe(res);
-                                         });
-                 };
-
-                 var feedIdOrApiKey = req.params['feedIdOrApiKey'];
-                 if (isFeedApiKey(feedIdOrApiKey)) {
-                    findFeedByApiKey(res, feedIdOrApiKey, 'id,userId,isPublic,apiKey,apiKeyReadOnly', doExport);
-                 }
-                 else {
-                    var feedId = feedIdOrApiKey;
-
-                    findFeedById(res, feedId, 'id,userId,isPublic,apiKey,apiKeyReadOnly', function(feed) {
-
-                       // Allow access to the tile if the feed is public
-                       if (feed.isPublic) {
-                          return doExport(feed);
-                       }
-                       else {
-                          // if the feed is private, then check for authorization
-                          if ("feedapikey" in req.headers) {
-                             var canSeeFeed = req.headers['feedapikey'] == feed.apiKey ||
-                                              req.headers['feedapikey'] == feed.apiKeyReadOnly;
-
-                             if (canSeeFeed) {
-                                return doExport(feed);
-                             }
-                             return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
-                          }
-                          else if ("authorization" in req.headers) {
-                             // If they sent an OAuth2 Authorization header, then authenticate the user to see whether she
-                             // owns the feed.  If so, then she should be granted access to see a tile.
-                             passport.authenticate('bearer', function(err, user) {
-                                if (err) {
-                                   var message = "Error while authenticating with OAuth2 access token to do export for channels [" + channels + "] from feed [" + feedId + "]";
-                                   log.error(message + ": " + err);
-                                   return res.jsendServerError(message);
-                                }
-
-                                if (user) {
-                                   if (user.id == feed.userId) {
-                                      return doExport(feed);
-                                   }
-                                }
-                                return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
-                             })(req, res, next);
-                          }
-                          else {
-                             // Otherwise, deny access.
-                             process.nextTick(function() {
-                                return res.jsendClientError("Authentication required.", null, httpStatus.UNAUTHORIZED);  // HTTP 401 Unauthorized
-                             });
-                          }
-                       }
-                    });
-                 }
+                                                                 // pipe the eventEmitter to the response
+                                                                 return eventEmitter.stdout.pipe(res);
+                                                              });
+                                      },
+                                      req, res, next)
               });
 
    var findFeedById = function(res, feedId, fieldsToSelect, successCallback) {
@@ -464,6 +343,59 @@ module.exports = function(FeedModel, feedRouteHelper) {
             return res.jsendClientError("Unknown or invalid feed", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
          }
       });
+   };
+
+   var findFeedByIdOrApiKey = function(feedIdOrApiKey, fieldsToSelect, allowAccessByReadOnlyFeedApiKey, successCallback, req, res, next) {
+      if (isFeedApiKey(feedIdOrApiKey)) {
+         findFeedByApiKey(res, feedIdOrApiKey, fieldsToSelect, successCallback);
+      }
+      else {
+         findFeedById(res, feedIdOrApiKey, fieldsToSelect, function(feed) {
+
+            // Allow access to the tile if the feed is public
+            if (feed.isPublic) {
+               return successCallback(feed);
+            }
+            else {
+               // if the feed is private, then check for authorization
+               if ("feedapikey" in req.headers) {
+                  var canAccessFeed = (req.headers['feedapikey'] == feed.apiKey);
+                  if (!canAccessFeed && allowAccessByReadOnlyFeedApiKey) {
+                     canAccessFeed = (req.headers['feedapikey'] == feed.apiKeyReadOnly);
+                  }
+
+                  if (canAccessFeed) {
+                     return successCallback(feed);
+                  }
+                  return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
+               }
+               else if ("authorization" in req.headers) {
+                  // If they sent an OAuth2 Authorization header, then authenticate the user to see whether she
+                  // owns the feed.  If so, then she should be granted access to see a tile.
+                  passport.authenticate('bearer', function(err, user) {
+                     if (err) {
+                        var message = "Error while authenticating with OAuth2 access token for feed [" + feed.id + "]";
+                        log.error(message + ": " + err);
+                        return res.jsendServerError(message);
+                     }
+
+                     if (user) {
+                        if (user.id == feed.userId) {
+                           return successCallback(feed);
+                        }
+                     }
+                     return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
+                  })(req, res, next);
+               }
+               else {
+                  // Otherwise, deny access.
+                  process.nextTick(function() {
+                     return res.jsendClientError("Authentication required.", null, httpStatus.UNAUTHORIZED);  // HTTP 401 Unauthorized
+                  });
+               }
+            }
+         });
+      }
    };
 
    var FEED_API_KEY_REGEX = /^[a-f0-9]{64}$/i;

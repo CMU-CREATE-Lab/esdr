@@ -3320,149 +3320,237 @@ describe("ESDR", function() {
 
                         describe("With FeedApiKey authentication", function() {
 
-                           it("Should be able to upload empty data to a feed using the feed's apiKey to authenticate", function(done) {
-                              agent(url)
-                                    .put("/api/v1/feeds/" + feeds.testFeed1a.id)
-                                    .set({
-                                            FeedApiKey : feeds.testFeed1a.apiKey
-                                         })
-                                    .send({})
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
+                           describe("Feed API Key in the request header", function() {
+                              it("Should be able to upload empty data to a feed using the feed's apiKey to authenticate", function(done) {
+                                 agent(url)
+                                       .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                                       .set({
+                                               FeedApiKey : feeds.testFeed1a.apiKey
+                                            })
+                                       .send({})
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
 
-                                            res.should.have.property('status', httpStatus.OK);
-                                            res.body.should.have.property('code', httpStatus.OK);
-                                            res.body.should.have.property('status', 'success');
-                                            res.body.should.have.property('data');
+                                               res.should.have.property('status', httpStatus.OK);
+                                               res.body.should.have.property('code', httpStatus.OK);
+                                               res.body.should.have.property('status', 'success');
+                                               res.body.should.have.property('data');
 
-                                            done();
-                                         });
-                           });
+                                               done();
+                                            });
+                              });
 
-                           it("Should be able to upload to a public feed using the feed's apiKey to authenticate", function(done) {
-                              agent(url)
-                                    .put("/api/v1/feeds/" + feeds.testFeed1a.id)
-                                    .set({
-                                            FeedApiKey : feeds.testFeed1a.apiKey
-                                         })
-                                    .send(testFeed1aData2)
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
+                              it("Should be able to upload to a public feed using the feed's apiKey to authenticate", function(done) {
+                                 agent(url)
+                                       .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                                       .set({
+                                               FeedApiKey : feeds.testFeed1a.apiKey
+                                            })
+                                       .send(testFeed1aData2)
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
 
-                                            res.should.have.property('status', httpStatus.OK);
-                                            res.body.should.have.property('code', httpStatus.OK);
-                                            res.body.should.have.property('status', 'success');
-                                            res.body.should.have.property('data');
+                                               res.should.have.property('status', httpStatus.OK);
+                                               res.body.should.have.property('code', httpStatus.OK);
+                                               res.body.should.have.property('status', 'success');
+                                               res.body.should.have.property('data');
 
-                                            done();
-                                         });
-                           });
+                                               done();
+                                            });
+                              });
 
-                           it("Should be able to upload to a private feed using the feed's apiKey to authenticate", function(done) {
-                              agent(url)
-                                    .put("/api/v1/feeds/" + feeds.testFeed1b.id)
-                                    .set({
-                                            FeedApiKey : feeds.testFeed1b.apiKey
-                                         })
-                                    .send(testFeed1aData2)
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
+                              it("Should be able to upload to a private feed using the feed's apiKey to authenticate", function(done) {
+                                 agent(url)
+                                       .put("/api/v1/feeds/" + feeds.testFeed1b.id)
+                                       .set({
+                                               FeedApiKey : feeds.testFeed1b.apiKey
+                                            })
+                                       .send(testFeed1aData2)
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
 
-                                            res.should.have.property('status', httpStatus.OK);
-                                            res.body.should.have.property('code', httpStatus.OK);
-                                            res.body.should.have.property('status', 'success');
-                                            res.body.should.have.property('data');
+                                               res.should.have.property('status', httpStatus.OK);
+                                               res.body.should.have.property('code', httpStatus.OK);
+                                               res.body.should.have.property('status', 'success');
+                                               res.body.should.have.property('data');
 
-                                            done();
-                                         });
-                           });
+                                               done();
+                                            });
+                              });
 
-                           it("Should be able to upload data for a single channel to a feed", function(done) {
-                              agent(url)
-                                    .put("/api/v1/feeds/" + feeds.testFeed1a.id)
-                                    .set({
-                                            FeedApiKey : feeds.testFeed1a.apiKey
-                                         })
-                                    .send(testFeed1aData3)
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
+                              it("Should be able to upload data for a single channel to a feed", function(done) {
+                                 agent(url)
+                                       .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                                       .set({
+                                               FeedApiKey : feeds.testFeed1a.apiKey
+                                            })
+                                       .send(testFeed1aData3)
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
 
-                                            res.should.have.property('status', httpStatus.OK);
-                                            res.body.should.have.property('code', httpStatus.OK);
-                                            res.body.should.have.property('status', 'success');
-                                            res.body.should.have.property('data');
+                                               res.should.have.property('status', httpStatus.OK);
+                                               res.body.should.have.property('code', httpStatus.OK);
+                                               res.body.should.have.property('status', 'success');
+                                               res.body.should.have.property('data');
 
-                                            done();
-                                         });
-                           });
+                                               done();
+                                            });
+                              });
 
-                           it("Should fail to upload to a feed using the wrong feed's apiKey to authenticate", function(done) {
-                              agent(url)
-                                    .put("/api/v1/feeds/" + feeds.testFeed1a.id)
-                                    .set({
-                                            FeedApiKey : feeds.testFeed1b.apiKey
-                                         })
-                                    .send(testFeed1aData2)
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
+                              it("Should fail to upload to a feed using the wrong feed's apiKey to authenticate", function(done) {
+                                 agent(url)
+                                       .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                                       .set({
+                                               FeedApiKey : feeds.testFeed1b.apiKey
+                                            })
+                                       .send(testFeed1aData2)
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
 
-                                            res.should.have.property('status', httpStatus.FORBIDDEN);
-                                            res.body.should.have.property('code', httpStatus.FORBIDDEN);
-                                            res.body.should.have.property('status', 'error');
-                                            res.body.should.have.property('data', null);
-                                            done();
-                                         });
-                           });
+                                               res.should.have.property('status', httpStatus.FORBIDDEN);
+                                               res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                               res.body.should.have.property('status', 'error');
+                                               res.body.should.have.property('data', null);
+                                               done();
+                                            });
+                              });
 
-                           it("Should fail to upload to a feed using a valid feed apiKey but an invalid feed ID", function(done) {
-                              agent(url)
-                                    .put("/api/v1/feeds/" + "0")
-                                    .set({
-                                            FeedApiKey : feeds.testFeed1b.apiKey
-                                         })
-                                    .send(testFeed1aData2)
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
+                              it("Should fail to upload to a feed using a valid feed apiKey but an invalid feed ID", function(done) {
+                                 agent(url)
+                                       .put("/api/v1/feeds/" + "0")
+                                       .set({
+                                               FeedApiKey : feeds.testFeed1b.apiKey
+                                            })
+                                       .send(testFeed1aData2)
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
 
-                                            res.should.have.property('status', httpStatus.NOT_FOUND);
-                                            res.body.should.have.property('code', httpStatus.NOT_FOUND);
-                                            res.body.should.have.property('status', 'error');
-                                            res.body.should.have.property('data');
-                                            done();
-                                         });
-                           });
+                                               res.should.have.property('status', httpStatus.NOT_FOUND);
+                                               res.body.should.have.property('code', httpStatus.NOT_FOUND);
+                                               res.body.should.have.property('status', 'error');
+                                               res.body.should.have.property('data');
+                                               done();
+                                            });
+                              });
 
-                           it("Should fail to upload to a feed using an invalid feed apiKey to authenticate", function(done) {
-                              agent(url)
-                                    .put("/api/v1/feeds/" + feeds.testFeed1a.id)
-                                    .set({
-                                            FeedApiKey : "bogus"
-                                         })
-                                    .send(testFeed1aData2)
-                                    .end(function(err, res) {
-                                            if (err) {
-                                               return done(err);
-                                            }
+                              it("Should fail to upload to a feed using an invalid feed apiKey to authenticate", function(done) {
+                                 agent(url)
+                                       .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                                       .set({
+                                               FeedApiKey : "bogus"
+                                            })
+                                       .send(testFeed1aData2)
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
 
-                                            res.should.have.property('status', httpStatus.FORBIDDEN);
-                                            done();
-                                         });
-                           });
+                                               res.should.have.property('status', httpStatus.FORBIDDEN);
+                                               done();
+                                            });
+                              });
+                           });      // end Feed API Key in the request header
 
+                           describe("Feed API Key in the URL", function() {
+                              it("Should be able to upload empty data to a feed using the feed's apiKey to authenticate", function(done) {
+                                 agent(url)
+                                       .put("/api/v1/feeds/" + feeds.testFeed1a.apiKey)
+                                       .send({})
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.should.have.property('status', httpStatus.OK);
+                                               res.body.should.have.property('code', httpStatus.OK);
+                                               res.body.should.have.property('status', 'success');
+                                               res.body.should.have.property('data');
+
+                                               done();
+                                            });
+                              });
+
+                              it("Should be able to upload to a public feed using the feed's apiKey to authenticate", function(done) {
+                                 agent(url)
+                                       .put("/api/v1/feeds/" + feeds.testFeed1a.apiKey)
+                                       .send(testFeed1aData2)
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.should.have.property('status', httpStatus.OK);
+                                               res.body.should.have.property('code', httpStatus.OK);
+                                               res.body.should.have.property('status', 'success');
+                                               res.body.should.have.property('data');
+
+                                               done();
+                                            });
+                              });
+
+                              it("Should be able to upload to a private feed using the feed's apiKey to authenticate", function(done) {
+                                 agent(url)
+                                       .put("/api/v1/feeds/" + feeds.testFeed1b.apiKey)
+                                       .send(testFeed1aData2)
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.should.have.property('status', httpStatus.OK);
+                                               res.body.should.have.property('code', httpStatus.OK);
+                                               res.body.should.have.property('status', 'success');
+                                               res.body.should.have.property('data');
+
+                                               done();
+                                            });
+                              });
+
+                              it("Should be able to upload data for a single channel to a feed", function(done) {
+                                 agent(url)
+                                       .put("/api/v1/feeds/" + feeds.testFeed1a.apiKey)
+                                       .send(testFeed1aData3)
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.should.have.property('status', httpStatus.OK);
+                                               res.body.should.have.property('code', httpStatus.OK);
+                                               res.body.should.have.property('status', 'success');
+                                               res.body.should.have.property('data');
+
+                                               done();
+                                            });
+                              });
+
+                              it("Should fail to upload to a feed using an invalid feed apiKey to authenticate", function(done) {
+                                 agent(url)
+                                       .put("/api/v1/feeds/" + "012345678901234567890123456789012345678901234567890123456789abcd")
+                                       .send(testFeed1aData2)
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.should.have.property('status', httpStatus.NOT_FOUND);
+                                               done();
+                                            });
+                              });
+                           });     // end Feed API Key in the URL
                         });   // end With FeedApiKey authentication
-
                      });   // end To /feeds method
 
                      describe("To /feed method", function() {
@@ -4213,141 +4301,227 @@ describe("ESDR", function() {
                      });      // end OAuth2 Authentication
 
                      describe("API Key Authentication", function() {
+                        describe("Feed API Key in the request header", function() {
 
-                        it("Should be able to get a tile from a public feed with valid authentication", function(done) {
-                           agent(url)
-                                 .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/channels/temperature/tiles/10.2633")
-                                 .set({
-                                         FeedApiKey : feeds.testFeed1a.apiKey
-                                      })
-                                 .end(function(err, res) {
-                                         if (err) {
-                                            return done(err);
-                                         }
+                           it("Should be able to get a tile from a public feed with valid authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/channels/temperature/tiles/10.2633")
+                                    .set({
+                                            FeedApiKey : feeds.testFeed1a.apiKey
+                                         })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                                         res.should.have.property('status', httpStatus.OK);
-                                         res.body.should.have.property('code', httpStatus.OK);
-                                         res.body.should.have.property('status', 'success');
-                                         res.body.should.have.property('data');
-                                         should(res.body.data).eql(testFeed1aTile10_2633); // deep equal
-                                         done();
-                                      });
-                        });
+                                            res.should.have.property('status', httpStatus.OK);
+                                            res.body.should.have.property('code', httpStatus.OK);
+                                            res.body.should.have.property('status', 'success');
+                                            res.body.should.have.property('data');
+                                            should(res.body.data).eql(testFeed1aTile10_2633); // deep equal
+                                            done();
+                                         });
+                           });
 
-                        it("Should be able to get a tile from a public feed with valid read-only authentication", function(done) {
-                           agent(url)
-                                 .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/channels/temperature/tiles/10.2633")
-                                 .set({
-                                         FeedApiKey : feeds.testFeed1a.apiKeyReadOnly
-                                      })
-                                 .end(function(err, res) {
-                                         if (err) {
-                                            return done(err);
-                                         }
+                           it("Should be able to get a tile from a public feed with valid read-only authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/channels/temperature/tiles/10.2633")
+                                    .set({
+                                            FeedApiKey : feeds.testFeed1a.apiKeyReadOnly
+                                         })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                                         res.should.have.property('status', httpStatus.OK);
-                                         res.body.should.have.property('code', httpStatus.OK);
-                                         res.body.should.have.property('status', 'success');
-                                         res.body.should.have.property('data');
-                                         should(res.body.data).eql(testFeed1aTile10_2633); // deep equal
-                                         done();
-                                      });
-                        });
+                                            res.should.have.property('status', httpStatus.OK);
+                                            res.body.should.have.property('code', httpStatus.OK);
+                                            res.body.should.have.property('status', 'success');
+                                            res.body.should.have.property('data');
+                                            should(res.body.data).eql(testFeed1aTile10_2633); // deep equal
+                                            done();
+                                         });
+                           });
 
-                        it("Should be able to get a tile from a private feed with valid authentication", function(done) {
-                           agent(url)
-                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/temperature/tiles/10.2634")
-                                 .set({
-                                         FeedApiKey : feeds.testFeed1b.apiKey
-                                      })
-                                 .end(function(err, res) {
-                                         if (err) {
-                                            return done(err);
-                                         }
+                           it("Should be able to get a tile from a private feed with valid authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/temperature/tiles/10.2634")
+                                    .set({
+                                            FeedApiKey : feeds.testFeed1b.apiKey
+                                         })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                                         res.should.have.property('status', httpStatus.OK);
-                                         res.body.should.have.property('code', httpStatus.OK);
-                                         res.body.should.have.property('status', 'success');
-                                         res.body.should.have.property('data');
-                                         should(res.body.data).eql(testFeed1bTile10_2634); // deep equal
-                                         done();
-                                      });
-                        });
+                                            res.should.have.property('status', httpStatus.OK);
+                                            res.body.should.have.property('code', httpStatus.OK);
+                                            res.body.should.have.property('status', 'success');
+                                            res.body.should.have.property('data');
+                                            should(res.body.data).eql(testFeed1bTile10_2634); // deep equal
+                                            done();
+                                         });
+                           });
 
-                        it("Should be able to get a tile from a private feed with valid read-only authentication", function(done) {
-                           agent(url)
-                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/temperature/tiles/10.2634")
-                                 .set({
-                                         FeedApiKey : feeds.testFeed1b.apiKeyReadOnly
-                                      })
-                                 .end(function(err, res) {
-                                         if (err) {
-                                            return done(err);
-                                         }
+                           it("Should be able to get a tile from a private feed with valid read-only authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/temperature/tiles/10.2634")
+                                    .set({
+                                            FeedApiKey : feeds.testFeed1b.apiKeyReadOnly
+                                         })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                                         res.should.have.property('status', httpStatus.OK);
-                                         res.body.should.have.property('code', httpStatus.OK);
-                                         res.body.should.have.property('status', 'success');
-                                         res.body.should.have.property('data');
-                                         should(res.body.data).eql(testFeed1bTile10_2634); // deep equal
-                                         done();
-                                      });
-                        });
+                                            res.should.have.property('status', httpStatus.OK);
+                                            res.body.should.have.property('code', httpStatus.OK);
+                                            res.body.should.have.property('status', 'success');
+                                            res.body.should.have.property('data');
+                                            should(res.body.data).eql(testFeed1bTile10_2634); // deep equal
+                                            done();
+                                         });
+                           });
 
-                        it("Should fail to get a tile from a private feed with valid authentication, but for the wrong user", function(done) {
-                           agent(url)
-                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/temperature/tiles/10.2633")
-                                 .set({
-                                         FeedApiKey : feeds.testFeed1a.apiKeyReadOnly
-                                      })
-                                 .end(function(err, res) {
-                                         if (err) {
-                                            return done(err);
-                                         }
+                           it("Should fail to get a tile from a private feed with valid authentication, but for the wrong user", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/temperature/tiles/10.2633")
+                                    .set({
+                                            FeedApiKey : feeds.testFeed1a.apiKeyReadOnly
+                                         })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                                         res.should.have.property('status', httpStatus.FORBIDDEN);
-                                         done();
-                                      });
-                        });
+                                            res.should.have.property('status', httpStatus.FORBIDDEN);
+                                            done();
+                                         });
+                           });
 
-                        it("Should be able to get a tile from a public feed with invalid authentication", function(done) {
-                           agent(url)
-                                 .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/channels/temperature/tiles/10.2633")
-                                 .set({
-                                         FeedApiKey : "bogus"
-                                      })
-                                 .end(function(err, res) {
-                                         if (err) {
-                                            return done(err);
-                                         }
+                           it("Should be able to get a tile from a public feed with invalid authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/channels/temperature/tiles/10.2633")
+                                    .set({
+                                            FeedApiKey : "bogus"
+                                         })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                                         res.should.have.property('status', httpStatus.OK);
-                                         res.body.should.have.property('code', httpStatus.OK);
-                                         res.body.should.have.property('status', 'success');
-                                         res.body.should.have.property('data');
-                                         should(res.body.data).eql(testFeed1aTile10_2633); // deep equal
-                                         done();
-                                      });
-                        });
+                                            res.should.have.property('status', httpStatus.OK);
+                                            res.body.should.have.property('code', httpStatus.OK);
+                                            res.body.should.have.property('status', 'success');
+                                            res.body.should.have.property('data');
+                                            should(res.body.data).eql(testFeed1aTile10_2633); // deep equal
+                                            done();
+                                         });
+                           });
 
-                        it("Should fail to get a tile from a private feed with invalid authentication", function(done) {
-                           agent(url)
-                                 .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/temperature/tiles/10.2633")
-                                 .set({
-                                         FeedApiKey : "bogus"
-                                      })
-                                 .end(function(err, res) {
-                                         if (err) {
-                                            return done(err);
-                                         }
+                           it("Should fail to get a tile from a private feed with invalid authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/temperature/tiles/10.2633")
+                                    .set({
+                                            FeedApiKey : "bogus"
+                                         })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
 
-                                         res.should.have.property('status', httpStatus.FORBIDDEN);
-                                         done();
-                                      });
-                        });
+                                            res.should.have.property('status', httpStatus.FORBIDDEN);
+                                            done();
+                                         });
+                           });
 
+                        });      // end Feed API Key in the request header
+
+                        describe("Feed API Key in the URL", function() {
+
+                           it("Should be able to get a tile from a public feed with valid authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1a.apiKey + "/channels/temperature/tiles/10.2633")
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.OK);
+                                            res.body.should.have.property('code', httpStatus.OK);
+                                            res.body.should.have.property('status', 'success');
+                                            res.body.should.have.property('data');
+                                            should(res.body.data).eql(testFeed1aTile10_2633); // deep equal
+                                            done();
+                                         });
+                           });
+
+                           it("Should be able to get a tile from a public feed with valid read-only authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1a.apiKeyReadOnly + "/channels/temperature/tiles/10.2633")
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.OK);
+                                            res.body.should.have.property('code', httpStatus.OK);
+                                            res.body.should.have.property('status', 'success');
+                                            res.body.should.have.property('data');
+                                            should(res.body.data).eql(testFeed1aTile10_2633); // deep equal
+                                            done();
+                                         });
+                           });
+
+                           it("Should be able to get a tile from a private feed with valid authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1b.apiKey + "/channels/temperature/tiles/10.2634")
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.OK);
+                                            res.body.should.have.property('code', httpStatus.OK);
+                                            res.body.should.have.property('status', 'success');
+                                            res.body.should.have.property('data');
+                                            should(res.body.data).eql(testFeed1bTile10_2634); // deep equal
+                                            done();
+                                         });
+                           });
+
+                           it("Should be able to get a tile from a private feed with valid read-only authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1b.apiKeyReadOnly + "/channels/temperature/tiles/10.2634")
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.OK);
+                                            res.body.should.have.property('code', httpStatus.OK);
+                                            res.body.should.have.property('status', 'success');
+                                            res.body.should.have.property('data');
+                                            should(res.body.data).eql(testFeed1bTile10_2634); // deep equal
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to get a tile with invalid authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + "012345678901234567890123456789012345678901234567890123456789abcd" + "/channels/temperature/tiles/10.2633")
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.NOT_FOUND);
+                                            done();
+                                         });
+                           });
+
+                        });      // end Feed API Key in the URL
                      });      // end API Key Authentication
-
                   });      // end Get Tile
 
                   describe("Find Feeds", function() {
