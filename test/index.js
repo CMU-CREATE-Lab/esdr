@@ -312,6 +312,29 @@ describe("ESDR", function() {
       "type" : "value"
    };
 
+   var multifeed1 = {
+      "spec" : [
+         {
+            "feeds" : "where=outdoor=1,productId=42",
+            "channels" : ["particle_concentration", "humidity"]
+         }
+      ]
+   };
+
+   var multifeed2 = {
+      "name" : "My_Awesome_Multifeed",
+      "spec" : [
+         {
+            "feeds" : "where=outdoor=1,productId=42",
+            "channels" : ["particle_concentration", "humidity"]
+         },
+         {
+            "feeds" : "productId=343",
+            "channels" : ["temperature"]
+         }
+      ]
+   };
+
    var shallowClone = function(obj) {
       if (obj) {
          var clone = {};
@@ -365,6 +388,15 @@ describe("ESDR", function() {
                   }
 
                   flow.series([
+                                 function(done) {
+                                    connection.query("DELETE FROM Multifeeds", function(err) {
+                                       if (err) {
+                                          throw err;
+                                       }
+
+                                       done();
+                                    });
+                                 },
                                  function(done) {
                                     connection.query("DELETE FROM Feeds", function(err) {
                                        if (err) {
@@ -5234,6 +5266,420 @@ describe("ESDR", function() {
                         });      // end API Key Authentication
                      });      // end Private Feeds
                   });      // end Export
+
+                  describe("Multifeeds", function() {
+                     describe("Create", function() {
+                        describe("Invalid Auth", function() {
+                           it("Should fail to create a multifeed if no authentication is provided", function(done) {
+                              agent(url)
+                                    .post("/api/v1/multifeeds")
+                                    .send(multifeed1)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.UNAUTHORIZED);
+
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to create a multifeed if invalid authentication is provided", function(done) {
+                              agent(url)
+                                    .post("/api/v1/multifeeds")
+                                    .set({
+                                            Authorization : "Bearer " + "bogus"
+                                         })
+                                    .send(multifeed1)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.UNAUTHORIZED);
+
+                                            done();
+                                         });
+                           });
+                        });     // end Invalid Auth
+
+                        describe("Valid Auth", function() {
+                           var name1 = null;
+                           it("Should be able to create a multifeed with no name specified", function(done) {
+                              agent(url)
+                                    .post("/api/v1/multifeeds")
+                                    .set({
+                                            Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                         })
+                                    .send(multifeed1)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.CREATED);
+                                            res.body.should.have.property('code', httpStatus.CREATED);
+                                            res.body.should.have.property('status', 'success');
+                                            res.body.should.have.property('data');
+                                            res.body.data.should.have.property('id');
+                                            res.body.data.should.have.property('name');
+
+                                            // remember the name so we can compare with the 2nd invocation below
+                                            name1 = res.body.data.name;
+
+                                            done();
+                                         });
+                           });
+
+                           it("Should be able to create the same multifeed again with no name specified", function(done) {
+                              agent(url)
+                                    .post("/api/v1/multifeeds")
+                                    .set({
+                                            Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                         })
+                                    .send(multifeed1)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.CREATED);
+                                            res.body.should.have.property('code', httpStatus.CREATED);
+                                            res.body.should.have.property('status', 'success');
+                                            res.body.should.have.property('data');
+                                            res.body.data.should.have.property('id');
+                                            res.body.data.should.have.property('name');
+
+                                            // the names should be different
+                                            res.body.data.name.should.not.equal(name1);
+
+                                            done();
+                                         });
+                           });
+
+                           it("Should be able to create a named multifeed", function(done) {
+                              agent(url)
+                                    .post("/api/v1/multifeeds")
+                                    .set({
+                                            Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                         })
+                                    .send(multifeed2)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.CREATED);
+                                            res.body.should.have.property('code', httpStatus.CREATED);
+                                            res.body.should.have.property('status', 'success');
+                                            res.body.should.have.property('data');
+                                            res.body.data.should.have.property('id');
+                                            res.body.data.should.have.property('name');
+
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to create a named multifeed again, by the same user", function(done) {
+                              agent(url)
+                                    .post("/api/v1/multifeeds")
+                                    .set({
+                                            Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                         })
+                                    .send(multifeed2)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.CONFLICT);
+                                            res.body.should.have.property('code', httpStatus.CONFLICT);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data');
+
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to create a named multifeed again, by a different user", function(done) {
+                              agent(url)
+                                    .post("/api/v1/multifeeds")
+                                    .set({
+                                            Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                         })
+                                    .send(multifeed2)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.CONFLICT);
+                                            res.body.should.have.property('code', httpStatus.CONFLICT);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data');
+
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to create multifeed with no spec field specified", function(done) {
+                              agent(url)
+                                    .post("/api/v1/multifeeds")
+                                    .set({
+                                            Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                         })
+                                    .send({})
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
+                                            res.body.should.have.property('code', httpStatus.UNPROCESSABLE_ENTITY);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data');
+                                            res.body.data.should.have.length(1);
+                                            res.body.data[0].should.have.property('constraintName', 'type');
+                                            res.body.data[0].should.have.property('constraintValue', 'array');
+                                            res.body.data[0].should.have.property('testedValue', 'undefined');
+
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to create multifeed with an empty array of specs specified", function(done) {
+                              agent(url)
+                                    .post("/api/v1/multifeeds")
+                                    .set({
+                                            Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                         })
+                                    .send({ spec : [] })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
+                                            res.body.should.have.property('code', httpStatus.UNPROCESSABLE_ENTITY);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data');
+                                            res.body.data.should.have.length(1);
+                                            res.body.data[0].should.have.property('constraintName', 'minItems');
+                                            res.body.data[0].should.have.property('constraintValue', 1);
+                                            res.body.data[0].should.have.property('testedValue', 0);
+
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to create multifeed with an empty array of specs specified", function(done) {
+                              agent(url)
+                                    .post("/api/v1/multifeeds")
+                                    .set({
+                                            Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                         })
+                                    .send({ spec : "bogus" })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
+                                            res.body.should.have.property('code', httpStatus.UNPROCESSABLE_ENTITY);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data');
+                                            res.body.data.should.have.length(1);
+                                            res.body.data[0].should.have.property('constraintName', 'type');
+                                            res.body.data[0].should.have.property('constraintValue', 'array');
+                                            res.body.data[0].should.have.property('testedValue', 'string');
+
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to create multifeed with the spec array containing a single empty object", function(done) {
+                              agent(url)
+                                    .post("/api/v1/multifeeds")
+                                    .set({
+                                            Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                         })
+                                    .send({ spec : [{}] })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
+                                            res.body.should.have.property('code', httpStatus.UNPROCESSABLE_ENTITY);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data');
+
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to create multifeed with the spec array containing an object with feeds and channels fields of the wrong type", function(done) {
+                              agent(url)
+                                    .post("/api/v1/multifeeds")
+                                    .set({
+                                            Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                         })
+                                    .send({ spec : [{ feeds : 4, channels : 42 }] })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
+                                            res.body.should.have.property('code', httpStatus.UNPROCESSABLE_ENTITY);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data');
+                                            res.body.data.should.have.length(2);
+                                            res.body.data[0].should.have.property('constraintName', 'type');
+                                            res.body.data[0].should.have.property('constraintValue', 'string');
+                                            res.body.data[0].should.have.property('testedValue', 'integer');
+                                            res.body.data[1].should.have.property('constraintName', 'type');
+                                            res.body.data[1].should.have.property('constraintValue', 'array');
+                                            res.body.data[1].should.have.property('testedValue', 'integer');
+
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to create multifeed with the spec array containing an object with only the feeds field", function(done) {
+                              agent(url)
+                                    .post("/api/v1/multifeeds")
+                                    .set({
+                                            Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                         })
+                                    .send({ spec : [{ feeds : "where=outdoor=1,productId=42" }] })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
+                                            res.body.should.have.property('code', httpStatus.UNPROCESSABLE_ENTITY);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data');
+                                            res.body.data.should.have.length(1);
+                                            res.body.data[0].should.have.property('constraintName', 'required');
+
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to create multifeed with the spec array containing an object with only the channels field", function(done) {
+                              agent(url)
+                                    .post("/api/v1/multifeeds")
+                                    .set({
+                                            Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                         })
+                                    .send({ spec : [{ channels : ["particle_concentration", "humidity"] }] })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
+                                            res.body.should.have.property('code', httpStatus.UNPROCESSABLE_ENTITY);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data');
+                                            res.body.data.should.have.length(1);
+                                            res.body.data[0].should.have.property('constraintName', 'required');
+
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to create multifeed with if the channels array is empty", function(done) {
+                              agent(url)
+                                    .post("/api/v1/multifeeds")
+                                    .set({
+                                            Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                         })
+                                    .send({ spec : [{ feeds : "where=outdoor=1,productId=42", channels : [] }] })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
+                                            res.body.should.have.property('code', httpStatus.UNPROCESSABLE_ENTITY);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data');
+                                            res.body.data.should.have.length(1);
+                                            res.body.data[0].should.have.property('constraintName', 'minItems');
+                                            res.body.data[0].should.have.property('constraintValue', 1);
+                                            res.body.data[0].should.have.property('testedValue', 0);
+
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to create multifeed with if the channels array contains an empty string", function(done) {
+                              agent(url)
+                                    .post("/api/v1/multifeeds")
+                                    .set({
+                                            Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                         })
+                                    .send({
+                                             spec : [{
+                                                        feeds : "where=outdoor=1,productId=42",
+                                                        channels : ["humidity", ""]
+                                                     }]
+                                          })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
+                                            res.body.should.have.property('code', httpStatus.UNPROCESSABLE_ENTITY);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data');
+                                            res.body.data.should.have.length(1);
+                                            res.body.data[0].should.have.property('constraintName', 'minLength');
+                                            res.body.data[0].should.have.property('constraintValue', 1);
+                                            res.body.data[0].should.have.property('testedValue', 0);
+
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to create multifeed with if the channels array contains multiple instances of the same string", function(done) {
+                              agent(url)
+                                    .post("/api/v1/multifeeds")
+                                    .set({
+                                            Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                         })
+                                    .send({
+                                             spec : [{
+                                                        feeds : "where=outdoor=1,productId=42",
+                                                        channels : ["humidity", "particle_concentration", "humidity"]
+                                                     }]
+                                          })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
+                                            res.body.should.have.property('code', httpStatus.UNPROCESSABLE_ENTITY);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data');
+                                            res.body.data.should.have.length(1);
+                                            res.body.data[0].should.have.property('constraintName', 'uniqueItems');
+                                            res.body.data[0].should.have.property('constraintValue', true);
+
+                                            done();
+                                         });
+                           });
+
+                        });     // end Valid Auth
+                     });      // end Create
+                  });      // end Multifeeds
                });      // end Feeds
             });      // end Devices
          });      // end Products

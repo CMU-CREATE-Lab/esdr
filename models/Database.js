@@ -8,6 +8,7 @@ var Tokens = require('./Tokens.js');
 var Products = require('./Products.js');
 var Devices = require('./Devices.js');
 var Feeds = require('./Feeds.js');
+var Multifeeds = require('./Multifeeds.js');
 
 var DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
 
@@ -35,7 +36,7 @@ module.exports = {
             [
                // make sure the database exists
                function(done) {
-                  log.info("1) Ensuring the database exists.");
+                  log.info(" 1) Ensuring the database exists.");
                   var conn = mysql.createConnection({
                                                        host : config.get("database:host"),
                                                        port : config.get("database:port"),
@@ -74,7 +75,7 @@ module.exports = {
                // create the connection pool
                function(done) {
                   if (!hasErrors()) {
-                     log.info("2) Creating the connection pool.");
+                     log.info(" 2) Creating the connection pool.");
                      var pool = mysql.createPool({
                                                     connectionLimit : config.get("database:pool:connectionLimit"),
                                                     host : config.get("database:host"),
@@ -91,7 +92,7 @@ module.exports = {
                // create the Users table, if necessary
                function(done) {
                   if (!hasErrors()) {
-                     log.info("3) Ensuring the Users table exists.");
+                     log.info(" 3) Ensuring the Users table exists.");
                      var users = new Users(databaseHelper);
                      users.initialize(function(err) {
                         if (err) {
@@ -112,7 +113,7 @@ module.exports = {
                // create the Clients table, if necessary
                function(done) {
                   if (!hasErrors()) {
-                     log.info("4) Ensuring the Clients table exists.");
+                     log.info(" 4) Ensuring the Clients table exists.");
                      var clients = new Clients(databaseHelper);
                      clients.initialize(function(err) {
                         if (err) {
@@ -133,7 +134,7 @@ module.exports = {
                // create the Tokens table, if necessary
                function(done) {
                   if (!hasErrors()) {
-                     log.info("5) Ensuring the Tokens table exists.");
+                     log.info(" 5) Ensuring the Tokens table exists.");
                      var tokens = new Tokens(databaseHelper);
                      tokens.initialize(function(err) {
                         if (err) {
@@ -154,7 +155,7 @@ module.exports = {
                // create the Products table, if necessary
                function(done) {
                   if (!hasErrors()) {
-                     log.info("6) Ensuring the Products table exists.");
+                     log.info(" 6) Ensuring the Products table exists.");
                      var products = new Products(databaseHelper);
                      products.initialize(function(err) {
                         if (err) {
@@ -175,7 +176,7 @@ module.exports = {
                // create the Devices table, if necessary
                function(done) {
                   if (!hasErrors()) {
-                     log.info("7) Ensuring the Devices table exists.");
+                     log.info(" 7) Ensuring the Devices table exists.");
                      var devices = new Devices(databaseHelper);
                      devices.initialize(function(err) {
                         if (err) {
@@ -196,7 +197,7 @@ module.exports = {
                // create the Feeds table, if necessary
                function(done) {
                   if (!hasErrors()) {
-                     log.info("8) Ensuring the Feeds table exists.");
+                     log.info(" 8) Ensuring the Feeds table exists.");
                      var feeds = new Feeds(databaseHelper);
                      feeds.initialize(function(err) {
                         if (err) {
@@ -214,10 +215,31 @@ module.exports = {
                   }
                },
 
+               // create the Multifeeds table, if necessary
+               function(done) {
+                  if (!hasErrors()) {
+                     log.info(" 9) Ensuring the Multifeeds table exists.");
+                     var multifeeds = new Multifeeds(databaseHelper);
+                     multifeeds.initialize(function(err) {
+                        if (err) {
+                           errors.push(err)
+                        }
+                        else {
+                           db.multifeeds = multifeeds;
+                        }
+
+                        done();
+                     });
+                  }
+                  else {
+                     done();
+                  }
+               },
+
                // create the ESDR client, if necessary
                function(done) {
                   if (!hasErrors()) {
-                     log.info("9) Ensuring the ESDR client exists.");
+                     log.info("10) Ensuring the ESDR client exists.");
                      var esdrClient = config.get("esdrClient");
                      db.clients.findByNameAndSecret(esdrClient.clientName,
                                                     esdrClient.clientSecret,
