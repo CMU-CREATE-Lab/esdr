@@ -156,7 +156,7 @@ module.exports = function(databaseHelper) {
                            }
 
                            var sql = queryParts.sql("Products");
-                           log.debug("Products.findProducts(): " + sql + (queryParts.whereValues.length > 0 ? " [where values: " + queryParts.whereValues + "]" : ""));
+                           log.debug("Products.find(): " + sql + (queryParts.whereValues.length > 0 ? " [where values: " + queryParts.whereValues + "]" : ""));
 
                            // use findWithLimit so we can also get a count of the total number of records that would have been returned
                            // had there been no LIMIT clause included in the query
