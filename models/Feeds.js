@@ -6,8 +6,7 @@ var createRandomHexToken = require('../lib/token').createRandomHexToken;
 var ValidationError = require('../lib/errors').ValidationError;
 var httpStatus = require('http-status');
 var BodyTrackDatastore = require('bodytrack-datastore');
-var Query2Query = require('query2query');
-
+var query2query = require('./feeds-query2query');
 var config = require('../config');
 
 // instantiate the datastore
@@ -60,26 +59,7 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Feeds` ( " +
                          "CONSTRAINT `feeds_userId_fk_1` FOREIGN KEY (`userId`) REFERENCES `Users` (`id`) " +
                          ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
 
-var query2query = new Query2Query();
-query2query.addField('id', true, true, false, Query2Query.types.INTEGER);
-query2query.addField('name', true, true, false);
-query2query.addField('deviceId', true, true, false, Query2Query.types.INTEGER);
-query2query.addField('productId', true, true, false, Query2Query.types.INTEGER);
-query2query.addField('userId', true, true, false, Query2Query.types.INTEGER);
-query2query.addField('apiKey', false, false, false);
-query2query.addField('apiKeyReadOnly', false, false, false);
-query2query.addField('exposure', true, true, false);
-query2query.addField('isPublic', true, true, false, Query2Query.types.BOOLEAN);
-query2query.addField('isMobile', true, true, false, Query2Query.types.BOOLEAN);
-query2query.addField('latitude', true, true, true, Query2Query.types.NUMBER);
-query2query.addField('longitude', true, true, true, Query2Query.types.NUMBER);
-query2query.addField('channelSpecs', false, false, false);
-query2query.addField('channelBounds', false, false, true);
-query2query.addField('created', true, true, false, Query2Query.types.DATETIME);
-query2query.addField('modified', true, true, false, Query2Query.types.DATETIME);
-query2query.addField('lastUpload', true, true, false, Query2Query.types.DATETIME);
-query2query.addField('minTimeSecs', true, true, true, Query2Query.types.NUMBER);
-query2query.addField('maxTimeSecs', true, true, true, Query2Query.types.NUMBER);
+var MAX_FOUND_FEEDS = 100;
 
 var JSON_SCHEMA = {
    "$schema" : "http://json-schema.org/draft-04/schema#",
@@ -366,66 +346,68 @@ module.exports = function(databaseHelper) {
 
    this.find = function(authUserId, queryString, callback) {
 
-      query2query.parse(queryString, function(err, queryParts) {
+      query2query.parse(queryString,
+                        function(err, queryParts) {
 
-         if (err) {
-            return callback(err);
-         }
+                           if (err) {
+                              return callback(err);
+                           }
 
-         // We need to be really careful about security here!  Restrict the WHERE clause to allow returning
-         // only the public feeds, or feeds owned by the authenticated user (if any).
-         var additionalWhereExpression = "(isPublic = true)";
-         if (authUserId != null) {
-            additionalWhereExpression = "(" + additionalWhereExpression + " OR (userId = " + authUserId + "))";
-         }
-         var whereClause = "WHERE " + additionalWhereExpression;
-         if (queryParts.whereExpressions.length > 0) {
-            whereClause += " AND (" + queryParts.where + ")";
-         }
+                           // We need to be really careful about security here!  Restrict the WHERE clause to allow returning
+                           // only the public feeds, or feeds owned by the authenticated user (if any).
+                           var additionalWhereExpression = "(isPublic = true)";
+                           if (authUserId != null) {
+                              additionalWhereExpression = "(" + additionalWhereExpression + " OR (userId = " + authUserId + "))";
+                           }
+                           var whereClause = "WHERE " + additionalWhereExpression;
+                           if (queryParts.whereExpressions.length > 0) {
+                              whereClause += " AND (" + queryParts.where + ")";
+                           }
 
-         // More security! Now disallow selection of the apiKey if not authenticated.  If the user IS authenticated,
-         // then we'll need to manually remove the apiKey field from feeds not owned by the auth'd user after we fetch
-         // the feeds from the database (see below).
-         var apiKeyIndex = queryParts.selectFields.indexOf('apiKey');
-         if (authUserId == null && apiKeyIndex >= 0) {
-            // remove the apiKey field from the array
-            queryParts.selectFields.splice(apiKeyIndex, 1);
-         }
+                           // More security! Now disallow selection of the apiKey if not authenticated.  If the user IS authenticated,
+                           // then we'll need to manually remove the apiKey field from feeds not owned by the auth'd user after we fetch
+                           // the feeds from the database (see below).
+                           var apiKeyIndex = queryParts.selectFields.indexOf('apiKey');
+                           if (authUserId == null && apiKeyIndex >= 0) {
+                              // remove the apiKey field from the array
+                              queryParts.selectFields.splice(apiKeyIndex, 1);
+                           }
 
-         // build the restricted SQL query
-         var restrictedSql = [
-            "SELECT " + queryParts.selectFields.join(','),
-            "FROM Feeds",
-            whereClause,
-            queryParts.orderByClause,
-            queryParts.limitClause
-         ].join(' ');
-         log.debug("Feeds.find(): " + restrictedSql + (queryParts.whereValues.length > 0 ? " [where values: " + queryParts.whereValues + "]" : ""));
+                           // build the restricted SQL query
+                           var restrictedSql = [
+                              "SELECT " + queryParts.selectFields.join(','),
+                              "FROM Feeds",
+                              whereClause,
+                              queryParts.orderByClause,
+                              queryParts.limitClause
+                           ].join(' ');
+                           log.debug("Feeds.find(): " + restrictedSql + (queryParts.whereValues.length > 0 ? " [where values: " + queryParts.whereValues + "]" : ""));
 
-         // use findWithLimit so we can also get a count of the total number of records that would have been returned
-         // had there been no LIMIT clause included in the query
-         databaseHelper.findWithLimit(restrictedSql, queryParts.whereValues, function(err, result) {
-            if (err) {
-               return callback(err);
-            }
+                           // use findWithLimit so we can also get a count of the total number of records that would have been returned
+                           // had there been no LIMIT clause included in the query
+                           databaseHelper.findWithLimit(restrictedSql, queryParts.whereValues, function(err, result) {
+                              if (err) {
+                                 return callback(err);
+                              }
 
-            // copy in the offset and limit
-            result.offset = queryParts.offset;
-            result.limit = queryParts.limit;
+                              // copy in the offset and limit
+                              result.offset = queryParts.offset;
+                              result.limit = queryParts.limit;
 
-            // now that we have the feeds, we need to manually remove the apiKey field (if selected) from all feeds
-            // which the user does not own.
-            if (authUserId != null && apiKeyIndex >= 0) {
-               result.rows.forEach(function(feed) {
-                  if (feed.userId != authUserId) {
-                     delete feed.apiKey;
-                  }
-               });
-            }
+                              // now that we have the feeds, we need to manually remove the apiKey field (if selected) from all feeds
+                              // which the user does not own.
+                              if (authUserId != null && apiKeyIndex >= 0) {
+                                 result.rows.forEach(function(feed) {
+                                    if (feed.userId != authUserId) {
+                                       delete feed.apiKey;
+                                    }
+                                 });
+                              }
 
-            return callback(null, result, queryParts.selectFields);
-         });
-      });
+                              return callback(null, result, queryParts.selectFields);
+                           });
+                        },
+                        MAX_FOUND_FEEDS);
    };
 
    /**
@@ -474,6 +456,57 @@ module.exports = function(databaseHelper) {
                                 [apiKey, apiKey],
                                 callback);
       });
+   };
+
+   /**
+    * Finds feeds contained in the set defined by the given whereSql.  Any where clause in the given queryString is
+    * ignored. Returned feeds can be filtered by the "fields" param in the given queryString, ordered by the "orderBy"
+    * param, and/or windowed by the "limit" and "offset" params.
+    *
+    * @param whereSql
+    * @param queryString
+    * @param callback
+    */
+   this.findBySqlWhere = function(whereSql, queryString, callback) {
+
+      var limitedQueryString;
+      if (typeof queryString !== 'undefined' && queryString != null) {
+         // make a copy, then delete the where clause stuff
+         limitedQueryString = JSON.parse(JSON.stringify(queryString));
+         delete limitedQueryString['where'];
+         delete limitedQueryString['whereOr'];
+         delete limitedQueryString['whereAnd'];
+         delete limitedQueryString['whereJoin'];
+      }
+
+      query2query.parse(queryString,
+                        function(err, queryParts) {
+                           if (err) {
+                              return callback(err);
+                           }
+
+                           queryParts.where = whereSql.where;
+                           queryParts.whereClause = "WHERE " + whereSql.where;
+                           queryParts.whereValues = whereSql.values;
+
+                           // use findWithLimit so we can also get a count of the total number of records that would have been returned
+                           // had there been no LIMIT clause included in the query
+                           databaseHelper.findWithLimit(queryParts.sql("Feeds"),
+                                                        queryParts.whereValues,
+                                                        function(err, result) {
+                                                           if (err) {
+                                                              return callback(err);
+                                                           }
+
+                                                           // copy in the offset and limit
+                                                           result.offset = queryParts.offset;
+                                                           result.limit = queryParts.limit;
+
+                                                           return callback(null, result, queryParts.selectFields);
+                                                        });
+                        },
+                        MAX_FOUND_FEEDS);
+
    };
 
    this.filterFields = function(feed, fieldsToSelect, callback) {

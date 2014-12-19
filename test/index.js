@@ -142,7 +142,7 @@ describe("ESDR", function() {
 
    var testFeed1a = {
       name : "Newell Simon 3rd Floor Bathroom",
-      exposure : "indoor",
+      exposure : "outdoor",
       isPublic : 1,
       isMobile : 0,
       latitude : 40.443403,
@@ -160,7 +160,7 @@ describe("ESDR", function() {
 
    var testFeed2a = {
       name : "Newell Simon A Level (Public)",
-      exposure : "indoor",
+      exposure : "outdoor",
       isPublic : 1,
       isMobile : 0,
       latitude : 40.443493,
@@ -315,7 +315,7 @@ describe("ESDR", function() {
    var multifeed1 = {
       "spec" : [
          {
-            "feeds" : "where=outdoor=1,productId=42",
+            "feeds" : "whereOr=exposure=outdoor,name=bogus",
             "channels" : ["particle_concentration", "humidity"]
          }
       ]
@@ -325,11 +325,11 @@ describe("ESDR", function() {
       "name" : "My_Awesome_Multifeed",
       "spec" : [
          {
-            "feeds" : "where=outdoor=1,productId=42",
+            "feeds" : "whereOr=exposure=indoor,productId=42",
             "channels" : ["particle_concentration", "humidity"]
          },
          {
-            "feeds" : "productId=343",
+            "feeds" : "where=productId=343",
             "channels" : ["temperature"]
          }
       ]
@@ -5362,7 +5362,7 @@ describe("ESDR", function() {
                               agent(url)
                                     .post("/api/v1/multifeeds")
                                     .set({
-                                            Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                            Authorization : "Bearer " + accessTokens.testUser2.access_token
                                          })
                                     .send(multifeed2)
                                     .end(function(err, res) {
@@ -5385,7 +5385,7 @@ describe("ESDR", function() {
                               agent(url)
                                     .post("/api/v1/multifeeds")
                                     .set({
-                                            Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                            Authorization : "Bearer " + accessTokens.testUser2.access_token
                                          })
                                     .send(multifeed2)
                                     .end(function(err, res) {
@@ -5406,7 +5406,7 @@ describe("ESDR", function() {
                               agent(url)
                                     .post("/api/v1/multifeeds")
                                     .set({
-                                            Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                            Authorization : "Bearer " + accessTokens.testUser1.access_token
                                          })
                                     .send(multifeed2)
                                     .end(function(err, res) {
@@ -5679,6 +5679,214 @@ describe("ESDR", function() {
 
                         });     // end Valid Auth
                      });      // end Create
+
+                     var foundMultifeeds = null;
+                     describe("Find Multifeeds", function() {
+                        it("Should be able to find all multifeeds", function(done) {
+                           agent(url)
+                                 .get("/api/v1/multifeeds")
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+                                         res.body.data.should.have.property('totalCount', 3);
+                                         res.body.data.should.have.property('rows');
+                                         res.body.data.rows.should.have.length(3);
+
+                                         foundMultifeeds = res.body.data.rows;
+
+                                         done();
+                                      });
+                        });
+
+                        it("Should be able to find all multifeeds owned by a specific user", function(done) {
+                           agent(url)
+                                 .get("/api/v1/multifeeds?where=userId=" + createdUsers.testUser2.id)
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+                                         res.body.data.should.have.property('totalCount', 1);
+                                         res.body.data.should.have.property('rows');
+                                         res.body.data.rows.should.have.length(1);
+                                         res.body.data.rows[0].should.have.property('userId', createdUsers.testUser2.id);
+
+                                         done();
+                                      });
+                        });
+
+                        it("Should be able to filter returned multifeeds", function(done) {
+                           agent(url)
+                                 .get("/api/v1/multifeeds?fields=id,name&orderBy=-id&where=userId=" + createdUsers.testUser1.id)
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+                                         res.body.data.should.have.property('totalCount', 2);
+                                         res.body.data.should.have.property('rows');
+                                         res.body.data.rows.should.have.length(2);
+                                         res.body.data.rows.forEach(function(row) {
+                                            row.should.have.property('id');
+                                            row.should.have.property('name');
+                                            row.should.not.have.property('spec');
+                                            row.should.not.have.property('querySpec');
+                                            row.should.not.have.property('created');
+                                            row.should.not.have.property('modified');
+                                         });
+                                         (res.body.data.rows[0].id > res.body.data.rows[1].id).should.be.true;
+
+                                         done();
+                                      });
+                        });
+                     });      // end Find Multifeeds
+                     describe("Find Single Multifeed", function() {
+                        it("Should be able to find a multifeed by id", function(done) {
+                           agent(url)
+                                 .get("/api/v1/multifeeds/" + foundMultifeeds[0].id)
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+
+                                         // deep equal
+                                         should(foundMultifeeds[0]).eql(res.body.data);
+
+                                         done();
+                                      });
+                        });
+
+                        it("Should be able to find a multifeed by name", function(done) {
+                           agent(url)
+                                 .get("/api/v1/multifeeds/" + foundMultifeeds[0].name)
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+
+                                         // deep equal
+                                         should(foundMultifeeds[0]).eql(res.body.data);
+
+                                         done();
+                                      });
+                        });
+
+                        it("Should be able to find a multifeed and filter returned fields", function(done) {
+                           agent(url)
+                                 .get("/api/v1/multifeeds/" + foundMultifeeds[0].name + "?fields=id,userId")
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+                                         res.body.data.should.have.property('id', foundMultifeeds[0].id);
+                                         res.body.data.should.have.property('userId', foundMultifeeds[0].userId);
+
+                                         done();
+                                      });
+                        });
+
+                        it("Should fail to find a multifeed with a bogus ID", function(done) {
+                           agent(url)
+                                 .get("/api/v1/multifeeds/" + 0)
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.NOT_FOUND);
+                                         res.body.should.have.property('code', httpStatus.NOT_FOUND);
+                                         res.body.should.have.property('status', 'error');
+                                         res.body.should.have.property('data');
+
+                                         done();
+                                      });
+                        });
+
+                        it("Should fail to find a multifeed with a bogus name", function(done) {
+                           agent(url)
+                                 .get("/api/v1/multifeeds/" + "bogus")
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.NOT_FOUND);
+                                         res.body.should.have.property('code', httpStatus.NOT_FOUND);
+                                         res.body.should.have.property('status', 'error');
+                                         res.body.should.have.property('data');
+
+                                         done();
+                                      });
+                        });
+                     });      // end Find Single Multifeed
+
+                     describe("Find feeds described by a multifeed", function() {
+                        it("Should be able to get (outdoor exposure) feeds described by a multifeed", function(done) {
+                           agent(url)
+                                 .get("/api/v1/multifeeds/" + foundMultifeeds[0].id + "/feeds?fields=id,name,exposure&orderBy=-id")
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.OK);
+                                         res.body.should.have.property('code', httpStatus.OK);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+
+                                         var multifeedResults = res.body.data;
+
+                                         // compare with the results from doing a feed selection--should be the same!
+                                         agent(url)
+                                               .get("/api/v1/feeds?fields=id,name,exposure&where=exposure=outdoor&orderBy=-id")
+                                               .end(function(err, res) {
+                                                       if (err) {
+                                                          return done(err);
+                                                       }
+
+                                                       res.should.have.property('status', httpStatus.OK);
+                                                       res.body.should.have.property('code', httpStatus.OK);
+                                                       res.body.should.have.property('status', 'success');
+                                                       res.body.should.have.property('data');
+
+                                                       // deep equal
+                                                       should(res.body.data).eql(multifeedResults);
+
+                                                       done();
+                                                    });
+                                      });
+                        });
+                     });      // end Find feeds described by a multifeed
+
                   });      // end Multifeeds
                });      // end Feeds
             });      // end Devices
