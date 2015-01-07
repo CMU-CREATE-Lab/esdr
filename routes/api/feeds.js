@@ -175,7 +175,7 @@ module.exports = function(FeedModel, feedRouteHelper) {
 
                                             res.jsendSuccess(tile);
                                          });
-                                      }, req, res, next)
+                                      }, req, res, next);
               });
 
    // For exporting one or more channels from a feed
