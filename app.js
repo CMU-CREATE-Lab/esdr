@@ -221,7 +221,7 @@ Database.create(function(err, db) {
          app.use('/api/v1/devices', require('./routes/api/devices')(db.devices, db.feeds));
          app.use('/api/v1/feed', require('./routes/api/feed')(db.feeds, feedRouteHelper, authHelper));
          app.use('/api/v1/feeds', require('./routes/api/feeds')(db.feeds, feedRouteHelper));
-         app.use('/api/v1/multifeeds', require('./routes/api/multifeeds')(db.feeds,db.multifeeds));
+         app.use('/api/v1/multifeeds', require('./routes/api/multifeeds')(db.feeds, db.multifeeds));
          app.use('/api/v1/user-verification', require('./routes/api/user-verification')(db.users));
          app.use('/api/v1/password-reset', require('./routes/api/password-reset')(db.users));
 
