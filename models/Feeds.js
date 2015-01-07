@@ -324,24 +324,29 @@ module.exports = function(databaseHelper) {
    };
 
    /**
-    * Exports the specified channels from the specified feed, optionally filtered with the given filter.  Data is
-    * returned to the callback via an EventEmitter.
+    * Exports the specified feed channels, optionally filtered with the given filter.  Data is returned to the callback
+    * via an EventEmitter.
     *
-    * @param {Object} feed
-    * @param {Array} channels
+    * @param {Array} feedAndChannelsObjects - array of objects of the form <code>{feed: FEED_OBJ, channels: ["CHANNEL_1",...]}</code>
     * @param {Object} filter
     * @param {function} callback
     */
-   this.exportData = function(feed, channels, filter, callback) {
+   this.exportData = function(feedAndChannelsObjects, filter, callback) {
       filter = filter || {};
-      datastore.export(feed.userId,
-                       getDatastoreDeviceNameForFeed(feed),
-                       channels,
-                       {
-                          minTime : filter.minTime,
-                          maxTime : filter.maxTime
-                       },
-                       callback);
+      var userIdDeviceChannelObjects = [];
+      feedAndChannelsObjects.forEach(function(feedAndChannels) {
+         userIdDeviceChannelObjects.push({
+                                            userId : feedAndChannels.feed.userId,
+                                            deviceName : getDatastoreDeviceNameForFeed(feedAndChannels.feed),
+                                            channelNames : feedAndChannels.channels
+                                         });
+      });
+      datastore.exportData(userIdDeviceChannelObjects,
+                           {
+                              minTime : filter.minTime,
+                              maxTime : filter.maxTime
+                           },
+                           callback);
    };
 
    this.find = function(authUserId, queryString, callback) {

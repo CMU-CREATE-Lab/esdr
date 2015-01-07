@@ -252,8 +252,10 @@ module.exports = function(FeedModel, feedRouteHelper) {
                                          filename += "." + format;
 
                                          // export the data
-                                         FeedModel.exportData(feed,
-                                                              channels,
+                                         FeedModel.exportData([{
+                                                                 feed : feed,
+                                                                 channels : channels
+                                                              }],
                                                               {
                                                                  minTime : minTime,
                                                                  maxTime : maxTime

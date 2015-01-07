@@ -4811,6 +4811,7 @@ describe("ESDR", function() {
                                          res.body.data.should.have.property('apiKeyReadOnly');
 
                                          feed.id = res.body.data.id;
+                                         feed.userId = createdUsers.testUser1.id;
                                          feed.apiKey = res.body.data.apiKey;
                                          feed.apiKeyReadOnly = res.body.data.apiKeyReadOnly;
 
@@ -4865,6 +4866,7 @@ describe("ESDR", function() {
                         it("Should be able to export a public feed without authentication", function(done) {
 
                            var feedId = createdFeeds[0].id;
+                           var feedPrefix = createdFeeds[0].userId + ".feed_" + feedId;
                            agent(url)
                                  .get("/api/v1/feeds/" + feedId + "/channels/humidity,particle_concentration,annotation/export")
                                  .end(function(err, res) {
@@ -4875,7 +4877,7 @@ describe("ESDR", function() {
                                          res.headers.should.have.property('content-disposition', 'attachment; filename=\"export_of_feed_' + feedId + '.csv\"');
                                          res.should.have.property('status', httpStatus.OK);
                                          res.text.should.equal(
-                                               "EpochTime,feed_" + feedId + ".humidity,feed_" + feedId + ".particle_concentration,feed_" + feedId + ".annotation\n" +
+                                               "EpochTime," + feedPrefix + ".humidity," + feedPrefix + ".particle_concentration," + feedPrefix + ".annotation\n" +
                                                "1414982815,38,7.1,\n" +
                                                "1414982833,38,11.9,\n" +
                                                "1414982875,39,6.9,\n" +
@@ -4895,6 +4897,7 @@ describe("ESDR", function() {
                         it("Should ignore redundant channels", function(done) {
 
                            var feedId = createdFeeds[0].id;
+                           var feedPrefix = createdFeeds[0].userId + ".feed_" + feedId;
                            agent(url)
                                  .get("/api/v1/feeds/" + feedId + "/channels/humidity,humidity,particle_concentration,annotation,humidity,particle_concentration/export")
                                  .end(function(err, res) {
@@ -4905,7 +4908,7 @@ describe("ESDR", function() {
                                          res.headers.should.have.property('content-disposition', 'attachment; filename=\"export_of_feed_' + feedId + '.csv\"');
                                          res.should.have.property('status', httpStatus.OK);
                                          res.text.should.equal(
-                                               "EpochTime,feed_" + feedId + ".humidity,feed_" + feedId + ".particle_concentration,feed_" + feedId + ".annotation\n" +
+                                               "EpochTime," + feedPrefix + ".humidity," + feedPrefix + ".particle_concentration," + feedPrefix + ".annotation\n" +
                                                "1414982815,38,7.1,\n" +
                                                "1414982833,38,11.9,\n" +
                                                "1414982875,39,6.9,\n" +
@@ -4925,6 +4928,7 @@ describe("ESDR", function() {
                         it("Should ignore invalid min and max times", function(done) {
 
                            var feedId = createdFeeds[0].id;
+                           var feedPrefix = createdFeeds[0].userId + ".feed_" + feedId;
                            agent(url)
                                  .get("/api/v1/feeds/" + feedId + "/channels/humidity,humidity,particle_concentration,annotation,humidity,particle_concentration/export?from=foo&to=bar")
                                  .end(function(err, res) {
@@ -4935,7 +4939,7 @@ describe("ESDR", function() {
                                          res.headers.should.have.property('content-disposition', 'attachment; filename=\"export_of_feed_' + feedId + '.csv\"');
                                          res.should.have.property('status', httpStatus.OK);
                                          res.text.should.equal(
-                                               "EpochTime,feed_" + feedId + ".humidity,feed_" + feedId + ".particle_concentration,feed_" + feedId + ".annotation\n" +
+                                               "EpochTime," + feedPrefix + ".humidity," + feedPrefix + ".particle_concentration," + feedPrefix + ".annotation\n" +
                                                "1414982815,38,7.1,\n" +
                                                "1414982833,38,11.9,\n" +
                                                "1414982875,39,6.9,\n" +
@@ -4973,6 +4977,7 @@ describe("ESDR", function() {
                         it("Should be able to export and limit returned records by max time", function(done) {
 
                            var feedId = createdFeeds[0].id;
+                           var feedPrefix = createdFeeds[0].userId + ".feed_" + feedId;
                            var maxTime = 1414982935;
                            agent(url)
                                  .get("/api/v1/feeds/" + feedId + "/channels/humidity,particle_concentration,annotation/export?to=" + maxTime)
@@ -4984,7 +4989,7 @@ describe("ESDR", function() {
                                          res.headers.should.have.property('content-disposition', 'attachment; filename=\"export_of_feed_' + feedId + '_to_time_' + maxTime + '.csv\"');
                                          res.should.have.property('status', httpStatus.OK);
                                          res.text.should.equal(
-                                               "EpochTime,feed_" + feedId + ".humidity,feed_" + feedId + ".particle_concentration,feed_" + feedId + ".annotation\n" +
+                                               "EpochTime," + feedPrefix + ".humidity," + feedPrefix + ".particle_concentration," + feedPrefix + ".annotation\n" +
                                                "1414982815,38,7.1,\n" +
                                                "1414982833,38,11.9,\n" +
                                                "1414982875,39,6.9,\n" +
@@ -4999,6 +5004,7 @@ describe("ESDR", function() {
                         it("Should be able to export and limit returned records by min time", function(done) {
 
                            var feedId = createdFeeds[0].id;
+                           var feedPrefix = createdFeeds[0].userId + ".feed_" + feedId;
                            var minTime = 1414982935;
                            agent(url)
                                  .get("/api/v1/feeds/" + feedId + "/channels/humidity,particle_concentration,annotation/export?from=" + minTime)
@@ -5010,7 +5016,7 @@ describe("ESDR", function() {
                                          res.headers.should.have.property('content-disposition', 'attachment; filename=\"export_of_feed_' + feedId + '_from_time_' + minTime + '.csv\"');
                                          res.should.have.property('status', httpStatus.OK);
                                          res.text.should.equal(
-                                               "EpochTime,feed_" + feedId + ".humidity,feed_" + feedId + ".particle_concentration,feed_" + feedId + ".annotation\n" +
+                                               "EpochTime," + feedPrefix + ".humidity," + feedPrefix + ".particle_concentration," + feedPrefix + ".annotation\n" +
                                                "1414982935,38,7.2,\n" +
                                                "1414982953,38,11.4,\n" +
                                                "1414985704,41,4.2,\n" +
@@ -5026,6 +5032,7 @@ describe("ESDR", function() {
                         it("Should be able to export and limit returned records by min and max time", function(done) {
 
                            var feedId = createdFeeds[0].id;
+                           var feedPrefix = createdFeeds[0].userId + ".feed_" + feedId;
                            var minTime = 1414982935;
                            var maxTime = 1414982953;
                            agent(url)
@@ -5038,7 +5045,7 @@ describe("ESDR", function() {
                                          res.headers.should.have.property('content-disposition', 'attachment; filename=\"export_of_feed_' + feedId + '_from_time_' + minTime + '_to_' + maxTime + '.csv\"');
                                          res.should.have.property('status', httpStatus.OK);
                                          res.text.should.equal(
-                                               "EpochTime,feed_" + feedId + ".humidity,feed_" + feedId + ".particle_concentration,feed_" + feedId + ".annotation\n" +
+                                               "EpochTime," + feedPrefix + ".humidity," + feedPrefix + ".particle_concentration," + feedPrefix + ".annotation\n" +
                                                "1414982935,38,7.2,\n" +
                                                "1414982953,38,11.4,\n"
                                          );
@@ -5050,6 +5057,7 @@ describe("ESDR", function() {
                         it("Should be able to export and limit returned records by min and max time, even if min and max time values are swapped", function(done) {
 
                            var feedId = createdFeeds[0].id;
+                           var feedPrefix = createdFeeds[0].userId + ".feed_" + feedId;
                            var minTime = 1414982935;
                            var maxTime = 1414982953;
                            agent(url)
@@ -5062,7 +5070,7 @@ describe("ESDR", function() {
                                          res.headers.should.have.property('content-disposition', 'attachment; filename=\"export_of_feed_' + feedId + '_from_time_' + minTime + '_to_' + maxTime + '.csv\"');
                                          res.should.have.property('status', httpStatus.OK);
                                          res.text.should.equal(
-                                               "EpochTime,feed_" + feedId + ".humidity,feed_" + feedId + ".particle_concentration,feed_" + feedId + ".annotation\n" +
+                                               "EpochTime," + feedPrefix + ".humidity," + feedPrefix + ".particle_concentration," + feedPrefix + ".annotation\n" +
                                                "1414982935,38,7.2,\n" +
                                                "1414982953,38,11.4,\n"
                                          );
@@ -5098,6 +5106,7 @@ describe("ESDR", function() {
                            it("Should be able to export a private feed with valid authentication", function(done) {
 
                               var feedId = createdFeeds[1].id;
+                              var feedPrefix = createdFeeds[0].userId + ".feed_" + feedId;
                               agent(url)
                                     .get("/api/v1/feeds/" + feedId + "/channels/humidity,particle_concentration,annotation/export")
                                     .set({
@@ -5111,7 +5120,7 @@ describe("ESDR", function() {
                                             res.headers.should.have.property('content-disposition', 'attachment; filename=\"export_of_feed_' + feedId + '.csv\"');
                                             res.should.have.property('status', httpStatus.OK);
                                             res.text.should.equal(
-                                                  "EpochTime,feed_" + feedId + ".humidity,feed_" + feedId + ".particle_concentration,feed_" + feedId + ".annotation\n" +
+                                                  "EpochTime," + feedPrefix + ".humidity," + feedPrefix + ".particle_concentration," + feedPrefix + ".annotation\n" +
                                                   "1414986064,35,22.6,\n" +
                                                   "1414986079,34,20.1,\n" +
                                                   "1414986124,34,22.8,\"Bad smell today!\"\n" +
@@ -5158,6 +5167,7 @@ describe("ESDR", function() {
                               it("Should be able to export a private feed with valid authentication", function(done) {
 
                                  var feedId = createdFeeds[1].id;
+                                 var feedPrefix = createdFeeds[0].userId + ".feed_" + feedId;
                                  agent(url)
                                        .get("/api/v1/feeds/" + feedId + "/channels/humidity,particle_concentration,annotation/export")
                                        .set({
@@ -5171,7 +5181,7 @@ describe("ESDR", function() {
                                                res.headers.should.have.property('content-disposition', 'attachment; filename=\"export_of_feed_' + feedId + '.csv\"');
                                                res.should.have.property('status', httpStatus.OK);
                                                res.text.should.equal(
-                                                     "EpochTime,feed_" + feedId + ".humidity,feed_" + feedId + ".particle_concentration,feed_" + feedId + ".annotation\n" +
+                                                     "EpochTime," + feedPrefix + ".humidity," + feedPrefix + ".particle_concentration," + feedPrefix + ".annotation\n" +
                                                      "1414986064,35,22.6,\n" +
                                                      "1414986079,34,20.1,\n" +
                                                      "1414986124,34,22.8,\"Bad smell today!\"\n" +
@@ -5217,6 +5227,7 @@ describe("ESDR", function() {
                               it("Should be able to export a private feed with valid authentication", function(done) {
 
                                  var feedId = createdFeeds[1].id;
+                                 var feedPrefix = createdFeeds[0].userId + ".feed_" + feedId;
                                  agent(url)
                                        .get("/api/v1/feeds/" + createdFeeds[1].apiKeyReadOnly + "/channels/humidity,particle_concentration,annotation/export")
                                        .end(function(err, res) {
@@ -5227,7 +5238,7 @@ describe("ESDR", function() {
                                                res.headers.should.have.property('content-disposition', 'attachment; filename=\"export_of_feed_' + feedId + '.csv\"');
                                                res.should.have.property('status', httpStatus.OK);
                                                res.text.should.equal(
-                                                     "EpochTime,feed_" + feedId + ".humidity,feed_" + feedId + ".particle_concentration,feed_" + feedId + ".annotation\n" +
+                                                     "EpochTime," + feedPrefix + ".humidity," + feedPrefix + ".particle_concentration," + feedPrefix + ".annotation\n" +
                                                      "1414986064,35,22.6,\n" +
                                                      "1414986079,34,20.1,\n" +
                                                      "1414986124,34,22.8,\"Bad smell today!\"\n" +
