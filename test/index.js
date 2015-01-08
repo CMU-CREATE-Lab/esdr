@@ -325,12 +325,12 @@ describe("ESDR", function() {
       "name" : "My_Awesome_Multifeed",
       "spec" : [
          {
-            "feeds" : "whereOr=exposure=indoor,productId=42",
-            "channels" : ["particle_concentration", "humidity"]
+            "feeds" : "whereOr=exposure=outdoor,productId=42",
+            "channels" : ["particle_concentration", "humidity", "conductivity"]
          },
          {
-            "feeds" : "where=productId=343",
-            "channels" : ["temperature"]
+            "feeds" : "whereOr=productId=343,name=Newell Simon 3rd Floor Bathroom",
+            "channels" : ["temperature", "conductivity"]
          }
       ]
    };
@@ -5898,6 +5898,103 @@ describe("ESDR", function() {
                         });
                      });      // end Find feeds described by a multifeed
 
+                     describe("Get Multifeed Tiles", function() {
+                        before(function(initDone) {
+
+                           // create another multifeed named "Outdoor_Temperature_Feeds"
+                           agent(url)
+                                 .post("/api/v1/multifeeds")
+                                 .set({
+                                         Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                      })
+                                 .send({
+                                          "name" : "Outdoor_Temperature_Feeds",
+                                          "spec" : [
+                                             {
+                                                "feeds" : "whereOr=exposure=outdoor",
+                                                "channels" : ["temperature", "humidity"]
+                                             }
+                                          ]
+                                       })
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return initDone(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.CREATED);
+                                         res.body.should.have.property('code', httpStatus.CREATED);
+                                         res.body.should.have.property('status', 'success');
+                                         res.body.should.have.property('data');
+                                         res.body.data.should.have.property('id');
+                                         res.body.data.should.have.property('name');
+
+                                         initDone();
+                                      });
+
+                        });
+
+                        it("Should be able to fetch the tiles for a multifeed", function(done) {
+                           agent(url)
+                                 .get("/api/v1/multifeeds/Outdoor_Temperature_Feeds/tiles/18.10")
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.OK);
+                                         should(res.body.data).eql(require('./multifeed_tiles_1.json'));
+                                         done();
+                                      });
+                        });
+                        it("Should fail to fetch the tiles for a multifeed with an invalid level", function(done) {
+                           agent(url)
+                                 .get("/api/v1/multifeeds/Outdoor_Temperature_Feeds/tiles/foo.10")
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
+                                         res.body.should.have.property('code', httpStatus.UNPROCESSABLE_ENTITY);
+                                         res.body.should.have.property('status', 'error');
+                                         res.body.should.have.property('data');
+                                         res.body.data.should.have.property('level');
+                                         done();
+                                      });
+                        });
+                        it("Should fail to fetch the tiles for a multifeed with an invalid offset", function(done) {
+                           agent(url)
+                                 .get("/api/v1/multifeeds/Outdoor_Temperature_Feeds/tiles/18.foo")
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
+                                         res.body.should.have.property('code', httpStatus.UNPROCESSABLE_ENTITY);
+                                         res.body.should.have.property('status', 'error');
+                                         res.body.should.have.property('data');
+                                         res.body.data.should.have.property('offset');
+                                         done();
+                                      });
+                        });
+                        it("Should fail to fetch the tiles for an known multifeed", function(done) {
+                           agent(url)
+                                 .get("/api/v1/multifeeds/Bogus/tiles/18.10")
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.NOT_FOUND);
+                                         res.body.should.have.property('code', httpStatus.NOT_FOUND);
+                                         res.body.should.have.property('status', 'error');
+                                         res.body.should.have.property('data');
+                                         done();
+                                      });
+                        });
+
+                     });      // end Get Multifeed Tiles
                   });      // end Multifeeds
                });      // end Feeds
             });      // end Devices

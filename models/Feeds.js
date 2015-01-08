@@ -59,7 +59,7 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Feeds` ( " +
                          "CONSTRAINT `feeds_userId_fk_1` FOREIGN KEY (`userId`) REFERENCES `Users` (`id`) " +
                          ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
 
-var MAX_FOUND_FEEDS = 100;
+var MAX_FOUND_FEEDS = 1000;
 
 var JSON_SCHEMA = {
    "$schema" : "http://json-schema.org/draft-04/schema#",
@@ -162,7 +162,7 @@ module.exports = function(databaseHelper) {
 
    this.getTile = function(feed, channelName, level, offset, callback) {
       datastore.getTile(feed.userId,
-                        getDatastoreDeviceNameForFeed(feed),
+                        getDatastoreDeviceNameForFeed(feed.id),
                         channelName,
                         level,
                         offset,
@@ -189,8 +189,56 @@ module.exports = function(databaseHelper) {
                         });
    };
 
-   var getDatastoreDeviceNameForFeed = function(feed) {
-      return "feed_" + feed.id;
+   /**
+    * Get tiles at the specified <code>level</code> and <code>offset</code> for the specified feed channels, returning
+    * data to the callback via an EventEmitter.  The feed channels are defined in the given
+    * <code>feedsAndChannels</code> array, which must be an array of objects where each object must be of the form:
+    * <code>
+    *    {
+    *    feeds : [ { id:FEED_ID, userId: FEED_USER_ID}, ... ],
+    *    channels: [ "CHANNEL_1", ... ]
+    *    }
+    * </code>
+    *
+    * @param {Array} feedsAndChannels array of objects describing the feeds and channels
+    * @param {int} level the tile level
+    * @param {int} offset the tile offset
+    * @param {function} callback
+    */
+   this.getTiles = function(feedsAndChannels, level, offset, callback) {
+
+      // remove duplicates
+      var feedMap = {};
+      feedsAndChannels.forEach(function(item) {
+         var feeds = item.feeds;
+         var channels = item.channels;
+
+         feeds.forEach(function(feed) {
+            if (!(feed.id in feedMap)) {
+               feedMap[feed.id] = { userId : feed.userId, channels : {} };
+            }
+
+            channels.forEach(function(channel) {
+               feedMap[feed.id].channels[channel] = true;
+            });
+         });
+      });
+
+      // build the userIdDeviceChannelObjects array needed for the call to getTiles()
+      var userIdDeviceChannelObjects = [];
+      Object.keys(feedMap).forEach(function(feedId) {
+         userIdDeviceChannelObjects.push({
+                                            userId : feedMap[feedId].userId,
+                                            deviceName : getDatastoreDeviceNameForFeed(feedId),
+                                            channelNames : Object.keys(feedMap[feedId].channels)
+                                         });
+      });
+
+      datastore.getTiles(userIdDeviceChannelObjects, level, offset, callback);
+   };
+
+   var getDatastoreDeviceNameForFeed = function(feedId) {
+      return "feed_" + feedId;
    };
 
    var createEmptyTile = function(level, offset) {
@@ -207,7 +255,7 @@ module.exports = function(databaseHelper) {
    };
 
    this.importData = function(feed, data, callback) {
-      var deviceName = getDatastoreDeviceNameForFeed(feed);
+      var deviceName = getDatastoreDeviceNameForFeed(feed.id);
       datastore.importJson(feed.userId,
                            deviceName,
                            data,
@@ -337,7 +385,7 @@ module.exports = function(databaseHelper) {
       feedAndChannelsObjects.forEach(function(feedAndChannels) {
          userIdDeviceChannelObjects.push({
                                             userId : feedAndChannels.feed.userId,
-                                            deviceName : getDatastoreDeviceNameForFeed(feedAndChannels.feed),
+                                            deviceName : getDatastoreDeviceNameForFeed(feedAndChannels.feed.id),
                                             channelNames : feedAndChannels.channels
                                          });
       });
@@ -470,9 +518,10 @@ module.exports = function(databaseHelper) {
     *
     * @param whereSql
     * @param queryString
+    * @param willLimitResults
     * @param callback
     */
-   this.findBySqlWhere = function(whereSql, queryString, callback) {
+   this.findBySqlWhere = function(whereSql, queryString, willLimitResults, callback) {
 
       var limitedQueryString;
       if (typeof queryString !== 'undefined' && queryString != null) {
@@ -494,21 +543,34 @@ module.exports = function(databaseHelper) {
                            queryParts.whereClause = "WHERE " + whereSql.where;
                            queryParts.whereValues = whereSql.values;
 
-                           // use findWithLimit so we can also get a count of the total number of records that would have been returned
-                           // had there been no LIMIT clause included in the query
-                           databaseHelper.findWithLimit(queryParts.sql("Feeds"),
-                                                        queryParts.whereValues,
-                                                        function(err, result) {
-                                                           if (err) {
-                                                              return callback(err);
-                                                           }
+                           var handleFindResult = function(err, result) {
+                              if (err) {
+                                 return callback(err);
+                              }
 
-                                                           // copy in the offset and limit
-                                                           result.offset = queryParts.offset;
-                                                           result.limit = queryParts.limit;
+                              if (willLimitResults) {
+                                 // copy in the offset and limit
+                                 result.offset = queryParts.offset;
+                                 result.limit = queryParts.limit;
+                              }
 
-                                                           return callback(null, result, queryParts.selectFields);
-                                                        });
+                              return callback(null, result, queryParts.selectFields);
+                           };
+
+                           if (willLimitResults) {
+                              // use findWithLimit so we can also get a count of the total number of records that would have been returned
+                              // had there been no LIMIT clause included in the query
+                              databaseHelper.findWithLimit(queryParts.sql("Feeds"),
+                                                           queryParts.whereValues,
+                                                           handleFindResult);
+                           }
+                           else {
+                              // passing true in the 2nd argument ensures that limit/offset won't be considered
+                              var sql = queryParts.sql("Feeds", true);
+                              databaseHelper.execute(sql,
+                                                     queryParts.whereValues,
+                                                     handleFindResult);
+                           }
                         },
                         MAX_FOUND_FEEDS);
 
