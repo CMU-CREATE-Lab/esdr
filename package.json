@@ -48,10 +48,10 @@
     "superagent": "^0.21.0"
   },
   "devDependencies": {
-    "mocha": "^2.0.1",
-    "node-sass": "^1.2.3",
+    "mocha": "^2.1.0",
+    "node-sass": "^2.0.0-beta",
     "rimraf": "^2.2.8",
-    "should": "^4.3.0",
+    "should": "^4.4.4",
     "supertest": "^0.15.0"
   }
 }
