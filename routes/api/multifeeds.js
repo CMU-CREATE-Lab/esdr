@@ -176,6 +176,16 @@ module.exports = function(FeedModel, MultifeedModel) {
                                                  .set("Content-Type", "application/json")
                                                  .set("Connection", "close");
 
+                                           // I don't really understand why, but we must have a function (even an empty
+                                           // one!) listening on stderr, or else sometimes I get no data on stdout.
+                                           eventEmitter.stderr.on('data', function(data) {
+                                              // log.error(data);
+                                           });
+
+                                           eventEmitter.on('error', function(e) {
+                                              log.error("Error event from EventEmitter while getting tiles: " + JSON.stringify(e, null, 3));
+                                           });
+
                                            // pipe the eventEmitter to the response
                                            return eventEmitter.stdout.pipe(res);
                                         });

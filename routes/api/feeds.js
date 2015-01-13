@@ -253,9 +253,9 @@ module.exports = function(FeedModel, feedRouteHelper) {
 
                                          // export the data
                                          FeedModel.exportData([{
-                                                                 feed : feed,
-                                                                 channels : channels
-                                                              }],
+                                                                  feed : feed,
+                                                                  channels : channels
+                                                               }],
                                                               {
                                                                  minTime : minTime,
                                                                  maxTime : maxTime
@@ -275,6 +275,20 @@ module.exports = function(FeedModel, feedRouteHelper) {
                                                                        .status(httpStatus.OK)
                                                                        .set("Connection", "close")
                                                                        .attachment(filename);
+
+                                                                 // I don't really understand why, but we must have a
+                                                                 // function (even an empty one!) listening on stderr,
+                                                                 // or else sometimes I get no data on stdout.  As of
+                                                                 // 2015-01-13, I've only seen this on multifeed
+                                                                 // getTiles and not with export, but I guess it can't
+                                                                 // hurt here.
+                                                                 eventEmitter.stderr.on('data', function(data) {
+                                                                    // log.error(data);
+                                                                 });
+
+                                                                 eventEmitter.on('error', function(e) {
+                                                                    log.error("Error event from EventEmitter while exporting: " + JSON.stringify(e, null, 3));
+                                                                 });
 
                                                                  // pipe the eventEmitter to the response
                                                                  return eventEmitter.stdout.pipe(res);

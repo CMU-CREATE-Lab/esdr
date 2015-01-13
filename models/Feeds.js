@@ -234,7 +234,13 @@ module.exports = function(databaseHelper) {
                                          });
       });
 
-      datastore.getTiles(userIdDeviceChannelObjects, level, offset, callback);
+      try {
+         datastore.getTiles(userIdDeviceChannelObjects, level, offset, callback);
+      }
+      catch (e) {
+         log.error("Error calling datastore.getTiles: " + JSON.stringify(e, null, 3));
+         callback(e);
+      }
    };
 
    var getDatastoreDeviceNameForFeed = function(feedId) {
