@@ -292,19 +292,15 @@ if (!window['superagent']) {
           * Optional callbacks:
           * - complete() [optional]
           *
-          * @param {int} feedId The feed's ID
-          * @param {string} apiKey The feed's API Key (either the read/write or read-only key). Optional for public feeds.
+          * @param {int} feedIdOrApiKey The feed's ID or API Key (either the read/write or read-only key).
           * @param {string} channelName The channel name
           * @param {int} level The tile's level
           * @param {int} offset The tile's offset
           * @param {obj} callbacks
           */
-         get : function(feedId, apiKey, channelName, level, offset, callbacks) {
+         get : function(feedIdOrApiKey, channelName, level, offset, callbacks) {
             superagent
-                  .get(ESDR_API_ROOT_URL + "/feeds/" + feedId + "/channels/" + channelName + "/tiles/" + level + "." + offset)
-                  .set({
-                          FeedApiKey : apiKey
-                       })
+                  .get(ESDR_API_ROOT_URL + "/feeds/" + feedIdOrApiKey + "/channels/" + channelName + "/tiles/" + level + "." + offset)
                   .end(createResponseHandler(callbacks));
          }
 
