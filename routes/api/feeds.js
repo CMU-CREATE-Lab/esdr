@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var passport = require('passport');
 var httpStatus = require('http-status');
+var S = require('string');
 var log = require('log4js').getLogger('esdr:routes:api:feeds');
 
 module.exports = function(FeedModel, feedRouteHelper) {
@@ -318,66 +319,72 @@ module.exports = function(FeedModel, feedRouteHelper) {
       }
       else {
          var feedId = feedIdOrApiKey;
-         FeedModel.findById(feedId, fieldsToSelect, function(err, feed) {
-            if (err) {
-               var message = "Error while trying to find feed with ID [" + feedId + "]";
-               log.error(message + ": " + err);
-               return res.jsendServerError(message);
-            }
-
-            if (feed) {
-               // Allow access to the tile if the feed is public
-               if (feed.isPublic) {
-                  return successCallback(feed);
+         // Not a Feed API key, but now make sure the ID is completely numeric (e.g. reject things like '4240abc')
+         if (S(feedId).isNumeric()) {
+            FeedModel.findById(feedId, fieldsToSelect, function(err, feed) {
+               if (err) {
+                  var message = "Error while trying to find feed with ID [" + feedId + "]";
+                  log.error(message + ": " + err);
+                  return res.jsendServerError(message);
                }
-               else {
-                  // if the feed is private, then check for authorization
-                  if ("feedapikey" in req.headers) {
-                     var isReadWriteKey = (req.headers['feedapikey'] == feed.apiKey);
-                     var isReadOnlyKey = (req.headers['feedapikey'] == feed.apiKeyReadOnly);
 
-                     if (isReadWriteKey || (isReadOnlyKey && allowAccessByReadOnlyFeedApiKey)) {
-                        return successCallback(feed, { hasAccessToReadWriteFeedApiKey : isReadWriteKey });
-                     }
-                     return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
-                  }
-                  else if ("authorization" in req.headers) {
-                     // If they sent an OAuth2 Authorization header, then authenticate the user to see whether she
-                     // owns the feed.  If so, then she should be granted access to see a tile.
-                     passport.authenticate('bearer', function(err, user) {
-                        if (err) {
-                           var message = "Error while authenticating with OAuth2 access token for feed [" + feed.id + "]";
-                           log.error(message + ": " + err);
-                           return res.jsendServerError(message);
-                        }
-
-                        if (user) {
-                           if (user.id == feed.userId) {
-                              return successCallback(feed, { hasAccessToReadWriteFeedApiKey : true });
-                           }
-                        }
-                        return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
-                     })(req, res, next);
+               if (feed) {
+                  // Allow access to the tile if the feed is public
+                  if (feed.isPublic) {
+                     return successCallback(feed);
                   }
                   else {
-                     // Otherwise, deny access.
-                     process.nextTick(function() {
-                        return res.jsendClientError("Authentication required.", null, httpStatus.UNAUTHORIZED);  // HTTP 401 Unauthorized
-                     });
+                     // if the feed is private, then check for authorization
+                     if ("feedapikey" in req.headers) {
+                        var isReadWriteKey = (req.headers['feedapikey'] == feed.apiKey);
+                        var isReadOnlyKey = (req.headers['feedapikey'] == feed.apiKeyReadOnly);
+
+                        if (isReadWriteKey || (isReadOnlyKey && allowAccessByReadOnlyFeedApiKey)) {
+                           return successCallback(feed, { hasAccessToReadWriteFeedApiKey : isReadWriteKey });
+                        }
+                        return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
+                     }
+                     else if ("authorization" in req.headers) {
+                        // If they sent an OAuth2 Authorization header, then authenticate the user to see whether she
+                        // owns the feed.  If so, then she should be granted access to see a tile.
+                        passport.authenticate('bearer', function(err, user) {
+                           if (err) {
+                              var message = "Error while authenticating with OAuth2 access token for feed [" + feed.id + "]";
+                              log.error(message + ": " + err);
+                              return res.jsendServerError(message);
+                           }
+
+                           if (user) {
+                              if (user.id == feed.userId) {
+                                 return successCallback(feed, { hasAccessToReadWriteFeedApiKey : true });
+                              }
+                           }
+                           return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
+                        })(req, res, next);
+                     }
+                     else {
+                        // Otherwise, deny access.
+                        process.nextTick(function() {
+                           return res.jsendClientError("Authentication required.", null, httpStatus.UNAUTHORIZED);  // HTTP 401 Unauthorized
+                        });
+                     }
                   }
                }
-            }
-            else {
-               return res.jsendClientError("Unknown or invalid feed", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
-            }
-         });
+               else {
+                  return res.jsendClientError("Unknown or invalid feed", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
+               }
+            });
+         }
+         else {
+            return res.jsendClientError("Unknown or invalid feed", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
+         }
       }
    };
 
    var FEED_API_KEY_REGEX = /^[a-f0-9]{64}$/i;
+   // If the given value is a string and matches the FEED_API_KEY_REGEX regex, then consider it a Feed API Key
    var isFeedApiKey = function(str) {
       return (isString(str) && FEED_API_KEY_REGEX.test(str));
-      // [^a-f0-9]+
    };
 
    /**

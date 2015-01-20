@@ -3920,6 +3920,21 @@ describe("ESDR", function() {
                                       });
                         });
 
+                        it("Should fail to get info for a feed with an invalid ID (valid ID plus extra non-numeric characters appended)", function(done) {
+                           agent(url)
+                                 .get("/api/v1/feeds/" + feeds.testFeed1a.id + "abc")
+                                 .end(function(err, res) {
+                                         if (err) {
+                                            return done(err);
+                                         }
+
+                                         res.should.have.property('status', httpStatus.NOT_FOUND);
+                                         res.body.should.have.property('code', httpStatus.NOT_FOUND);
+                                         res.body.should.have.property('status', 'error');
+                                         res.body.should.have.property('data', null);
+                                         done();
+                                      });
+                        });
                      });      // end OAuth2 Authentication
 
                      describe("API Key Authentication", function() {
