@@ -150,7 +150,7 @@ if (!window['superagent']) {
           * Find devices owned by the user according to the parameters specified in the given query string.
           *
           * Required callbacks:
-          * - success(feeds)
+          * - success(devices)
           * - unauthorized()
           * - validationError(errors)
           * - error(responseBody, httpStatusCode)
@@ -283,7 +283,7 @@ if (!window['superagent']) {
           * Gets a tile for the feed specified by the given <code>feedId</code> and optional <code>apiKey</code>.
           *
           * Required callbacks:
-          * - success(creationResult)
+          * - success(tile)
           * - unauthorized()
           * - forbidden()
           * - error(responseBody, httpStatusCode)
