@@ -5,9 +5,16 @@ body {
 .main_container {
   background: #ffffff;
   width: 1000px;
+  min-width: 800px;
   margin: 50px auto;
-  padding-top: 50px;
+  padding-top: 20px;
   padding-bottom: 50px; }
+
+.main_container_with_navbar {
+  margin: 10px;
+  min-width: 800px;
+  width: auto;
+  padding-top: 0; }
 
 .content_container {
   margin-left: 50px;
@@ -30,3 +37,6 @@ input[type="text"], input[type="email"], input[type="password"] {
 .form_messages {
   display: none;
   margin-bottom: 15px; }
+
+.navbar {
+  margin-bottom: 0; }
