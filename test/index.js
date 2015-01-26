@@ -1809,7 +1809,7 @@ describe("ESDR", function() {
                           });
             });
 
-            it("Should be able to create find clients (without authentication) and only see all fields for public clients", function(done) {
+            it("Should be able to find clients (without authentication) and only see all fields for public clients", function(done) {
                agent(url)
                      .get("/api/v1/clients")
                      .end(function(err, res) {
@@ -1852,7 +1852,7 @@ describe("ESDR", function() {
                           });
             });
 
-            it("Should be able to create find clients (with authentication) and see all fields for public clients and clients owned by testUser1", function(done) {
+            it("Should be able to find clients (with authentication) and see all fields for public clients and clients owned by testUser1", function(done) {
                agent(url)
                      .get("/api/v1/clients")
                      .set({
@@ -1898,7 +1898,7 @@ describe("ESDR", function() {
                           });
             });
 
-            it("Should be able to create find clients (with authentication) and see all fields for public clients and clients owned by testUser2", function(done) {
+            it("Should be able to find clients (with authentication) and see all fields for public clients and clients owned by testUser2", function(done) {
                agent(url)
                      .get("/api/v1/clients")
                      .set({
