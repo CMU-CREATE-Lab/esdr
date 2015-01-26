@@ -232,7 +232,7 @@ Database.create(function(err, db) {
          app.use('/logout', sessionSupport, require('./routes/logout')(db.tokens));
          app.use('/verification', sessionSupport, require('./routes/verification'));
          app.use('/password-reset', sessionSupport, require('./routes/password-reset'));
-         app.use('/home', sessionSupport, ensureAuthenticated, require('./routes/home'));
+         app.use('/home', sessionSupport, ensureAuthenticated, require('./routes/home/index'));
 
          // ERROR HANDLERS ---------------------------------------------------------------------------------------------
 
