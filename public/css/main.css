@@ -28,7 +28,7 @@ body {
   margin-top: 30px;
   margin-bottom: 20px; }
 
-input[type="text"], input[type="email"], input[type="password"] {
+.big_form input[type="text"], .big_form input[type="email"], .big_form input[type="password"], .big_form input[type="url"] {
   height: 50px;
   font-size: 20px;
   padding-left: 15px;
@@ -37,6 +37,13 @@ input[type="text"], input[type="email"], input[type="password"] {
 .form_messages {
   display: none;
   margin-bottom: 15px; }
+
+.help-block {
+  font-size: 8pt;
+  margin-bottom: 0; }
+
+h4 {
+  margin-top: 20px; }
 
 .navbar {
   margin-bottom: 0; }

@@ -1,11 +1,293 @@
+<script src="/js/api/v1/org/cmucreatelab/esdr/ESDR.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript">
+   var esdr;
+
+   function loadClients() {
+      var accessToken = new org.cmucreatelab.esdr.AccessToken();
+
+      // try fetching the access token
+      accessToken.load(function(err, token) {
+         console.log("My access token is: " + token);
+         esdr = new org.cmucreatelab.esdr.ESDR(token);
+
+         var handleFindClientsErrorOrFailure = function() {
+            $("#loading_panel").text("Sorry, an unexpected error occurred.  Please try again later.");
+         };
+         esdr.clients.find("where=creatorUserId={{user.id}}&fields=id,displayName,clientName,email,isPublic&orderBy=displayName,-created",
+                           {
+                              success : function(foundClients) {
+                                 var myClientsElement = $("#my_clients");
+                                 myClientsElement.empty();
+                                 if (foundClients && foundClients.rows && foundClients.rows.length > 0) {
+                                    var clientListItemTemplate = Handlebars.templates['client-list-item'];
+                                    foundClients.rows.forEach(function(client) {
+                                       var clientListItemElement = $(clientListItemTemplate(client));
+                                       $("#my_clients").append(clientListItemElement);
+                                    });
+                                    $("#my_clients_panel").show();
+                                 }
+                                 $("#loading_panel").hide();
+                                 $("#content_panel").show();
+                              },
+                              error : handleFindClientsErrorOrFailure,
+                              failure : handleFindClientsErrorOrFailure
+                           });
+      });
+   }
+
+   $(document).ready(loadClients);
+
+   function submitCreateClientForm() {
+      var messages = new org.cmucreatelab.esdr.Messages();
+
+      var form = $("#create_client_form");
+      var errorMessagesElement = $("#create_client_error_messages");
+      var successMessagesElement = $("#create_client_success_messages");
+      errorMessagesElement.empty().hide();
+      successMessagesElement.empty().hide();
+
+      var displayNameElement = $("#displayName");
+      var displayName = displayNameElement.val().trim();
+
+      var clientNameElement = $("#clientName");
+      var clientName = clientNameElement.val().trim();
+
+      var clientSecretElement = $("#clientSecret");
+      var clientSecret = clientSecretElement.val().trim();
+
+      var emailElement = $("#email");
+      var email = emailElement.val().trim();
+
+      var verificationUrlElement = $("#verificationUrl");
+      var verificationUrl = verificationUrlElement.val().trim();
+
+      var resetPasswordUrlElement = $("#resetPasswordUrl");
+      var resetPasswordUrl = resetPasswordUrlElement.val().trim();
+
+      if (displayName.length < 1) {
+         messages.add("Please enter a Display Name.");
+      }
+      if (clientName.length < 1) {
+         messages.add("Please enter a Client ID.");
+      }
+      if (clientSecret.length < 1) {
+         messages.add("Please enter a Client Secret.");
+      }
+      if (email.length < 1) {
+         messages.add("Please enter the client's email address.");
+      }
+      if (verificationUrl.length < 1) {
+         verificationUrl = '{{defaultVerificationUrl}}';
+      }
+      if (resetPasswordUrl.length < 1) {
+         resetPasswordUrl = '{{defaultResetPasswordUrl}}';
+      }
+
+      var isPublic = !!($('#create_client_is_public_true').prop('checked'));
+
+      if (messages.isEmpty()) {
+         setFormEnabled(form, false);
+
+         var handleCreateClientErrorOrFailure = function() {
+            messages.add("Sorry, an unexpected error occurred.");
+            messages.render(errorMessagesElement);
+         };
+
+         esdr.clients.create({
+                                displayName : displayName,
+                                clientName : clientName,
+                                clientSecret : clientSecret,
+                                email : email,
+                                verificationUrl : verificationUrl,
+                                resetPasswordUrl : resetPasswordUrl,
+                                isPublic : isPublic
+                             },
+                             {
+                                complete : function() {
+                                   setFormEnabled(form, true);
+                                },
+                                created : function() {
+                                   messages.add("Success!");
+                                   messages.render(successMessagesElement);
+                                   $("#create_client_form_panel").hide();
+                                   $("#create_client_prompt_button").show();
+                                   loadClients();
+                                },
+                                duplicate : function() {
+                                   messages.add("Sorry, another client with that ID already exists.");
+                                   messages.render(errorMessagesElement);
+                                },
+                                validationError : function(validationErrors) {
+                                   processValidationErrors(validationErrors, messages);
+                                   messages.render(errorMessagesElement);
+                                },
+                                error : handleCreateClientErrorOrFailure,
+                                failure : handleCreateClientErrorOrFailure
+                             });
+      }
+      else {
+         messages.render(errorMessagesElement);
+      }
+
+      return false;
+   }
+
+   function processValidationErrors(validationErrors, messages) {
+      var fieldsToValidate = {
+         "#/displayName" : { prettyName : "Display Name", messages : [] },
+         "#/clientName" : { prettyName : "Client ID", messages : [] },
+         "#/clientSecret" : { prettyName : "Client Secret", messages : [] },
+         "#/email" : { prettyName : "Email Address", messages : [] },
+         "#/verificationUrl" : { prettyName : "Verification URL", messages : [] },
+         "#/resetPasswordUrl" : { prettyName : "Reset Password URL", messages : [] }
+      };
+      var validationErrorPresentationOrder = ["#/displayName", "#/clientName", "#/clientSecret", "#/email", "#/verificationUrl", "#/resetPasswordUrl"];
+
+      if (validationErrors && validationErrors.length > 0) {
+         // process each validation error
+         validationErrors.forEach(function(err) {
+            var fieldName = err['instanceContext'];
+            if (fieldName in fieldsToValidate) {
+               var prettyName = fieldsToValidate[fieldName]['prettyName'];
+               var constraintName = err['constraintName'];
+               var constraintValue = err['constraintValue'];
+               switch (constraintName) {
+                  case 'minLength':
+                     fieldsToValidate[fieldName]['messages'].push("The " + prettyName + " must be at least " + constraintValue + " characters long.");
+                     break;
+                  case 'maxLength':
+                     fieldsToValidate[fieldName]['messages'].push("The " + prettyName + " must be no more than " + constraintValue + " characters long.");
+                     break;
+                  case 'pattern':
+                     fieldsToValidate[fieldName]['messages'].push("The " + prettyName + " contains illegal characters.");
+                     break;
+                  default:
+                     console.log("Unexpected constraint name [" + constraintName + "]");
+               }
+            }
+            else {
+               console.log("Unexpected validation error instance context [" + fieldName + "]");
+            }
+         });
+
+         // present the errors to the user in the same order as the fields appear in the form
+         validationErrorPresentationOrder.forEach(function(fieldName) {
+            fieldsToValidate[fieldName]['messages'].forEach(function(message) {
+               messages.add(message);
+            })
+         });
+      }
+   }
+
+   function showCreateForm() {
+      $("#create_client_form").get(0).reset();
+      $("#create_client_prompt_button").hide();
+      $("#create_client_form_panel").show();
+      $("#create_client_error_messages").empty().hide();
+      $("#create_client_success_messages").empty().hide();
+   }
+</script>
+
 <div class="main_container main_container_with_navbar panel panel-default">
    {{> navbar}}
-   <div class="content_container panel-body">
-      <h2>
-         Clients
-      </h2>
-      <div class="page_instructions">
-         This is the clients page.
+   <div id="loading_panel" class="content_container panel-body">
+      <h4>Loading...</h4>
+   </div>
+   <div id="content_panel" class="content_container panel-body" style="display:none">
+
+      <div id="my_clients_panel" style="display:none">
+         <h2>My Clients</h2>
+         <div class="table-responsive">
+            <table class="table table-condensed">
+               <thead>
+                  <tr>
+                     <th>Display Name</th>
+                     <th>Client ID</th>
+                     <th>Email</th>
+                     <th>Is Public?</th>
+                  </tr>
+               </thead>
+               <tbody id="my_clients"></tbody>
+            </table>
+         </div>
+      </div>
+
+      <h2>Create a New Client</h2>
+      <div id="create_client_success_messages" class="form_messages alert alert-success"></div>
+      <div id="create_client_prompt_button" style="display:none">
+         <button type="submit" class="btn btn-primary" onclick="showCreateForm();">Create another client...</button>
+      </div>
+      <div id="create_client_form_panel">
+         <div class="page_instructions">
+            Use this form to create an OAuth2 client. All fields except the URLs are required.
+         </div>
+         <div id="create_client_error_messages" class="form_messages alert alert-danger"></div>
+         <form role="form" id="create_client_form" class="form-horizontal" onsubmit="return submitCreateClientForm();">
+            <div class="form-group">
+               <label for="displayName" class="col-sm-3 control-label">Display Name</label>
+               <div class="col-sm-9">
+                  <input type="text" class="form-control" id="displayName" name="displayName"/>
+                  <span class="help-block">A 'pretty name' for your client.  This is the name used in emails to your users, etc.</span>
+               </div>
+            </div>
+            <div class="form-group">
+               <label for="clientName" class="col-sm-3 control-label">Client ID</label>
+               <div class="col-sm-9">
+                  <input type="text" class="form-control" id="clientName" name="clientName"/>
+                  <span class="help-block">Must be unique across all clients. Valid characters are letters, numbers, underscore, dash, and period.  Must start with a letter or number.</span>
+               </div>
+            </div>
+            <div class="form-group">
+               <label for="clientSecret" class="col-sm-3 control-label">Client Secret</label>
+               <div class="col-sm-9">
+                  <input type="password" class="form-control" id="clientSecret" name="clientSecret"/>
+                  <span class="help-block">The password used by your client during OAuth2 authentication.</span>
+               </div>
+            </div>
+            <div class="form-group">
+               <label for="email" class="col-sm-3 control-label">Email Address</label>
+               <div class="col-sm-9">
+                  <input type="email" class="form-control" id="email" name="email"/>
+                  <span class="help-block">The email address from which verification and reset password emails will be sent.</span>
+               </div>
+            </div>
+            <div class="form-group">
+               <label for="verificationUrl" class="col-sm-3 control-label">Verification URL</label>
+               <div class="col-sm-9">
+                  <input type="url" class="form-control" id="verificationUrl" name="verificationUrl" value="{{defaultVerificationUrl}}"/>
+                  <span class="help-block">The URL to which users will be directed to verify their account.  If left blank, ESDR's default page will be used.</span>
+               </div>
+            </div>
+            <div class="form-group">
+               <label for="resetPasswordUrl" class="col-sm-3 control-label">Reset Password URL</label>
+               <div class="col-sm-9">
+                  <input type="url" class="form-control" id="resetPasswordUrl" name="resetPasswordUrl" value="{{defaultResetPasswordUrl}}"/>
+                  <span class="help-block">The URL to which users will be directed to reset their password.  If left blank, ESDR's default page will be used.</span>
+               </div>
+            </div>
+
+            <div class="form-group">
+               <label for="create_client_is_public_false" class="col-sm-3 control-label">Visibility</label>
+               <div class="col-sm-9">
+                  <div class="radio">
+                     <label>
+                        <input type="radio" id="create_client_is_public_false" name="create_client_is_public" value="false" checked="checked">
+                        Private &mdash; visible only to me
+                     </label>
+                  </div>
+                  <div class="radio">
+                     <label>
+                        <input type="radio" id="create_client_is_public_true" name="create_client_is_public" value="true">
+                        Public &mdash; visible to all users
+                     </label>
+                  </div>
+               </div>
+            </div>
+            <div class="pull-right">
+               <button type="reset" class="btn btn-default">Reset</button>
+               <button type="submit" class="btn btn-primary">Create</button>
+            </div>
+         </form>
       </div>
    </div>
 </div>

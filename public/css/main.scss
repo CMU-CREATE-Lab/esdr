@@ -3,7 +3,7 @@ $BODY_TEXT_COLOR: #1c1c1e;
 $CONTENT_BACKGROUND_COLOR: #ffffff;
 $BODY_MIN_WIDTH: 800px;
 $BODY_WIDTH: 1000px;
-$BODY_HORIZONTAL_MARGIN_WIDTH:50px;
+$BODY_HORIZONTAL_MARGIN_WIDTH: 50px;
 
 body {
    color: $BODY_TEXT_COLOR;
@@ -41,12 +41,13 @@ body {
    margin-bottom: 20px;
 }
 
-
-input[type="text"], input[type="email"], input[type="password"] {
-   height: 50px;
-   font-size: 20px;
-   padding-left: 15px;
-   margin: 0 0 15px 0;
+.big_form {
+   input[type="text"], input[type="email"], input[type="password"], input[type="url"] {
+      height: 50px;
+      font-size: 20px;
+      padding-left: 15px;
+      margin: 0 0 15px 0;
+   }
 }
 
 .form_messages {
@@ -57,6 +58,15 @@ input[type="text"], input[type="email"], input[type="password"] {
 //----------------------------------------------------------------------------------------------------------------------
 // Bootstrap Overrides
 //----------------------------------------------------------------------------------------------------------------------
+
+.help-block {
+   font-size: 8pt;
+   margin-bottom: 0;
+}
+
+h4 {
+   margin-top: 20px;
+}
 
 .navbar {
    margin-bottom: 0;

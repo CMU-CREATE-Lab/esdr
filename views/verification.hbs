@@ -104,12 +104,12 @@
          </div>
          <div id="verification_error_messages" class="form_messages alert alert-danger"></div>
          <div id="verification_success_messages" class="form_messages alert alert-success"></div>
-         <form role="form" id="verification_form" onsubmit="return submitVerificationForm();">
+         <form role="form" id="verification_form" class="big_form" onsubmit="return submitVerificationForm();">
             <div class="form-group">
                <input type="email" class="form-control" id="verification_email" name="verification_email" placeholder="Email address"/>
             </div>
             <div class="pull-right">
-               <button type="submit" class="btn btn-default">{{#if resetPasswordToken}}Change Password{{else}}Submit{{/if}}</button>
+               <button type="submit" class="btn btn-primary">{{#if resetPasswordToken}}Change Password{{else}}Submit{{/if}}</button>
             </div>
          </form>
       {{/if}}

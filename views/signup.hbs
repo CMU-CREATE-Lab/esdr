@@ -105,7 +105,7 @@
       </div>
       <div id="signup_error_messages" class="form_messages alert alert-danger"></div>
       <div id="signup_success_messages" class="form_messages alert alert-success"></div>
-      <form id="signup_form" onsubmit="return submitSignUpForm('signup_form', 'signup_email', 'signup_password', 'signup_error_messages', 'signup_success_messages');">
+      <form id="signup_form" class="big_form" onsubmit="return submitSignUpForm('signup_form', 'signup_email', 'signup_password', 'signup_error_messages', 'signup_success_messages');">
          <div class="form-group">
             <input type="email" class="form-control" id="signup_email" name="signup_email" placeholder="Email address"/>
          </div>
@@ -113,7 +113,7 @@
             <input type="password" class="form-control" id="signup_password" name="signup_password" placeholder="Password"/>
          </div>
          <div class="form-group">
-            <button type="submit" class="btn btn-default pull-right">Sign Up</button>
+            <button type="submit" class="btn btn-primary pull-right">Sign Up</button>
             Already have an account? <a href="/login">Log in!</a>
          </div>
       </form>

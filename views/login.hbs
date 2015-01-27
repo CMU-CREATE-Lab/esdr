@@ -91,7 +91,7 @@
          repository for storing and visualizing environmental sensor data. Please log in to begin.
          Need an account? <a href="/signup">Sign up!</a>
       </div>
-      <form id="login_form" onsubmit="return submitLoginForm('login_form','login_email','login_password','login_messages','{{{redirectToAfterLogin}}}');return false;">
+      <form id="login_form" class="big_form" onsubmit="return submitLoginForm('login_form','login_email','login_password','login_messages','{{{redirectToAfterLogin}}}');return false;">
          <div id="login_messages" class="form_messages alert alert-danger"></div>
          <div class="form-group">
             <input type="email" class="form-control" id="login_email" name="login_email" placeholder="Email address"/>
@@ -100,7 +100,7 @@
             <input type="password" class="form-control" id="login_password" name="login_password" placeholder="Password"/>
          </div>
          <div class="form-group">
-            <button type="submit" class="btn btn-default pull-right">Log In</button>
+            <button type="submit" class="btn btn-primary pull-right">Log In</button>
             <a href="/password-reset">Forgot your password?</a>
          </div>
       </form>
