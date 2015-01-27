@@ -57,6 +57,7 @@ var JSON_SCHEMA = {
       },
       "clientName" : {
          "type" : "string",
+         "pattern" : "^[a-zA-Z0-9][a-zA-Z0-9_\\-\\.]*$",   // alphanumeric, underscore, hyphen, and period, but must start with an alphanumeric
          "minLength" : 4,
          "maxLength" : 255
       },

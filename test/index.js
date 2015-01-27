@@ -649,6 +649,60 @@ describe("ESDR", function() {
                        });
          });
 
+         it("Should fail to create a new client with a client name that doesn't start with an alphanumeric character", function(done) {
+            agent(url)
+                  .post("/api/v1/clients")
+                  .send({
+                           displayName : testClient.displayName,
+                           clientName : ".cannot_start_with_non_alphanumeric",
+                           clientSecret : testClient.clientSecret,
+                           resetPasswordUrl : testClient.resetPasswordUrl,
+                           verificationUrl : testClient.verificationUrl
+                        })
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
+                          res.body.should.have.property('code', httpStatus.UNPROCESSABLE_ENTITY);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.length(1);
+                          res.body.data[0].should.have.property('instanceContext', '#/clientName');
+                          res.body.data[0].should.have.property('constraintName', 'pattern');
+                          res.body.data[0].should.have.property('constraintValue', db.clients.jsonSchema.properties.clientName.pattern);
+                          done();
+                       });
+         });
+
+         it("Should fail to create a new client with a client name that contains illegal characters", function(done) {
+            agent(url)
+                  .post("/api/v1/clients")
+                  .send({
+                           displayName : testClient.displayName,
+                           clientName : "cannot/have/slashes or spaces",
+                           clientSecret : testClient.clientSecret,
+                           resetPasswordUrl : testClient.resetPasswordUrl,
+                           verificationUrl : testClient.verificationUrl
+                        })
+                  .end(function(err, res) {
+                          if (err) {
+                             return done(err);
+                          }
+
+                          res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
+                          res.body.should.have.property('code', httpStatus.UNPROCESSABLE_ENTITY);
+                          res.body.should.have.property('status', 'error');
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.length(1);
+                          res.body.data[0].should.have.property('instanceContext', '#/clientName');
+                          res.body.data[0].should.have.property('constraintName', 'pattern');
+                          res.body.data[0].should.have.property('constraintValue', db.clients.jsonSchema.properties.clientName.pattern);
+                          done();
+                       });
+         });
+
          it("Should fail to create a new client with a client secret that's too short", function(done) {
             agent(url)
                   .post("/api/v1/clients")
