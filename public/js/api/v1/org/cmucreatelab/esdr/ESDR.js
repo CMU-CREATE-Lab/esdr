@@ -117,6 +117,53 @@ if (!window['superagent']) {
          return queryString;
       };
 
+      this.clients = {
+         /**
+          * Creates a new client.
+          *
+          * Required callbacks:
+          * - created(createdClient)
+          * - duplicate()
+          * - validationError(errors)
+          * - error(responseBody, httpStatusCode)
+          * - failure(err, httpStatusCode)
+          *
+          * Optional callbacks:
+          * - complete() [optional]
+          *
+          * @param {obj} client Details for the new client
+          * @param {obj} callbacks
+          */
+         create : function(client, callbacks) {
+            superagent
+                  .post(ESDR_API_ROOT_URL + "/clients")
+                  .set(authorizationHeader)
+                  .send(client)
+                  .end(createResponseHandler(callbacks));
+         },
+
+         /**
+          * Find clients optionally filtered according to the parameters specified in the given query string.
+          *
+          * Required callbacks:
+          * - success(devices)
+          * - error(responseBody, httpStatusCode)
+          * - failure(err, httpStatusCode)
+          *
+          * Optional callbacks:
+          * - complete() [optional]
+          *
+          * @param queryString
+          * @param callbacks
+          */
+         find : function(queryString, callbacks) {
+            superagent
+                  .get(ESDR_API_ROOT_URL + "/clients" + sanitizeQueryString(queryString))
+                  .set(authorizationHeader)
+                  .end(createResponseHandler(callbacks));
+         }
+      };
+
       this.products = {};
 
       this.devices = {
