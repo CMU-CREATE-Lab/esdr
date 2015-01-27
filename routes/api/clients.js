@@ -10,42 +10,35 @@ module.exports = function(ClientModel) {
 
    // create a new client (with optional authentication)
    router.post('/',
+               passport.authenticate('bearer', { session : false }),
                function(req, res, next) {
-                  passport.authenticate('bearer', function(err, user, info) {
-                     if (err) {
-                        var message = "Error while authenticating to create a client";
-                        log.error(message + ": " + err);
-                        return res.jsendServerError(message);
-                     }
-
-                     var userId = user ? user.id : null;
-                     var newClient = req.body;
-                     log.debug("Received POST from user ID [" + userId + "] to create client [" + (newClient && newClient.clientName ? newClient.clientName : null) + "]");
-                     ClientModel.create(newClient,
-                                        userId,
-                                        function(err, result) {
-                                           if (err) {
-                                              if (err instanceof ValidationError) {
-                                                 return res.jsendClientValidationError("Validation failure", err.data);   // HTTP 422 Unprocessable Entity
-                                              }
-                                              if (err instanceof DuplicateRecordError) {
-                                                 log.debug("Client name [" + newClient.clientName + "] already in use!");
-                                                 return res.jsendClientError("Client name already in use.", { clientName : newClient.clientName }, httpStatus.CONFLICT);  // HTTP 409 Conflict
-                                              }
-
-                                              var message = "Error while trying to create client [" + newClient.clientName + "]";
-                                              log.error(message + ": " + err);
-                                              return res.jsendServerError(message);
+                  var userId = req.user.id;
+                  var newClient = req.body;
+                  log.debug("Received POST from user ID [" + userId + "] to create client [" + (newClient && newClient.clientName ? newClient.clientName : null) + "]");
+                  ClientModel.create(newClient,
+                                     userId,
+                                     function(err, result) {
+                                        if (err) {
+                                           if (err instanceof ValidationError) {
+                                              return res.jsendClientValidationError("Validation failure", err.data);   // HTTP 422 Unprocessable Entity
+                                           }
+                                           if (err instanceof DuplicateRecordError) {
+                                              log.debug("Client name [" + newClient.clientName + "] already in use!");
+                                              return res.jsendClientError("Client name already in use.", { clientName : newClient.clientName }, httpStatus.CONFLICT);  // HTTP 409 Conflict
                                            }
 
-                                           log.debug("Created new client [" + result.clientName + "] with id [" + result.insertId + "] ");
+                                           var message = "Error while trying to create client [" + newClient.clientName + "]";
+                                           log.error(message + ": " + err);
+                                           return res.jsendServerError(message);
+                                        }
 
-                                           res.jsendSuccess({
-                                                               displayName : result.displayName,
-                                                               clientName : result.clientName
-                                                            }, httpStatus.CREATED); // HTTP 201 Created
-                                        });
-                  })(req, res, next);
+                                        log.debug("Created new client [" + result.clientName + "] with id [" + result.insertId + "] ");
+
+                                        res.jsendSuccess({
+                                                            displayName : result.displayName,
+                                                            clientName : result.clientName
+                                                         }, httpStatus.CREATED); // HTTP 201 Created
+                                     });
                });
 
    // for searching for clients, optionally matching specified criteria and sort order

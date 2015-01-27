@@ -18,6 +18,11 @@ var log = log4js.getLogger('esdr:test');
 
 describe("ESDR", function() {
    var url = "http://localhost:3001";
+   var esdrAdminUser = {
+      email : "esdr-admin@esdr.cmucreatelab.org",
+      password : "password",
+      displayName : "ESDR Admin"
+   };
    var testUser1 = {
       email : "test@user.com",
       password : "password",
@@ -460,10 +465,86 @@ describe("ESDR", function() {
    });
 
    describe("REST API", function() {
-      describe("Clients (without authentication)", function() {
+      describe("Clients", function() {
+         var accessToken = null;
+
+         // To create a client, we have a bit of a chicken-and-egg scenario.  We need to have an OAuth2 access token to
+         // create a client, but you can't get one without auth'ing against a client.  So, here, we'll create a user
+         // using the ESDR client, verify that user, and then get an access token for that user (using the ESDR client)
+         // so that we can create new clients.
+         before(function(initDone) {
+            // create a user, auth'd against ESDR
+            agent(url)
+                  .post("/api/v1/users")
+                  .auth(config.get("esdrClient:clientName"), config.get("esdrClient:clientSecret"))
+                  .send(esdrAdminUser)
+                  .end(function(err, res) {
+                          if (err) {
+                             return initDone(err);
+                          }
+
+                          res.should.have.property('status', httpStatus.CREATED);
+                          res.body.should.have.property('code', httpStatus.CREATED);
+                          res.body.should.have.property('status', 'success');
+                          res.body.should.have.property('data');
+                          res.body.data.should.have.property('id');
+                          res.body.data.should.have.property('email', esdrAdminUser.email);
+                          res.body.data.should.have.property('displayName', esdrAdminUser.displayName);
+                          res.body.data.should.have.property('verificationToken');
+
+                          // remember the verification token so we can verify this user below
+                          var createdUser = res.body.data;
+                          var verificationToken = createdUser.verificationToken;
+
+                          // verify this new user
+                          agent(url)
+                                .put("/api/v1/user-verification")
+                                .send({ token : verificationToken })
+                                .end(function(err, res) {
+                                        if (err) {
+                                           return initDone(err);
+                                        }
+
+                                        res.should.have.property('status', httpStatus.OK);
+                                        res.body.should.have.property('code', httpStatus.OK);
+                                        res.body.should.have.property('status', 'success');
+                                        res.body.should.have.property('data');
+                                        res.body.data.should.have.property('isVerified', true);
+
+                                        // finaly, request an access token for this user
+                                        agent(url)
+                                              .post("/oauth/token")
+                                              .send({
+                                                       grant_type : "password",
+                                                       client_id : config.get("esdrClient:clientName"),
+                                                       client_secret : config.get("esdrClient:clientSecret"),
+                                                       username : esdrAdminUser.email,
+                                                       password : esdrAdminUser.password
+                                                    })
+                                              .end(function(err, res) {
+                                                      if (err) {
+                                                         return initDone(err);
+                                                      }
+
+                                                      res.should.have.property('status', httpStatus.OK);
+                                                      res.body.should.have.property('access_token');
+                                                      res.body.should.have.property('refresh_token');
+                                                      res.body.should.have.property('token_type', "Bearer");
+
+                                                      accessToken = res.body.access_token;
+
+                                                      initDone();
+                                                   });
+
+                                     });
+
+                       });
+         });
+
          it("Should be able to create a new client", function(done) {
             agent(url)
                   .post("/api/v1/clients")
+                  .set({ Authorization : "Bearer " + accessToken })
                   .send(testClient)
                   .end(function(err, res) {
                           if (err) {
@@ -483,6 +564,7 @@ describe("ESDR", function() {
          it("Should trim the displayName and clientName when creating a new client", function(done) {
             agent(url)
                   .post("/api/v1/clients")
+                  .set({ Authorization : "Bearer " + accessToken })
                   .send(testClientNeedsTrimming)
                   .end(function(err, res) {
                           if (err) {
@@ -502,6 +584,7 @@ describe("ESDR", function() {
          it("Should fail to create the same client again", function(done) {
             agent(url)
                   .post("/api/v1/clients")
+                  .set({ Authorization : "Bearer " + accessToken })
                   .send(testClient)
                   .end(function(err, res) {
                           if (err) {
@@ -520,6 +603,7 @@ describe("ESDR", function() {
          it("Should fail to create a new client with missing required values", function(done) {
             agent(url)
                   .post("/api/v1/clients")
+                  .set({ Authorization : "Bearer " + accessToken })
                   .send({})
                   .end(function(err, res) {
                           if (err) {
@@ -544,6 +628,7 @@ describe("ESDR", function() {
          it("Should fail to create a new client with a display name that's too short", function(done) {
             agent(url)
                   .post("/api/v1/clients")
+                  .set({ Authorization : "Bearer " + accessToken })
                   .send({
                            displayName : "T",
                            clientName : testClient.clientName,
@@ -571,6 +656,7 @@ describe("ESDR", function() {
          it("Should fail to create a new client with a display name that's too long", function(done) {
             agent(url)
                   .post("/api/v1/clients")
+                  .set({ Authorization : "Bearer " + accessToken })
                   .send({
                            displayName : "thisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstring",
                            clientName : testClient.clientName,
@@ -598,6 +684,7 @@ describe("ESDR", function() {
          it("Should fail to create a new client with a client name that's too short", function(done) {
             agent(url)
                   .post("/api/v1/clients")
+                  .set({ Authorization : "Bearer " + accessToken })
                   .send({
                            displayName : testClient.displayName,
                            clientName : "t",
@@ -625,6 +712,7 @@ describe("ESDR", function() {
          it("Should fail to create a new client with a client name that's too long", function(done) {
             agent(url)
                   .post("/api/v1/clients")
+                  .set({ Authorization : "Bearer " + accessToken })
                   .send({
                            displayName : testClient.displayName,
                            clientName : "thisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstring",
@@ -652,6 +740,7 @@ describe("ESDR", function() {
          it("Should fail to create a new client with a client name that doesn't start with an alphanumeric character", function(done) {
             agent(url)
                   .post("/api/v1/clients")
+                  .set({ Authorization : "Bearer " + accessToken })
                   .send({
                            displayName : testClient.displayName,
                            clientName : ".cannot_start_with_non_alphanumeric",
@@ -679,6 +768,7 @@ describe("ESDR", function() {
          it("Should fail to create a new client with a client name that contains illegal characters", function(done) {
             agent(url)
                   .post("/api/v1/clients")
+                  .set({ Authorization : "Bearer " + accessToken })
                   .send({
                            displayName : testClient.displayName,
                            clientName : "cannot/have/slashes or spaces",
@@ -706,6 +796,7 @@ describe("ESDR", function() {
          it("Should fail to create a new client with a client secret that's too short", function(done) {
             agent(url)
                   .post("/api/v1/clients")
+                  .set({ Authorization : "Bearer " + accessToken })
                   .send({
                            displayName : testClient.displayName,
                            clientName : testClient.clientName,
@@ -733,6 +824,7 @@ describe("ESDR", function() {
          it("Should fail to create a new client with a client secret that's too long", function(done) {
             agent(url)
                   .post("/api/v1/clients")
+                  .set({ Authorization : "Bearer " + accessToken })
                   .send({
                            displayName : testClient.displayName,
                            clientName : testClient.clientName,
@@ -760,6 +852,7 @@ describe("ESDR", function() {
          it("Should fail to create a new client with a reset password URL that's too short", function(done) {
             agent(url)
                   .post("/api/v1/clients")
+                  .set({ Authorization : "Bearer " + accessToken })
                   .send({
                            displayName : testClient.displayName,
                            clientName : testClient.clientName,
@@ -787,6 +880,7 @@ describe("ESDR", function() {
          it("Should fail to create a new client with a verification URL that's too short", function(done) {
             agent(url)
                   .post("/api/v1/clients")
+                  .set({ Authorization : "Bearer " + accessToken })
                   .send({
                            displayName : testClient.displayName,
                            clientName : testClient.clientName,
@@ -814,6 +908,7 @@ describe("ESDR", function() {
          it("Should fail to create a new client with a client name that's already in use", function(done) {
             agent(url)
                   .post("/api/v1/clients")
+                  .set({ Authorization : "Bearer " + accessToken })
                   .send(testClient)
                   .end(function(err, res) {
                           if (err) {
@@ -1795,11 +1890,11 @@ describe("ESDR", function() {
                           });
             });
 
-            it("Should be able to create a new client (with bogus authentication)", function(done) {
+            it("Should be able to create another new client (with valid authentication)", function(done) {
                agent(url)
                      .post("/api/v1/clients")
                      .set({
-                             Authorization : "Bearer " + "bogus"
+                             Authorization : "Bearer " + accessTokens.testUser1.access_token
                           })
                      .send(testClient3)
                      .end(function(err, res) {
@@ -1817,23 +1912,19 @@ describe("ESDR", function() {
                           });
             });
 
-            it("Creating a client without authentication should result in public clients, regardless of whether isPublic was requested to be false", function(done) {
+            it("Should fail to create a new client with bogus authentication", function(done) {
                agent(url)
-                     .get("/api/v1/clients?whereOr=clientName=test_client_1,clientName=test_client_3&fields=isPublic")
+                     .post("/api/v1/clients")
+                     .set({
+                             Authorization : "Bearer " + "bogus"
+                          })
+                     .send(testClient3)
                      .end(function(err, res) {
                              if (err) {
                                 return done(err);
                              }
 
-                             res.should.have.property('status', httpStatus.OK);
-                             res.body.should.have.property('code', httpStatus.OK);
-                             res.body.should.have.property('status', 'success');
-                             res.body.should.have.property('data');
-                             res.body.data.should.have.property('totalCount', 2);
-                             res.body.data.should.have.property('rows');
-                             res.body.data.rows.should.have.length(2);
-                             res.body.data.rows[0].should.have.property('isPublic', 1);
-                             res.body.data.rows[1].should.have.property('isPublic', 1);
+                             res.should.have.property('status', httpStatus.UNAUTHORIZED);
                              done();
                           });
             });
@@ -1841,6 +1932,9 @@ describe("ESDR", function() {
             it("Creating a client without specifying the email, verificationUrl, or resetPasswordUrl should result in the client getting the defaults", function(done) {
                agent(url)
                      .get("/api/v1/clients?where=clientName=" + testClient3.clientName)
+                     .set({
+                             Authorization : "Bearer " + accessTokens.testUser1.access_token
+                          })
                      .end(function(err, res) {
                              if (err) {
                                 return done(err);
