@@ -124,6 +124,7 @@ if (!window['superagent']) {
           * Required callbacks:
           * - created(createdClient)
           * - duplicate()
+          * - unauthorized()
           * - validationError(errors)
           * - error(responseBody, httpStatusCode)
           * - failure(err, httpStatusCode)
@@ -174,6 +175,7 @@ if (!window['superagent']) {
           * Required callbacks:
           * - created(device)
           * - duplicate()
+          * - unauthorized()
           * - validationError(errors)
           * - error(responseBody, httpStatusCode)
           * - failure(err, httpStatusCode)
