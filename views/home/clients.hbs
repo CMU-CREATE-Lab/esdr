@@ -7,7 +7,6 @@
 
       // try fetching the access token
       accessToken.load(function(err, token) {
-         console.log("My access token is: " + token);
          esdr = new org.cmucreatelab.esdr.ESDR(token);
 
          var handleFindClientsErrorOrFailure = function() {
