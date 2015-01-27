@@ -452,6 +452,26 @@
       <option name="workingDir" value="$FileDir$" />
       <envs />
     </TaskOptions>
+    <TaskOptions isEnabled="true">
+      <option name="arguments" value="$ProjectFileDir$/public-templates -m -e hbs" />
+      <option name="checkSyntaxErrors" value="true" />
+      <option name="description" value="Compiles Handlebars templates" />
+      <option name="exitCodeBehavior" value="ERROR" />
+      <option name="fileExtension" value="handlebars;hbs;mustache" />
+      <option name="immediateSync" value="true" />
+      <option name="name" value="Handlebars Compiler" />
+      <option name="output" value="$ProjectFileDir$/public/js/handlebars_templates.js" />
+      <option name="outputFilters">
+        <array />
+      </option>
+      <option name="outputFromStdout" value="true" />
+      <option name="passParentEnvs" value="true" />
+      <option name="program" value="$PROJECT_DIR$/node_modules/handlebars/bin/handlebars" />
+      <option name="scopeName" value="Project Files" />
+      <option name="trackOnlyRoot" value="false" />
+      <option name="workingDir" value="$ProjectFileDir$/public-templates" />
+      <envs />
+    </TaskOptions>
   </component>
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
@@ -474,6 +494,18 @@
       </properties>
       <CLASSES>
         <root url="file://$PROJECT_DIR$/node_modules" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
+    <library name="Generated files" type="javaScript">
+      <properties>
+        <sourceFilesUrls>
+          <item url="file://$PROJECT_DIR$/public/js/handlebars_templates.js" />
+        </sourceFilesUrls>
+      </properties>
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/public/js/handlebars_templates.js" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />

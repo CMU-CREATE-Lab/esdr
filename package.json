@@ -8,6 +8,7 @@
     "start": "node app.js",
     "test": "NODE_ENV=test ./node_modules/.bin/mocha --reporter spec",
     "gen-css": "./node_modules/node-sass/bin/node-sass ./public/css/main.scss ./public/css/main.css;",
+    "gen-handlebars": "./node_modules/handlebars/bin/handlebars   ./public-templates -m -e hbs -f ./public/js/handlebars_templates.js",
     "api-docs": "./node_modules/.bin/jsdoc index.js"
   },
   "author": "Chris Bartley <bartley@cmu.edu>",
@@ -48,6 +49,7 @@
     "superagent": "^0.21.0"
   },
   "devDependencies": {
+    "handlebars": "^2.0.0",
     "mocha": "^2.1.0",
     "node-sass": "^2.0.0-beta",
     "rimraf": "^2.2.8",
