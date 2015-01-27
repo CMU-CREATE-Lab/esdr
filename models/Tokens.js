@@ -68,6 +68,10 @@ module.exports = function(databaseHelper) {
 
    };
 
+   this.findAccessTokenForUserAndClient = function(userId, clientId, callback) {
+      databaseHelper.findOne("SELECT accessToken FROM Tokens WHERE userId=? AND clientId=?", [userId, clientId], callback);
+   };
+
    this.remove = function(userId, clientId, callback) {
       databaseHelper.execute("DELETE FROM Tokens WHERE userId=? AND clientId=?",
                              [userId, clientId],
