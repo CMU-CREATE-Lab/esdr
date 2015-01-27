@@ -52,9 +52,6 @@ if (!window['superagent']) {
       var accessToken = null;
 
       this.load = function(callback) {
-         if (accessToken != null) {
-            return callback(null, accessToken);
-         }
          superagent
                .get("/access-token?no-cache=" + new Date().getTime())
                .end(function(err, res) {

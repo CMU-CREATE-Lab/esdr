@@ -1,13 +1,11 @@
 <script src="/js/api/v1/org/cmucreatelab/esdr/ESDR.js" type="text/javascript"></script>
 <script language="JavaScript" type="text/javascript">
-   var esdr;
+   var accessToken = new org.cmucreatelab.esdr.AccessToken();
 
    function loadClients() {
-      var accessToken = new org.cmucreatelab.esdr.AccessToken();
-
       // try fetching the access token
       accessToken.load(function(err, token) {
-         esdr = new org.cmucreatelab.esdr.ESDR(token);
+         var esdr = new org.cmucreatelab.esdr.ESDR(token);
 
          var handleFindClientsErrorOrFailure = function() {
             $("#loading_panel").text("Sorry, an unexpected error occurred.  Please try again later.");
@@ -92,37 +90,45 @@
             messages.render(errorMessagesElement);
          };
 
-         esdr.clients.create({
-                                displayName : displayName,
-                                clientName : clientName,
-                                clientSecret : clientSecret,
-                                email : email,
-                                verificationUrl : verificationUrl,
-                                resetPasswordUrl : resetPasswordUrl,
-                                isPublic : isPublic
-                             },
-                             {
-                                complete : function() {
-                                   setFormEnabled(form, true);
+         // Make sure we're using the latest access token.
+         accessToken.load(function(err, token) {
+            var esdr = new org.cmucreatelab.esdr.ESDR(token);
+            esdr.clients.create({
+                                   displayName : displayName,
+                                   clientName : clientName,
+                                   clientSecret : clientSecret,
+                                   email : email,
+                                   verificationUrl : verificationUrl,
+                                   resetPasswordUrl : resetPasswordUrl,
+                                   isPublic : isPublic
                                 },
-                                created : function() {
-                                   messages.add("Success!");
-                                   messages.render(successMessagesElement);
-                                   $("#create_client_form_panel").hide();
-                                   $("#create_client_prompt_button").show();
-                                   loadClients();
-                                },
-                                duplicate : function() {
-                                   messages.add("Sorry, another client with that ID already exists.");
-                                   messages.render(errorMessagesElement);
-                                },
-                                validationError : function(validationErrors) {
-                                   processValidationErrors(validationErrors, messages);
-                                   messages.render(errorMessagesElement);
-                                },
-                                error : handleCreateClientErrorOrFailure,
-                                failure : handleCreateClientErrorOrFailure
-                             });
+                                {
+                                   complete : function() {
+                                      setFormEnabled(form, true);
+                                   },
+                                   created : function() {
+                                      messages.add("Success!");
+                                      messages.render(successMessagesElement);
+                                      $("#create_client_form_panel").hide();
+                                      $("#create_client_prompt_button").show();
+                                      loadClients();
+                                   },
+                                   duplicate : function() {
+                                      messages.add("Sorry, another client with that ID already exists.");
+                                      messages.render(errorMessagesElement);
+                                   },
+                                   validationError : function(validationErrors) {
+                                      processValidationErrors(validationErrors, messages);
+                                      messages.render(errorMessagesElement);
+                                   },
+                                   unauthorized : function() {
+                                      messages.add("Sorry, your authorization appears to have expired.  Please refresh the page and try again.");
+                                      messages.render(errorMessagesElement);
+                                   },
+                                   error : handleCreateClientErrorOrFailure,
+                                   failure : handleCreateClientErrorOrFailure
+                                });
+         });
       }
       else {
          messages.render(errorMessagesElement);
