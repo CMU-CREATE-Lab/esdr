@@ -2150,7 +2150,7 @@ describe("ESDR", function() {
                           });
             });
 
-            it("Should be able to create a new product (without authentication)", function(done) {
+            it("Should fail to create a new product without authentication", function(done) {
                agent(url)
                      .post("/api/v1/products")
                      .send(testProduct3)
@@ -2159,15 +2159,25 @@ describe("ESDR", function() {
                                 return done(err);
                              }
 
-                             res.should.have.property('status', httpStatus.CREATED);
-                             res.body.should.have.property('code', httpStatus.CREATED);
-                             res.body.should.have.property('status', 'success');
-                             res.body.should.have.property('data');
-                             res.body.data.should.have.property('id');
-                             res.body.data.should.have.property('name', testProduct3.name);
+                             res.should.have.property('status', httpStatus.UNAUTHORIZED);
 
-                             // remember the product ID
-                             productIds.testProduct3 = res.body.data.id;
+                             done();
+                          });
+            });
+
+            it("Should fail to create a new product with bogus authentication", function(done) {
+               agent(url)
+                     .post("/api/v1/products")
+                     .set({
+                             Authorization : "Bearer " + "bogus"
+                          })
+                     .send(testProduct3)
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', httpStatus.UNAUTHORIZED);
 
                              done();
                           });
@@ -2377,11 +2387,11 @@ describe("ESDR", function() {
                              res.body.should.have.property('code', httpStatus.OK);
                              res.body.should.have.property('status', 'success');
                              res.body.should.have.property('data');
-                             res.body.data.should.have.property('totalCount', 3);
+                             res.body.data.should.have.property('totalCount', 2);
                              res.body.data.should.have.property('offset', 0);
                              res.body.data.should.have.property('limit', 100);
                              res.body.data.should.have.property('rows');
-                             res.body.data.rows.should.have.length(3);
+                             res.body.data.rows.should.have.length(2);
 
                              done();
                           });
@@ -2430,11 +2440,11 @@ describe("ESDR", function() {
                              res.body.should.have.property('code', httpStatus.OK);
                              res.body.should.have.property('status', 'success');
                              res.body.should.have.property('data');
-                             res.body.data.should.have.property('totalCount', 3);
+                             res.body.data.should.have.property('totalCount', 2);
                              res.body.data.should.have.property('offset', 0);
                              res.body.data.should.have.property('limit', 100);
                              res.body.data.should.have.property('rows');
-                             res.body.data.rows.should.have.length(3);
+                             res.body.data.rows.should.have.length(2);
 
                              // make sure the IDs are in descending order
                              var previousId = null;
@@ -6847,7 +6857,7 @@ describe("ESDR", function() {
                   product.should.have.property('name', testProduct4.name);
 
                   // remember the insert ID
-                  productInsertIds.testProduct3 = product.insertId;
+                  productInsertIds.testProduct4 = product.insertId;
 
                   done();
                });
@@ -6895,7 +6905,7 @@ describe("ESDR", function() {
                      return done(err);
                   }
 
-                  product.should.have.property('id', productInsertIds.testProduct3);
+                  product.should.have.property('id', productInsertIds.testProduct4);
                   product.should.have.property('name', testProduct4.name);
                   product.should.have.property('prettyName', testProduct4.prettyName);
                   product.should.have.property('vendor', testProduct4.vendor);
@@ -6938,7 +6948,7 @@ describe("ESDR", function() {
                var deviceInsertIds = {};
 
                it("Should be able to create a device", function(done) {
-                  db.devices.create(testDevice5, productInsertIds.testProduct3, userIds.testUser1, function(err, device) {
+                  db.devices.create(testDevice5, productInsertIds.testProduct4, userIds.testUser1, function(err, device) {
                      if (err) {
                         return done(err);
                      }
@@ -6961,7 +6971,7 @@ describe("ESDR", function() {
 
                      device.should.have.property('id', deviceInsertIds.testDevice5);
                      device.should.have.property('serialNumber', testDevice5.serialNumber);
-                     device.should.have.property('productId', productInsertIds.testProduct3);
+                     device.should.have.property('productId', productInsertIds.testProduct4);
                      device.should.have.property('userId', userIds.testUser1);
                      device.should.have.property('created');
                      device.should.have.property('modified');
@@ -6983,7 +6993,7 @@ describe("ESDR", function() {
                });
 
                it("Should be able to find a device by product ID, serial number, and user ID", function(done) {
-                  db.devices.findByProductIdAndSerialNumberForUser(productInsertIds.testProduct3,
+                  db.devices.findByProductIdAndSerialNumberForUser(productInsertIds.testProduct4,
                                                                    testDevice5.serialNumber,
                                                                    userIds.testUser1,
                                                                    'id,serialNumber,productId,userId',
@@ -6994,7 +7004,7 @@ describe("ESDR", function() {
 
                                                                       device.should.have.property('id', deviceInsertIds.testDevice5);
                                                                       device.should.have.property('serialNumber', testDevice5.serialNumber);
-                                                                      device.should.have.property('productId', productInsertIds.testProduct3);
+                                                                      device.should.have.property('productId', productInsertIds.testProduct4);
                                                                       device.should.have.property('userId', userIds.testUser1);
                                                                       device.should.not.have.property('created');
                                                                       device.should.not.have.property('modified');
@@ -7008,7 +7018,7 @@ describe("ESDR", function() {
                   var feedInsertIds = {};
 
                   it("Should be able to create a feed", function(done) {
-                     db.feeds.create(testFeed3, deviceInsertIds.testDevice5, productInsertIds.testProduct3, userIds.testUser1, function(err, feed) {
+                     db.feeds.create(testFeed3, deviceInsertIds.testDevice5, productInsertIds.testProduct4, userIds.testUser1, function(err, feed) {
                         if (err) {
                            return done(err);
                         }

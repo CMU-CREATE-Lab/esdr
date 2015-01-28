@@ -11,42 +11,35 @@ module.exports = function(ProductModel, DeviceModel) {
 
    // create a product
    router.post('/',
+               passport.authenticate('bearer', { session : false }),
                function(req, res, next) {
-                  passport.authenticate('bearer', function(err, user, info) {
-                     if (err) {
-                        var message = "Error while authenticating to create a product";
-                        log.error(message + ": " + err);
-                        return res.jsendServerError(message);
-                     }
-
-                     var userId = user ? user.id : null;
-                     var newProduct = req.body;
-                     log.debug("Received POST from user ID [" + userId + "] to create product [" + (newProduct && newProduct.name ? newProduct.name : null) + "]");
-                     ProductModel.create(newProduct,
-                                         userId,
-                                         function(err, result) {
-                                            if (err) {
-                                               if (err instanceof ValidationError) {
-                                                  return res.jsendClientValidationError("Validation failure", err.data);   // HTTP 422 Unprocessable Entity
-                                               }
-                                               if (err instanceof DuplicateRecordError) {
-                                                  log.debug("Product name [" + newProduct.name + "] already in use!");
-                                                  return res.jsendClientError("Product name already in use.", {name : newProduct.name}, httpStatus.CONFLICT);  // HTTP 409 Conflict
-                                               }
-
-                                               var message = "Error while trying to create product [" + newProduct.name + "]";
-                                               log.error(message + ": " + err);
-                                               return res.jsendServerError(message);
+                  var userId = req.user.id;
+                  var newProduct = req.body;
+                  log.debug("Received POST from user ID [" + userId + "] to create product [" + (newProduct && newProduct.name ? newProduct.name : null) + "]");
+                  ProductModel.create(newProduct,
+                                      userId,
+                                      function(err, result) {
+                                         if (err) {
+                                            if (err instanceof ValidationError) {
+                                               return res.jsendClientValidationError("Validation failure", err.data);   // HTTP 422 Unprocessable Entity
+                                            }
+                                            if (err instanceof DuplicateRecordError) {
+                                               log.debug("Product name [" + newProduct.name + "] already in use!");
+                                               return res.jsendClientError("Product name already in use.", {name : newProduct.name}, httpStatus.CONFLICT);  // HTTP 409 Conflict
                                             }
 
-                                            log.debug("Created new product [" + result.name + "] with id [" + result.insertId + "] ");
+                                            var message = "Error while trying to create product [" + newProduct.name + "]";
+                                            log.error(message + ": " + err);
+                                            return res.jsendServerError(message);
+                                         }
 
-                                            res.jsendSuccess({
-                                                                id : result.insertId,
-                                                                name : result.name
-                                                             }, httpStatus.CREATED); // HTTP 201 Created
-                                         });
-                  })(req, res, next);
+                                         log.debug("Created new product [" + result.name + "] with id [" + result.insertId + "] ");
+
+                                         res.jsendSuccess({
+                                                             id : result.insertId,
+                                                             name : result.name
+                                                          }, httpStatus.CREATED); // HTTP 201 Created
+                                      });
                });
 
    // find products
