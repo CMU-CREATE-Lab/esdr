@@ -344,7 +344,7 @@ The "from" and "to" filters are optional.
 Multi-feed export is coming soon, too.
 
 
-#Queries
+##Queries
 
 Querying over clients, products, devices, and feeds is fairly robust.  You can do where clauses joined by AND or OR (or both), order by (ASC or DESC), limit, offset, and specify which fields you want to select.  Where clauses also support comparison with =, <>, <, <=, >, >=, is null, and is not null.  Detailed examples will be coming soon.  Some simple examples:
 
