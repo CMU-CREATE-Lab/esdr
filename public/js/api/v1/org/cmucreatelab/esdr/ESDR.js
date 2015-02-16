@@ -165,6 +165,29 @@ if (!window['superagent']) {
          }
       };
 
+      this.users = {
+         /**
+          * Returns info for the user specified by the given <code>userId</code>.  Requires authorization, so it will
+          * only succeed when requesting info for the authorized user.
+          *
+          * Required callbacks:
+          * - success(userInfo)
+          * - unauthorized()
+          * - forbidden()
+          * - error(responseBody, httpStatusCode)
+          * - failure(err, httpStatusCode)
+          *
+          * @param userId
+          * @param callbacks
+          */
+         findById : function(userId, callbacks) {
+            superagent
+                  .get(ESDR_API_ROOT_URL + "/users/" + userId)
+                  .set(authorizationHeader)
+                  .end(createResponseHandler(callbacks));
+         }
+      };
+
       this.products = {};
 
       this.devices = {
