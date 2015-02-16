@@ -12,29 +12,29 @@ var log = require('log4js').getLogger('esdr:middleware:auth');
 module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {
 
    var authHelper = {
-         authenticateByFeedApiKey : function(apiKey, done) {
-            FeedModel.findByApiKey(apiKey, null, function(err, feed) {
-               if (err) {
-                  return done(err);
-               }
+      authenticateByFeedApiKey : function(apiKey, done) {
+         FeedModel.findByApiKey(apiKey, null, function(err, feed) {
+            if (err) {
+               return done(err);
+            }
 
-               if (!feed) {
-                  return done(null, false, { message : 'Invalid feed API key' });
-               }
+            if (!feed) {
+               return done(null, false, { message : 'Invalid feed API key' });
+            }
 
-               var user = {
-                  id : feed.userId
-               };
+            var user = {
+               id : feed.userId
+            };
 
-               var info = {
-                  feed : feed,
-                  isReadOnly : feed.apiKeyReadOnly == apiKey
-               };
+            var info = {
+               feed : feed,
+               isReadOnly : feed.apiKeyReadOnly == apiKey
+            };
 
-               return done(null, user, info);
-            });
-         }
-      };
+            return done(null, user, info);
+         });
+      }
+   };
 
    passport.use(new LocalStrategy({
                                      usernameField : 'email',
@@ -88,7 +88,14 @@ module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {
    ));
 
    passport.serializeUser(function(user, done) {
-      log.trace("serializing user " + user.id);
+      if (log.isTraceEnabled()) {
+         if (user) {
+            log.trace("serializeUser(): " + user.id);
+         }
+         else {
+            log.trace("serializeUser(): null user!");
+         }
+      }
       done(null, user.id);
    });
 
