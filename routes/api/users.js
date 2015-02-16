@@ -123,7 +123,7 @@ module.exports = function(UserModel) {
                     });
                  }
                  else {
-                    return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 401 Unauthorized
+                    return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 FORBIDDEN
                  }
               }
    );
