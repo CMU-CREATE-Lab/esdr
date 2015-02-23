@@ -50,6 +50,31 @@ ESDR should respond with an HTTP 200, with content similar to:
 
 Make a note of that `access_token`...you'll need it below.
 
+NOTE: Since the access token expires in 7 days, you might find yourself in a situation where you need to refresh the token.  You could simply re-authenticate to get a new token, but it's typically more desirable to use the refresh token to obtain new access and refresh tokens. The process for doing so is very similar. To refresh the tokens shown above, first create a file named `refresh.json` with the following contents:
+
+```json
+{
+"grant_type" : "refresh_token",
+"client_id" : "my_client",
+"client_secret" : "Secret secret, I've got a secret!",
+"refresh_token" : "64cbf6915fbd25bf6954f807332810a316ad3932526f7e8acdef742ce8ef11c3"
+}
+```
+
+Then request the new tokens:
+
+    curl -X POST -H "Content-Type:application/json" https://esdr.cmucreatelab.org/oauth/token -d @refresh.json
+
+ESDR should respond with an HTTP 200 and return new access and refresh tokens, similar to this:
+
+```json
+{
+"access_token":"f1faf1e7d0ed139ecc19431de59247c5a933c4f1686648fdb553753b3d112983",
+"refresh_token":"9eb05b1284328a07c7c5a98e744f4c0d837fdbde74576f8911aebf331ce7ab3a",
+"expires_in":604800,
+"token_type":"Bearer"
+}
+```
 
 ##Create a Product
 
