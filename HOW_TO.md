@@ -348,6 +348,8 @@ If the feed is private, give it either the read-write or the read-only feed API 
 
 ESDR also has a "multi-get-tile" API method which will let you get tiles for any number of channels from any number of feeds in a single call.  This is critical to supporting visualizations of large numbers of sensors.  The initial version is working, but it is still in flux, so documentation will be provided once the API is more stable.
 
+Details about how to compute `level` and `offset` are provided in [Fluxtream/BodyTrack's API docs](https://fluxtream.atlassian.net/wiki/display/FLX/BodyTrack+server+APIs#BodyTrackserverAPIs-Formattingoftime).
+
 See the next section for an example which makes tile fetches.
 
 ##Viewing Data
