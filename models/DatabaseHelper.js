@@ -136,30 +136,42 @@ module.exports = function(pool) {
                function() {
                   //log.debug("findWithLimit(): 5) All done, now checking status and performing commit/rollback as necessary!");
                   if (hasError() || rows == null) {
-                     connection.rollback(function() {
-                        connection.release();
-                        log.error("findWithLimit():    An error occurred while executing the find query, rolled back the transaction. Error:" + error);
+                     if (connection == null) {
+                        log.error("findWithLimit():    An error occurred, but connection is null, so there's nothing to rollback. Error:" + error);
                         callback(error);
-                     });
+                     }
+                     else {
+                        connection.rollback(function() {
+                           connection.release();
+                           log.error("findWithLimit():    An error occurred while executing the find query, rolled back the transaction. Error:" + error);
+                           callback(error);
+                        });
+                     }
                   }
                   else {
-                     //log.debug("findWithLimit():    No errors while executing find query, committing...");
-                     connection.commit(function(err) {
-                        if (err) {
-                           log.error("findWithLimit():    Failed to commit the transaction after executing find query");
+                     if (connection == null) {
+                        log.error("findWithLimit():    No error, but the connection is null, so there's nothing to commit. This probably shouldn't ever happen?");
+                        callback(null, { totalCount : totalCount, rows : rows });
+                     }
+                     else {
+                        //log.debug("findWithLimit():    No errors while executing find query, committing...");
+                        connection.commit(function(err) {
+                           if (err) {
+                              log.error("findWithLimit():    Failed to commit the transaction after executing find query");
 
-                           // rollback and then release the connection
-                           connection.rollback(function() {
+                              // rollback and then release the connection
+                              connection.rollback(function() {
+                                 connection.release();
+                                 callback(err);
+                              });
+                           }
+                           else {
                               connection.release();
-                              callback(err);
-                           });
-                        }
-                        else {
-                           connection.release();
-                           //log.debug("findWithLimit():    Commit successful!");
-                           callback(null, {totalCount: totalCount, rows:rows});
-                        }
-                     });
+                              //log.debug("findWithLimit():    Commit successful!");
+                              callback(null, { totalCount : totalCount, rows : rows });
+                           }
+                        });
+                     }
                   }
                }
          );
