@@ -98,7 +98,7 @@ module.exports = function(databaseHelper) {
       trimAndCopyPropertyIfNonEmpty(productDetails, product, "vendor");
       trimAndCopyPropertyIfNonEmpty(productDetails, product, "description");
       if (typeof productDetails.defaultChannelSpecs !== 'undefined' && productDetails.defaultChannelSpecs != null) {
-         product.defaultChannelSpecs = JSON.stringify(productDetails.defaultChannelSpecs)
+         product.defaultChannelSpecs = JSON.stringify(productDetails.defaultChannelSpecs);
       }
 
       // now validate
