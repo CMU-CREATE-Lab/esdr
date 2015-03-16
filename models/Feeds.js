@@ -8,6 +8,7 @@ var httpStatus = require('http-status');
 var BodyTrackDatastore = require('bodytrack-datastore');
 var query2query = require('./feeds-query2query');
 var config = require('../config');
+var flow = require('nimble');
 
 // instantiate the datastore
 var datastore = new BodyTrackDatastore({
@@ -60,6 +61,7 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Feeds` ( " +
                          ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
 
 var MAX_FOUND_FEEDS = 1000;
+var MIN_CHANNEL_SPECS_STRING_LENGTH = 2;
 
 var JSON_SCHEMA = {
    "$schema" : "http://json-schema.org/draft-04/schema#",
@@ -90,9 +92,13 @@ var JSON_SCHEMA = {
       },
       "isMobile" : {
          "type" : "boolean"
+      },
+      "channelSpecs" : {
+         "type" : "string",
+         "minLength" : MIN_CHANNEL_SPECS_STRING_LENGTH
       }
    },
-   "required" : ["name", "exposure"]
+   "required" : ["name", "exposure", "channelSpecs"]
 };
 
 module.exports = function(databaseHelper) {
@@ -126,38 +132,65 @@ module.exports = function(databaseHelper) {
       copyPropertyIfDefinedAndNonNull(feedDetails, feed, "latitude");
       copyPropertyIfDefinedAndNonNull(feedDetails, feed, "longitude");
 
-      // now validate
-      jsonValidator.validate(feed, JSON_SCHEMA, function(err1) {
-         if (err1) {
-            return callback(new ValidationError(err1));
-         }
+      var channelSpecs = null;
+      flow.series(
+            [
+               // get the channelSpecs from the product, if necessary
+               function(done) {
+                  var isChannelSpecsSpecified = (typeof feedDetails.channelSpecs !== 'undefined') && (feedDetails.channelSpecs != null);
+                  if (isChannelSpecsSpecified) {
+                     channelSpecs = JSON.stringify(feedDetails.channelSpecs);
+                     done();
+                  }
+                  else {
+                     // Since the channelSpecs weren't specified, get the default channel specs from this device's
+                     // Product (which was already validated when inserted into the product, so no need to do so here)
+                     databaseHelper.findOne("SELECT defaultChannelSpecs FROM Products WHERE id = ?",
+                                            [productId],
+                                            function(err, result) {
+                                               if (err) {
+                                                  log.error("Feeds.create: failed to get defaultChannelSpecs for product [" + productId + "]");
+                                               }
+                                               else {
+                                                  if (result) {
+                                                     channelSpecs = result.defaultChannelSpecs;
+                                                  }
+                                                  else {
+                                                     log.error("Feeds.create: no result when getting defaultChannelSpecs for product [" + productId + "]");
+                                                  }
+                                               }
 
-         // now that we have validated, get the default channel specs from this device's Products table record (which
-         // was already validated when inserted into the product, so no need to do so again here)
-         databaseHelper.findOne("SELECT defaultChannelSpecs FROM Products WHERE id = ?",
-                                [productId],
-                                function(err2, result) {
-                                   if (err2) {
-                                      return callback(err2);
-                                   }
+                                               done();
+                                            });
+                  }
+               }
+            ],
 
-                                   feed.channelSpecs = result.defaultChannelSpecs;
+            // now that we (should) have the channelSpecs, validate
+            function() {
+               feed.channelSpecs = channelSpecs;
 
-                                   // now that we have the channel specs, try to insert
-                                   databaseHelper.execute("INSERT INTO Feeds SET ?", feed, function(err3, result) {
-                                      if (err3) {
-                                         return callback(err3);
-                                      }
+               jsonValidator.validate(feed, JSON_SCHEMA, function(err1) {
+                  if (err1) {
+                     return callback(new ValidationError(err1));
+                  }
 
-                                      return callback(null, {
-                                         insertId : result.insertId,
-                                         apiKey : feed.apiKey,
-                                         apiKeyReadOnly : feed.apiKeyReadOnly
-                                      });
-                                   });
-                                });
+                  // now try to insert
+                  databaseHelper.execute("INSERT INTO Feeds SET ?", feed, function(err2, result) {
+                     if (err2) {
+                        return callback(err2);
+                     }
 
-      });
+                     return callback(null, {
+                        insertId : result.insertId,
+                        apiKey : feed.apiKey,
+                        apiKeyReadOnly : feed.apiKeyReadOnly
+                     });
+                  });
+
+               });
+            }
+      );
    };
 
    this.getTile = function(feed, channelName, level, offset, callback) {

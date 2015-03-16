@@ -163,6 +163,16 @@ describe("ESDR", function() {
       longitude : -79.945721
    };
 
+   var testFeed1c = {
+      name : "Newell Simon 5th Floor Kitchen",
+      exposure : "indoor",
+      isPublic : 0,
+      isMobile : 0,
+      latitude : 40.443493,
+      longitude : -79.945721,
+      channelSpecs : { "particle_count" : { "prettyName" : "Particle Count", "units" : "particles" } }
+   };
+
    var testFeed2a = {
       name : "Newell Simon A Level (Public)",
       exposure : "outdoor",
@@ -2987,6 +2997,7 @@ describe("ESDR", function() {
                            .send(testFeed1a)
                            .end(function(err, res) {
                                    if (err) {
+                                      log.error(err);
                                       return done(err);
                                    }
 
@@ -3159,6 +3170,94 @@ describe("ESDR", function() {
                                    res.body.data.rows[0].should.have.property('apiKeyReadOnly');
 
                                    done();
+                                });
+                  });
+
+                  it("Should be able to create a new feed with a null channelSpecs (will use Product's defaultChannelSpecs)", function(done) {
+                     var invalidFeed = shallowClone(testFeed1c);
+                     invalidFeed.channelSpecs = null;
+
+                     agent(url)
+                           .post("/api/v1/devices/" + deviceIds.testDevice1 + "/feeds")
+                           .set({
+                                   Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                })
+                           .send(invalidFeed)
+                           .end(function(err, res) {
+                                   if (err) {
+                                      return done(err);
+                                   }
+
+                                   res.should.have.property('status', httpStatus.CREATED);
+                                   res.body.should.have.property('code', httpStatus.CREATED);
+                                   res.body.should.have.property('status', 'success');
+                                   res.body.should.have.property('data');
+                                   res.body.data.should.have.property('id');
+                                   res.body.data.should.have.property('apiKey');
+                                   res.body.data.should.have.property('apiKeyReadOnly');
+
+                                   // now compare the channelSpecs to the product's defaultChannelSpecs.  First get the
+                                   // channelSpecs from the created feed
+                                   agent(url)
+                                         .get("/api/v1/feeds/" + res.body.data.apiKeyReadOnly + "?fields=channelSpecs")
+                                         .end(function(err, res) {
+                                                 if (err) {
+                                                    return done(err);
+                                                 }
+
+                                                 res.should.have.property('status', httpStatus.OK);
+                                                 res.body.should.have.property('code', httpStatus.OK);
+                                                 res.body.should.have.property('status', 'success');
+                                                 res.body.should.have.property('data');
+                                                 res.body.data.should.have.property('channelSpecs');
+
+                                                 should(res.body.data.channelSpecs).eql(testProduct1.defaultChannelSpecs); // deep equal
+
+                                                 done();
+                                              })
+                                });
+                  });
+
+                  it("Should be able to create a new feed with a custom channelSpecs (different from the Product's defaultChannelSpecs)", function(done) {
+
+                     agent(url)
+                           .post("/api/v1/devices/" + deviceIds.testDevice1 + "/feeds")
+                           .set({
+                                   Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                })
+                           .send(testFeed1c)
+                           .end(function(err, res) {
+                                   if (err) {
+                                      return done(err);
+                                   }
+
+                                   res.should.have.property('status', httpStatus.CREATED);
+                                   res.body.should.have.property('code', httpStatus.CREATED);
+                                   res.body.should.have.property('status', 'success');
+                                   res.body.should.have.property('data');
+                                   res.body.data.should.have.property('id');
+                                   res.body.data.should.have.property('apiKey');
+                                   res.body.data.should.have.property('apiKeyReadOnly');
+
+                                   // now compare the actual channelSpecs to the requests channelSpecs.  First get the
+                                   // channelSpecs from the created feed
+                                   agent(url)
+                                         .get("/api/v1/feeds/" + res.body.data.apiKeyReadOnly + "?fields=channelSpecs")
+                                         .end(function(err, res) {
+                                                 if (err) {
+                                                    return done(err);
+                                                 }
+
+                                                 res.should.have.property('status', httpStatus.OK);
+                                                 res.body.should.have.property('code', httpStatus.OK);
+                                                 res.body.should.have.property('status', 'success');
+                                                 res.body.should.have.property('data');
+                                                 res.body.data.should.have.property('channelSpecs');
+
+                                                 should(res.body.data.channelSpecs).eql(testFeed1c.channelSpecs); // deep equal
+
+                                                 done();
+                                              })
                                 });
                   });
 
@@ -4879,10 +4978,10 @@ describe("ESDR", function() {
                                       res.body.should.have.property('status', 'success');
                                       res.body.should.have.property('data');
 
-                                      res.body.data.should.have.property('totalCount', 6);
+                                      res.body.data.should.have.property('totalCount', 8);
                                       res.body.data.should.have.property('offset', 0);
                                       res.body.data.should.have.property('rows');
-                                      res.body.data.rows.should.have.length(6);
+                                      res.body.data.rows.should.have.length(8);
                                       res.body.data.rows.forEach(function(feed) {
                                          var isOwnedByUser = feed.userId == accessTokens.testUser1.userId;
 
