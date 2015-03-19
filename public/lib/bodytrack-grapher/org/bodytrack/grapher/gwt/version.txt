@@ -1,1 +1,1 @@
-Corresponds to commit eea834bb5ffae2f1c0aaf9f9af859a53b7cbc578 from the "stripchart-no-touch" branch.
+Corresponds to tag stripchart_multitouch_1.0.0 from the "stripchart" branch.
