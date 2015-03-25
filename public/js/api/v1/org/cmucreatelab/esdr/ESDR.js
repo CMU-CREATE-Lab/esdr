@@ -100,6 +100,8 @@ if (!window['superagent']) {
                   return callbacks.notFound();
                case 409:
                   return callbacks.duplicate();
+               case 413:
+                  return callbacks.entityTooLarge();
                case 422:
                   return callbacks.validationError(res.body.data);
                default:
@@ -328,6 +330,7 @@ if (!window['superagent']) {
           * - badRequest()
           * - unauthorized()
           * - forbidden()
+          * - entityTooLarge()
           * - validationError(errors)
           * - error(responseBody, httpStatusCode)
           * - failure(err, httpStatusCode)
