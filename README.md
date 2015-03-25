@@ -24,6 +24,8 @@ Again, the data samples themselves are all stored in the datastore.  Data for th
 
 We don't yet do spatiotemporal aggregation, but it's on the TODO list.
 
+Please see the [HOW TO](https://github.com/CMU-CREATE-Lab/esdr/blob/master/HOW_TO.md) document for more details on how to use ESDR.
+
 Setup
 =====
 
