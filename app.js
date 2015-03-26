@@ -118,6 +118,12 @@ Database.create(function(err, db) {
                var message = err.message || (statusCode < httpStatus.INTERNAL_SERVER_ERROR ? "Bad Request" : "Internal Server Error");
                var data = err;
 
+               // Manually set the CORS header here--I couldn't figure out how to get it working with the CORS
+               // middleware. We need to do this so that client-side AJAX uploads which try to send files larger than
+               // the limit get a proper 413 response.  Without it, the browser will complain that the CORS header is
+               // missing.
+               res.set('Access-Control-Allow-Origin', '*');
+
                if (statusCode < httpStatus.INTERNAL_SERVER_ERROR) {
                   res.jsendClientError(message, data, statusCode);
                }
