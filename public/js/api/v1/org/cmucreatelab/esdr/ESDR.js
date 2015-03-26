@@ -82,7 +82,7 @@ if (!window['superagent']) {
             }
 
             if (err) {
-               return callbacks.failure(err, res.status);
+               return callbacks.failure(err, res ? res.status : null);
             }
 
             switch (res.status) {
