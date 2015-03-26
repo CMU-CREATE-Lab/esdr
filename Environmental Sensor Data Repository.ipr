@@ -41,36 +41,34 @@
     <entry_points version="2.0" />
   </component>
   <component name="InspectionProjectProfileManager">
-    <profiles>
-      <profile version="1.0" is_locked="false">
-        <option name="myName" value="Project Default" />
-        <option name="myLocal" value="false" />
-        <inspection_tool class="CStyleArrayDeclaration" enabled="true" level="WARNING" enabled_by_default="true" />
-        <inspection_tool class="NullableProblems" enabled="true" level="ERROR" enabled_by_default="true">
-          <option name="REPORT_NULLABLE_METHOD_OVERRIDES_NOTNULL" value="true" />
-          <option name="REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL" value="true" />
-          <option name="REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE" value="true" />
-          <option name="REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL" value="true" />
-          <option name="REPORT_NOT_ANNOTATED_GETTER" value="true" />
-          <option name="REPORT_NOT_ANNOTATED_SETTER_PARAMETER" value="true" />
-          <option name="REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS" value="true" />
-          <option name="REPORT_NULLS_PASSED_TO_NON_ANNOTATED_METHOD" value="true" />
-        </inspection_tool>
-        <inspection_tool class="ObjectEquality" enabled="true" level="WARNING" enabled_by_default="true">
-          <option name="m_ignoreEnums" value="true" />
-          <option name="m_ignoreClassObjects" value="false" />
-          <option name="m_ignorePrivateConstructors" value="false" />
-        </inspection_tool>
-        <inspection_tool class="SpellCheckingInspection" enabled="false" level="TYPO" enabled_by_default="false">
-          <option name="processCode" value="true" />
-          <option name="processLiterals" value="true" />
-          <option name="processComments" value="true" />
-        </inspection_tool>
-        <inspection_tool class="SubtractionInCompareTo" enabled="true" level="WARNING" enabled_by_default="true" />
-        <inspection_tool class="SuspiciousIndentAfterControlStatement" enabled="true" level="WARNING" enabled_by_default="true" />
-        <inspection_tool class="VariableNotUsedInsideIf" enabled="true" level="WARNING" enabled_by_default="true" />
-      </profile>
-    </profiles>
+    <profile version="1.0" is_locked="false">
+      <option name="myName" value="Project Default" />
+      <option name="myLocal" value="true" />
+      <inspection_tool class="CStyleArrayDeclaration" enabled="true" level="WARNING" enabled_by_default="true" />
+      <inspection_tool class="NullableProblems" enabled="true" level="ERROR" enabled_by_default="true">
+        <option name="REPORT_NULLABLE_METHOD_OVERRIDES_NOTNULL" value="true" />
+        <option name="REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL" value="true" />
+        <option name="REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE" value="true" />
+        <option name="REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL" value="true" />
+        <option name="REPORT_NOT_ANNOTATED_GETTER" value="true" />
+        <option name="REPORT_NOT_ANNOTATED_SETTER_PARAMETER" value="true" />
+        <option name="REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS" value="true" />
+        <option name="REPORT_NULLS_PASSED_TO_NON_ANNOTATED_METHOD" value="true" />
+      </inspection_tool>
+      <inspection_tool class="ObjectEquality" enabled="true" level="WARNING" enabled_by_default="true">
+        <option name="m_ignoreEnums" value="true" />
+        <option name="m_ignoreClassObjects" value="false" />
+        <option name="m_ignorePrivateConstructors" value="false" />
+      </inspection_tool>
+      <inspection_tool class="SpellCheckingInspection" enabled="false" level="TYPO" enabled_by_default="false">
+        <option name="processCode" value="true" />
+        <option name="processLiterals" value="true" />
+        <option name="processComments" value="true" />
+      </inspection_tool>
+      <inspection_tool class="SubtractionInCompareTo" enabled="true" level="WARNING" enabled_by_default="true" />
+      <inspection_tool class="SuspiciousIndentAfterControlStatement" enabled="true" level="WARNING" enabled_by_default="true" />
+      <inspection_tool class="VariableNotUsedInsideIf" enabled="true" level="WARNING" enabled_by_default="true" />
+    </profile>
     <option name="PROJECT_PROFILE" value="Project Default" />
     <option name="USE_PROJECT_PROFILE" value="true" />
     <version value="1.0" />
@@ -78,7 +76,6 @@
   <component name="JavaScriptLibraryMappings">
     <file url="file://$PROJECT_DIR$" libraries="{EnvironmentalSensorDataRepository node_modules}" />
     <file url="PROJECT" libraries="{EnvironmentalSensorDataRepository node_modules, Superagent, jQuery 1.11.1, mocha-DefinitelyTyped, nconf-DefinitelyTyped, should-DefinitelyTyped}" />
-    <includedPredefinedLibrary name="Node.js Globals" />
   </component>
   <component name="ProjectCodeStyleSettingsManager">
     <option name="PER_PROJECT_SETTINGS">
@@ -99,7 +96,6 @@
         </option>
         <option name="GENERATE_FINAL_LOCALS" value="true" />
         <option name="GENERATE_FINAL_PARAMETERS" value="true" />
-        <option name="USE_FQ_CLASS_NAMES_IN_JAVADOC" value="false" />
         <option name="CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND" value="100" />
         <option name="NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND" value="100" />
         <option name="PACKAGES_TO_USE_IMPORT_ON_DEMAND">
@@ -162,6 +158,9 @@
           <option name="SPACE_BEFORE_COLON" value="true" />
           <option name="ARRAY_WRAPPING" value="5" />
         </JSON>
+        <JavaCodeStyleSettings>
+          <option name="CLASS_NAMES_IN_JAVADOC" value="3" />
+        </JavaCodeStyleSettings>
         <XML>
           <option name="XML_ATTRIBUTE_WRAP" value="0" />
           <option name="XML_TEXT_WRAP" value="0" />
