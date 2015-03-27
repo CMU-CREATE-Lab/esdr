@@ -92,6 +92,15 @@ Database.create(function(err, db) {
          app.use(favicon(path.join(__dirname, 'public/favicon.ico')));     // favicon serving
          app.use(compress());                // enables gzip compression
          app.use(express.static(path.join(__dirname, 'public')));          // static file serving
+
+         // enable logging of the user ID, if authenticated
+         requestLogger.token('uid', function(req) {
+            if (req.user) {
+               return req.user.id;
+            }
+            return '-';
+         });
+
          // set up HTTP request logging (do this AFTER the static file serving so we don't log those)
          if (RunMode.isProduction()) {
             // create a write stream (in append mode)
@@ -104,10 +113,13 @@ Database.create(function(err, db) {
             requestLogger.token('remote-addr', function(req) {
                return req.headers['x-forwarded-for'];
             });
-            app.use(requestLogger('combined', { stream : accessLogStream }));
+
+            // This is just the "combined" format with response time and UID appended to the end
+            var logFormat = ':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" :response-time ms :uid';
+            app.use(requestLogger(logFormat, { stream : accessLogStream }));
          }
          else {
-            app.use(requestLogger('dev'));      // simple request logging when in non-production mode
+            app.use(requestLogger(':method :url :status :response-time ms :res[content-length] :uid'));      // simple request logging when in non-production mode
          }
          app.use(bodyParser.urlencoded({ extended : true }));     // form parsing
          app.use(bodyParser.json({ limit : '5mb' }));             // json body parsing (5 MB limit)
