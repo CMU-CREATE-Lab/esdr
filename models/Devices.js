@@ -87,12 +87,16 @@ module.exports = function(databaseHelper) {
       // now validate
       jsonValidator.validate(device, JSON_SCHEMA, function(err1) {
          if (err1) {
+            console.log('* VALIDATION ERROR *');
+            console.dir(err1);
             return callback(new ValidationError(err1));
          }
 
          // now that we have the hashed secret, try to insert
          databaseHelper.execute("INSERT INTO Devices SET ?", device, function(err2, result) {
             if (err2) {
+               console.log('* INSERTION ERROR *');
+               console.dir(err2);
                return callback(err2);
             }
 
@@ -103,6 +107,18 @@ module.exports = function(databaseHelper) {
                serialNumber : device.serialNumber
             });
          });
+      });
+   };
+
+   this.remove = function(deviceId, userId, callback) {
+      databaseHelper.execute("DELETE FROM Devices WHERE id = "+deviceId+" and userId = "+userId, null, function(err, result) {
+         if (err) {
+            return callback(err);
+         } else {
+            return callback(null, {
+               deviceId : deviceId
+            });
+         }
       });
    };
 
