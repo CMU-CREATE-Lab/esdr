@@ -130,8 +130,6 @@ module.exports = function(ProductModel, DeviceModel) {
                      log.debug("Found product [" + productNameOrId + "], will now create the device...");
                      var newDevice = req.body;
                      DeviceModel.create(newDevice, product.id, req.user.id, function(err, result) {
-                        console.log("==== result of device creation:");
-                        console.dir(result);
                         if (err) {
                            if (err instanceof ValidationError) {
                               return res.jsendClientValidationError("Validation failure", err.data);   // HTTP 422 Unprocessable Entity
@@ -145,8 +143,6 @@ module.exports = function(ProductModel, DeviceModel) {
                            log.error(message + ": " + err);
                            return res.jsendServerError(message);
                         }
-
-                        log.debug("================================================================================= Created new device [" + result.serialNumber + "] with id [" + result.insertId + "] and userId "+req.user.id);
 
                         return res.jsendSuccess({
                                                    id : result.insertId,
