@@ -1,1 +1,0 @@
-Corresponds to tag stripchart_multitouch_1.0.0 from the "stripchart" branch.
