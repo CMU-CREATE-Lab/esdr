@@ -2104,6 +2104,8 @@ describe("ESDR", function() {
 
          });
 
+         // -------------------------------------------------------------------------------------------------------------------- Products
+
          describe("Products", function() {
 
             var productIds = {};
@@ -2468,6 +2470,71 @@ describe("ESDR", function() {
                              done();
                           });
             });
+
+            it("Should be able to update an existing product (with authentication)", function(done) {
+               testProduct1.description = "foobar";
+               agent(url)
+                     .put("/api/v1/products/"+productIds.testProduct1)
+                     .set({
+                             Authorization : "Bearer " + accessTokens.testUser1.access_token
+                          })
+                     .send(testProduct1)
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', httpStatus.ACCEPTED);
+                             res.body.should.have.property('code', httpStatus.ACCEPTED);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('id');
+                             res.body.data.should.have.property('description', testProduct1.description);
+
+                             // remember the product ID
+                             productIds.testProduct1 = res.body.data.id;
+
+                             done();
+                          });
+            });
+
+            it("Should be able to delete a product (with authentication)", function(done) {
+               agent(url)
+                     .delete("/api/v1/products/"+productIds.testProduct1+"?fields=id")
+                     .set({
+                             Authorization : "Bearer " + accessTokens.testUser1.access_token
+                          })
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', httpStatus.CREATED);
+                             res.body.should.have.property('code', httpStatus.CREATED);
+                             res.body.should.have.property('status', 'success');
+                             res.body.should.have.property('data');
+                             res.body.data.should.have.property('id');
+                             res.body.data.should.have.property('id', productIds.testProduct1);
+
+                             done();
+                          });
+            });
+
+            it("Should fail to delete a product without authentication", function(done) {
+               agent(url)
+                     .delete("/api/v1/products/"+productIds.testProduct1+"?fields=id")
+                     .end(function(err, res) {
+                             if (err) {
+                                return done(err);
+                             }
+
+                             res.should.have.property('status', httpStatus.UNAUTHORIZED);
+
+                             done();
+                          });
+            });
+
+            // -------------------------------------------------------------------------------------------------------------------- Devices
 
             describe("Devices", function() {
 
@@ -2983,6 +3050,44 @@ describe("ESDR", function() {
                                 done();
                              });
                });
+
+               it("Should be able to delete a device (with authentication)", function(done) {
+                  agent(url)
+                        .delete("/api/v1/devices/"+ deviceIds.testDevice1 + "?fields=id,serialNumber,userId")
+                        .set({
+                                Authorization : "Bearer " + accessTokens.testUser1.access_token
+                             })
+                        .end(function(err, res) {
+                                if (err) {
+                                   return done(err);
+                                }
+
+                                res.should.have.property('status', httpStatus.CREATED);
+                                res.body.should.have.property('code', httpStatus.CREATED);
+                                res.body.should.have.property('status', 'success');
+                                res.body.should.have.property('data');
+                                res.body.data.should.have.property('id');
+                                res.body.data.should.have.property('id', productIds.testProduct1);
+
+                                done();
+                             });
+               });
+
+               it("Should fail to delete a device without authentication", function(done) {
+                  agent(url)
+                        .delete("/api/v1/devices/"+ deviceIds.testDevice1 + "?fields=id,serialNumber,userId")
+                        .end(function(err, res) {
+                                if (err) {
+                                   return done(err);
+                                }
+
+                                res.should.have.property('status', httpStatus.UNAUTHORIZED);
+
+                                done();
+                             });
+               });
+
+               // ---------------------------------------------------------------------------------------------------------- Feeds
 
                describe("Feeds", function() {
 

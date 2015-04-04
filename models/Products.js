@@ -122,6 +122,37 @@ module.exports = function(databaseHelper) {
       });
    };
 
+   this.update = function(productId, userId, body, callback) {
+      var setstring = "";
+      console.log("-- update called for product id "+productId+", and userId = "+userId);
+      //console.dir(body);
+      for(var k in body){
+         var v = body[k];
+         setstring += +"="+v+",";
+      }
+      setstring = setstring.substring(0, setstring.length-1);
+      console.log("setstring is "+setstring);
+      databaseHelper.execute("UPDATE Products SET "+setstring+" WHERE id = "+productId+" and userId = "+userId, null, function(err, result) {
+         if (err) {
+            return callback(err);
+         } else {
+            return callback(null, result);
+         }
+      });
+   };
+
+   this.remove = function(productId, userId, callback) {
+      databaseHelper.execute("DELETE FROM Products WHERE id = "+productId+" and userId = "+userId, null, function(err, result) {
+         if (err) {
+            return callback(err);
+         } else {
+            return callback(null, {
+               productId : productId
+            });
+         }
+      });
+   };
+
    /**
     * Tries to find the product with the given <code>name</code> and returns it to the given <code>callback</code>. If
     * successful, the product is returned as the 2nd argument to the <code>callback</code> function.  If unsuccessful,

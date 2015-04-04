@@ -42,6 +42,21 @@ module.exports = function(ProductModel, DeviceModel) {
                                       });
                });
 
+   // update a product
+   router.put('/:id',
+               passport.authenticate('bearer', { session : false }),
+               function(req, res, next) {
+                  var id = req.params.id;
+                  var userId = req.user.id;
+                  var newProduct = req.body;
+                  log.debug("Received PUT from user ID [" + userId + "] to update product [" + (newProduct && newProduct.name ? newProduct.name : null) + "]");
+                  findProductByNameOrId(res, id, 'id', function(product) {
+                     ProductModel.update(id, userId, newProduct, function(err, result){
+                        res.jsendSuccess(result, httpStatus.ACCEPTED);
+                     });
+                  });
+               });
+
    // find products
    router.get('/',
               function(req, res, next) {
@@ -85,6 +100,25 @@ module.exports = function(ProductModel, DeviceModel) {
                  });
               });
 
+   // delete a specific product
+   // TODO: Guard against products being deleted when there are devices that refer to them
+   router.delete('/:id',
+                 passport.authenticate('bearer', { session : false }),
+                 function(req, res, next) {
+                    var userId = req.user.id;
+                    var productId = req.params.id;
+                    log.debug("Received DELETE for product [" + productId + "]");
+                    ProductModel.findById(productId, "id,creatorUserId", function(err, prod){
+                       if (prod.creatorUserId != userId) {
+                           res.jsendClientError("Access denied", null, httpStatus.FORBIDDEN);
+                       } else {
+                          ProductModel.remove(productId, userId, function(result) {
+                             res.jsendSuccess(result);
+                          });
+                       }
+                    });
+              });
+
    // create a new device
    router.post('/:productNameOrId/devices',
                passport.authenticate('bearer', { session : false }),
@@ -110,11 +144,10 @@ module.exports = function(ProductModel, DeviceModel) {
                            return res.jsendServerError(message);
                         }
 
-                        log.debug("Created new device [" + result.serialNumber + "] with id [" + result.insertId + "] ");
-
                         return res.jsendSuccess({
                                                    id : result.insertId,
                                                    name : result.name,
+                                                   userId: req.user.id,
                                                    serialNumber : result.serialNumber
                                                 }, httpStatus.CREATED); // HTTP 201 Created
                      });

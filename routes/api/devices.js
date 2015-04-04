@@ -42,6 +42,32 @@ module.exports = function(DeviceModel, FeedModel) {
                  });
               });
 
+   router.delete('/:id',
+                 passport.authenticate('bearer', { session : false }),
+                 function(req, res, next) {
+                    var userId = req.user.id;
+                    var deviceId = req.params.id;
+                    log.debug("Received DELETE for device [" + deviceId + "]");
+                    DeviceModel.findByIdForUser(deviceId, userId, "id,userId", function(err, prod){
+                       //console.log("delete find err = "+err+", prod = "+prod);
+                       //console.dir(prod);
+                       if (err){
+                          console.dir(err);
+                          console.log("Access Denied");
+                          res.jsendClientError("Access denied", err.data);
+                       }
+                       else if (prod.userId != userId) {
+                          console.log("Access Denied, since creator userId is "+prod.userId+" and attempted deletor userId is "+userId);
+                          res.jsendClientError("Access denied", null, httpStatus.FORBIDDEN);
+                       } else {
+                          console.log("Device removed.");
+                          DeviceModel.remove(deviceId, userId, function(result) {
+                             res.jsendSuccess(result);
+                          });
+                       }
+                    });
+                 });
+
    // create a feed for the specified device (specified by device ID)
    router.post('/:deviceId/feeds',
                passport.authenticate('bearer', { session : false }),
