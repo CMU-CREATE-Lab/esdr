@@ -124,7 +124,7 @@ if (!window['$']) {
     * is used instead.
     * @param {number} max - a double representing the axis max. If <code>null</code>, undefined, or non-numeric, then
     * <code>Number.MAX_VALUE</code> is used instead.
-    * @return {AxisRange}
+    * @returns {AxisRange}
     */
    var validateAxisRange = function(rangeOrMin, max) {
       var min = rangeOrMin;
@@ -146,7 +146,7 @@ if (!window['$']) {
     * @private
     * @param {Object} hash - the hash
     * @param {string|number} [keyToFind] - the key of the item to find in the hash
-    * @return {*|null}
+    * @returns {*|null}
     */
    var getItemFromHashOrFindFirst = function(hash, keyToFind) {
       if (typeof hash !== 'undefined' && hash != null) {
@@ -182,7 +182,7 @@ if (!window['$']) {
       /**
        * Returns the DOM element ID for the container div holding this axis.
        *
-       * @return {string}
+       * @returns {string}
        */
       this.getElementId = function() {
          return elementId;
@@ -191,7 +191,7 @@ if (!window['$']) {
       /**
        * Returns the wrapped <code>DateAxis</code> object.
        *
-       * @return {DateAxis}
+       * @returns {DateAxis}
        */
       this.getWrappedAxis = function() {
          return wrappedAxis;
@@ -223,7 +223,7 @@ if (!window['$']) {
       /**
        * Returns the date axis's current range as and object containing <code>mine</code> and <code>max</code> fields.
        *
-       * @return {AxisRange}
+       * @returns {AxisRange}
        */
       this.getRange = function() {
          return {
@@ -235,7 +235,7 @@ if (!window['$']) {
       /**
        * Returns the current cursor position.
        *
-       * @return {number}
+       * @returns {number}
        */
       this.getCursorPosition = function() {
          return wrappedAxis.getCursorPosition();
@@ -321,7 +321,7 @@ if (!window['$']) {
       /**
        * Returns the width of the DateAxis's container div.
        *
-       * @return {int} the width of the DateAxis's container div
+       * @returns {int} the width of the DateAxis's container div
        */
       this.getWidth = function() {
          return $("#" + elementId).width();
@@ -355,7 +355,7 @@ if (!window['$']) {
       /**
        * Returns the DOM element ID for the container div holding this axis.
        *
-       * @return {string}
+       * @returns {string}
        */
       this.getElementId = function() {
          return elementId;
@@ -364,7 +364,7 @@ if (!window['$']) {
       /**
        * Returns the wrapped <code>DateAxis</code> object.
        *
-       * @return {DateAxis}
+       * @returns {DateAxis}
        */
       this.getWrappedAxis = function() {
          return wrappedAxis
@@ -396,7 +396,7 @@ if (!window['$']) {
       /**
        * Returns the Y axis's current range as and object containing <code>mine</code> and <code>max</code> fields.
        *
-       * @return {AxisRange}
+       * @returns {AxisRange}
        */
       this.getRange = function() {
          return {
@@ -452,6 +452,17 @@ if (!window['$']) {
        */
       this.clearRangeConstraints = function() {
          self.constrainRangeTo(null, null)
+      };
+
+      /**
+       * Sets the height of the axis.
+       *
+       * @param {int} height - the new height
+       */
+      this.setHeight = function(height) {
+         var element = $("#" + elementId);
+         element.height(height);
+         wrappedAxis.setSize(element.width(), height, SequenceNumber.getNext());
       };
 
       var padRange = function(range) {
@@ -546,7 +557,7 @@ if (!window['$']) {
       /**
        * Returns the plot's ID.
        *
-       * @return {string|number}
+       * @returns {string|number}
        */
       this.getId = function() {
          return plotId;
@@ -555,7 +566,7 @@ if (!window['$']) {
       /**
        * Returns the wrapped <code>DataSeriesPlot</code> object.
        *
-       * @return {DataSeriesPlot}
+       * @returns {DataSeriesPlot}
        */
       this.getWrappedPlot = function() {
          return wrappedPlot;
@@ -670,7 +681,7 @@ if (!window['$']) {
        * @param timeInSecs - the time, in seconds, around which the window of time to look for the closest point is defined
        * @param numSecsBefore - when defining the time window in which to look for the closest point, this is the number of seconds before the timeInSecs
        * @param numSecsAfter - when defining the time window in which to look for the closest point, this is the number of seconds after the timeInSecs
-       * @return {DataPoint|null}
+       * @returns {DataPoint|null}
        */
       this.getClosestDataPointToTimeWithinWindow = function(timeInSecs, numSecsBefore, numSecsAfter) {
          return wrappedPlot.getClosestDataPointToTimeWithinWindow(timeInSecs, numSecsBefore, numSecsAfter);
@@ -710,7 +721,7 @@ if (!window['$']) {
       /**
        * Returns the DOM element ID for the container div holding this plot container.
        *
-       * @return {string}
+       * @returns {string}
        */
       this.getElementId = function() {
          return elementId;
@@ -722,7 +733,7 @@ if (!window['$']) {
        * this method returns the first Y axis found, or <code>null</code> if none have been added.
        *
        * @param {string} [yAxisElementId] - the DOM element ID for the container div holding the desired Y axis
-       * @return {org.bodytrack.grapher.YAxis}
+       * @returns {org.bodytrack.grapher.YAxis}
        */
       this.getYAxis = function(yAxisElementId) {
          var yAxisAndPlotCount = getItemFromHashOrFindFirst(yAxesAndPlotCount, yAxisElementId);
@@ -739,7 +750,7 @@ if (!window['$']) {
        * this method returns the first plot found, or <code>null</code> if none have been added.
        *
        * @param {string|number} [plotId] - A identifier for the plot, unique within the PlotContainer.  Must be a number or a string.
-       * @return {org.bodytrack.grapher.DataSeriesPlot}
+       * @returns {org.bodytrack.grapher.DataSeriesPlot}
        */
       this.getPlot = function(plotId) {
          var plotAndYAxis = getItemFromHashOrFindFirst(plotsAndYAxes, plotId);
@@ -888,6 +899,23 @@ if (!window['$']) {
          wrappedPlotContainer.setSize(width, element.height(), SequenceNumber.getNext());
       };
 
+      /**
+       * Sets the height of the PlotContainer and all of its Y axes to the given height.
+       *
+       * @param {int} height - the new height
+       */
+      this.setHeight = function(height) {
+         var element = $("#" + elementId);
+         element.height(height);
+         wrappedPlotContainer.setSize(element.width(), height, SequenceNumber.getNext());
+
+         // update the height of the Y axes
+         Object.keys(yAxesAndPlotCount).forEach(function(yAxisElementId) {
+            var yAxis = yAxesAndPlotCount[yAxisElementId].yAxis;
+            yAxis.setHeight(height);
+         });
+      };
+
       // the "constructor"
       (function() {
          wrappedPlotContainer = new PlotContainer(elementId, false, []);
@@ -920,7 +948,7 @@ if (!window['$']) {
       /**
        * Returns the <code>DateAxis</code> object representing the date axis.
        *
-       * @return {org.bodytrack.grapher.DateAxis} the DateAxis object
+       * @returns {org.bodytrack.grapher.DateAxis} the DateAxis object
        */
       this.getDateAxis = function() {
          return dateAxis;
@@ -933,7 +961,7 @@ if (!window['$']) {
        * <code>null</code> if no Y axes have been added to any PlotContainer.
        *
        * @param {string} [yAxisElementId] - the DOM element ID for the container div holding the desired Y axis
-       * @return {org.bodytrack.grapher.YAxis}
+       * @returns {org.bodytrack.grapher.YAxis}
        */
       this.getYAxis = function(yAxisElementId) {
          // iterate over the PlotContainers this way instead of using self.forEachPlotContainer() so that we can return
@@ -961,7 +989,7 @@ if (!window['$']) {
        * <code>null</code> if no plots have been added to any PlotContainer.
        *
        * @param {string|number} [plotId] - A identifier for the plot, unique within its {@link org.bodytrack.grapher.PlotContainer PlotContainer}.  Must be a number or a string.
-       * @return {org.bodytrack.grapher.DataSeriesPlot|null}
+       * @returns {org.bodytrack.grapher.DataSeriesPlot|null}
        */
       this.getPlot = function(plotId) {
          // iterate over the PlotContainers this way instead of using self.forEachPlotContainer() so that we can return
@@ -986,7 +1014,7 @@ if (!window['$']) {
        * have been added.
        *
        * @param {string} [plotContainerElementId] - the DOM element ID for the container div holding the desired plot container.
-       * @return {org.bodytrack.grapher.PlotContainer}
+       * @returns {org.bodytrack.grapher.PlotContainer}
        */
       this.getPlotContainer = function(plotContainerElementId) {
          return getItemFromHashOrFindFirst(plotContainers, plotContainerElementId);
@@ -997,7 +1025,7 @@ if (!window['$']) {
        * PlotContainer has already been added, a new one is not created.  Returns the PlotContainer.
        *
        * @param {string} plotContainerElementId - the DOM element ID for the container div holding the plot container
-       * @return {org.bodytrack.grapher.PlotContainer}
+       * @returns {org.bodytrack.grapher.PlotContainer}
        */
       this.addPlotContainer = function(plotContainerElementId) {
          if (!(plotContainerElementId in plotContainers)) {
