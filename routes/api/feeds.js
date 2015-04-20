@@ -57,13 +57,12 @@ module.exports = function(FeedModel, feedRouteHelper) {
    // access.
    router.put('/:feedIdOrApiKey',
               function(req, res, next) {
-                 findFeedByIdOrApiKey(req.params.feedIdOrApiKey,
-                                      'id,userId,apiKey',
-                                      false,
-                                      function(feed) {
-                                         return feedRouteHelper.importData(res, feed, req.body);
-                                      },
-                                      req, res, next);
+                 getFeedForWritingByIdOrApiKey(req.params.feedIdOrApiKey,
+                                               'id,userId,apiKey',
+                                               function(feed) {
+                                                  return feedRouteHelper.importData(res, feed, req.body);
+                                               },
+                                               req, res, next);
               });
 
    // For getting info about a feed, optionally authenticated using the user's OAuth2 access token or the feed's
@@ -77,76 +76,75 @@ module.exports = function(FeedModel, feedRouteHelper) {
                  var feedIdOrApiKey = req.params.feedIdOrApiKey;
 
                  log.debug("Received GET to get info for feed [" + feedIdOrApiKey + "]");
-                 findFeedByIdOrApiKey(feedIdOrApiKey,
-                                      null,
-                                      true,
-                                      function(feed, authInfo) {
-                                         // we found the feed, so now filter the fields to return based on fields
-                                         // specified in the query string (if any)
-                                         FeedModel.filterFields(feed, req.query.fields, function(err, filteredFeed) {
-                                            if (err) {
-                                               return res.jsendServerError("Failed to get feed: " + err.message, null);
-                                            }
+                 getFeedForReadingByIdOrApiKey(feedIdOrApiKey,
+                                               null,
+                                               function(feed, authInfo) {
+                                                  // we found the feed, so now filter the fields to return based on fields
+                                                  // specified in the query string (if any)
+                                                  FeedModel.filterFields(feed, req.query.fields, function(err, filteredFeed) {
+                                                     if (err) {
+                                                        return res.jsendServerError("Failed to get feed: " + err.message, null);
+                                                     }
 
-                                            var getInfo = function(isAllowedToSelectReadWriteFeedApiKey) {
-                                               // inflate the JSON fields into objects
-                                               if ("channelSpecs" in filteredFeed) {
-                                                  filteredFeed.channelSpecs = JSON.parse(filteredFeed.channelSpecs);
-                                               }
-
-                                               if ("channelBounds" in filteredFeed) {
-                                                  filteredFeed.channelBounds = JSON.parse(filteredFeed.channelBounds);
-                                               }
-
-                                               // delete the read-write feed API key if not allowed to see it
-                                               if (!isAllowedToSelectReadWriteFeedApiKey) {
-                                                  delete filteredFeed.apiKey;
-                                               }
-
-                                               return res.jsendSuccess(filteredFeed, httpStatus.OK); // HTTP 200 OK
-                                            };
-
-                                            // The only way authInfo won't be defined is if the feed is public, and is
-                                            // being accessed by feedId in the URL.
-                                            if (authInfo) {
-                                               return getInfo(authInfo.hasAccessToReadWriteFeedApiKey);
-                                            }
-                                            else {
-                                               // See whether they're even trying to ask for the read-write feed API
-                                               // key.  If so, then we need to auth the user either by feed API key in
-                                               // the request header or OAuth access token in the request header.
-                                               if ("apiKey" in filteredFeed) {
-                                                  if ("feedapikey" in req.headers) {
-                                                     // If the given feed API key matches the feed's read-write key,
-                                                     // then they obviously should be allowed to see it because they
-                                                     // already know it!
-                                                     var wasGivenReadWriteApiKey = req.headers['feedapikey'] == feed.apiKey;
-                                                     return getInfo(wasGivenReadWriteApiKey);
-                                                  }
-                                                  else {
-                                                     // If they sent an OAuth2 Authorization header, then authenticate
-                                                     // the user to see whether she owns the feed.  If so, then she
-                                                     // should be granted access to see the read-write API key.
-                                                     passport.authenticate('bearer', function(err, user) {
-                                                        if (err) {
-                                                           log.error(message + ": " + err);
-                                                           return res.jsendServerError(message);
+                                                     var getInfo = function(isAllowedToSelectReadWriteFeedApiKey) {
+                                                        // inflate the JSON fields into objects
+                                                        if ("channelSpecs" in filteredFeed) {
+                                                           filteredFeed.channelSpecs = JSON.parse(filteredFeed.channelSpecs);
                                                         }
 
-                                                        // prevent selection of the read-write API key unless the user
-                                                        // was authenticated successfully, and she owns the feed
-                                                        return getInfo(user && user.id == feed.userId);
-                                                     })(req, res, next);
-                                                  }
-                                               }
-                                               else {
-                                                  // they're not requesting the API key, so just return the filtered feed
-                                                  return getInfo(false);
-                                               }
-                                            }
-                                         });
-                                      },
-                                      req, res, next);
+                                                        if ("channelBounds" in filteredFeed) {
+                                                           filteredFeed.channelBounds = JSON.parse(filteredFeed.channelBounds);
+                                                        }
+
+                                                        // delete the read-write feed API key if not allowed to see it
+                                                        if (!isAllowedToSelectReadWriteFeedApiKey) {
+                                                           delete filteredFeed.apiKey;
+                                                        }
+
+                                                        return res.jsendSuccess(filteredFeed, httpStatus.OK); // HTTP 200 OK
+                                                     };
+
+                                                     // The only way authInfo won't be defined is if the feed is public, and is
+                                                     // being accessed by feedId in the URL.
+                                                     if (authInfo) {
+                                                        return getInfo(authInfo.hasAccessToReadWriteFeedApiKey);
+                                                     }
+                                                     else {
+                                                        // See whether they're even trying to ask for the read-write feed API
+                                                        // key.  If so, then we need to auth the user either by feed API key in
+                                                        // the request header or OAuth access token in the request header.
+                                                        if ("apiKey" in filteredFeed) {
+                                                           if ("feedapikey" in req.headers) {
+                                                              // If the given feed API key matches the feed's read-write key,
+                                                              // then they obviously should be allowed to see it because they
+                                                              // already know it!
+                                                              var wasGivenReadWriteApiKey = req.headers['feedapikey'] == feed.apiKey;
+                                                              return getInfo(wasGivenReadWriteApiKey);
+                                                           }
+                                                           else {
+                                                              // If they sent an OAuth2 Authorization header, then authenticate
+                                                              // the user to see whether she owns the feed.  If so, then she
+                                                              // should be granted access to see the read-write API key.
+                                                              passport.authenticate('bearer', function(err, user) {
+                                                                 if (err) {
+                                                                    log.error(message + ": " + err);
+                                                                    return res.jsendServerError(message);
+                                                                 }
+
+                                                                 // prevent selection of the read-write API key unless the user
+                                                                 // was authenticated successfully, and she owns the feed
+                                                                 return getInfo(user && user.id == feed.userId);
+                                                              })(req, res, next);
+                                                           }
+                                                        }
+                                                        else {
+                                                           // they're not requesting the API key, so just return the filtered feed
+                                                           return getInfo(false);
+                                                        }
+                                                     }
+                                                  });
+                                               },
+                                               req, res, next);
               });
 
    // For tile requests, optionally authenticated using the user's OAuth2 access token or the feed's read-write or
@@ -162,21 +160,20 @@ module.exports = function(FeedModel, feedRouteHelper) {
                  var level = req.params.level;
                  var offset = req.params.offset;
 
-                 findFeedByIdOrApiKey(feedIdOrApiKey,
-                                      'id,userId,isPublic,apiKey,apiKeyReadOnly',
-                                      true,
-                                      function(feed) {
-                                         FeedModel.getTile(feed, channelName, level, offset, function(err, tile) {
-                                            if (err) {
-                                               if (err.data && err.data.code == httpStatus.UNPROCESSABLE_ENTITY) {
-                                                  return res.jsendPassThrough(err.data);
-                                               }
-                                               return res.jsendServerError(err.message, null);
-                                            }
+                 getFeedForReadingByIdOrApiKey(feedIdOrApiKey,
+                                               'id,userId,isPublic,apiKey,apiKeyReadOnly',
+                                               function(feed) {
+                                                  FeedModel.getTile(feed, channelName, level, offset, function(err, tile) {
+                                                     if (err) {
+                                                        if (err.data && err.data.code == httpStatus.UNPROCESSABLE_ENTITY) {
+                                                           return res.jsendPassThrough(err.data);
+                                                        }
+                                                        return res.jsendServerError(err.message, null);
+                                                     }
 
-                                            res.jsendSuccess(tile);
-                                         });
-                                      }, req, res, next);
+                                                     res.jsendSuccess(tile);
+                                                  });
+                                               }, req, res, next);
               });
 
    // For exporting one or more channels from a feed
@@ -238,69 +235,67 @@ module.exports = function(FeedModel, feedRouteHelper) {
                  //}
                  var format = 'csv';
 
-                 findFeedByIdOrApiKey(req.params['feedIdOrApiKey'],
-                                      'id,userId,isPublic,apiKey,apiKeyReadOnly',
-                                      true,
-                                      function(feed) {
-                                         // build the filename for the Content-disposition header
-                                         var filename = "export_of_feed_" + feed.id;
-                                         if (minTime != null) {
-                                            filename += "_from_time_" + minTime;
-                                         }
-                                         if (maxTime != null) {
-                                            filename += "_to_" + (minTime == null ? "time_" : "") + maxTime;
-                                         }
-                                         filename += "." + format;
+                 getFeedForReadingByIdOrApiKey(req.params['feedIdOrApiKey'],
+                                               'id,userId,isPublic,apiKey,apiKeyReadOnly',
+                                               function(feed) {
+                                                  // build the filename for the Content-disposition header
+                                                  var filename = "export_of_feed_" + feed.id;
+                                                  if (minTime != null) {
+                                                     filename += "_from_time_" + minTime;
+                                                  }
+                                                  if (maxTime != null) {
+                                                     filename += "_to_" + (minTime == null ? "time_" : "") + maxTime;
+                                                  }
+                                                  filename += "." + format;
 
-                                         // export the data
-                                         FeedModel.exportData([{
-                                                                  feed : feed,
-                                                                  channels : channels
-                                                               }],
-                                                              {
-                                                                 minTime : minTime,
-                                                                 maxTime : maxTime
-                                                              },
-                                                              function(err, eventEmitter) {
-                                                                 if (err) {
-                                                                    if (err.data && err.data.code == httpStatus.UNPROCESSABLE_ENTITY) {
-                                                                       return res.jsendPassThrough(err.data)
-                                                                    }
+                                                  // export the data
+                                                  FeedModel.exportData([{
+                                                           feed : feed,
+                                                           channels : channels
+                                                        }],
+                                                        {
+                                                           minTime : minTime,
+                                                           maxTime : maxTime
+                                                        },
+                                                        function(err, eventEmitter) {
+                                                           if (err) {
+                                                              if (err.data && err.data.code == httpStatus.UNPROCESSABLE_ENTITY) {
+                                                                 return res.jsendPassThrough(err.data)
+                                                              }
 
-                                                                    log.error("Failed to export feed: " + JSON.stringify(err, null, 3));
-                                                                    return res.jsendServerError("Failed to export feed", null);
-                                                                 }
+                                                              log.error("Failed to export feed: " + JSON.stringify(err, null, 3));
+                                                              return res.jsendServerError("Failed to export feed", null);
+                                                           }
 
-                                                                 // set the status code, the connection to close, and specify the Content-disposition filename
-                                                                 res
-                                                                       .status(httpStatus.OK)
-                                                                       .set("Connection", "close")
-                                                                       .attachment(filename);
+                                                           // set the status code, the connection to close, and specify the Content-disposition filename
+                                                           res
+                                                                 .status(httpStatus.OK)
+                                                                 .set("Connection", "close")
+                                                                 .attachment(filename);
 
-                                                                 // I don't really understand why, but we must have a
-                                                                 // function (even an empty one!) listening on stderr,
-                                                                 // or else sometimes I get no data on stdout.  As of
-                                                                 // 2015-01-13, I've only seen this on multifeed
-                                                                 // getTiles and not with export, but I guess it can't
-                                                                 // hurt here.
-                                                                 eventEmitter.stderr.on('data', function(data) {
-                                                                    // log.error(data);
-                                                                 });
+                                                           // I don't really understand why, but we must have a
+                                                           // function (even an empty one!) listening on stderr,
+                                                           // or else sometimes I get no data on stdout.  As of
+                                                           // 2015-01-13, I've only seen this on multifeed
+                                                           // getTiles and not with export, but I guess it can't
+                                                           // hurt here.
+                                                           eventEmitter.stderr.on('data', function(data) {
+                                                              // log.error(data);
+                                                           });
 
-                                                                 eventEmitter.on('error', function(e) {
-                                                                    log.error("Error event from EventEmitter while exporting: " + JSON.stringify(e, null, 3));
-                                                                 });
+                                                           eventEmitter.on('error', function(e) {
+                                                              log.error("Error event from EventEmitter while exporting: " + JSON.stringify(e, null, 3));
+                                                           });
 
-                                                                 // pipe the eventEmitter to the response
-                                                                 return eventEmitter.stdout.pipe(res);
-                                                              });
-                                      },
-                                      req, res, next)
+                                                           // pipe the eventEmitter to the response
+                                                           return eventEmitter.stdout.pipe(res);
+                                                        });
+                                               },
+                                               req, res, next)
               });
 
-   // Finds a feed by ID or API Key.  Note that this is really intended for *getting* a feed, and may not be appropriate
-   // for methods which intend to modify a feed (edit, delete, upload, etc).  Use with caution!
-   var findFeedByIdOrApiKey = function(feedIdOrApiKey, fieldsToSelect, allowAccessByReadOnlyFeedApiKey, successCallback, req, res, next) {
+   // Finds a feed for writing by ID or API Key
+   var getFeedForWritingByIdOrApiKey = function(feedIdOrApiKey, fieldsToSelect, successCallback, req, res, next) {
       if (isFeedApiKey(feedIdOrApiKey)) {
          var feedApiKey = feedIdOrApiKey;
          FeedModel.findByApiKey(feedApiKey, fieldsToSelect, function(err, feed) {
@@ -311,12 +306,88 @@ module.exports = function(FeedModel, feedRouteHelper) {
             }
 
             if (feed) {
-               var hasAccessToReadWriteFeedApiKey = feed.apiKey == feedApiKey;
-               if (allowAccessByReadOnlyFeedApiKey || hasAccessToReadWriteFeedApiKey) {
-                  return successCallback(feed, { hasAccessToReadWriteFeedApiKey : hasAccessToReadWriteFeedApiKey });
-               } else {
+               // make sure user is using the read-write API key
+               if (feed.apiKey == feedApiKey) {
+                  return successCallback(feed);
+               }
+               else {
                   return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
                }
+            }
+            else {
+               return res.jsendClientError("Unknown or invalid feed", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
+            }
+         });
+      }
+      else {
+         var feedId = feedIdOrApiKey;
+         // Not a Feed API key, but now make sure the ID is completely numeric (e.g. reject things like '4240abc')
+         if (S(feedId).isNumeric()) {
+            FeedModel.findById(feedId, fieldsToSelect, function(err, feed) {
+               if (err) {
+                  var message = "Error while trying to find feed with ID [" + feedId + "]";
+                  log.error(message + ": " + err);
+                  return res.jsendServerError(message);
+               }
+
+               if (feed) {
+                  // verify acces, either by the read-write API key in the header, or the OAuth2 authorization
+                  if ("feedapikey" in req.headers) {
+                     if ((req.headers['feedapikey'] == feed.apiKey)) {
+                        return successCallback(feed);
+                     }
+                     return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
+                  }
+                  else if ("authorization" in req.headers) {
+                     // If they sent an OAuth2 Authorization header, then authenticate the user to see whether she
+                     // owns the feed.  If so, then she should be granted access to see a tile.
+                     passport.authenticate('bearer', function(err, user) {
+                        if (err) {
+                           var message = "Error while authenticating with OAuth2 access token for feed [" + feed.id + "]";
+                           log.error(message + ": " + err);
+                           return res.jsendServerError(message);
+                        }
+
+                        if (user) {
+                           // make sure the user owns the feed
+                           if (user.id == feed.userId) {
+                              return successCallback(feed);
+                           }
+                        }
+                        return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
+                     })(req, res, next);
+                  }
+                  else {
+                     // Otherwise, deny access.
+                     process.nextTick(function() {
+                        return res.jsendClientError("Authentication required.", null, httpStatus.UNAUTHORIZED);  // HTTP 401 Unauthorized
+                     });
+                  }
+               }
+               else {
+                  return res.jsendClientError("Unknown or invalid feed", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
+               }
+            });
+         }
+         else {
+            return res.jsendClientError("Unknown or invalid feed", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
+         }
+      }
+   };
+
+   // Finds a feed for reading by ID or API Key
+   var getFeedForReadingByIdOrApiKey = function(feedIdOrApiKey, fieldsToSelect, successCallback, req, res, next) {
+      if (isFeedApiKey(feedIdOrApiKey)) {
+         var feedApiKey = feedIdOrApiKey;
+         FeedModel.findByApiKey(feedApiKey, fieldsToSelect, function(err, feed) {
+            if (err) {
+               var message = "Error while trying to find feed with API key [" + feedApiKey + "]";
+               log.error(message + ": " + err);
+               return res.jsendServerError(message);
+            }
+
+            if (feed) {
+               return successCallback(feed, { hasAccessToReadWriteFeedApiKey : feed.apiKey == feedApiKey });
             }
             else {
                return res.jsendClientError("Unknown or invalid feed", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
@@ -345,7 +416,7 @@ module.exports = function(FeedModel, feedRouteHelper) {
                         var isReadWriteKey = (req.headers['feedapikey'] == feed.apiKey);
                         var isReadOnlyKey = (req.headers['feedapikey'] == feed.apiKeyReadOnly);
 
-                        if (isReadWriteKey || (isReadOnlyKey && allowAccessByReadOnlyFeedApiKey)) {
+                        if (isReadWriteKey || isReadOnlyKey) {
                            return successCallback(feed, { hasAccessToReadWriteFeedApiKey : isReadWriteKey });
                         }
                         return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
@@ -361,6 +432,7 @@ module.exports = function(FeedModel, feedRouteHelper) {
                            }
 
                            if (user) {
+                              // make sure the user owns the feed
                               if (user.id == feed.userId) {
                                  return successCallback(feed, { hasAccessToReadWriteFeedApiKey : true });
                               }
