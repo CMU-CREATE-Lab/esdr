@@ -3588,12 +3588,12 @@ describe("ESDR", function() {
                                          });
                            });
 
-                           it("Should fail to upload to a feed using an invalid OAuth2 access token to authenticate", function(done) {
+                           it("Should fail to upload to a public feed using an invalid OAuth2 access token to authenticate", function(done) {
                               agent(url)
                                     .put("/api/v1/feeds/" + feeds.testFeed1a.id)
                                     .set({
-                                            Authorization : "Bearer " + "bogus"
-                                         })
+                                       Authorization : "Bearer " + "bogus"
+                                    })
                                     .send(testFeed1aData2)
                                     .end(function(err, res) {
                                             if (err) {
@@ -3601,6 +3601,63 @@ describe("ESDR", function() {
                                             }
 
                                             res.should.have.property('status', httpStatus.FORBIDDEN);
+                                            res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data', null);
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to upload to a public feed using no authentication", function(done) {
+                              agent(url)
+                                    .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                                    .send(testFeed1aData2)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.UNAUTHORIZED);
+                                            res.body.should.have.property('code', httpStatus.UNAUTHORIZED);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data', null);
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to upload to a private feed using an invalid OAuth2 access token to authenticate", function(done) {
+                              agent(url)
+                                    .put("/api/v1/feeds/" + feeds.testFeed1b.id)
+                                    .set({
+                                       Authorization : "Bearer " + "bogus"
+                                    })
+                                    .send(testFeed1aData2)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.FORBIDDEN);
+                                            res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data', null);
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to upload to a private feed using no authentication", function(done) {
+                              agent(url)
+                                    .put("/api/v1/feeds/" + feeds.testFeed1b.id)
+                                    .send(testFeed1aData2)
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.UNAUTHORIZED);
+                                            res.body.should.have.property('code', httpStatus.UNAUTHORIZED);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data', null);
                                             done();
                                          });
                            });
@@ -3694,11 +3751,71 @@ describe("ESDR", function() {
                                             });
                               });
 
-                              it("Should fail to upload to a feed using the wrong feed's apiKey to authenticate", function(done) {
+                              it("Should fail to upload to a public feed using the wrong feed's apiKey to authenticate", function(done) {
                                  agent(url)
                                        .put("/api/v1/feeds/" + feeds.testFeed1a.id)
                                        .set({
                                                FeedApiKey : feeds.testFeed1b.apiKey
+                                            })
+                                       .send(testFeed1aData2)
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.should.have.property('status', httpStatus.FORBIDDEN);
+                                               res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                               res.body.should.have.property('status', 'error');
+                                               res.body.should.have.property('data', null);
+                                               done();
+                                            });
+                              });
+
+                              it("Should fail to upload to a private feed using the wrong feed's apiKey to authenticate", function(done) {
+                                 agent(url)
+                                       .put("/api/v1/feeds/" + feeds.testFeed1b.id)
+                                       .set({
+                                               FeedApiKey : feeds.testFeed1a.apiKey
+                                            })
+                                       .send(testFeed1aData2)
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.should.have.property('status', httpStatus.FORBIDDEN);
+                                               res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                               res.body.should.have.property('status', 'error');
+                                               res.body.should.have.property('data', null);
+                                               done();
+                                            });
+                              });
+
+                              it("Should fail to upload to a public feed using the wrong feed's read-only apiKey to authenticate", function(done) {
+                                 agent(url)
+                                       .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                                       .set({
+                                               FeedApiKey : feeds.testFeed1b.apiKeyReadOnly
+                                            })
+                                       .send(testFeed1aData2)
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.should.have.property('status', httpStatus.FORBIDDEN);
+                                               res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                               res.body.should.have.property('status', 'error');
+                                               res.body.should.have.property('data', null);
+                                               done();
+                                            });
+                              });
+
+                              it("Should fail to upload to a private feed using the wrong feed's read-only apiKey to authenticate", function(done) {
+                                 agent(url)
+                                       .put("/api/v1/feeds/" + feeds.testFeed1b.id)
+                                       .set({
+                                               FeedApiKey : feeds.testFeed1a.apiKeyReadOnly
                                             })
                                        .send(testFeed1aData2)
                                        .end(function(err, res) {
@@ -3734,12 +3851,63 @@ describe("ESDR", function() {
                                             });
                               });
 
-                              it("Should fail to upload to a feed using an invalid feed apiKey to authenticate", function(done) {
+                              it("Should fail to upload to a public feed using an invalid feed apiKey to authenticate", function(done) {
                                  agent(url)
                                        .put("/api/v1/feeds/" + feeds.testFeed1a.id)
                                        .set({
                                                FeedApiKey : "bogus"
                                             })
+                                       .send(testFeed1aData2)
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.should.have.property('status', httpStatus.FORBIDDEN);
+                                               done();
+                                            });
+                              });
+
+                              it("Should fail to upload to a private feed using an invalid feed apiKey to authenticate", function(done) {
+                                 agent(url)
+                                       .put("/api/v1/feeds/" + feeds.testFeed1b.id)
+                                       .set({
+                                          FeedApiKey : "bogus"
+                                       })
+                                       .send(testFeed1aData2)
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.should.have.property('status', httpStatus.FORBIDDEN);
+                                               done();
+                                            });
+                              });
+
+                              it("Should fail to upload to a public feed using the read-only apiKey to authenticate", function(done) {
+                                 agent(url)
+                                       .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                                       .set({
+                                          FeedApiKey : feeds.testFeed1a.apiKeyReadOnly
+                                       })
+                                       .send(testFeed1aData2)
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.should.have.property('status', httpStatus.FORBIDDEN);
+                                               done();
+                                            });
+                              });
+
+                              it("Should fail to upload to a private feed using the read-only apiKey to authenticate", function(done) {
+                                 agent(url)
+                                       .put("/api/v1/feeds/" + feeds.testFeed1b.id)
+                                       .set({
+                                          FeedApiKey : feeds.testFeed1b.apiKeyReadOnly
+                                       })
                                        .send(testFeed1aData2)
                                        .end(function(err, res) {
                                                if (err) {
@@ -3835,6 +4003,40 @@ describe("ESDR", function() {
                                                }
 
                                                res.should.have.property('status', httpStatus.NOT_FOUND);
+                                               done();
+                                            });
+                              });
+
+                              it("Should fail to upload to a public feed using a read-only apiKey to authenticate", function(done) {
+                                 agent(url)
+                                       .put("/api/v1/feeds/" + feeds.testFeed1a.apiKeyReadOnly)
+                                       .send(testFeed1aData2)
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.should.have.property('status', httpStatus.FORBIDDEN);
+                                               res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                               res.body.should.have.property('status', 'error');
+                                               res.body.should.have.property('data', null);
+                                               done();
+                                            });
+                              });
+
+                              it("Should fail to upload to a private feed using a read-only apiKey to authenticate", function(done) {
+                                 agent(url)
+                                       .put("/api/v1/feeds/" + feeds.testFeed1b.apiKeyReadOnly)
+                                       .send(testFeed1aData2)
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.should.have.property('status', httpStatus.FORBIDDEN);
+                                               res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                               res.body.should.have.property('status', 'error');
+                                               res.body.should.have.property('data', null);
                                                done();
                                             });
                               });

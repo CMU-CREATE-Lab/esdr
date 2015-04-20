@@ -298,6 +298,8 @@ module.exports = function(FeedModel, feedRouteHelper) {
                                       req, res, next)
               });
 
+   // Finds a feed by ID or API Key.  Note that this is really intended for *getting* a feed, and may not be appropriate
+   // for methods which intend to modify a feed (edit, delete, upload, etc).  Use with caution!
    var findFeedByIdOrApiKey = function(feedIdOrApiKey, fieldsToSelect, allowAccessByReadOnlyFeedApiKey, successCallback, req, res, next) {
       if (isFeedApiKey(feedIdOrApiKey)) {
          var feedApiKey = feedIdOrApiKey;
@@ -309,13 +311,17 @@ module.exports = function(FeedModel, feedRouteHelper) {
             }
 
             if (feed) {
-               return successCallback(feed, { hasAccessToReadWriteFeedApiKey : feed.apiKey == feedApiKey });
+               var hasAccessToReadWriteFeedApiKey = feed.apiKey == feedApiKey;
+               if (allowAccessByReadOnlyFeedApiKey || hasAccessToReadWriteFeedApiKey) {
+                  return successCallback(feed, { hasAccessToReadWriteFeedApiKey : hasAccessToReadWriteFeedApiKey });
+               } else {
+                  return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
+               }
             }
             else {
                return res.jsendClientError("Unknown or invalid feed", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
             }
          });
-
       }
       else {
          var feedId = feedIdOrApiKey;
@@ -329,7 +335,7 @@ module.exports = function(FeedModel, feedRouteHelper) {
                }
 
                if (feed) {
-                  // Allow access to the tile if the feed is public
+                  // Allow access if the feed is public
                   if (feed.isPublic) {
                      return successCallback(feed);
                   }
