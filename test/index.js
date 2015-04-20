@@ -4846,11 +4846,27 @@ describe("ESDR", function() {
                                          });
                            });
 
-                           it("Should fail to get a tile from a private feed with valid authentication, but for the wrong user", function(done) {
+                           it("Should fail to get a tile from a private feed with valid read-only authentication, but for the wrong feed", function(done) {
                               agent(url)
                                     .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/temperature/tiles/10.2633")
                                     .set({
                                             FeedApiKey : feeds.testFeed1a.apiKeyReadOnly
+                                         })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.FORBIDDEN);
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to get a tile from a private feed with valid read-write authentication, but for the wrong feed", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/temperature/tiles/10.2633")
+                                    .set({
+                                            FeedApiKey : feeds.testFeed1a.apiKey
                                          })
                                     .end(function(err, res) {
                                             if (err) {
@@ -4902,7 +4918,7 @@ describe("ESDR", function() {
 
                         describe("Feed API Key in the URL", function() {
 
-                           it("Should be able to get a tile from a public feed with valid authentication", function(done) {
+                           it("Should be able to get a tile from a public feed with valid read-write authentication", function(done) {
                               agent(url)
                                     .get("/api/v1/feeds/" + feeds.testFeed1a.apiKey + "/channels/temperature/tiles/10.2633")
                                     .end(function(err, res) {
@@ -4936,7 +4952,7 @@ describe("ESDR", function() {
                                          });
                            });
 
-                           it("Should be able to get a tile from a private feed with valid authentication", function(done) {
+                           it("Should be able to get a tile from a private feed with valid read-write authentication", function(done) {
                               agent(url)
                                     .get("/api/v1/feeds/" + feeds.testFeed1b.apiKey + "/channels/temperature/tiles/10.2634")
                                     .end(function(err, res) {
@@ -5611,6 +5627,28 @@ describe("ESDR", function() {
                                          });
                            });
 
+                           it("Should fail to export a private feed with valid authentication, but for the wrong user", function(done) {
+
+                              var feedId = createdFeeds[1].id;
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feedId + "/channels/humidity,particle_concentration,annotation/export")
+                                    .set({
+                                         Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                         })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.FORBIDDEN);
+                                            res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data');
+
+                                            done();
+                                         });
+                           });
+
                            it("Should fail to export a private feed with invalid authentication", function(done) {
 
                               var feedId = createdFeeds[1].id;
@@ -5638,7 +5676,41 @@ describe("ESDR", function() {
                         describe("API Key Authentication", function() {
                            describe("Feed API Key in the request header", function() {
 
-                              it("Should be able to export a private feed with valid authentication", function(done) {
+                              it("Should be able to export a private feed with valid read-write authentication", function(done) {
+
+                                 var feedId = createdFeeds[1].id;
+                                 var feedPrefix = createdFeeds[0].userId + ".feed_" + feedId;
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feedId + "/channels/humidity,particle_concentration,annotation/export")
+                                       .set({
+                                               FeedApiKey : createdFeeds[1].apiKey
+                                            })
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.headers.should.have.property('content-disposition', 'attachment; filename=\"export_of_feed_' + feedId + '.csv\"');
+                                               res.should.have.property('status', httpStatus.OK);
+                                               res.text.should.equal(
+                                                     "EpochTime," + feedPrefix + ".humidity," + feedPrefix + ".particle_concentration," + feedPrefix + ".annotation\n" +
+                                                     "1414986064,35,22.6,\n" +
+                                                     "1414986079,34,20.1,\n" +
+                                                     "1414986124,34,22.8,\"Bad smell today!\"\n" +
+                                                     "1414986139,35,19.5,\n" +
+                                                     "1414986184,34,22.5,\n" +
+                                                     "1414986199,34,18.8,\n" +
+                                                     "1414986244,35,21.7,\n" +
+                                                     "1414986259,34,19.8,\n" +
+                                                     "1414986304,34,22.9,\n" +
+                                                     "1414986319,34,19.5,\n"
+                                               );
+
+                                               done();
+                                            });
+                              });
+
+                              it("Should be able to export a private feed with valid read-only authentication", function(done) {
 
                                  var feedId = createdFeeds[1].id;
                                  var feedPrefix = createdFeeds[0].userId + ".feed_" + feedId;
@@ -5694,11 +5766,61 @@ describe("ESDR", function() {
                                             });
                               });
 
+                              it("Should fail to export a private feed with no authentication", function(done) {
+
+                                 var feedId = createdFeeds[1].id;
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feedId + "/channels/humidity,particle_concentration,annotation/export")
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.should.have.property('status', httpStatus.UNAUTHORIZED);
+                                               res.body.should.have.property('code', httpStatus.UNAUTHORIZED);
+                                               res.body.should.have.property('status', 'error');
+                                               res.body.should.have.property('data');
+
+                                               done();
+                                            });
+                              });
+
                            });      // end Feed API Key in the request header
 
                            describe("Feed API Key in the URL", function() {
 
-                              it("Should be able to export a private feed with valid authentication", function(done) {
+                              it("Should be able to export a private feed with valid read-write authentication", function(done) {
+
+                                 var feedId = createdFeeds[1].id;
+                                 var feedPrefix = createdFeeds[0].userId + ".feed_" + feedId;
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + createdFeeds[1].apiKey + "/channels/humidity,particle_concentration,annotation/export")
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.headers.should.have.property('content-disposition', 'attachment; filename=\"export_of_feed_' + feedId + '.csv\"');
+                                               res.should.have.property('status', httpStatus.OK);
+                                               res.text.should.equal(
+                                                     "EpochTime," + feedPrefix + ".humidity," + feedPrefix + ".particle_concentration," + feedPrefix + ".annotation\n" +
+                                                     "1414986064,35,22.6,\n" +
+                                                     "1414986079,34,20.1,\n" +
+                                                     "1414986124,34,22.8,\"Bad smell today!\"\n" +
+                                                     "1414986139,35,19.5,\n" +
+                                                     "1414986184,34,22.5,\n" +
+                                                     "1414986199,34,18.8,\n" +
+                                                     "1414986244,35,21.7,\n" +
+                                                     "1414986259,34,19.8,\n" +
+                                                     "1414986304,34,22.9,\n" +
+                                                     "1414986319,34,19.5,\n"
+                                               );
+
+                                               done();
+                                            });
+                              });
+
+                              it("Should be able to export a private feed with valid read-only authentication", function(done) {
 
                                  var feedId = createdFeeds[1].id;
                                  var feedPrefix = createdFeeds[0].userId + ".feed_" + feedId;
