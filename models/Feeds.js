@@ -465,6 +465,15 @@ module.exports = function(databaseHelper) {
                               queryParts.selectFields.splice(apiKeyIndex, 1);
                            }
 
+                           // remember whether the user is requesting the user ID
+                           var isRequestingUserId = queryParts.selectFields.indexOf('userId') >=0;
+
+                           // we need the user ID in order to do the feed ownership security check below, so make sure
+                           // it gets requested in the query
+                           if (!isRequestingUserId) {
+                              queryParts.selectFields.push('userId');
+                           }
+
                            // build the restricted SQL query
                            var restrictedSql = [
                               "SELECT " + queryParts.selectFields.join(','),
@@ -493,6 +502,13 @@ module.exports = function(databaseHelper) {
                                     if (feed.userId != authUserId) {
                                        delete feed.apiKey;
                                     }
+                                 });
+                              }
+
+                              // finally, if the user didn't request the userId, strip it out of the found feeds
+                              if (!isRequestingUserId) {
+                                 result.rows.forEach(function(feed) {
+                                    delete feed.userId;
                                  });
                               }
 

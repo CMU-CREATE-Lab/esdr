@@ -5112,6 +5112,7 @@ describe("ESDR", function() {
                                       res.body.data.rows.should.have.length(5);
                                       res.body.data.rows.forEach(function(feed) {
                                          feed.should.have.property("isPublic", 1);
+                                         feed.should.not.have.property("apiKey");
                                       });
 
                                       done();
@@ -5136,6 +5137,7 @@ describe("ESDR", function() {
                                       res.body.data.rows.should.have.length(2);
                                       res.body.data.rows.forEach(function(feed) {
                                          feed.should.have.property("isPublic", 1);
+                                         feed.should.not.have.property("apiKey");
                                       });
 
                                       done();
@@ -5184,8 +5186,8 @@ describe("ESDR", function() {
                         agent(url)
                               .get("/api/v1/feeds?fields=id,name,deviceId,userId,productId,isPublic,apiKey,apiKeyReadOnly")
                               .set({
-                                      Authorization : "Bearer " + accessTokens.testUser1.access_token
-                                   })
+                                 Authorization : "Bearer " + accessTokens.testUser1.access_token
+                              })
                               .end(function(err, res) {
                                       if (err) {
                                          return done(err);
@@ -5200,7 +5202,13 @@ describe("ESDR", function() {
                                       res.body.data.should.have.property('offset', 0);
                                       res.body.data.should.have.property('rows');
                                       res.body.data.rows.should.have.length(8);
+
+                                      // remember the found feeds so we do the extra test below
+                                      var foundFeedsById = {};
+
                                       res.body.data.rows.forEach(function(feed) {
+                                         foundFeedsById[feed.id] = feed;
+
                                          var isOwnedByUser = feed.userId == accessTokens.testUser1.userId;
 
                                          // should only return feeds that are owned by the user or are public
@@ -5215,7 +5223,55 @@ describe("ESDR", function() {
                                          }
                                          feed.should.have.property('apiKeyReadOnly');
                                       });
-                                      done();
+
+                                      // Now try again, but only selecting the id and the apiKey.  We should only get the API key for feeds that user 1 owns
+                                      // This is to test a fix for a bug in the Feeds model which prevented selection of the apiKey if you didn't also select
+                                      // the userId
+                                      agent(url)
+                                            .get("/api/v1/feeds?fields=id,apiKey")
+                                            .set({
+                                               Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                            })
+                                            .end(function(err, res) {
+                                                    if (err) {
+                                                       return done(err);
+                                                    }
+
+                                                    res.should.have.property('status', httpStatus.OK);
+                                                    res.body.should.have.property('code', httpStatus.OK);
+                                                    res.body.should.have.property('status', 'success');
+                                                    res.body.should.have.property('data');
+
+                                                    res.body.data.should.have.property('totalCount', 8);
+                                                    res.body.data.should.have.property('offset', 0);
+                                                    res.body.data.should.have.property('rows');
+                                                    res.body.data.rows.should.have.length(8);
+
+                                                    // now check each returned feed and make sure we're only getting the apiKey for feeds owned by this user
+                                                    res.body.data.rows.forEach(function(feed) {
+
+                                                       // we should get the feed ID
+                                                       feed.should.have.property('id');
+
+                                                       // we didn't ask for the userId, so we shouldn't get it
+                                                       feed.should.not.have.property('userId');
+
+                                                       var isOwnedByUser = foundFeedsById[feed.id].userId == accessTokens.testUser1.userId;
+
+                                                       // should only return feeds that are owned by the user or are public
+                                                       (isOwnedByUser || foundFeedsById[feed.id].isPublic == 1).should.be.true;
+
+                                                       // we should only get the apiKey if owned by the user.
+                                                       if (isOwnedByUser) {
+                                                          feed.should.have.property('apiKey');
+                                                       }
+                                                       else {
+                                                          feed.should.not.have.property('apiKey');
+                                                       }
+                                                    });
+
+                                                    done();
+                                                 });
                                    });
                      });
 
