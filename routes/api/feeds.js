@@ -77,7 +77,7 @@ module.exports = function(FeedModel, feedRouteHelper) {
 
                  log.debug("Received GET to get info for feed [" + feedIdOrApiKey + "]");
                  getFeedForReadingByIdOrApiKey(feedIdOrApiKey,
-                                               null,
+                                               null,  // passing null will cause it to select all fields--we'll filter them below
                                                function(feed, authInfo) {
                                                   // we found the feed, so now filter the fields to return based on fields
                                                   // specified in the query string (if any)
