@@ -86,6 +86,7 @@
    <script src="https://esdr.cmucreatelab.org/lib/plot-manager/org/bodytrack/grapher/PlotManager.js" type="text/javascript"></script>
 
 <script language="JavaScript" type="text/javascript">
+
    var ESDR_API_ROOT_URL = 'https://esdr.cmucreatelab.org/api/v1';
    var DEFAULT_CHANNEL = 'particle_concentration';
 
@@ -338,15 +339,7 @@
    
    function init() {
       $.ajax({url: ESDR_API_ROOT_URL + '/feeds', success: loadFeeds});
-
-      $(document).keydown(function(){
-         $('#search-bar').focus(); 
-      }).on('click', function(event) {
-         if (!$(event.target).closest('#search-bar').length) {
-            $('#search-bar').blur(); 
-         }
-      }); 
-
+      $('#search-bar').focus(); 
       var timer = null; 
       $('#search-bar').keyup(function(){
          if ($('#search-bar').val() == ""){
@@ -361,15 +354,10 @@
             clearInterval(timer);
             timer = null; 
          }
-      }).click(function(){
-         $(this).focus(); 
-
       }).on("search", function(){
          searchAttributes(); 
       }); 
    }
-
-   //$('#search-bar').mousedown(function(e) {e.target.dispatchEvent(e);});
 
    function getChannels() {
       var plotDivs = $('#charts [id^=plot]');
