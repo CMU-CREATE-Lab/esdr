@@ -366,8 +366,10 @@
 
       }).on("search", function(){
          searchAttributes(); 
-      })
+      }); 
    }
+
+   //$('#search-bar').mousedown(function(e) {e.target.dispatchEvent(e);});
 
    function getChannels() {
       var plotDivs = $('#charts [id^=plot]');
