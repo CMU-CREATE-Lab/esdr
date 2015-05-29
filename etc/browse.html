@@ -80,403 +80,422 @@
          line-height: 11px;
       }
    </style>
+
    <script src="https://esdr.cmucreatelab.org/lib/jquery/jquery-1.11.1.min.js" type="text/javascript"></script>
    <script src="https://esdr.cmucreatelab.org/lib/superagent/superagent.js" type="text/javascript"></script>
    <script src="https://esdr.cmucreatelab.org/lib/bodytrack-grapher/org/bodytrack/grapher/grapher2.nocache.js" type="text/javascript"></script>
    <script src="https://esdr.cmucreatelab.org/lib/plot-manager/org/bodytrack/grapher/PlotManager.js" type="text/javascript"></script>
 
-<script language="JavaScript" type="text/javascript">
-   var ESDR_API_ROOT_URL = 'https://esdr.cmucreatelab.org/api/v1';
-   var DEFAULT_CHANNEL = 'particle_concentration';
+   <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
 
-   var selectedFeedIdOrApiKey = null;
-   var selectedChannelName = null;
+   <script language="JavaScript" type="text/javascript">
 
-   var channelUnits = null;
-
-   //Jquery cache for all selectors 
-   var $allSelect = null; 
-
-   // grapher stuff
-   var plotManager;
-   var feed = null;
-   var availableChannels = [];
-   var isAutoScaleOn = false;
-
-   function setRangeFromSecondsAgoToNow(numSecondsAgo) {
-      var now = Date.now() / 1000;
-      var min = now - numSecondsAgo;
-      plotManager.getDateAxis().constrainRangeTo(Math.min(min, feed.minTimeSecs), now);
-      plotManager.getDateAxis().setRange(min, now);
-   }
-
-   var timeRangeOptions = [
-      {
-         "label" : "all data",
-         "handler" : function() {
-            plotManager.getDateAxis().setRange(feed.minTimeSecs, feed.maxTimeSecs);
-         }
-      },
-      {
-         "label" : "past 30 days",
-         "handler" : function() {
-            setRangeFromSecondsAgoToNow(3600*24*30);
-         }
-      },
-      {
-         "label" : "past 7 days",
-         "handler" : function() {
-            setRangeFromSecondsAgoToNow(3600*24*7);
-         }
-      },
-      {
-         "label" : "past 24 hours",
-         "handler" : function() {
-            setRangeFromSecondsAgoToNow(3600*24);
-         }
-      },
-      {
-         "label" : "past 12 hours",
-         "handler" : function() {
-            setRangeFromSecondsAgoToNow(3600*12);
-         }
-      },
-      {
-         "label" : "past hour",
-         "handler" : function() {
-            setRangeFromSecondsAgoToNow(3600);
-         }
-      },
-   ];
-
-   function setTimeRange(rangeName) {
-      var rangeFunction = timeRangeOptions[rangeName];
-      if (typeof rangeFunction === 'function') {
-         var range = rangeFunction();
-         if (range && 'min' in range && 'max' in range) {
-            plotManager.getDateAxis().setRange(range['min'], range['max']);
-         }
+      //WebGl start:
+      var map;
+      function initialize() {
+      var mapOptions = {
+         zoom: 8,
+         center: new google.maps.LatLng(-34.397, 150.644)
+      };
+      
+      map = new google.maps.Map(document.getElementById('map-div'),
+         mapOptions);
       }
-   }
 
-   // Got this from: http://css-tricks.com/snippets/javascript/get-url-variables/
-   function getQueryVariable(variable) {
-      var query = window.location.search.substring(1);
-      var vars = query.split("&");
-      for (var i = 0; i < vars.length; i++) {
-         var pair = vars[i].split("=");
-         if (pair[0] == variable) {
-            return pair[1];
-         }
+      google.maps.event.addDomListener(window, 'load', initialize);
+
+   
+      //main ESDR start: 
+      var ESDR_API_ROOT_URL = 'https://esdr.cmucreatelab.org/api/v1';
+      var DEFAULT_CHANNEL = 'particle_concentration';
+
+      var selectedFeedIdOrApiKey = null;
+      var selectedChannelName = null;
+
+      var channelUnits = null;
+
+      //Jquery cache for all selectors 
+      var $allSelect = null; 
+
+      // grapher stuff
+      var plotManager;
+      var feed = null;
+      var availableChannels = [];
+      var isAutoScaleOn = false;
+
+      function setRangeFromSecondsAgoToNow(numSecondsAgo) {
+         var now = Date.now() / 1000;
+         var min = now - numSecondsAgo;
+         plotManager.getDateAxis().constrainRangeTo(Math.min(min, feed.minTimeSecs), now);
+         plotManager.getDateAxis().setRange(min, now);
       }
-      return null;
-   }
 
-   var style = {
-      "styles" : [
-         { "type" : "line", "lineWidth" : 1, "show" : true, "color" : "red" },
-         { "type" : "circle", radius : 3, "lineWidth" : 1, "show" : true, "color" : "blue", fill : false }
-      ],
-      "highlight" : {
-         "lineWidth" : 1,
-         "styles" : [
-            {
-               "show" : true,
-               "type" : "lollipop",
-               "color" : "green",
-               "radius" : 0,
-               "lineWidth" : 1,
-               "fill" : false
-            },
-            {
-               "type" : "circle",
-               radius : 3,
-               "lineWidth" : 0.5,
-               "show" : true,
-               "color" : "#ff0000",
-               fill : true
-            },
-            {
-               "show" : true,
-               "type" : "value",
-               "fillColor" : "#000000",
-               "marginWidth" : 10,
-               "font" : "9pt Helvetica,Arial,Verdana,sans-serif",
-               "verticalOffset" : 7
+      var timeRangeOptions = [
+         {
+            "label" : "all data",
+            "handler" : function() {
+               plotManager.getDateAxis().setRange(feed.minTimeSecs, feed.maxTimeSecs);
             }
-         ]
-      }
-   };
+         },
+         {
+            "label" : "past 30 days",
+            "handler" : function() {
+               setRangeFromSecondsAgoToNow(3600*24*30);
+            }
+         },
+         {
+            "label" : "past 7 days",
+            "handler" : function() {
+               setRangeFromSecondsAgoToNow(3600*24*7);
+            }
+         },
+         {
+            "label" : "past 24 hours",
+            "handler" : function() {
+               setRangeFromSecondsAgoToNow(3600*24);
+            }
+         },
+         {
+            "label" : "past 12 hours",
+            "handler" : function() {
+               setRangeFromSecondsAgoToNow(3600*12);
+            }
+         },
+         {
+            "label" : "past hour",
+            "handler" : function() {
+               setRangeFromSecondsAgoToNow(3600);
+            }
+         },
+      ];
 
-   function createDatasource(source) {
-      var split = source.split('.');
-      if (split.length != 2) {
-         console.log('createDatasource must have source of form ID.channel but was ' + source);
+      function setTimeRange(rangeName) {
+         var rangeFunction = timeRangeOptions[rangeName];
+         if (typeof rangeFunction === 'function') {
+            var range = rangeFunction();
+            if (range && 'min' in range && 'max' in range) {
+               plotManager.getDateAxis().setRange(range['min'], range['max']);
+            }
+         }
+      }
+
+      // Got this from: http://css-tricks.com/snippets/javascript/get-url-variables/
+      function getQueryVariable(variable) {
+         var query = window.location.search.substring(1);
+         var vars = query.split("&");
+         for (var i = 0; i < vars.length; i++) {
+            var pair = vars[i].split("=");
+            if (pair[0] == variable) {
+               return pair[1];
+            }
+         }
          return null;
       }
-      var feedIdOrApiKey = split[0];
-      var channelName = split[1];
-      
-      return function(level, offset, successCallback) {
-         var url = ESDR_API_ROOT_URL + "/feeds/" + feedIdOrApiKey + "/channels/" + channelName + "/tiles/" + level + "." + offset;
-         console.log('getting ' + url);
-         superagent.get(url)
-                   .end(function(err, res) {
-                      console.log('done getting ' + url);
-                      if (err) {
-                         return console.log("Error: " + res.body);
-                      }
-                      switch (res.status) {
-                         case 200:
-                            return successCallback(JSON.stringify(res.body.data));
-                         case 401:
-                            return console.log("Unauthorized");
-                         case 403:
-                            return console.log("Forbidden");
-                         default:
-                            return console.log("Error: " + res.body);
-                      }
-                   });
+
+      var style = {
+         "styles" : [
+            { "type" : "line", "lineWidth" : 1, "show" : true, "color" : "red" },
+            { "type" : "circle", radius : 3, "lineWidth" : 1, "show" : true, "color" : "blue", fill : false }
+         ],
+         "highlight" : {
+            "lineWidth" : 1,
+            "styles" : [
+               {
+                  "show" : true,
+                  "type" : "lollipop",
+                  "color" : "green",
+                  "radius" : 0,
+                  "lineWidth" : 1,
+                  "fill" : false
+               },
+               {
+                  "type" : "circle",
+                  radius : 3,
+                  "lineWidth" : 0.5,
+                  "show" : true,
+                  "color" : "#ff0000",
+                  fill : true
+               },
+               {
+                  "show" : true,
+                  "type" : "value",
+                  "fillColor" : "#000000",
+                  "marginWidth" : 10,
+                  "font" : "9pt Helvetica,Arial,Verdana,sans-serif",
+                  "verticalOffset" : 7
+               }
+            ]
+         }
       };
-   }
 
-   var plotCount = 0;
-   var channelLabels = {};
-   var plotScalers = {};
-   var channelToPlotIdx = {};
-   var plotIdxToChannel = {};
-   
-   function addPlot(channel) {
-      var html = [];
-      html.push('<div style="height:100px; width:100%; position:relative; border-bottom:1px solid black">');
-      var plotName = 'plot' + plotCount;
-      var yAxisName = 'yaxis' + plotCount;
-      html.push('<div id="' + plotName + '" style="position:absolute; left:0px; top:0px; bottom:0px; right:30px"></div>');
-      html.push('<div id="' + yAxisName + '" style="position:absolute; width:30px; top:0px; bottom:0px; right:0px"></div>');
-      html.push('<div style="position:absolute"><span style="cursor:pointer" onclick="removePlot(\'' + channel + '\')">☒</span> <font size=-1>' + channelLabels[channel] + '</font></div>');
-      html.push('</div>');
-      $('#charts').append(html.join(''));
+      function createDatasource(source) {
+         var split = source.split('.');
+         if (split.length != 2) {
+            console.log('createDatasource must have source of form ID.channel but was ' + source);
+            return null;
+         }
+         var feedIdOrApiKey = split[0];
+         var channelName = split[1];
+         
+         return function(level, offset, successCallback) {
+            var url = ESDR_API_ROOT_URL + "/feeds/" + feedIdOrApiKey + "/channels/" + channelName + "/tiles/" + level + "." + offset;
+            console.log('getting ' + url);
+            superagent.get(url)
+                      .end(function(err, res) {
+                         console.log('done getting ' + url);
+                         if (err) {
+                            return console.log("Error: " + res.body);
+                         }
+                         switch (res.status) {
+                            case 200:
+                               return successCallback(JSON.stringify(res.body.data));
+                            case 401:
+                               return console.log("Unauthorized");
+                            case 403:
+                               return console.log("Forbidden");
+                            default:
+                               return console.log("Error: " + res.body);
+                         }
+                      });
+         };
+      }
+
+      var plotCount = 0;
+      var channelLabels = {};
+      var plotScalers = {};
+      var channelToPlotIdx = {};
+      var plotIdxToChannel = {};
       
-      plotManager.addDataSeriesPlot(plotName, createDatasource(channel), plotName, yAxisName, 0, 100, style);
-      var thisPlotIdx = plotCount;
-      // TODO: Always polling to auto-scale the Y axis -- not ideal!
-      // Someday, let's push this API to PlotManager and the actual implementation into the grapher.
-      plotScalers[plotCount] = window.setInterval(function() {
-         clampNumberAxisToDataRange(thisPlotIdx);
-      }, 100);
-      channelToPlotIdx[channel] = plotCount;
-      plotIdxToChannel[plotCount] = channel;
-      plotCount++;
-      $('input[name="' + channel + '"]').attr('checked', true);
-   }
-
-   function removePlot(channel) {
-      var plotIdx = channelToPlotIdx[channel];
-      var plotName = 'plot' + plotIdx;
-      plotManager.getPlotContainer(plotName).removePlot(plotManager.getPlot(plotName));
-      $('#plot' + plotIdx).parent().remove();
-      window.clearInterval(plotScalers[plotIdx]);
-      $('input[name="' + channel + '"]').attr('checked', false);
-   }
-
-   function clampNumberAxisToDataRange(plotIdx) {
-      var plot = plotManager.getPlot('plot' + plotIdx);
-      var yAxis = plotManager.getYAxis('yaxis' + plotIdx);
-      var stats = plot.getStatisticsWithinRange(plotManager.getDateAxis().getRange());
-      if (typeof stats['minValue'] !== 'undefined' && typeof stats['maxValue'] !== 'undefined') {
-         yAxis.setRange(stats['minValue'], stats['maxValue']);
+      function addPlot(channel) {
+         var html = [];
+         html.push('<div style="height:100px; width:100%; position:relative; border-bottom:1px solid black">');
+         var plotName = 'plot' + plotCount;
+         var yAxisName = 'yaxis' + plotCount;
+         html.push('<div id="' + plotName + '" style="position:absolute; left:0px; top:0px; bottom:0px; right:30px"></div>');
+         html.push('<div id="' + yAxisName + '" style="position:absolute; width:30px; top:0px; bottom:0px; right:0px"></div>');
+         html.push('<div style="position:absolute"><span style="cursor:pointer" onclick="removePlot(\'' + channel + '\')">☒</span> <font size=-1>' + channelLabels[channel] + '</font></div>');
+         html.push('</div>');
+         $('#charts').append(html.join(''));
+         
+         plotManager.addDataSeriesPlot(plotName, createDatasource(channel), plotName, yAxisName, 0, 100, style);
+         var thisPlotIdx = plotCount;
+         // TODO: Always polling to auto-scale the Y axis -- not ideal!
+         // Someday, let's push this API to PlotManager and the actual implementation into the grapher.
+         plotScalers[plotCount] = window.setInterval(function() {
+            clampNumberAxisToDataRange(thisPlotIdx);
+         }, 100);
+         channelToPlotIdx[channel] = plotCount;
+         plotIdxToChannel[plotCount] = channel;
+         plotCount++;
+         $('input[name="' + channel + '"]').attr('checked', true);
       }
-   }
 
-   function clickChannel(input) {
-      console.log('clickChannel ' + input.name);
-      if (input.checked) {
-         addPlot(input.name);
-      } else {
-         removePlot(input.name);
+      function removePlot(channel) {
+         var plotIdx = channelToPlotIdx[channel];
+         var plotName = 'plot' + plotIdx;
+         plotManager.getPlotContainer(plotName).removePlot(plotManager.getPlot(plotName));
+         $('#plot' + plotIdx).parent().remove();
+         window.clearInterval(plotScalers[plotIdx]);
+         $('input[name="' + channel + '"]').attr('checked', false);
       }
-      updateHash();
-   }
 
-   function loadFeeds(response) {
-      var data = response.data;
-      var max = data.limit + data.offset;
-      console.log('Received feeds in range ' + data.offset + ' - ' + max);
-      if (data.totalCount > max) { 
-        $.ajax({url: ESDR_API_ROOT_URL + '/feeds?offset=' + max, success: loadFeeds});
+      function clampNumberAxisToDataRange(plotIdx) {
+         var plot = plotManager.getPlot('plot' + plotIdx);
+         var yAxis = plotManager.getYAxis('yaxis' + plotIdx);
+         var stats = plot.getStatisticsWithinRange(plotManager.getDateAxis().getRange());
+         if (typeof stats['minValue'] !== 'undefined' && typeof stats['maxValue'] !== 'undefined') {
+            yAxis.setRange(stats['minValue'], stats['maxValue']);
+         }
       }
-      // TODO(rsargent): get all the feeds not just the first 1K
-      var feeds = data.rows;
-      var html = [];
-      for (var i = 0; i < feeds.length; i++) {
-         var feed = feeds[i];
-         if (feed.channelBounds) {
-            var channels = Object.keys(feed.channelBounds.channels).sort();
-            for (var c = 0; c < channels.length; c++) {
-               var channel = channels[c];
-               var label = feed.name + ' (' + feed.id + ').' + channel;
-               var id = feed.id + '.' + channel;
-               var inputDiv= $('<div id="' + label + '"> </div>')
-               channelLabels[id] = label;
 
-               html.push('<div class="sensors" id="' + label.toLowerCase() + '"> <input type="checkbox" onclick="clickChannel(this)" name="' + id +'">' + label + '<br> </div>');
+      function clickChannel(input) {
+         console.log('clickChannel ' + input.name);
+         if (input.checked) {
+            addPlot(input.name);
+         } else {
+            removePlot(input.name);
+         }
+         updateHash();
+      }
+
+      function loadFeeds(response) {
+         var data = response.data;
+         var max = data.limit + data.offset;
+         console.log('Received feeds in range ' + data.offset + ' - ' + max);
+         if (data.totalCount > max) { 
+           $.ajax({url: ESDR_API_ROOT_URL + '/feeds?offset=' + max, success: loadFeeds});
+         }
+         // TODO(rsargent): get all the feeds not just the first 1K
+         var feeds = data.rows;
+         var html = [];
+         for (var i = 0; i < feeds.length; i++) {
+            var feed = feeds[i];
+            if (feed.channelBounds) {
+               var channels = Object.keys(feed.channelBounds.channels).sort();
+               for (var c = 0; c < channels.length; c++) {
+                  var channel = channels[c];
+                  var label = feed.name + ' (' + feed.id + ').' + channel;
+                  var id = feed.id + '.' + channel;
+                  var inputDiv= $('<div id="' + label + '"> </div>')
+                  channelLabels[id] = label;
+
+                  html.push('<div class="sensors" id="' + label.toLowerCase() + '"> <input type="checkbox" onclick="clickChannel(this)" name="' + id +'">' + label + '<br> </div>');
+               }
+            }
+            //for (var channel = 0; i < feed.channelBounds.channels
+         }
+         $('#channels').append(html.join(''));
+         if (data.totalCount <= max) {
+            loadHash();
+            // TODO(rsargent): let's update this only when panning or zooming the time axis
+            window.setInterval(updateHash, 100);
+            window.onhashchange = loadHash;
+         }
+
+         $allSelect = $("div[class = sensors]"); 
+         searchAttributes(); 
+      }
+      
+      function init() {
+         $.ajax({url: ESDR_API_ROOT_URL + '/feeds', success: loadFeeds});
+
+         $(document).keydown(function(){
+            $('#search-bar').focus(); 
+         }).on('click', function(event) {
+            if (!$(event.target).closest('#search-bar').length) {
+               $('#search-bar').blur(); 
+            }
+         }); 
+
+         var timer = null; 
+         $('#search-bar').keyup(function(){
+            if ($('#search-bar').val() == ""){
+               clearInterval(timer); 
+               timer = null; 
+               searchAttributes(); 
+            }else if (timer == null) {
+               timer = setTimeout(function(){
+               searchAttributes()}, 100)}
+         }).keydown(function(){
+            if (timer) {
+               clearInterval(timer);
+               timer = null; 
+            }
+         }).click(function(){
+            $(this).focus(); 
+
+         }).on("search", function(){
+            searchAttributes(); 
+         }); 
+      }
+
+      //$('#search-bar').mousedown(function(e) {e.target.dispatchEvent(e);});
+
+      function getChannels() {
+         var plotDivs = $('#charts [id^=plot]');
+         var channels = [];
+         for (var i = 0; i < plotDivs.length; i++) {
+            var plotName = plotDivs[i].id;
+            var plotIdx = parseInt(plotName.slice(4));
+            var channel = plotIdxToChannel[plotIdx];
+            channels.push(channel);
+         }
+         return channels;
+      }
+      
+      function updateHash() {
+         var channels = getChannels();
+         var params = [];
+         if (channels.length > 0) {
+            params.push('channels=' + channels.join('|'));
+         }
+         var timeRange = plotManager.getDateAxis().getRange();
+         params.push('time=' + timeRange.min + ',' + timeRange.max);
+         var newHash = '#' + params.join('&');
+         if (window.location.hash != newHash) {
+            window.location.hash = newHash;
+         }
+      }
+
+      // from http://stackoverflow.com/questions/4197591/parsing-url-hash-fragment-identifier-with-javascript
+      function getHashParams() {
+         var hashParams = {};
+         var e,
+             a = /\+/g,  // Regex for replacing addition symbol with a space
+             r = /([^&;=]+)=?([^&;]*)/g,
+             d = function (s) { return decodeURIComponent(s.replace(a, " ")); },
+             q = window.location.hash.substring(1);
+        
+         while (e = r.exec(q)) hashParams[d(e[1])] = d(e[2]);
+        
+         return hashParams;
+      }
+
+      function loadHash() {
+         var params = getHashParams();
+
+         if (params.time) {
+            var split = params.time.split(',');
+            plotManager.getDateAxis().setRange(parseFloat(split[0]), parseFloat(split[1]));
+         }
+
+         var oldChannels = getChannels(); 
+         var newChannels = [];
+         if (params.channels) {
+            newChannels = params.channels.split('|');
+         }
+         if (oldChannels.join('|') != newChannels.join('|')) {
+            for (var i = 0; i < oldChannels.length; i++) {
+               removePlot(oldChannels[i]);
+            }
+            for (i = 0; i < newChannels.length; i++) {
+               addPlot(newChannels[i]);
             }
          }
-         //for (var channel = 0; i < feed.channelBounds.channels
-      }
-      $('#channels').append(html.join(''));
-      if (data.totalCount <= max) {
-         loadHash();
-         // TODO(rsargent): let's update this only when panning or zooming the time axis
-         window.setInterval(updateHash, 100);
-         window.onhashchange = loadHash;
       }
 
-      $allSelect = $("div[class = sensors]"); 
-      searchAttributes(); 
-   }
-   
-   function init() {
-      $.ajax({url: ESDR_API_ROOT_URL + '/feeds', success: loadFeeds});
-
-      $(document).keydown(function(){
-         $('#search-bar').focus(); 
-      }).on('click', function(event) {
-         if (!$(event.target).closest('#search-bar').length) {
-            $('#search-bar').blur(); 
-         }
-      }); 
-
-      var timer = null; 
-      $('#search-bar').keyup(function(){
-         if ($('#search-bar').val() == ""){
-            clearInterval(timer); 
-            timer = null; 
-            searchAttributes(); 
-         }else if (timer == null) {
-            timer = setTimeout(function(){
-            searchAttributes()}, 100)}
-      }).keydown(function(){
-         if (timer) {
-            clearInterval(timer);
-            timer = null; 
-         }
-      }).click(function(){
-         $(this).focus(); 
-
-      }).on("search", function(){
-         searchAttributes(); 
-      }); 
-   }
-
-   //$('#search-bar').mousedown(function(e) {e.target.dispatchEvent(e);});
-
-   function getChannels() {
-      var plotDivs = $('#charts [id^=plot]');
-      var channels = [];
-      for (var i = 0; i < plotDivs.length; i++) {
-         var plotName = plotDivs[i].id;
-         var plotIdx = parseInt(plotName.slice(4));
-         var channel = plotIdxToChannel[plotIdx];
-         channels.push(channel);
+      function removePlot(channel) {
+         var plotIdx = channelToPlotIdx[channel];
+         var plotName = 'plot' + plotIdx;
+         plotManager.getPlotContainer(plotName).removePlot(plotManager.getPlot(plotName));
+         $('#plot' + plotIdx).parent().remove();
+         window.clearInterval(plotScalers[plotIdx]);
+         $('input[name="' + channel + '"]').attr('checked', false);
       }
-      return channels;
-   }
-   
-   function updateHash() {
-      var channels = getChannels();
-      var params = [];
-      if (channels.length > 0) {
-         params.push('channels=' + channels.join('|'));
-      }
-      var timeRange = plotManager.getDateAxis().getRange();
-      params.push('time=' + timeRange.min + ',' + timeRange.max);
-      var newHash = '#' + params.join('&');
-      if (window.location.hash != newHash) {
-         window.location.hash = newHash;
-      }
-   }
+      
 
-   // from http://stackoverflow.com/questions/4197591/parsing-url-hash-fragment-identifier-with-javascript
-   function getHashParams() {
-      var hashParams = {};
-      var e,
-          a = /\+/g,  // Regex for replacing addition symbol with a space
-          r = /([^&;=]+)=?([^&;]*)/g,
-          d = function (s) { return decodeURIComponent(s.replace(a, " ")); },
-          q = window.location.hash.substring(1);
-     
-      while (e = r.exec(q)) hashParams[d(e[1])] = d(e[2]);
-     
-      return hashParams;
-   }
+      window.grapherLoad = function() {
+         var maxTimeSecs = Date.now() / 1000;
+         var minTimeSecs = maxTimeSecs - 7 * 24 * 60 * 60;
 
-   function loadHash() {
-      var params = getHashParams();
+         plotManager = new org.bodytrack.grapher.PlotManager("date_axis", minTimeSecs, maxTimeSecs);
 
-      if (params.time) {
-         var split = params.time.split(',');
-         plotManager.getDateAxis().setRange(parseFloat(split[0]), parseFloat(split[1]));
+      plotManager.setWillAutoResizeWidth(true, function() {
+               return $('#charts').width()         // window width
+                      - 30;
+            });
       }
 
-      var oldChannels = getChannels(); 
-      var newChannels = [];
-      if (params.channels) {
-         newChannels = params.channels.split('|');
-      }
-      if (oldChannels.join('|') != newChannels.join('|')) {
-         for (var i = 0; i < oldChannels.length; i++) {
-            removePlot(oldChannels[i]);
-         }
-         for (i = 0; i < newChannels.length; i++) {
-            addPlot(newChannels[i]);
-         }
-      }
-   }
+      function searchAttributes() {
+         var str = $('#search-bar').val().toLowerCase();     
+         var wordList = str.split(" ") || [];
 
-   function removePlot(channel) {
-      var plotIdx = channelToPlotIdx[channel];
-      var plotName = 'plot' + plotIdx;
-      plotManager.getPlotContainer(plotName).removePlot(plotManager.getPlot(plotName));
-      $('#plot' + plotIdx).parent().remove();
-      window.clearInterval(plotScalers[plotIdx]);
-      $('input[name="' + channel + '"]').attr('checked', false);
-   }
-   
+         var showConditions = "[class = sensors]"; 
+         for (var i = 0; i < wordList.length; i++){
+            if (wordList[i] != "") {
+               showConditions = showConditions + "[id *= '" + wordList[i] + "']";  
+            }
+         }; 
 
-   window.grapherLoad = function() {
-      var maxTimeSecs = Date.now() / 1000;
-      var minTimeSecs = maxTimeSecs - 7 * 24 * 60 * 60;
-
-      plotManager = new org.bodytrack.grapher.PlotManager("date_axis", minTimeSecs, maxTimeSecs);
-
-plotManager.setWillAutoResizeWidth(true, function() {
-            return $('#charts').width()         // window width
-                   - 30;
-         });
-
-   }
-
-   function searchAttributes() {
-      var str = $('#search-bar').val().toLowerCase();     
-      var wordList = str.split(" ") || [];
-
-      var showConditions = "[class = sensors]"; 
-      for (var i = 0; i < wordList.length; i++){
-         if (wordList[i] != "") {
-            showConditions = showConditions + "[id *= '" + wordList[i] + "']";  
-         }
+         if (str == ""){
+            $allSelect.show(); 
+         } else {
+            $allSelect.hide(); 
+            $('div' + showConditions).show(); 
+         }; 
       }; 
 
-      if (str == ""){
-         $allSelect.show(); 
-      } else {
-         $allSelect.hide(); 
-         $('div' + showConditions).show(); 
-      }; 
-   }; 
-
-   $(init);
+      $(init);
 
 </script>
 
@@ -484,7 +503,7 @@ plotManager.setWillAutoResizeWidth(true, function() {
 <body style="width:100%;height:100%">
 <input id = "search-bar" type = "search" placeholder="Search: " style = "width:19%; height:15px; position:absolute; left:3px; top: 5px; font-size:10px;"> 
 <div id="channels" style="width:20%; height:100%; position:absolute; left:0px; top:22px; font-size:10px; overflow-y:auto"></div>
-<div id="charts" style="width:80%; height: 100%; position:absolute; right:0px; top:0px">
+<div id="charts" style="width:80%; height: 50%; position:absolute; right:0px; bottom:0px">
 <div style="position:relative; height: 40px; width:100%; border-bottom:1px solid black">
 <div id="date_axis" style="position:absolute; top:0px; bottom:0px; left:0px; right:40px"></div>
 </div>
