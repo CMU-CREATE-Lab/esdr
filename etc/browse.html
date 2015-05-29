@@ -12,7 +12,7 @@
       }
 
       .plot_container {
-         position: relative;
+         position: relative;``
          border: 1px solid black;
       }
 
@@ -93,6 +93,9 @@
    var selectedChannelName = null;
 
    var channelUnits = null;
+
+   //Jquery cache for all selectors 
+   var $allSelect = null; 
 
    // grapher stuff
    var plotManager;
@@ -299,7 +302,7 @@
       var data = response.data;
       var max = data.limit + data.offset;
       console.log('Received feeds in range ' + data.offset + ' - ' + max);
-      if (data.totalCount > max) {
+      if (data.totalCount > max) { 
         $.ajax({url: ESDR_API_ROOT_URL + '/feeds?offset=' + max, success: loadFeeds});
       }
       // TODO(rsargent): get all the feeds not just the first 1K
@@ -313,8 +316,10 @@
                var channel = channels[c];
                var label = feed.name + ' (' + feed.id + ').' + channel;
                var id = feed.id + '.' + channel;
+               var inputDiv= $('<div id="' + label + '"> </div>')
                channelLabels[id] = label;
-               html.push('<input type="checkbox" onclick="clickChannel(this)" name="' + id +'">' + label + '<br>');
+
+               html.push('<div class="sensors" id="' + label.toLowerCase() + '"> <input type="checkbox" onclick="clickChannel(this)" name="' + id +'">' + label + '<br> </div>');
             }
          }
          //for (var channel = 0; i < feed.channelBounds.channels
@@ -326,10 +331,37 @@
          window.setInterval(updateHash, 100);
          window.onhashchange = loadHash;
       }
+
+      $allSelect = $("div[class = sensors]"); 
+      searchAttributes(); 
    }
    
    function init() {
       $.ajax({url: ESDR_API_ROOT_URL + '/feeds', success: loadFeeds});
+
+      $(document).keydown(function(){
+         $('#search-bar').focus(); 
+      }); 
+
+      var timer = null; 
+      $('#search-bar').keyup(function(){
+         if ($('#search-bar').val() == ""){
+            clearInterval(timer); 
+            timer = null; 
+            searchAttributes(); 
+         }else if (timer == null) {
+            timer = setTimeout(function(){
+            searchAttributes()}, 100)}
+      }).keydown(function(){
+         if (timer) {
+            clearInterval(timer);
+            timer = null; 
+         }
+      }).click(function(){
+         $(this).focus(); 
+      }).on("search", function(){
+         searchAttributes(); 
+      })
    }
 
    function getChannels() {
@@ -404,6 +436,7 @@
       $('input[name="' + channel + '"]').attr('checked', false);
    }
    
+
    window.grapherLoad = function() {
       var maxTimeSecs = Date.now() / 1000;
       var minTimeSecs = maxTimeSecs - 7 * 24 * 60 * 60;
@@ -417,12 +450,33 @@ plotManager.setWillAutoResizeWidth(true, function() {
 
    }
 
+   function searchAttributes() {
+      var str = $('#search-bar').val().toLowerCase();     
+      var wordList = str.split(" ") || [];
+
+      var showConditions = "[class = sensors]"; 
+      for (var i = 0; i < wordList.length; i++){
+         if (wordList[i] != "") {
+            showConditions = showConditions + "[id *= '" + wordList[i] + "']";  
+         }
+      }; 
+
+      if (str == ""){
+         $allSelect.show(); 
+      } else {
+         $allSelect.hide(); 
+         $('div' + showConditions).show(); 
+      }; 
+   }; 
+
    $(init);
+
 </script>
 
 </head>
 <body style="width:100%;height:100%">
-<div id="channels" style="width:20%; height:100%; position:absolute; left:0px; top:0px; font-size:10px; overflow-y:auto"></div>
+<input id = "search-bar" type = "search" placeholder="Search: " style = "width:19%; height:15px; position:absolute; left:3px; top: 5px; font-size:10px;"> 
+<div id="channels" style="width:20%; height:100%; position:absolute; left:0px; top:22px; font-size:10px; overflow-y:auto display: inline-block;"></div>
 <div id="charts" style="width:80%; height: 100%; position:absolute; right:0px; top:0px">
 <div style="position:relative; height: 40px; width:100%; border-bottom:1px solid black">
 <div id="date_axis" style="position:absolute; top:0px; bottom:0px; left:0px; right:40px"></div>
