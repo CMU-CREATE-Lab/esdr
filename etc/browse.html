@@ -86,133 +86,15 @@
    <script src="https://esdr.cmucreatelab.org/lib/bodytrack-grapher/org/bodytrack/grapher/grapher2.nocache.js" type="text/javascript"></script>
    <script src="https://esdr.cmucreatelab.org/lib/plot-manager/org/bodytrack/grapher/PlotManager.js" type="text/javascript"></script>
 
-   <script src="http://api.cmucreatelab.org/exp-0.1/js/CanvasLayer.js"></script>
+   <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
    <script src="http://api.cmucreatelab.org/exp-0.1/js/utils.js"></script>
    <script src="http://api.cmucreatelab.org/exp-0.1/js/series.js"></script>
-   <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
-   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
-
-   <script id="pointVertexShader" type="x-shader/x-vertex">
-      attribute vec4 worldCoord;
-      attribute float aPointSize;
-
-      uniform mat4 mapMatrix;
-
-      void main() {
-        // transform world coordinate by matrix uniform variable
-        gl_Position = mapMatrix * worldCoord;
-
-        // a constant size for points, regardless of zoom level
-        gl_PointSize = aPointSize;
-      }
-    </script>
-    <script id="pointFragmentShader" type="x-shader/x-fragment">
-      precision mediump float;
-      uniform vec4 color;
-      uniform float hardFraction;
-
-      // Circle of diameter 0.5, composed of a "hard" (alpha=1) center of radius 0.5 * hardFraction,
-      // then transitioning to alpha=0 at diameter 0.5
-      void main() {
-        float dist = length(gl_PointCoord.xy - vec2(.5, .5));
-        // TODO(rsargent):  shouldn't we just be adjusting the alpha here?  Maybe we're taking
-        // advantage of the double-multiplication to get something other than linear.
-        // But multiplying all the channels will break if we do something other than an additive blend.
-        gl_FragColor = color * clamp((0.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
-      }
-    </script>
+   <script src="http://api.cmucreatelab.org/exp-0.1/js/CanvasLayer.js"></script>
 
    <script language="JavaScript" type="text/javascript">
 
-      //WebGl start:
-      var map;
-      var canvasLayer;
-      var gl;
-      var pixelsToWebGLMatrix = new Float32Array(16);
-      var mapMatrix = new Float32Array(16);
-      var currentIndex, minIndex, maxIndex;
-      var feedLocList; 
-
-      function initializeMap() {
-           var mapOptions = {
-            zoom: 4,
-            center: new google.maps.LatLng(39.3, -95.8)
-         };
-         
-         map = new google.maps.Map(document.getElementById('map-div'),
-            mapOptions);
-
-      }
-
-      google.maps.event.addDomListener(window, 'load', initializeMap); 
-
-      function drawFrame() {
-
-        gl.enable(gl.BLEND);
-        gl.blendFunc( gl.SRC_ALPHA, gl.ONE );
-
-        // Compute WebGL transform from world xy coords to screen
-        // copy pixel->webgl matrix
-        mapMatrix.set(pixelsToWebGLMatrix);
-
-        var scale = canvasLayer.getMapScale();
-        scaleMatrix(mapMatrix, scale, scale);
-
-        var translation = canvasLayer.getMapTranslation();
-        translateMatrix(mapMatrix, translation.x, translation.y);
-
-        // Erase frame
-        gl.clear(gl.COLOR_BUFFER_BIT);
-
-        // Compute point diameter, in pixels, based on zoom level
-
-        // map.zoom is approx 4 at country level
-        var countryPointSizePixels = 3;
-
-        // map.zoom is approx 18 at block level
-        var blockPointSizePixels = 90;
-
-        var pointSize = countryPointSizePixels * Math.pow(blockPointSizePixels / countryPointSizePixels, (map.zoom - 4) / (18 - 4));
-        var color = [.82, .22, .07, 1.0]; // RGBA, orange
-
-        var hardFraction = 0.4;  
-
-        drawPoints(gl, mapMatrix, feedLocList, 0, findIndex(currentIndex, feedLocList), 
-                   {color: color, pointSize: pointSize, hardFraction: hardFraction});
-      }
-
-      function initWebGL() {
-        // initialize the canvasLayer
-        var canvasLayerOptions = {
-          map: map,
-          resizeHandler: resize,
-          animate: true,
-          updateHandler: drawFrame
-        };
-        canvasLayer = new CanvasLayer(canvasLayerOptions);
-
-        window.addEventListener('resize', function () {  google.maps.event.trigger(map, 'resize') }, false);
-
-        // initialize WebGL
-        gl = canvasLayer.canvas.getContext('experimental-webgl');
-        return !!gl;
-      }
-
-      function resize() {
-        var w = canvasLayer.canvas.width;
-        var h = canvasLayer.canvas.height;
-
-        // Extend viewport to entire canvas
-        gl.viewport(0, 0, w, h);
-
-        // Map canvas pixel coordinates to WebGL coordinates
-        pixelsToWebGLMatrix.set([2/w, 0,   0, 0,
-                                 0,  -2/h, 0, 0,
-                                 0,   0,   1, 0,
-                                -1,   1,   0, 1]);
-      }
-   
-      //main ESDR start: 
+      //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   esdr start  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      var feedLocList = {latlng: [], index: []}; 
       var ESDR_API_ROOT_URL = 'https://esdr.cmucreatelab.org/api/v1';
       var DEFAULT_CHANNEL = 'particle_concentration';
 
@@ -435,10 +317,13 @@
          // TODO(rsargent): get all the feeds not just the first 1K
          var feeds = data.rows;
          var html = [];
-         var latLngList = []; 
-         var indexList = []; 
+
          for (var i = 0; i < feeds.length; i++) {
             var feed = feeds[i];
+
+            feedLocList.latlng.push(feed.longitude, feed.latitude); 
+            feedLocList.index.push(i); 
+
             if (feed.channelBounds) {
                var channels = Object.keys(feed.channelBounds.channels).sort();
                for (var c = 0; c < channels.length; c++) {
@@ -446,10 +331,6 @@
                   var label = feed.name + ' (' + feed.id + ').' + channel;
                   var id = feed.id + '.' + channel;
                   channelLabels[id] = label;
-
-                  latLngList.push(feed.longitude, feed.latitude); 
-                  indexList.push(i); 
-
                   html.push('<div class="sensors" id="' + label.toLowerCase() + '"> <input type="checkbox" onclick="clickChannel(this)" name="' + id +'">' + label + '<br> </div>');
                }
             }
@@ -457,20 +338,157 @@
          }
          $('#channels').append(html.join(''));
          if (data.totalCount <= max) {
+            // That was the last data.  Ready to process
             loadHash();
             // TODO(rsargent): let's update this only when panning or zooming the time axis
             window.setInterval(updateHash, 100);
             window.onhashchange = loadHash;
+
+            feedLocList.latlng = new Float32Array(feedLocList.latlng); 
+            feedLocList.index = new Float32Array(feedLocList.index); 
+            console.log(feedLocList); 
+
+            initializeWebGL(); 
          }
 
          $allSelect = $("div[class = sensors]"); 
          searchAttributes(); 
 
-         feedLocList = {latlng: latLngList, 
-                         index: indexList}; 
       }
       
+      //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   WebGL START   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      var map;
+      var canvasLayer;
+      var gl;
+      var pixelsToWebGLMatrix = new Float32Array(16);
+      var mapMatrix = new Float32Array(16);
+      var currentIndex, minIndex, maxIndex;
+
+      function initializeMap() {
+           var mapOptions = {
+            zoom: 4,
+            center: new google.maps.LatLng(39.3, -95.8)
+         };
+         
+         map = new google.maps.Map(document.getElementById('map-div'),
+            mapOptions);
+
+      }
+
+      google.maps.event.addDomListener(window, 'load', initializeMap); 
+
+      function drawFrame() {
+
+        gl.enable(gl.BLEND);
+        gl.blendFunc( gl.SRC_ALPHA, gl.ONE );
+
+        // Compute WebGL transform from world xy coords to screen
+        // copy pixel->webgl matrix
+        mapMatrix.set(pixelsToWebGLMatrix);
+
+        var scale = canvasLayer.getMapScale();
+        scaleMatrix(mapMatrix, scale, scale);
+
+        var translation = canvasLayer.getMapTranslation();
+        translateMatrix(mapMatrix, translation.x, translation.y);
+
+        // Erase frame
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        // Compute point diameter, in pixels, based on zoom level
+
+        // map.zoom is approx 4 at country level
+        var countryPointSizePixels = 3;
+
+        // map.zoom is approx 18 at block level
+        var blockPointSizePixels = 90;
+
+        var pointSize = countryPointSizePixels * Math.pow(blockPointSizePixels / countryPointSizePixels, (map.zoom - 4) / (18 - 4));
+        var color = [.82, .22, .07, 1.0]; // RGBA, orange
+
+        var hardFraction = 0.4;  
+
+        drawPoints(gl, mapMatrix, feedLocList, 0, findIndex(currentIndex, feedLocList), 
+                   {color: color, pointSize: pointSize, hardFraction: hardFraction}); 
+      }
+
+      //for implementation of WebGL
+      function initWebGL() {
+        // initialize the canvasLayer
+        var canvasLayerOptions = {
+          map: map,
+          resizeHandler: resize,
+          animate: true,
+          updateHandler: drawFrame
+        };
+        canvasLayer = new CanvasLayer(canvasLayerOptions);
+
+        window.addEventListener('resize', function () {  google.maps.event.trigger(map, 'resize') }, false);
+
+        // initialize WebGL
+        gl = canvasLayer.canvas.getContext('experimental-webgl');
+        return !!gl;
+      }
+
+      function resize() {
+        var w = canvasLayer.canvas.width;
+        var h = canvasLayer.canvas.height;
+
+        // Extend viewport to entire canvas
+        gl.viewport(0, 0, w, h);
+
+        // Map canvas pixel coordinates to WebGL coordinates
+        pixelsToWebGLMatrix.set([2/w, 0,   0, 0,
+                                 0,  -2/h, 0, 0,
+                                 0,   0,   1, 0,
+                                -1,   1,   0, 1]);
+      }
+
+      //When ready to draw points 
+      function initializeWebGL(){
+
+         if (!initWebGL()) {
+             $('#map-div').append('<div align="center" style="position: absolute; z-index:1000000; margin:50px; padding:10px; border-color:black; border-style:solid; border-width:1px; box-shadow:5px 5px 5px grey; background-color:white; font-size:20px"><b>WebGL required</b><br>Please try using a browser that supports WebGL,<br>such as Chrome, Firefox, or Internet Explorer 11.</div>');
+           }
+
+          // Convert from latlng to xy for map, and set up shader programs
+         prepareSeries(gl, feedLocList);
+
+         currentIndex = minIndex = feedLocList.index[0];
+         maxIndex = feedLocList.index[feedLocList.index.length - 1];
+
+         var mouseoverTimer;
+         var infoWindow;
+
+         console.log("In initializeWebGL: " + feedLocList.latlng + " " + feedLocList.index);
+
+         // Initialize mouseover on canvas
+         google.maps.event.addListener(map, 'mousemove', function(event) {
+               clearTimeout(mouseoverTimer);
+               if (infoWindow) infoWindow.close();
+               mouseoverTimer = setTimeout(function() {
+                  var maxDistInPixels = 20;
+                  var elt = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
+                  if (elt) {
+                     infoWindow = new google.maps.InfoWindow(
+                     {content: 'Store ' + feedLocList.index[elt.i] + ' &nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',
+                     position: new google.maps.LatLng(elt.lat, elt.lng)});
+                     infoWindow.open(map);
+                  }
+               }, 500);
+           });
+
+         google.maps.event.addListener(map, 'mouseout', function() {
+            clearTimeout(mouseoverTimer);
+         });
+      }
+
+
+
+      //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ init() function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   
       function init() {
+
          $.ajax({url: ESDR_API_ROOT_URL + '/feeds', success: loadFeeds});
 
          $(document).keydown(function(){
@@ -501,42 +519,9 @@
          }).on("search", function(){
             searchAttributes(); 
          }); 
-
-
-         //WebGL Start
-
-         if (!initWebGL()) {
-             $('#map-div').append('<div align="center" style="position: absolute; z-index:1000000; margin:50px; padding:10px; border-color:black; border-style:solid; border-width:1px; box-shadow:5px 5px 5px grey; background-color:white; font-size:20px"><b>WebGL required</b><br>Please try using a browser that supports WebGL,<br>such as Chrome, Firefox, or Internet Explorer 11.</div>');
-           }
-          // Convert from latlng to xy for map, and set up shader programs
-         prepareSeries(gl, feedLocList);
-
-         currentIndex = minIndex = feedLocList.index[0];
-         maxIndex = feedLocList.index[feedLocList.index.length - 1];
-
-         var mouseoverTimer;
-         var infoWindow;
-
-         // Initialize mouseover on canvas
-         event.addListener(map, 'mousemove', function(event) {
-               clearTimeout(mouseoverTimer);
-               if (infoWindow) infoWindow.close();
-               mouseoverTimer = setTimeout(function() {
-                  var maxDistInPixels = 20;
-                  var elt = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
-                  if (elt) {
-                     infoWindow = new google.maps.InfoWindow(
-                     {content: 'Store ' + feedLocList.index[elt.i] + ' &nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',
-                     position: new google.maps.LatLng(elt.lat, elt.lng)});
-                     infoWindow.open(map);
-                  }
-               }, 500);
-           });
-
-         google.maps.event.addListener(map, 'mouseout', function() {
-            clearTimeout(mouseoverTimer);
-         });
       }
+
+   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ init() function END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
       function getChannels() {
          var plotDivs = $('#charts [id^=plot]');
@@ -641,10 +626,40 @@
             $('div' + showConditions).show(); 
          }; 
       }; 
-
+         
       $(init);
 
 </script>
+
+ <script id="pointVertexShader" type="x-shader/x-vertex">
+      attribute vec4 worldCoord;
+      attribute float aPointSize;
+
+      uniform mat4 mapMatrix;
+
+      void main() {
+        // transform world coordinate by matrix uniform variable
+        gl_Position = mapMatrix * worldCoord;
+
+        // a constant size for points, regardless of zoom level
+        gl_PointSize = aPointSize;
+      }
+    </script>
+
+    <script id="pointFragmentShader" type="x-shader/x-fragment">
+      precision mediump float;
+      uniform vec4 color;
+      uniform float hardFraction;
+
+      // Circle of diameter 0.5, composed of a "hard" (alpha=1) center of radius 0.5 * hardFraction,
+      // then transitioning to alpha=0 at diameter 0.5
+      void main() {
+        float dist = length(gl_PointCoord.xy - vec2(.5, .5));
+
+        gl_FragColor = color * clamp((0.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
+      }
+    </script>
+
 
 </head>
 <body style="width:100%;height:100%">
