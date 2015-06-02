@@ -88,7 +88,7 @@
 
    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
    <script src="http://api.cmucreatelab.org/exp-0.1/js/utils.js"></script>
-   <script src="http://api.cmucreatelab.org/exp-0.1/js/series.js"></script>
+   <script src="http://api.cmucreatelab.org/exp-0.1/js/series.js"></script> 
    <script src="http://api.cmucreatelab.org/exp-0.1/js/CanvasLayer.js"></script>
 
    <script language="JavaScript" type="text/javascript">
@@ -330,8 +330,9 @@
                   var channel = channels[c];
                   var label = feed.name + ' (' + feed.id + ').' + channel;
                   var id = feed.id + '.' + channel;
+                  var idHashTag = i + data.offset; 
                   channelLabels[id] = label;
-                  html.push('<div class="sensors" id="' + label.toLowerCase() + "#" + i + '"> <input type="checkbox" onclick="clickChannel(this)" name="' + id +'">' + label + '<br> </div>');
+                  html.push('<div class="sensors" id="' + label.toLowerCase() + " #" + idHashTag + '"> <input type="checkbox" onclick="clickChannel(this)" name="' + id +'">' + label + '<br> </div>');
                }
             }
             //for (var channel = 0; i < feed.channelBounds.channels
@@ -509,8 +510,13 @@
 
       function initializeMap() {
            var mapOptions = {
-            zoom: 4,
-            center: new google.maps.LatLng(39.3, -95.8)
+            //start at middle of US
+            // zoom: 4,
+            // center: new google.maps.LatLng(39.3, -95.8)
+
+            //start in Pittsburgh 
+            zoom: 13,
+            center: new google.maps.LatLng(40.442493, -79.942553)
          };
          
          map = new google.maps.Map(document.getElementById('map-div'),
@@ -606,21 +612,21 @@
 
          console.log("In initializeWebGL: " + feedLocList.latlng + " " + feedLocList.index);
 
-         // Initialize mouseover on canvas
-         google.maps.event.addListener(map, 'mousemove', function(event) {
-             clearTimeout(mouseoverTimer);
-             if (infoWindow) infoWindow.close();
-             mouseoverTimer = setTimeout(function() {
-                var maxDistInPixels = 20;
-                var elt = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
-                if (elt) {
-                   infoWindow = new google.maps.InfoWindow(
-                   {content: 'Feed ' + feedLocList.index[elt.i] + ' &nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',
-                   position: new google.maps.LatLng(elt.lat, elt.lng)});
-                   infoWindow.open(map);
-                }
-             }, 500);
-          });
+         // // Initialize mouseover on canvas
+         // google.maps.event.addListener(map, 'mousemove', function(event) {
+         //     clearTimeout(mouseoverTimer);
+         //     if (infoWindow) infoWindow.close();
+         //     mouseoverTimer = setTimeout(function() {
+         //        var maxDistInPixels = 20;
+         //        var elt = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
+         //        if (elt) {
+         //           infoWindow = new google.maps.InfoWindow(
+         //           {content: 'Feed ' + feedLocList.index[elt.i] + ' &nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',
+         //           position: new google.maps.LatLng(elt.lat, elt.lng)});
+         //           infoWindow.open(map);
+         //        }
+         //     }, 500);
+          // });
 
          google.maps.event.addListener(map, 'click', function(event) {
                 //if (infoWindow) infoWindow.close();
@@ -628,20 +634,33 @@
                 var elt = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
                 if (elt) {
                     console.log(feedLocList.index[elt.i]);
-                    var clickedNode = $("div[id $= '#" + feedLocList.index[elt.i] + "']");
-                    // $(clickedNode).children().prop("checked", !($(this).prop("checked"))).each(function(){
-                    //   console.log($(this).get(0).checked); 
-                    //   console.log($(this).get(0).name); 
-                    //   if ($(this).get(0).checked) {
-                    //     addPlot($(this).get(0).name);
-                    //   } else {
-                    //     removePlot($(this).get(0).name);
-                    //   }
-                    //   updateHash();
-                    // });
+                    var clickedNode = $("div[id $= '#" + feedLocList.index[elt.i] + "']"); 
 
-                     $(clickedNode).each(function(){ 
-                      console.log($(this).text()); 
+                    $(clickedNode).each(function(){ 
+                        console.log($(this).text()); 
+                    });
+
+                    var inputNodes = $(clickedNode).children().filter('input');
+
+                    $(inputNodes).each(function(){
+                      console.log($(this).get(0).name); 
+                      console.log("Previous Value: "+ $(this).get(0).checked); 
+                      if ($(this).get(0).checked){
+                        $(this).prop('checked', false); 
+                        removePlot($(this).get(0).name);
+                      } else{
+                        $(this).prop('checked', true); 
+                        addPlot($(this).get(0).name);
+                      }
+                      console.log("New Value: "+ $(this).get(0).checked); 
+
+
+                      // if ($(this).get(0).checked) {
+                      //   addPlot($(this).get(0).name);
+                      // } else {
+                      //   removePlot($(this).get(0).name);
+                      // }
+                      // updateHash();
                     });
 
                 }
@@ -682,6 +701,32 @@
         gl_FragColor = color * clamp((0.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
       }
     </script>
+
+    <script id="vertex" type="x-shader">
+
+      attribute vec2 aVertexPosition;
+       
+      void main() {
+          gl_Position = vec4(aVertexPosition, 0.0, 1.0);
+      }
+
+    </script>  
+    
+    <script id="fragment" type="x-shader">
+
+      #ifdef GL_ES
+      precision highp float;
+      #endif
+                             
+      uniform vec4 uColor;
+                             
+      void main() {
+              gl_FragColor = uColor;
+      }
+      
+    </script> 
+
+
 
 
 </head>
