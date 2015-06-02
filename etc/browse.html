@@ -497,7 +497,33 @@
             $('div' + showConditions).show(); 
          }; 
       }; 
-         
+      
+      function toggleChecks($inputLists){
+         $($inputLists).each(function(){
+            console.log($(this).get(0).name); 
+            console.log("Previous Value: "+ $(this).get(0).checked); 
+            if ($(this).get(0).checked){
+              $(this).prop('checked', false); 
+              removePlot($(this).get(0).name);
+            } else{
+              $(this).prop('checked', true); 
+              addPlot($(this).get(0).name);
+            }
+            console.log("New Value: "+ $(this).get(0).checked); 
+            updateHash(); 
+          });
+      }
+
+      function printFoundDivs($divList){
+        var string = ""; 
+        $($divList).each(function(index, element){
+          string += $(element).get(0).outerHTML; 
+          console.log("current string: " + string); 
+        })
+
+        return string; 
+      }
+
       $(init);
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   WebGL START   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -552,7 +578,7 @@
         var blockPointSizePixels = 90;
 
         var pointSize = .55 * countryPointSizePixels * Math.pow(blockPointSizePixels / countryPointSizePixels, (map.zoom - 4) / (18 - 4));
-        var color = [0, 0, 255, 1.0];
+        var color = [0, 0, 255, .75];
 
         var hardFraction = .90;  
 
@@ -607,33 +633,16 @@
          currentIndex = minIndex = feedLocList.index[0];
          maxIndex = feedLocList.index[feedLocList.index.length - 1];
 
-         var mouseoverTimer;
-         var infoWindow;
-
          console.log("In initializeWebGL: " + feedLocList.latlng + " " + feedLocList.index);
 
-         // // Initialize mouseover on canvas
-         // google.maps.event.addListener(map, 'mousemove', function(event) {
-         //     clearTimeout(mouseoverTimer);
-         //     if (infoWindow) infoWindow.close();
-         //     mouseoverTimer = setTimeout(function() {
-         //        var maxDistInPixels = 20;
-         //        var elt = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
-         //        if (elt) {
-         //           infoWindow = new google.maps.InfoWindow(
-         //           {content: 'Feed ' + feedLocList.index[elt.i] + ' &nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',
-         //           position: new google.maps.LatLng(elt.lat, elt.lng)});
-         //           infoWindow.open(map);
-         //        }
-         //     }, 500);
-          // });
-
+         var infoWindow; 
          google.maps.event.addListener(map, 'click', function(event) {
-                //if (infoWindow) infoWindow.close();
                 var maxDistInPixels = 20;
                 var elt = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
                 if (elt) {
+
                     console.log(feedLocList.index[elt.i]);
+                    
                     var clickedNode = $("div[id $= '#" + feedLocList.index[elt.i] + "']"); 
 
                     $(clickedNode).each(function(){ 
@@ -642,33 +651,25 @@
 
                     var inputNodes = $(clickedNode).children().filter('input');
 
-                    $(inputNodes).each(function(){
-                      console.log($(this).get(0).name); 
-                      console.log("Previous Value: "+ $(this).get(0).checked); 
-                      if ($(this).get(0).checked){
-                        $(this).prop('checked', false); 
-                        removePlot($(this).get(0).name);
-                      } else{
-                        $(this).prop('checked', true); 
-                        addPlot($(this).get(0).name);
-                      }
-                      console.log("New Value: "+ $(this).get(0).checked); 
+                    //toggleChecks(inputNodes); 
+                    if (infoWindow){
+                      infoWindow.close();
+                    };
+                    infoWindow = new google.maps.InfoWindow(
+                      {content: printFoundDivs(clickedNode), 
+                      position: new google.maps.LatLng(elt.lat, elt.lng)});
+                    infoWindow.open(map); 
+                    //console.log(printFoundDivs(clickedNode)); 
 
-
-                      // if ($(this).get(0).checked) {
-                      //   addPlot($(this).get(0).name);
-                      // } else {
-                      //   removePlot($(this).get(0).name);
-                      // }
-                      // updateHash();
-                    });
 
                 }
+                // else{
+                //   console.log("No Node Clicked.");
+                  // if (infoWindow){
+                  //   infoWindow.close();
+                  // };
+                // };
           });
-
-         google.maps.event.addListener(map, 'mouseout', function() {
-            clearTimeout(mouseoverTimer);
-         });
       }
 
 </script>
