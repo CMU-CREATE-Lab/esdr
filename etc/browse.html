@@ -305,7 +305,7 @@
             removePlot(input.name);
          }
          updateHash();
-      }
+      } 
 
       function loadFeeds(response) {
          var data = response.data;
@@ -321,7 +321,7 @@
          for (var i = 0; i < feeds.length; i++) {
             var feed = feeds[i];
 
-            feedLocList.latlng.push(feed.longitude, feed.latitude); 
+            feedLocList.latlng.push(feed.latitude, feed.longitude); 
             feedLocList.index.push(i); 
 
             if (feed.channelBounds) {
@@ -331,7 +331,7 @@
                   var label = feed.name + ' (' + feed.id + ').' + channel;
                   var id = feed.id + '.' + channel;
                   channelLabels[id] = label;
-                  html.push('<div class="sensors" id="' + label.toLowerCase() + '"> <input type="checkbox" onclick="clickChannel(this)" name="' + id +'">' + label + '<br> </div>');
+                  html.push('<div class="sensors" id="' + label.toLowerCase() + "#" + i + '"> <input type="checkbox" onclick="clickChannel(this)" name="' + id +'">' + label + '<br> </div>');
                }
             }
             //for (var channel = 0; i < feed.channelBounds.channels
@@ -356,144 +356,14 @@
 
       }
       
-      //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   WebGL START   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      var map;
-      var canvasLayer;
-      var gl;
-      var pixelsToWebGLMatrix = new Float32Array(16);
-      var mapMatrix = new Float32Array(16);
-      var currentIndex, minIndex, maxIndex;
-
-      function initializeMap() {
-           var mapOptions = {
-            zoom: 4,
-            center: new google.maps.LatLng(39.3, -95.8)
-         };
-         
-         map = new google.maps.Map(document.getElementById('map-div'),
-            mapOptions);
-
-      }
-
-      google.maps.event.addDomListener(window, 'load', initializeMap); 
-
-      function drawFrame() {
-
-        gl.enable(gl.BLEND);
-        gl.blendFunc( gl.SRC_ALPHA, gl.ONE );
-
-        // Compute WebGL transform from world xy coords to screen
-        // copy pixel->webgl matrix
-        mapMatrix.set(pixelsToWebGLMatrix);
-
-        var scale = canvasLayer.getMapScale();
-        scaleMatrix(mapMatrix, scale, scale);
-
-        var translation = canvasLayer.getMapTranslation();
-        translateMatrix(mapMatrix, translation.x, translation.y);
-
-        // Erase frame
-        gl.clear(gl.COLOR_BUFFER_BIT);
-
-        // Compute point diameter, in pixels, based on zoom level
-
-        // map.zoom is approx 4 at country level
-        var countryPointSizePixels = 3;
-
-        // map.zoom is approx 18 at block level
-        var blockPointSizePixels = 90;
-
-        var pointSize = countryPointSizePixels * Math.pow(blockPointSizePixels / countryPointSizePixels, (map.zoom - 4) / (18 - 4));
-        var color = [.82, .22, .07, 1.0]; // RGBA, orange
-
-        var hardFraction = 0.4;  
-
-        drawPoints(gl, mapMatrix, feedLocList, 0, findIndex(currentIndex, feedLocList), 
-                   {color: color, pointSize: pointSize, hardFraction: hardFraction}); 
-      }
-
-      //for implementation of WebGL
-      function initWebGL() {
-        // initialize the canvasLayer
-        var canvasLayerOptions = {
-          map: map,
-          resizeHandler: resize,
-          animate: true,
-          updateHandler: drawFrame
-        };
-        canvasLayer = new CanvasLayer(canvasLayerOptions);
-
-        window.addEventListener('resize', function(){ google.maps.event.trigger(map, 'resize') }, false);
-
-        // initialize WebGL
-        gl = canvasLayer.canvas.getContext('experimental-webgl');
-        return !!gl;
-      }
-
-      function resize() {
-        var w = canvasLayer.canvas.width;
-        var h = canvasLayer.canvas.height;
-
-        // Extend viewport to entire canvas
-        gl.viewport(0, 0, w, h);
-
-        // Map canvas pixel coordinates to WebGL coordinates
-        pixelsToWebGLMatrix.set([2/w, 0,   0, 0,
-                                 0,  -2/h, 0, 0,
-                                 0,   0,   1, 0,
-                                -1,   1,   0, 1]);
-      }
-
-      //When ready to draw points 
-      function initializeWebGL(){
-
-         if (!initWebGL()) {
-             $('#map-div').append('<div align="center" style="position: absolute; z-index:1000000; margin:50px; padding:10px; border-color:black; border-style:solid; border-width:1px; box-shadow:5px 5px 5px grey; background-color:white; font-size:20px"><b>WebGL required</b><br>Please try using a browser that supports WebGL,<br>such as Chrome, Firefox, or Internet Explorer 11.</div>');
-           }
-
-          // Convert from latlng to xy for map, and set up shader programs
-         prepareSeries(gl, feedLocList);
-
-         currentIndex = minIndex = feedLocList.index[0];
-         maxIndex = feedLocList.index[feedLocList.index.length - 1];
-
-         var mouseoverTimer;
-         var infoWindow;
-
-         console.log("In initializeWebGL: " + feedLocList.latlng + " " + feedLocList.index);
-
-         // Initialize mouseover on canvas
-         google.maps.event.addListener(map, 'mousemove', function(event) {
-               clearTimeout(mouseoverTimer);
-               if (infoWindow) infoWindow.close();
-               mouseoverTimer = setTimeout(function() {
-                  var maxDistInPixels = 20;
-                  var elt = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
-                  if (elt) {
-                     infoWindow = new google.maps.InfoWindow(
-                     {content: 'Store ' + feedLocList.index[elt.i] + ' &nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',
-                     position: new google.maps.LatLng(elt.lat, elt.lng)});
-                     infoWindow.open(map);
-                  }
-               }, 500);
-           });
-
-         google.maps.event.addListener(map, 'mouseout', function() {
-            clearTimeout(mouseoverTimer);
-         });
-      }
-
-
-
       //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ init() function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    
       function init() {
 
          $.ajax({url: ESDR_API_ROOT_URL + '/feeds', success: loadFeeds});
+         $('#search-bar').focus(); 
 
-         $(document).keydown(function(){
-            $('#search-bar').focus(); 
-         }).on('click', function(event) {
+         $(document).on('click', function(event) {
             if (!$(event.target).closest('#search-bar').length) {
                $('#search-bar').blur(); 
             }
@@ -651,7 +521,6 @@
       google.maps.event.addDomListener(window, 'load', initializeMap); 
 
       function drawFrame() {
-
         gl.enable(gl.BLEND);
         gl.blendFunc( gl.SRC_ALPHA, gl.ONE );
 
@@ -677,11 +546,13 @@
         var blockPointSizePixels = 90;
 
         var pointSize = countryPointSizePixels * Math.pow(blockPointSizePixels / countryPointSizePixels, (map.zoom - 4) / (18 - 4));
-        var color = [.82, .22, .07, 1.0]; // RGBA, orange
+        var color = [0, 0, 255, 1.0];
 
-        var hardFraction = 0.4;  
+        var hardFraction = 0.;  
 
-        drawPoints(gl, mapMatrix, feedLocList, 0, findIndex(currentIndex, feedLocList), 
+        var count = feedLocList.index.length;
+
+        drawPoints(gl, mapMatrix, feedLocList, 0, count, 
                    {color: color, pointSize: pointSize, hardFraction: hardFraction}); 
       }
 
@@ -737,19 +608,44 @@
 
          // Initialize mouseover on canvas
          google.maps.event.addListener(map, 'mousemove', function(event) {
-               clearTimeout(mouseoverTimer);
-               if (infoWindow) infoWindow.close();
-               mouseoverTimer = setTimeout(function() {
-                  var maxDistInPixels = 20;
-                  var elt = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
-                  if (elt) {
-                     infoWindow = new google.maps.InfoWindow(
-                     {content: 'Store ' + feedLocList.index[elt.i] + ' &nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',
-                     position: new google.maps.LatLng(elt.lat, elt.lng)});
-                     infoWindow.open(map);
-                  }
-               }, 500);
-           });
+             clearTimeout(mouseoverTimer);
+             if (infoWindow) infoWindow.close();
+             mouseoverTimer = setTimeout(function() {
+                var maxDistInPixels = 20;
+                var elt = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
+                if (elt) {
+                   infoWindow = new google.maps.InfoWindow(
+                   {content: 'Feed ' + feedLocList.index[elt.i] + ' &nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',
+                   position: new google.maps.LatLng(elt.lat, elt.lng)});
+                   infoWindow.open(map);
+                }
+             }, 500);
+          });
+
+         google.maps.event.addListener(map, 'click', function(event) {
+                //if (infoWindow) infoWindow.close();
+                var maxDistInPixels = 20;
+                var elt = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
+                if (elt) {
+                    console.log(feedLocList.index[elt.i]);
+                    var clickedNode = $("div[id $= '#" + feedLocList.index[elt.i] + "']");
+                    // $(clickedNode).children().prop("checked", !($(this).prop("checked"))).each(function(){
+                    //   console.log($(this).get(0).checked); 
+                    //   console.log($(this).get(0).name); 
+                    //   if ($(this).get(0).checked) {
+                    //     addPlot($(this).get(0).name);
+                    //   } else {
+                    //     removePlot($(this).get(0).name);
+                    //   }
+                    //   updateHash();
+                    // });
+
+                     $(clickedNode).each(function(){ 
+                      console.log($(this).text()); 
+                    });
+
+                }
+          });
 
          google.maps.event.addListener(map, 'mouseout', function() {
             clearTimeout(mouseoverTimer);
