@@ -354,7 +354,6 @@
             feedLocList.latlng = new Float32Array(feedLocList.latlng); 
             feedLocList.index = new Float32Array(feedLocList.index); 
             
-            console.log("Before initializeWebGl: " + feedLocList.latlng + " " + feedLocList.index); 
             initializeWebGL();  
          }
 
@@ -638,8 +637,6 @@
 
          currentIndex = minIndex = feedLocList.index[0];
          maxIndex = feedLocList.index[feedLocList.index.length - 1];
-
-         console.log("In initializeWebGL: " + feedLocList.latlng + " " + feedLocList.index);
 
          var infoWindow; 
          google.maps.event.addListener(map, 'click', function(event) {
