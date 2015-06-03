@@ -524,7 +524,6 @@
         var string = ""; 
         $($divList).each(function(index, element){
           string += $(element).get(0).outerHTML; 
-          console.log("current string: " + string); 
         })
 
         return string; 
@@ -542,13 +541,13 @@
 
       function initializeMap() {
            var mapOptions = {
-            //start at middle of US
-            zoom: 4,
-            center: new google.maps.LatLng(39.3, -95.8)
+            // //start at middle of US
+            // zoom: 4,
+            // center: new google.maps.LatLng(39.3, -95.8)
 
             //start in Pittsburgh 
-            // zoom: 13,
-            // center: new google.maps.LatLng(40.442493, -79.942553)
+            zoom: 13,
+            center: new google.maps.LatLng(40.442493, -79.942553)
          };
          
          map = new google.maps.Map(document.getElementById('map-div'),
@@ -649,32 +648,32 @@
                 if (elt) {
 
                     console.log(feedLocList.index[elt.i]);
-                    
-                    var clickedNode = $("div[id $= '#" + feedLocList.index[elt.i] + "']"); 
 
-                    $(clickedNode).each(function(){ 
-                        console.log($(this).text()); 
-                    });
+                    var clickedNode = null; 
+                    
+                    var clickedNode = $("#channels div[id $= '#" + feedLocList.index[elt.i] + "']"); 
 
                     var inputNodes = $(clickedNode).children().filter('input');
 
-                    //toggleChecks(inputNodes); 
                     if (infoWindow){
+                      console.log("An infowindow is open.")
                       infoWindow.close();
                     };
+
                     infoWindow = new google.maps.InfoWindow(
                       {content: printFoundDivs(clickedNode), 
                       position: new google.maps.LatLng(elt.lat, elt.lng)});
                     infoWindow.open(map); 
-                    console.log(elt.lat + ", " + elt.lng); 
-                    //console.log(printFoundDivs(clickedNode)); 
+                    console.log(printFoundDivs(clickedNode)); 
                 }
           });
       }
 
 </script>
 
- <script id="pointVertexShader" type="x-shader/x-vertex">
+</script>
+
+    <script id="pointVertexShader" type="x-shader/x-vertex">
       attribute vec4 worldCoord;
       attribute float aPointSize;
 
@@ -698,37 +697,12 @@
       // then transitioning to alpha=0 at diameter 0.5
       void main() {
         float dist = length(gl_PointCoord.xy - vec2(.5, .5));
-
+        // TODO(rsargent):  shouldn't we just be adjusting the alpha here?  Maybe we're taking
+        // advantage of the double-multiplication to get something other than linear.
+        // But multiplying all the channels will break if we do something other than an additive blend.
         gl_FragColor = color * clamp((0.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
       }
     </script>
-
-    <script id="vertex" type="x-shader">
-
-      attribute vec2 aVertexPosition;
-       
-      void main() {
-          gl_Position = vec4(aVertexPosition, 0.0, 1.0);
-      }
-
-    </script>  
-    
-    <script id="fragment" type="x-shader">
-
-      #ifdef GL_ES
-      precision highp float;
-      #endif
-                             
-      uniform vec4 uColor;
-                             
-      void main() {
-              gl_FragColor = uColor;
-      }
-      
-    </script> 
-
-
-
 
 </head>
 <body style="width:100%;height:100%">
