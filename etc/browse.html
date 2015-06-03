@@ -9,6 +9,8 @@
          font-weight: 400 !important;
          font-size: 16px !important;
          margin: 3px;
+         width: 100%;
+         height: 100%;
       }
 
       .plot_container {
@@ -264,7 +266,7 @@
          html.push('<div id="' + yAxisName + '" style="position:absolute; width:30px; top:0px; bottom:0px; right:0px"></div>');
          html.push('<div style="position:absolute"><span style="cursor:pointer" onclick="removePlot(\'' + channel + '\')">☒</span> <font size=-1>' + channelLabels[channel] + '</font></div>');
          html.push('</div>');
-         $('#charts').append(html.join(''));
+         $('#plots').append(html.join(''));
          
          plotManager.addDataSeriesPlot(plotName, createDatasource(channel), plotName, yAxisName, 0, 100, style);
          var thisPlotIdx = plotCount;
@@ -395,7 +397,7 @@
    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ init() function END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
       function getChannels() {
-         var plotDivs = $('#charts [id^=plot]');
+         var plotDivs = $('#plots [id^=plot]');
          var channels = [];
          for (var i = 0; i < plotDivs.length; i++) {
             var plotName = plotDivs[i].id;
@@ -474,7 +476,7 @@
          plotManager = new org.bodytrack.grapher.PlotManager("date_axis", minTimeSecs, maxTimeSecs);
 
       plotManager.setWillAutoResizeWidth(true, function() {
-               return $('#charts').width()         // window width
+               return $('#plots').width()         // window width
                       - 30;
             });
       }
@@ -733,12 +735,13 @@
 </head>
 <body style="width:100%;height:100%">
 <input id = "search-bar" type = "search" placeholder="Search: " style = "width:19%; height:15px; position:absolute; left:3px; top: 5px; font-size:10px;"> 
-<div id="channels" style="width:20%; height:100%; position:absolute; left:0px; top:22px; font-size:10px; overflow-y:auto"></div>
+<div id="channels" style="width:20%; height:calc(100vh - 15px); position:absolute; left:0px; top:22px; font-size:10px; overflow-y:auto"></div>
 <div id="map-div" style="width:80%; height:40%; position:absolute; right:3px;"></div>
-<div id="charts" style="width:80%; height: 59.8%; position:absolute; right:0px; bottom:0px;">
-<div style="position:relative; height: 40px; width:100%; border-bottom:1px solid black">
-<div id="date_axis" style="position:absolute; top:0px; bottom:0px; left:0px; right:40px"></div>
-</div>
+<div id="charts" style="width:80%; height: 60%; position:absolute; right:0px; bottom:0px;">
+  <div style="position:relative; height: 40px; width:100%; border-bottom:1px solid black">
+      <div id="date_axis" style="position:absolute; top:0px; bottom:0px; left:0px; right:40px"></div>
+  </div>
+  <div id = "plots" style="position:relative; overflow-y: auto; top:0px; height:calc(100vh - 30px);">
 </div>
 </body>
 </html>
