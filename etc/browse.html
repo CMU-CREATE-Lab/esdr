@@ -91,13 +91,13 @@
 
    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
    <script src="http://api.cmucreatelab.org/exp-0.1/js/utils.js"></script>
-   <script src="http://api.cmucreatelab.org/exp-0.1/js/series.js"></script> 
+   <script src="series.js"></script> 
    <script src="http://api.cmucreatelab.org/exp-0.1/js/CanvasLayer.js"></script>
 
    <script language="JavaScript" type="text/javascript">
 
       //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   esdr start  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      var feedLocList = {latlng: [], index: []}; 
+      var feedLocList = {latlng: [], index: [], color: []}; 
       var ESDR_API_ROOT_URL = 'https://esdr.cmucreatelab.org/api/v1';
       var DEFAULT_CHANNEL = 'particle_concentration';
 
@@ -329,7 +329,8 @@
 
                if (channels.length > 0) {
                 feedLocList.latlng.push(feed.latitude, feed.longitude); 
-                feedLocList.index.push(feed.id); 
+                feedLocList.index.push(feed.id);
+                feedLocList.color.push(Math.random(), Math.random(), Math.random(), .75);  
                }
 
                for (var c = 0; c < channels.length; c++) {
@@ -353,6 +354,7 @@
 
             feedLocList.latlng = new Float32Array(feedLocList.latlng); 
             feedLocList.index = new Float32Array(feedLocList.index); 
+            feedLocList.color = new Float32Array(feedLocList.color); 
             
             initializeWebGL();  
          }
@@ -646,6 +648,21 @@
 
                     console.log(feedLocList.index[elt.i]);
 
+                    for(var i = 0; i < 4; i++){
+                      console.log(feedLocList.color[elt.i * 4 + i]); 
+                      feedLocList.color[elt.i * 4 + i] = 1; 
+                      gl.bindBuffer(gl.ARRAY_BUFFER, feedLocList.colorBuffer);
+                      gl.bufferData(gl.ARRAY_BUFFER, feedLocList.color, gl.STATIC_DRAW);
+
+                      // enable the 'aColor' attribute in the shader to receive buffer
+                      gl.enableVertexAttribArray(gl.getAttribLocation(feedLocList.program, 'aColor'));
+
+                      // tell webgl how buffer is laid out 
+                      gl.vertexAttribPointer(gl.getAttribLocation(feedLocList.program, 'aColor'), 4, gl.FLOAT, false, 0, 0);
+                    }
+
+
+
                     var clickedNode = null; 
                     
                     var clickedNode = $("#channels div[id $= '#" + feedLocList.index[elt.i] + "']"); 
@@ -663,6 +680,8 @@
                     infoWindow.open(map); 
                 }
           });
+
+
       }
 
 </script>
@@ -672,6 +691,9 @@
     <script id="pointVertexShader" type="x-shader/x-vertex">
       attribute vec4 worldCoord;
       attribute float aPointSize;
+      attribute vec4 aColor; 
+
+      varying vec4 vColor; 
 
       uniform mat4 mapMatrix;
 
@@ -681,11 +703,15 @@
 
         // a constant size for points, regardless of zoom level
         gl_PointSize = aPointSize;
+
+        vColor = aColor; 
       }
     </script>
     <script id="pointFragmentShader" type="x-shader/x-fragment">
       precision mediump float;
       uniform vec4 color;
+      varying vec4 vColor; 
+
       uniform float hardFraction;
 
       // Circle of diameter 0.5, composed of a "hard" (alpha=1) center of radius 0.5 * hardFraction,
@@ -695,7 +721,10 @@
         // TODO(rsargent):  shouldn't we just be adjusting the alpha here?  Maybe we're taking
         // advantage of the double-multiplication to get something other than linear.
         // But multiplying all the channels will break if we do something other than an additive blend.
-        gl_FragColor = color * clamp((0.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
+        // gl_FragColor = color * clamp((0.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
+
+        gl_FragColor = vColor * clamp((0.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
+
       }
     </script>
 
