@@ -686,11 +686,9 @@
         gl_PointSize = aPointSize;
       }
     </script>
-
     <script id="pointFragmentShader" type="x-shader/x-fragment">
       precision mediump float;
       uniform vec4 color;
-      attribute vec4 vColor; 
       uniform float hardFraction;
 
       // Circle of diameter 0.5, composed of a "hard" (alpha=1) center of radius 0.5 * hardFraction,
@@ -701,7 +699,6 @@
         // advantage of the double-multiplication to get something other than linear.
         // But multiplying all the channels will break if we do something other than an additive blend.
         gl_FragColor = color * clamp((0.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
-        //gl_FragColor = vColor * clamp((0.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
       }
     </script>
 
