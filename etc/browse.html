@@ -91,7 +91,7 @@
 
    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
    <script src="http://api.cmucreatelab.org/exp-0.1/js/utils.js"></script>
-   <script src="series.js"></script> 
+   <script src="..\series2.js"></script> 
    <script src="http://api.cmucreatelab.org/exp-0.1/js/CanvasLayer.js"></script>
 
    <script language="JavaScript" type="text/javascript">
@@ -279,7 +279,11 @@
          channelToPlotIdx[channel] = plotCount;
          plotIdxToChannel[plotCount] = channel;
          plotCount++;
-         $('input[name="' + channel + '"]').attr('checked', true);
+         $('input[name="' + channel + '"]').prop('checked', true);
+
+         var feedIndex = parseInt(channel.substr(0, channel.indexOf('.'))); 
+         var listIndex = $.inArray(feedIndex, feedLocList.index); 
+         changeColor(1,0,0,.85,listIndex);
       }
 
       function removePlot(channel) {
@@ -288,7 +292,13 @@
          plotManager.getPlotContainer(plotName).removePlot(plotManager.getPlot(plotName));
          $('#plot' + plotIdx).parent().remove();
          window.clearInterval(plotScalers[plotIdx]);
-         $('input[name="' + channel + '"]').attr('checked', false);
+         $('input[name="' + channel + '"]').prop('checked', false);
+
+         var feedIndex = parseInt(channel.substr(0, channel.indexOf('.'))); 
+         var listIndex = $.inArray(feedIndex, feedLocList.index); 
+
+         if (!(checkIfAnyChecked(feedIndex))) changeColor(0,0,1,1,listIndex);
+
       }
 
       function clampNumberAxisToDataRange(plotIdx) {
@@ -301,14 +311,31 @@
       }
 
       function clickChannel(input) {
-         console.log('clickChannel ' + input.name);
-         if (input.checked) {
-            addPlot(input.name);
-         } else {
-            removePlot(input.name);
-         }
-         updateHash();
+        console.log('clickChannel ' + input.name); 
+        if (input.checked) {
+          addPlot(input.name);
+        } else {
+          removePlot(input.name);
+        }
+        updateHash();
       } 
+
+      function checkIfAnyChecked(index){
+        
+        var foundDivs = $("#channels div[id $= '#" + index + "']"); 
+
+        var inputNodes = $(foundDivs).children().children().filter('input');
+        var result = false; 
+        $(inputNodes).each(function(){
+          if ($(this).get(0).checked){
+            result = true;
+          } 
+          console.log($(this).get(0).checked);
+        });
+
+        return result; 
+
+      }
 
       function loadFeeds(response) {
          var data = response.data;
@@ -330,7 +357,7 @@
                if (channels.length > 0) {
                 feedLocList.latlng.push(feed.latitude, feed.longitude); 
                 feedLocList.index.push(feed.id);
-                feedLocList.color.push(Math.random(), Math.random(), Math.random(), .75);  
+                feedLocList.color.push(0, 0, 1, .80);  
                }
 
                for (var c = 0; c < channels.length; c++) {
@@ -350,7 +377,7 @@
             loadHash();
             // TODO(rsargent): let's update this only when panning or zooming the time axis
             window.setInterval(updateHash, 100);
-            window.onhashchange = loadHash;
+            window.onhashchange = loadHash; 
 
             feedLocList.latlng = new Float32Array(feedLocList.latlng); 
             feedLocList.index = new Float32Array(feedLocList.index); 
@@ -470,7 +497,11 @@
          plotManager.getPlotContainer(plotName).removePlot(plotManager.getPlot(plotName));
          $('#plot' + plotIdx).parent().remove();
          window.clearInterval(plotScalers[plotIdx]);
-         $('input[name="' + channel + '"]').attr('checked', false);
+         $('input[name="' + channel + '"]').prop('checked', false);
+
+         var feedIndex = parseInt(channel.substr(0, channel.indexOf('.'))); 
+         var listIndex = $.inArray(feedIndex, feedLocList.index); 
+         if (!(checkIfAnyChecked(feedIndex))) changeColor(0,0,1,1,listIndex);
       }
       
 
@@ -504,22 +535,6 @@
             $('div' + showConditions).show(); 
          }; 
       }; 
-      
-      function toggleChecks($inputLists){
-         $($inputLists).each(function(){
-            console.log($(this).get(0).name); 
-            console.log("Previous Value: "+ $(this).get(0).checked); 
-            if ($(this).get(0).checked){
-              $(this).prop('checked', false); 
-              removePlot($(this).get(0).name);
-            } else{
-              $(this).prop('checked', true); 
-              addPlot($(this).get(0).name);
-            }
-            console.log("New Value: "+ $(this).get(0).checked); 
-            updateHash(); 
-          });
-      }
 
       function printFoundDivs($divList){
         var string = ""; 
@@ -539,6 +554,24 @@
       var pixelsToWebGLMatrix = new Float32Array(16);
       var mapMatrix = new Float32Array(16);
       var currentIndex, minIndex, maxIndex;
+
+      function changeColor(r, g, b, a, index){
+
+        feedLocList.color[index * 4 + 0] = r; 
+        feedLocList.color[index * 4 + 1] = g; 
+        feedLocList.color[index * 4 + 2] = b; 
+        feedLocList.color[index * 4 + 3] = a; 
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, feedLocList.colorBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, feedLocList.color, gl.STATIC_DRAW);
+
+        // enable the 'aColor' attribute in the shader to receive buffer
+        gl.enableVertexAttribArray(gl.getAttribLocation(feedLocList.program, 'aColor'));
+
+        // tell webgl how buffer is laid out 
+        gl.vertexAttribPointer(gl.getAttribLocation(feedLocList.program, 'aColor'), 4, gl.FLOAT, false, 0, 0);
+
+      }
 
       function initializeMap() {
            var mapOptions = {
@@ -646,22 +679,7 @@
                 var elt = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
                 if (elt) {
 
-                    console.log(feedLocList.index[elt.i]);
-
-                    for(var i = 0; i < 4; i++){
-                      console.log(feedLocList.color[elt.i * 4 + i]); 
-                      feedLocList.color[elt.i * 4 + i] = 1; 
-                      gl.bindBuffer(gl.ARRAY_BUFFER, feedLocList.colorBuffer);
-                      gl.bufferData(gl.ARRAY_BUFFER, feedLocList.color, gl.STATIC_DRAW);
-
-                      // enable the 'aColor' attribute in the shader to receive buffer
-                      gl.enableVertexAttribArray(gl.getAttribLocation(feedLocList.program, 'aColor'));
-
-                      // tell webgl how buffer is laid out 
-                      gl.vertexAttribPointer(gl.getAttribLocation(feedLocList.program, 'aColor'), 4, gl.FLOAT, false, 0, 0);
-                    }
-
-
+                    console.log(elt.i + ' ' + feedLocList.index[elt.i]);
 
                     var clickedNode = null; 
                     
@@ -678,6 +696,20 @@
                       {content: printFoundDivs(clickedNode), 
                       position: new google.maps.LatLng(elt.lat, elt.lng)});
                     infoWindow.open(map); 
+
+
+                    // for(var i = 0; i < 4; i++){
+                    //   console.log(elt.i + " " + feedLocList.color[elt.i * 4 + i]); 
+                    //   feedLocList.color[elt.i * 4 + i] = 1; 
+                    //   gl.bindBuffer(gl.ARRAY_BUFFER, feedLocList.colorBuffer);
+                    //   gl.bufferData(gl.ARRAY_BUFFER, feedLocList.color, gl.STATIC_DRAW);
+
+                    //   // enable the 'aColor' attribute in the shader to receive buffer
+                    //   gl.enableVertexAttribArray(gl.getAttribLocation(feedLocList.program, 'aColor'));
+
+                    //   // tell webgl how buffer is laid out 
+                    //   gl.vertexAttribPointer(gl.getAttribLocation(feedLocList.program, 'aColor'), 4, gl.FLOAT, false, 0, 0);
+                    // }
                 }
           });
 
