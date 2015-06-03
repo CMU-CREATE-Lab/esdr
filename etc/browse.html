@@ -322,15 +322,7 @@
          var html = [];
 
          for (var i = 0; i < feeds.length; i++) {
-            var feed = feeds[i];
-
-            if (Math.abs(feed.latitude - 40.49976018987462) < 1e-5 &&
-                Math.abs(feed.longitude - -80.07060170173645) < 1e-5) {
-              console.log('hit');
-              debugger;
-            }
-
-            
+            var feed = feeds[i]; 
 
             if (feed.channelBounds) {
                var channels = Object.keys(feed.channelBounds.channels).sort();
@@ -551,12 +543,12 @@
       function initializeMap() {
            var mapOptions = {
             //start at middle of US
-            // zoom: 4,
-            // center: new google.maps.LatLng(39.3, -95.8)
+            zoom: 4,
+            center: new google.maps.LatLng(39.3, -95.8)
 
             //start in Pittsburgh 
-            zoom: 13,
-            center: new google.maps.LatLng(40.442493, -79.942553)
+            // zoom: 13,
+            // center: new google.maps.LatLng(40.442493, -79.942553)
          };
          
          map = new google.maps.Map(document.getElementById('map-div'),
