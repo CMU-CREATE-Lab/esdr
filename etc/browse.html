@@ -106,6 +106,8 @@
 
       var channelUnits = null;
 
+      var showNumList = []; 
+
       //Jquery cache for all selectors 
       var $allSelect = null; 
 
@@ -116,6 +118,9 @@
       var feed = null;
       var availableChannels = [];
       var isAutoScaleOn = false;
+
+      //WebGL stuff
+      var alpha = 0.70; 
 
       function setRangeFromSecondsAgoToNow(numSecondsAgo) {
          var now = Date.now() / 1000;
@@ -285,7 +290,7 @@
 
          var feedIndex = parseInt(channel.substr(0, channel.indexOf('.'))); 
 
-         changeColor(1,0,0,.85,feedIndex);
+         changeColor(1,0,0, feedIndex);
       }
 
       function removePlot(channel) {
@@ -298,7 +303,7 @@
 
          var feedIndex = parseInt(channel.substr(0, channel.indexOf('.'))); 
 
-         if (!(checkIfAnyChecked(feedIndex))) changeColor(0,0,1,1,feedIndex);
+         if (!(checkIfAnyChecked(feedIndex))) changeColor(0,0,1,feedIndex);
 
       }
 
@@ -358,7 +363,7 @@
                if (channels.length > 0) {
                 feedLocList.latlng.push(feed.latitude, feed.longitude); 
                 feedLocList.index.push(feed.id);
-                feedLocList.color.push(0, 0, 1, .80);  
+                feedLocList.color.push(0, 0, 1, alpha);  
                }
 
                for (var c = 0; c < channels.length; c++) {
@@ -517,7 +522,7 @@
 
          var feedIndex = parseInt(channel.substr(0, channel.indexOf('.'))); 
 
-         if (!(checkIfAnyChecked(feedIndex))) changeColor(0,0,1,1,feedIndex);
+         if (!(checkIfAnyChecked(feedIndex))) changeColor(0,0,1,feedIndex);
       }
       
 
@@ -536,7 +541,7 @@
       function searchAttributes() {
          var str = $('#search-bar').val().toLowerCase();     
          var wordList = str.split(" ") || [];
-         var feedNumList = []; 
+         showNumList = []; 
 
          var showConditions = "[class = sensors]"; 
          for (var i = 0; i < wordList.length; i++){
@@ -549,9 +554,9 @@
 
           var currentNum = $(this).attr('id').substr($(this).attr('id').lastIndexOf('#') + 1); 
 
-          if (feedNumList.length == 0 || currentNum != feedNumList[feedNumList.length - 1]) {
+          if (showNumList.length == 0 || currentNum != showNumList[showNumList.length - 1]) {
             
-            feedNumList.push(parseInt(currentNum));
+            showNumList.push(parseInt(currentNum));
 
           } 
 
@@ -559,7 +564,7 @@
          if (str == ""){
             if ($allSelect) {
               $allSelect.show(); 
-              changeOpacity(allFeedNums, .85)
+              changeOpacity(allFeedNums, alpha)
             }
          } else {
             if($allSelect){
@@ -567,11 +572,9 @@
               changeOpacity(allFeedNums, 0); 
 
               $('div' + showConditions).show(); 
-              changeOpacity(feedNumList, .85)
+              changeOpacity(showNumList, alpha)
           }
          }; 
-
-
 
       }; 
 
@@ -594,23 +597,24 @@
       var mapMatrix = new Float32Array(16);
       var currentIndex, minIndex, maxIndex;
 
-      function changeColor(r, g, b, a, feedNum){
+      function changeColor(r, g, b, feedNum){
 
         var listIndex = $.inArray(feedNum, feedLocList.index); 
 
         feedLocList.color[listIndex * 4 + 0] = r; 
         feedLocList.color[listIndex * 4 + 1] = g; 
         feedLocList.color[listIndex * 4 + 2] = b; 
-        feedLocList.color[listIndex * 4 + 3] = a; 
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, feedLocList.colorBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, feedLocList.color, gl.STATIC_DRAW);
+        if(!!gl){
+          gl.bindBuffer(gl.ARRAY_BUFFER, feedLocList.colorBuffer);
+          gl.bufferData(gl.ARRAY_BUFFER, feedLocList.color, gl.STATIC_DRAW);
 
-        // enable the 'aColor' attribute in the shader to receive buffer
-        gl.enableVertexAttribArray(gl.getAttribLocation(feedLocList.program, 'aColor'));
+          // enable the 'aColor' attribute in the shader to receive buffer
+          gl.enableVertexAttribArray(gl.getAttribLocation(feedLocList.program, 'aColor'));
 
-        // tell webgl how buffer is laid out 
-        gl.vertexAttribPointer(gl.getAttribLocation(feedLocList.program, 'aColor'), 4, gl.FLOAT, false, 0, 0);
+          // tell webgl how buffer is laid out 
+          gl.vertexAttribPointer(gl.getAttribLocation(feedLocList.program, 'aColor'), 4, gl.FLOAT, false, 0, 0);
+        }
 
       }
 
@@ -624,18 +628,35 @@
 
         })
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, feedLocList.colorBuffer);
+        if(!!gl){gl.bindBuffer(gl.ARRAY_BUFFER, feedLocList.colorBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, feedLocList.color, gl.STATIC_DRAW);
 
         // enable the 'aColor' attribute in the shader to receive buffer
         gl.enableVertexAttribArray(gl.getAttribLocation(feedLocList.program, 'aColor'));
 
         // tell webgl how buffer is laid out 
-        gl.vertexAttribPointer(gl.getAttribLocation(feedLocList.program, 'aColor'), 4, gl.FLOAT, false, 0, 0);
+        gl.vertexAttribPointer(gl.getAttribLocation(feedLocList.program, 'aColor'), 4, gl.FLOAT, false, 0, 0);}
 
       }
 
       function initializeMap() {
+            var myStyle = [
+                            {
+                              "featureType": "poi",
+                              "elementType": "labels.icon",
+                              "stylers": [
+                                { "visibility": "on" }
+                              ]
+                            },
+                            {
+                              "featureType": "poi",
+                              "elementType": "labels.text",
+                              "stylers": [
+                                { "visibility": "off" }
+                              ]
+                            }
+                          ]
+
            var mapOptions = {
             // //start at middle of US
             // zoom: 4,
@@ -643,7 +664,9 @@
 
             //start in Pittsburgh 
             zoom: 13,
-            center: new google.maps.LatLng(40.442493, -79.942553)
+            center: new google.maps.LatLng(40.442493, -79.942553),
+            styles: myStyle, 
+
          };
          
          map = new google.maps.Map(document.getElementById('map-div'),
@@ -678,9 +701,9 @@
         // map.zoom is approx 18 at block level
         var blockPointSizePixels = 90;
 
-        var pointSize = .55 * countryPointSizePixels * Math.pow(blockPointSizePixels / countryPointSizePixels, (map.zoom - 4) / (18 - 4));
+        var pointSize = .75 * countryPointSizePixels * Math.pow(blockPointSizePixels / countryPointSizePixels, (map.zoom - 4) / (18 - 4));
 
-        var color = [0, 0, 255, .75];
+        var color = [0, 0, 255, alpha];
 
         var hardFraction = .90;  
 
@@ -737,17 +760,18 @@
 
          var infoWindow; 
          google.maps.event.addListener(map, 'click', function(event) {
-                var maxDistInPixels = 20;
+                var maxDistInPixels = 10;
                 var elt = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
-                if (elt) {
+                if (elt && feedLocList.color[elt.i * 4 + 3] != 0) {
 
-                    console.log(elt.i + ' ' + feedLocList.index[elt.i]);
+                    console.log("Feed Number: " + feedLocList.index[elt.i] + ", Location in Array: " + elt.i);
 
                     var clickedNode = null; 
                     
-                    var clickedNode = $("#channels div[id $= '#" + feedLocList.index[elt.i] + "']"); 
+                    var clickedNode = $("#channels div[id $= '#" + feedLocList.index[elt.i] + "']");
 
-                    var inputNodes = $(clickedNode).children().filter('input');
+                    var inputNodes = $(clickedNode).children().children().filter('input');
+
 
                     if (infoWindow){
                       console.log("An infowindow is open.")
@@ -758,7 +782,29 @@
                       {content: printFoundDivs(clickedNode), 
                       position: new google.maps.LatLng(elt.lat, elt.lng)});
                     infoWindow.open(map); 
+
+                    $(inputNodes).each(function (index, inputs){
+                      $('input[name="' + $(this).attr('name') + '"]').prop('checked', $(this).prop('checked'));
+
+                  }); 
                 }
+          });
+
+          google.maps.event.addListener(map, 'mousemove', function(event) {
+                var maxDistInPixels = 10;
+                var elt = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
+                if (elt && feedLocList.color[elt.i * 4 + 3] != 0) {
+
+                    map.setOptions({ draggableCursor: 'default' });
+
+                    changeOpacity([feedLocList.index[elt.i]], 1); 
+                    
+                }else{
+
+                  map.setOptions({ draggableCursor: null });
+                  changeOpacity(showNumList, alpha);
+                }
+
           });
 
 
@@ -803,7 +849,9 @@
         // But multiplying all the channels will break if we do something other than an additive blend.
         // gl_FragColor = color * clamp((0.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
 
-        gl_FragColor = vColor * clamp((0.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
+        //gl_FragColor = vColor * clamp((0.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
+        
+        gl_FragColor = vColor * clamp((.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
 
       }
     </script>
