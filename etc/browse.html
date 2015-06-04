@@ -109,6 +109,8 @@
       //Jquery cache for all selectors 
       var $allSelect = null; 
 
+      var allFeedNums = []; 
+
       // grapher stuff
       var plotManager;
       var feed = null;
@@ -282,8 +284,8 @@
          $('input[name="' + channel + '"]').prop('checked', true);
 
          var feedIndex = parseInt(channel.substr(0, channel.indexOf('.'))); 
-         var listIndex = $.inArray(feedIndex, feedLocList.index); 
-         changeColor(1,0,0,.85,listIndex);
+
+         changeColor(1,0,0,.85,feedIndex);
       }
 
       function removePlot(channel) {
@@ -295,9 +297,8 @@
          $('input[name="' + channel + '"]').prop('checked', false);
 
          var feedIndex = parseInt(channel.substr(0, channel.indexOf('.'))); 
-         var listIndex = $.inArray(feedIndex, feedLocList.index); 
 
-         if (!(checkIfAnyChecked(feedIndex))) changeColor(0,0,1,1,listIndex);
+         if (!(checkIfAnyChecked(feedIndex))) changeColor(0,0,1,1,feedIndex);
 
       }
 
@@ -382,11 +383,26 @@
             feedLocList.latlng = new Float32Array(feedLocList.latlng); 
             feedLocList.index = new Float32Array(feedLocList.index); 
             feedLocList.color = new Float32Array(feedLocList.color); 
+
+            $allSelect = $("div[class = sensors]"); 
+
+            ($allSelect).each(function(){
+
+                var currentNum = $(this).attr('id').substr($(this).attr('id').lastIndexOf('#') + 1); 
+                
+                if (currentNum == 4712) console.log('hi')
+                if (allFeedNums.length == 0 || currentNum != allFeedNums[allFeedNums.length - 1]) {
+                    allFeedNums.push(parseInt(currentNum));
+                }
+            });  
             
             initializeWebGL();  
+
+
          }
 
-         $allSelect = $("div[class = sensors]"); 
+      
+
          searchAttributes(); 
 
       }
@@ -500,8 +516,8 @@
          $('input[name="' + channel + '"]').prop('checked', false);
 
          var feedIndex = parseInt(channel.substr(0, channel.indexOf('.'))); 
-         var listIndex = $.inArray(feedIndex, feedLocList.index); 
-         if (!(checkIfAnyChecked(feedIndex))) changeColor(0,0,1,1,listIndex);
+
+         if (!(checkIfAnyChecked(feedIndex))) changeColor(0,0,1,1,feedIndex);
       }
       
 
@@ -520,6 +536,7 @@
       function searchAttributes() {
          var str = $('#search-bar').val().toLowerCase();     
          var wordList = str.split(" ") || [];
+         var feedNumList = []; 
 
          var showConditions = "[class = sensors]"; 
          for (var i = 0; i < wordList.length; i++){
@@ -528,12 +545,34 @@
             }
          }; 
 
+        $('div' + showConditions).each(function(){
+
+          var currentNum = $(this).attr('id').substr($(this).attr('id').lastIndexOf('#') + 1); 
+
+          if (feedNumList.length == 0 || currentNum != feedNumList[feedNumList.length - 1]) {
+            
+            feedNumList.push(parseInt(currentNum));
+
+          } 
+
+        })
          if (str == ""){
-            $allSelect.show(); 
+            if ($allSelect) {
+              $allSelect.show(); 
+              changeOpacity(allFeedNums, .85)
+            }
          } else {
-            $allSelect.hide(); 
-            $('div' + showConditions).show(); 
+            if($allSelect){
+              $allSelect.hide(); 
+              changeOpacity(allFeedNums, 0); 
+
+              $('div' + showConditions).show(); 
+              changeOpacity(feedNumList, .85)
+          }
          }; 
+
+
+
       }; 
 
       function printFoundDivs($divList){
@@ -555,12 +594,35 @@
       var mapMatrix = new Float32Array(16);
       var currentIndex, minIndex, maxIndex;
 
-      function changeColor(r, g, b, a, index){
+      function changeColor(r, g, b, a, feedNum){
 
-        feedLocList.color[index * 4 + 0] = r; 
-        feedLocList.color[index * 4 + 1] = g; 
-        feedLocList.color[index * 4 + 2] = b; 
-        feedLocList.color[index * 4 + 3] = a; 
+        var listIndex = $.inArray(feedNum, feedLocList.index); 
+
+        feedLocList.color[listIndex * 4 + 0] = r; 
+        feedLocList.color[listIndex * 4 + 1] = g; 
+        feedLocList.color[listIndex * 4 + 2] = b; 
+        feedLocList.color[listIndex * 4 + 3] = a; 
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, feedLocList.colorBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, feedLocList.color, gl.STATIC_DRAW);
+
+        // enable the 'aColor' attribute in the shader to receive buffer
+        gl.enableVertexAttribArray(gl.getAttribLocation(feedLocList.program, 'aColor'));
+
+        // tell webgl how buffer is laid out 
+        gl.vertexAttribPointer(gl.getAttribLocation(feedLocList.program, 'aColor'), 4, gl.FLOAT, false, 0, 0);
+
+      }
+
+      function changeOpacity(feedNumArray, alpha){
+
+        $(feedNumArray).each(function(index, feedNum){
+
+          var listIndex = $.inArray(feedNum, feedLocList.index); 
+
+          feedLocList.color[listIndex * 4 + 3] = alpha; 
+
+        })
 
         gl.bindBuffer(gl.ARRAY_BUFFER, feedLocList.colorBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, feedLocList.color, gl.STATIC_DRAW);
@@ -696,20 +758,6 @@
                       {content: printFoundDivs(clickedNode), 
                       position: new google.maps.LatLng(elt.lat, elt.lng)});
                     infoWindow.open(map); 
-
-
-                    // for(var i = 0; i < 4; i++){
-                    //   console.log(elt.i + " " + feedLocList.color[elt.i * 4 + i]); 
-                    //   feedLocList.color[elt.i * 4 + i] = 1; 
-                    //   gl.bindBuffer(gl.ARRAY_BUFFER, feedLocList.colorBuffer);
-                    //   gl.bufferData(gl.ARRAY_BUFFER, feedLocList.color, gl.STATIC_DRAW);
-
-                    //   // enable the 'aColor' attribute in the shader to receive buffer
-                    //   gl.enableVertexAttribArray(gl.getAttribLocation(feedLocList.program, 'aColor'));
-
-                    //   // tell webgl how buffer is laid out 
-                    //   gl.vertexAttribPointer(gl.getAttribLocation(feedLocList.program, 'aColor'), 4, gl.FLOAT, false, 0, 0);
-                    // }
                 }
           });
 
