@@ -760,7 +760,7 @@
 
          var infoWindow; 
          google.maps.event.addListener(map, 'click', function(event) {
-                var maxDistInPixels = 10;
+                var maxDistInPixels = 15;
                 var elt = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
                 if (elt && feedLocList.color[elt.i * 4 + 3] != 0) {
 
@@ -783,15 +783,16 @@
                       position: new google.maps.LatLng(elt.lat, elt.lng)});
                     infoWindow.open(map); 
 
-                    $(inputNodes).each(function (index, inputs){
-                      $('input[name="' + $(this).attr('name') + '"]').prop('checked', $(this).prop('checked'));
-
-                  }); 
+                    google.maps.event.addListener(infoWindow, 'domready', function() {
+                      $(inputNodes).each(function (index, inputs){
+                        $('input[name="' + $(this).attr('name') + '"]').prop('checked', $(this).prop('checked'));
+                      }); 
+                    });
                 }
           });
 
           google.maps.event.addListener(map, 'mousemove', function(event) {
-                var maxDistInPixels = 10;
+                var maxDistInPixels = 15;
                 var elt = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
                 if (elt && feedLocList.color[elt.i * 4 + 3] != 0) {
 
