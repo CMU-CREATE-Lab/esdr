@@ -658,14 +658,14 @@
                           ]
 
            var mapOptions = {
-            // //start at middle of US
-            // zoom: 4,
-            // center: new google.maps.LatLng(39.3, -95.8)
+            //start at middle of US
+            zoom: 4,
+            center: new google.maps.LatLng(39.3, -95.8)
 
             //start in Pittsburgh 
-            zoom: 13,
-            center: new google.maps.LatLng(40.442493, -79.942553),
-            styles: myStyle, 
+            // zoom: 13,
+            // center: new google.maps.LatLng(40.442493, -79.942553),
+            // styles: myStyle, 
 
          };
          
@@ -804,10 +804,13 @@
                       changeOpacity([feedLocList.index[eltList[i].i]], 1); 
                     }
                 }
+
                 if (eltList.length == 0){
                     map.setOptions({ draggableCursor: null });
                     changeOpacity(showNumList, alpha); 
                 }
+
+                console.log(eltList);
           });
 
 
