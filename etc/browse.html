@@ -760,15 +760,17 @@
 
          var infoWindow; 
          google.maps.event.addListener(map, 'click', function(event) {
-                var maxDistInPixels = 15;
-                var elt = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
-                if (elt && feedLocList.color[elt.i * 4 + 3] != 0) {
+                var maxDistInPixels = 10;
+                var eltList = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
+                for (var i = 0; i < eltList.length; i++){
 
-                    console.log("Feed Number: " + feedLocList.index[elt.i] + ", Location in Array: " + elt.i);
+                   if (feedLocList.color[eltList[i].i * 4 + 3] != 0) {
+
+                    console.log("Feed Number: " + feedLocList.index[eltList[i].i] + ", Location in Array: " + eltList[i].i);
 
                     var clickedNode = null; 
                     
-                    var clickedNode = $("#channels div[id $= '#" + feedLocList.index[elt.i] + "']");
+                    clickedNode = $("#channels div[id $= '#" + feedLocList.index[eltList[i].i] + "']");
 
                     var inputNodes = $(clickedNode).children().children().filter('input');
 
@@ -780,7 +782,7 @@
 
                     infoWindow = new google.maps.InfoWindow(
                       {content: printFoundDivs(clickedNode), 
-                      position: new google.maps.LatLng(elt.lat, elt.lng)});
+                      position: new google.maps.LatLng(eltList[i].lat, eltList[i].lng)});
                     infoWindow.open(map); 
 
                     google.maps.event.addListener(infoWindow, 'domready', function() {
@@ -788,24 +790,24 @@
                         $('input[name="' + $(this).attr('name') + '"]').prop('checked', $(this).prop('checked'));
                       }); 
                     });
-                }
+                  }
+
+              }
           });
 
           google.maps.event.addListener(map, 'mousemove', function(event) {
-                var maxDistInPixels = 15;
-                var elt = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
-                if (elt && feedLocList.color[elt.i * 4 + 3] != 0) {
-
-                    map.setOptions({ draggableCursor: 'default' });
-
-                    changeOpacity([feedLocList.index[elt.i]], 1); 
-                    
-                }else{
-
-                  map.setOptions({ draggableCursor: null });
-                  changeOpacity(showNumList, alpha);
+                var maxDistInPixels = 10;
+                var eltList = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
+                for (var i = 0; i < eltList.length; i++){
+                    if (feedLocList.color[eltList[i].i * 4 + 3] != 0) {
+                      map.setOptions({ draggableCursor: 'default' });
+                      changeOpacity([feedLocList.index[eltList[i].i]], 1); 
+                    }
                 }
-
+                if (eltList.length == 0){
+                    map.setOptions({ draggableCursor: null });
+                    changeOpacity(showNumList, alpha); 
+                }
           });
 
 

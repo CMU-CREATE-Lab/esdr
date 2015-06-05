@@ -95,26 +95,31 @@ function findClosestElement(gl, transform, series, pixelXY, maxDistInPixels) {
   var glXY = divToGl(gl, transform, pixelXY);
 
   var closest_distsq = 1e30;
-  var closest = null;
+  var selectedGL = []; 
+  var selectedPixel = []; 
+
   for (var i = 0; i < series.xy.length / 2; i++) {
     var distsq = Math.pow(series.xy[i * 2] - glXY.x, 2) + Math.pow(series.xy[i * 2 + 1] - glXY.y, 2);
     if (distsq < closest_distsq) {
       closest_distsq = distsq;
-      closest = i;
+      var closest = i; 
+      currentGL = {x: series.xy[closest * 2], y: series.xy[closest * 2 + 1]}
+      selectedGL.push(currentGL)
+      selectedPixel.push(glToDiv(gl, transform, currentGL)); 
     }
   }
 
-  var selectedGL = {x: series.xy[closest * 2], y: series.xy[closest * 2 + 1]};
-  var selectedPixel = glToDiv(gl, transform, selectedGL);
+  var eltList = []; 
 
-  var dist = Math.sqrt(Math.pow(pixelXY.x - selectedPixel.x, 2) + Math.pow(pixelXY.y - selectedPixel.y, 2));
-  if (dist <= maxDistInPixels) {
-    var elt = glToLatLng(selectedGL);
-    elt.i = closest;
-    return elt;
-  } else {
-    return null;
+  for(var i=0; i < selectedPixel.length; i++){
+     var dist = Math.sqrt(Math.pow(pixelXY.x - selectedPixel[i].x, 2) + Math.pow(pixelXY.y - selectedPixel[i].y, 2));
+     if (dist <= maxDistInPixels) {
+      var elt = glToLatLng(selectedGL[i]);
+      elt.i = closest;
+      eltList.push(elt); 
+    } 
   }
+  return eltList; 
 }
 
 // Convert from lat, lng to GL x, y coords in the range x:0-256, y:0-256
