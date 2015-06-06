@@ -121,6 +121,7 @@
 
       //WebGL stuff
       var alpha = 0.70; 
+      var currentPointSize = 0; 
 
       function setRangeFromSecondsAgoToNow(numSecondsAgo) {
          var now = Date.now() / 1000;
@@ -289,6 +290,12 @@
          $('input[name="' + channel + '"]').prop('checked', true);
 
          var feedIndex = parseInt(channel.substr(0, channel.indexOf('.'))); 
+
+         $("#channels div[id = '#" + feedIndex + "']").each(function(index, element){
+            var inputTag = $(element).children().children().filter('input'); 
+
+            if ($(inputTag).attr('name') == channel) $(element).prependTo('#channels'); 
+         }); 
 
          changeColor(1,0,0, feedIndex);
       }
@@ -571,8 +578,46 @@
               $allSelect.hide(); 
               changeOpacity(allFeedNums, 0); 
 
-              $('div' + showConditions).show(); 
-              changeOpacity(showNumList, alpha)
+              
+              if (showNumList.length != 0){
+                $('div' + showConditions).show(); 
+                changeOpacity(showNumList, alpha)
+              }//else{
+
+              //   geocoder.geocode( { 'address': str}, function(results, status) {
+              //     if (status == google.maps.GeocoderStatus.OK) { 
+              //       var latlng = {latlng: []}
+              //       console.log(results[0].geometry.viewport.northeast()); 
+              //       // latlng.latlng.push(results[0].geometry.viewport);
+              //       // latlng.xy = latlng.latlng;
+
+              //       // for (var i = 0; i < latlng.latlng.length; i += 2) {
+              //       //     var lat = latlng.latlng[i];
+              //       //     var lon = latlng.latlng[i + 1];
+              //       //     var pixel = LatLongToPixelXY(lat, lon);
+              //       //     latlng.xy[i] = pixel.x;
+              //       //     latlng.xy[i + 1] = pixel.y;
+              //       // }
+              //       // delete latlng.latlng;
+
+              //       // var foundIndexes = []; 
+              //       // for (var k = 0; k < feedLocList.index.length ; k++){
+              //       //   if (Math.pow(feedLocList.xy[k*2] - latlng.xy[0],2) + Math.pow(feedLocList.xy[k*2 + 1] - latlng.xy[1],2) <= .05){
+              //       //     foundIndexes.push(feedLocList.index[k]);
+              //       //   }
+              //       // } 
+
+              //       // console.log(foundIndexes); 
+              //       // changeOpacity(foundIndexes, alpha); 
+
+              //     } else {
+              //       console.log("Geocode was not successful for the following reason: " + status);
+              //     }
+
+              //   });
+
+              // };
+              
           }
          }; 
 
@@ -591,6 +636,7 @@
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   WebGL START   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       var map;
+      var geocoder;
       var canvasLayer;
       var gl;
       var pixelsToWebGLMatrix = new Float32Array(16);
@@ -658,23 +704,29 @@
                           ]
 
            var mapOptions = {
-            //start at middle of US
-            zoom: 4,
-            center: new google.maps.LatLng(39.3, -95.8)
+            // //start at middle of US
+            // zoom: 4,
+            // center: new google.maps.LatLng(39.3, -95.8)
 
-            //start in Pittsburgh 
-            // zoom: 13,
-            // center: new google.maps.LatLng(40.442493, -79.942553),
-            // styles: myStyle, 
+            // start in Pittsburgh 
+            zoom: 13,
+            center: new google.maps.LatLng(40.442493, -79.942553),
+            styles: myStyle, 
 
          };
          
          map = new google.maps.Map(document.getElementById('map-div'),
             mapOptions);
 
+         geocoder = new google.maps.Geocoder();
+
       }
 
       google.maps.event.addDomListener(window, 'load', initializeMap); 
+
+      function codeAddress(address) {
+        
+      }
 
       function drawFrame() {
         gl.enable(gl.BLEND);
@@ -696,12 +748,14 @@
         // Compute point diameter, in pixels, based on zoom level
 
         // map.zoom is approx 4 at country level
-        var countryPointSizePixels = 3;
+        var countryPointSizePixels = 5;
 
         // map.zoom is approx 18 at block level
-        var blockPointSizePixels = 90;
+        var blockPointSizePixels = 50;
 
         var pointSize = .75 * countryPointSizePixels * Math.pow(blockPointSizePixels / countryPointSizePixels, (map.zoom - 4) / (18 - 4));
+
+        currentPointSize = pointSize; 
 
         var color = [0, 0, 255, alpha];
 
@@ -760,8 +814,14 @@
 
          var infoWindow; 
          google.maps.event.addListener(map, 'click', function(event) {
-                var maxDistInPixels = 10;
+                var finalDiv = $('<div></div>'); 
+                var finalInput = $('<div></div>'); 
+                var sectionBreak = $('<hr>');
+                var meanLat = 0; 
+                var meanLng = 0; 
+                var maxDistInPixels = currentPointSize/2 + 5;
                 var eltList = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
+                var inputNodes = null; 
                 for (var i = 0; i < eltList.length; i++){
 
                    if (feedLocList.color[eltList[i].i * 4 + 3] != 0) {
@@ -771,49 +831,60 @@
                     var clickedNode = null; 
                     
                     clickedNode = $("#channels div[id $= '#" + feedLocList.index[eltList[i].i] + "']");
+                    inputNodes = $(clickedNode).children().children().filter('input');
 
-                    var inputNodes = $(clickedNode).children().children().filter('input');
+                    $(finalInput).append(inputNodes.clone()); 
 
+                    console.log("Iteration: " + i); 
+                    console.log(finalDiv);
 
-                    if (infoWindow){
-                      console.log("An infowindow is open.")
-                      infoWindow.close();
-                    };
-
-                    infoWindow = new google.maps.InfoWindow(
-                      {content: printFoundDivs(clickedNode), 
-                      position: new google.maps.LatLng(eltList[i].lat, eltList[i].lng)});
-                    infoWindow.open(map); 
-
-                    google.maps.event.addListener(infoWindow, 'domready', function() {
-                      $(inputNodes).each(function (index, inputs){
-                        $('input[name="' + $(this).attr('name') + '"]').prop('checked', $(this).prop('checked'));
-                      }); 
-                    });
+                    if(i > 0 && i < eltList.length)$(finalDiv).append(sectionBreak.clone());
+                    $(finalDiv).append(clickedNode.clone()); 
+                    $('input[name="' + $(this).attr('name') + '"]').prop('checked', $(this).prop('checked'));
+                    
+                    meanLat += eltList[i].lat/eltList.length; 
+                    meanLng += eltList[i].lng/eltList.length; 
                   }
-
+                    console.log(eltList);
+                    console.log(meanLat, meanLng);  
+                    console.log(printFoundDivs(finalDiv)); 
               }
-          });
+
+              if (eltList.length != 0){
+                console.log("initiate Window Opening");
+                  if (infoWindow){
+                    console.log("An infowindow is open.")
+                    infoWindow.close();
+                  };
+
+                 infoWindow = new google.maps.InfoWindow(
+                      {content: printFoundDivs(finalDiv), 
+                      position: new google.maps.LatLng(meanLat, meanLng)});
+                  infoWindow.open(map); 
+
+                  google.maps.event.addListener(infoWindow, 'domready', function() {
+                    $(finalInput).children().each(function (index, inputs){
+                      $('input[name="' + $(this).attr('name') + '"]').prop('checked', $(this).prop('checked'));
+                    }); 
+                  });
+              };
+         });
 
           google.maps.event.addListener(map, 'mousemove', function(event) {
-                var maxDistInPixels = 10;
+                var maxDistInPixels = currentPointSize/2 + 1 / (currentPointSize + .00001) ;
                 var eltList = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
                 for (var i = 0; i < eltList.length; i++){
                     if (feedLocList.color[eltList[i].i * 4 + 3] != 0) {
                       map.setOptions({ draggableCursor: 'default' });
                       changeOpacity([feedLocList.index[eltList[i].i]], 1); 
-                    }
+                    } 
                 }
 
                 if (eltList.length == 0){
                     map.setOptions({ draggableCursor: null });
-                    changeOpacity(showNumList, alpha); 
+                    changeOpacity(showNumList, alpha);
                 }
-
-                console.log(eltList);
           });
-
-
       }
 
 </script>
@@ -875,3 +946,5 @@
 </div>
 </body>
 </html>
+
+

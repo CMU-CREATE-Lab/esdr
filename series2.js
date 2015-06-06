@@ -68,6 +68,18 @@ function prepareSeries(gl, series, settings) {
 
 }
 
+function prepareSeries2(series){
+  series.xy = series.latlng;
+  for (var i = 0; i < series.latlng.length; i += 2) {
+      var lat = series.latlng[i];
+      var lon = series.latlng[i + 1];
+      var pixel = LatLongToPixelXY(lat, lon);
+      series.xy[i] = pixel.x;
+      series.xy[i + 1] = pixel.y;
+  }
+  delete series.latlng;
+}
+
 function findIndex(index, series) {
   if (index > series.index[series.index.length - 1]) {
     return series.index.length;
@@ -97,13 +109,13 @@ function findClosestElement(gl, transform, series, pixelXY, maxDistInPixels) {
   var closest_distsq = 1e30;
   var selectedGL = []; 
   var selectedPixel = []; 
-
+  var closest = []; 
   for (var i = 0; i < series.xy.length / 2; i++) {
     var distsq = Math.pow(series.xy[i * 2] - glXY.x, 2) + Math.pow(series.xy[i * 2 + 1] - glXY.y, 2);
     if (distsq < closest_distsq) {
       closest_distsq = distsq;
-      var closest = i; 
-      currentGL = {x: series.xy[closest * 2], y: series.xy[closest * 2 + 1]}
+      closest.push(i); 
+      currentGL = {x: series.xy[i * 2], y: series.xy[i * 2 + 1]}
       selectedGL.push(currentGL)
       selectedPixel.push(glToDiv(gl, transform, currentGL)); 
     }
@@ -115,10 +127,12 @@ function findClosestElement(gl, transform, series, pixelXY, maxDistInPixels) {
      var dist = Math.sqrt(Math.pow(pixelXY.x - selectedPixel[i].x, 2) + Math.pow(pixelXY.y - selectedPixel[i].y, 2));
      if (dist <= maxDistInPixels) {
       var elt = glToLatLng(selectedGL[i]);
-      elt.i = closest;
+      elt.i = closest[i];
       eltList.push(elt); 
     } 
   }
+
+
   return eltList; 
 }
 
