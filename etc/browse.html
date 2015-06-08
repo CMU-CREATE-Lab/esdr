@@ -108,6 +108,16 @@
 
       var showNumList = []; 
 
+      var pm25 = []; 
+      var pm10 = []; 
+      var ozone = []; 
+      var no = []; 
+      var no2 = []; 
+      var so2 = []; 
+      var co = []; 
+      var speck = []; 
+
+
       //Jquery cache for all selectors 
       var $allSelect = null; 
 
@@ -194,8 +204,15 @@
 
       var style = {
          "styles" : [
-            { "type" : "line", "lineWidth" : 1, "show" : true, "color" : "red" },
-            { "type" : "circle", radius : 3, "lineWidth" : 1, "show" : true, "color" : "blue", fill : false }
+            // { "type" : "line", "lineWidth" : 1, "show" : true, "color" : "red" },
+            // { "type" : "circle", radius : 3, "lineWidth" : 1, "show" : true, "color" : "blue", fill : false }
+            {
+                     "type" : "bar",
+                     "stripPosition" : "center",
+                     "stripWidthSecs" : 3600,
+                     "rangedColors" : "rgb(0,255,0); 3;rgb(47,255,0); 6;rgb(110,255,0); 9;rgb(180,255,0); 12;rgb(255,255,0); 15;rgb(255,177,0);18;rgb(255,107,0);21;rgb(255,46,0);24;rgb(255,0,0)"
+                  },
+            { "type" : "line", "lineWidth" : 1, "show" : true, "color" : "black" }
          ],
          "highlight" : {
             "lineWidth" : 1,
@@ -375,6 +392,7 @@
 
                for (var c = 0; c < channels.length; c++) {
                   var channel = channels[c];
+                  sortChannel(feed.productId, feed.id, channel); 
                   var label = feed.name + ' (' + feed.id + ').' + channel;
                   var id = feed.id + '.' + channel;
                   var idHashTag = feed.id; 
@@ -410,12 +428,120 @@
             
             initializeWebGL();  
 
-
          }
 
-      
-
          searchAttributes(); 
+
+      }
+
+      // var pm25 = []; 
+      // var pm10 = []; 
+      // var ozone = []; 
+      // var no = []; 
+      // var no2 = []; 
+      // var so2 = []; 
+      // var co = []; 
+
+      function sortChannel(productId, feedID, channel){
+        if (productId == 1){
+          console.log("ACHD Found"); 
+          if (channel.indexOf("PM25") > -1){
+            pm25.push(feedID); 
+          }
+          else if (channel.indexOf("PM10") > -1){
+            pm10.push(feedID); 
+          }
+          else if (channel.indexOf("OZONE") > -1){
+            ozone.push(feedID); 
+          }
+          else if (channel.indexOf("NO_") > -1){
+            no.push(feedID);
+          }
+          else if (channel.indexOf("NO2_") > -1){
+            no2.push(feedID);
+          }
+          else if (channel.indexOf("SO2") > -1){
+            so2.push(feedID);
+          }
+          else if (channel.indexOf("CO_") > -1){
+            co.push(feedID);
+          }
+        }else if(productId == 11){
+          console.log("AirNow Found");
+          if (channel.indexOf("PM2_5") > -1){
+            pm25.push(feedID); 
+          }
+          else if (channel.indexOf("PM10") > -1){
+            pm10.push(feedID); 
+          }
+          else if (channel.indexOf("OZONE") > -1){
+            ozone.push(feedID); 
+          }
+          else if (channel.indexOf("NO2") > -1){
+            no2.push(feedID);
+          }
+          else if (channel.indexOf("NO") > -1){
+            no.push(feedID);
+          }
+          else if (channel.indexOf("SO2") > -1){
+            so2.push(feedID);
+          }
+          else if (channel.indexOf("CO") > -1){
+            co.push(feedID);
+          }  
+        }else if(productId == 35){
+          console.log("BAAQMD Found");
+          if (channel === "PM2_5"){
+            pm25.push(feedID); 
+          }
+          else if (channel === "Ozone_O3"){
+            ozone.push(feedID); 
+          }
+          else if (channel === "Nitrogen_Dioxide_NO2"){
+            no2.push(feedID);
+          }
+          else if (channel === "Nitric_Oxide_NO"){
+            no.push(feedID);
+          }
+          else if (channel === "Sulfur_Dioxide_SO2"){
+            so2.push(feedID);
+          }
+          else if (channel === "Carbon_Monoxide_CO"){
+            co.push(feedID);
+          }
+        }else if(productId == 9){
+          console.log("Speck Found"); 
+          speck.push(feedID); 
+        }
+        // }else if(feedName.indexOf("Speck") > -1){
+        //   console.log("Speck Found");
+        // }else if(feedName.indexOf("Retigo") > -1){
+        //   console.log("Retigo Found");
+        // }else if(feedName.indexOf("Tepper") > -1){
+        //   console.log("Tepper Found");
+        // }else if(feedName.indexOf("Rodeo") > -1){
+        //   console.log("Rodeo Found");
+        // }else if(feedName.indexOf("fenceline_org") > -1){
+        //   console.log("fenceline_org Found");
+        // }else{
+        //   console.log("Other: " + channel);
+        // }
+
+        // switch (expression) {
+        //   case value1:
+        //     //Statements executed when the result of expression matches value1
+        //     [break;]
+        //   case value2:
+        //     //Statements executed the result of expression matches value2
+        //     [break;]
+        //   ...
+        //   case valueN:
+        //     //Statements executed when the result of expression matches valueN
+        //     [break;]
+        //   default:
+        //     //Statements executed when none of the values match the value of the expression
+        //     [break;]
+        // }
 
       }
       
@@ -819,7 +945,7 @@
                 var sectionBreak = $('<hr>');
                 var meanLat = 0; 
                 var meanLng = 0; 
-                var maxDistInPixels = currentPointSize/2 + 5;
+                var maxDistInPixels = currentPointSize/2 + 10;
                 var eltList = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
                 var inputNodes = null; 
                 for (var i = 0; i < eltList.length; i++){
@@ -835,7 +961,6 @@
 
                     $(finalInput).append(inputNodes.clone()); 
 
-                    console.log("Iteration: " + i); 
                     console.log(finalDiv);
 
                     if(i > 0 && i < eltList.length)$(finalDiv).append(sectionBreak.clone());
@@ -845,15 +970,11 @@
                     meanLat += eltList[i].lat/eltList.length; 
                     meanLng += eltList[i].lng/eltList.length; 
                   }
-                    console.log(eltList);
-                    console.log(meanLat, meanLng);  
-                    console.log(printFoundDivs(finalDiv)); 
+                     
               }
 
               if (eltList.length != 0){
-                console.log("initiate Window Opening");
                   if (infoWindow){
-                    console.log("An infowindow is open.")
                     infoWindow.close();
                   };
 
@@ -936,10 +1057,10 @@
 </head>
 <body style="width:100%;height:100%">
 <input id = "search-bar" type = "search" placeholder="Search: " style = "width:19%; height:15px; position:absolute; left:3px; top: 5px; font-size:10px;"> 
-<div id="channels" style="width:20%; height:calc(100vh - 15px); position:absolute; left:0px; top:25px; font-size:10px; overflow-y:auto"></div>
+<div id="channels" style="width:20%; height:calc(100vh - 30px); position:absolute; left:0px; top:25px; font-size:10px; overflow-y:auto"></div>
 <div id="map-div" style="width:80%; height:40%; position:absolute; right:3px;"></div>
 <div id="charts" style="width:80%; height: 60%; position:absolute; right:0px; bottom:0px;">
-  <div style="position:relative; height: 40px; width:100%; border-bottom:1px solid black">
+  <div style="position:relative; height: 50px; width:100%; border-bottom:1px solid black">
       <div id="date_axis" style="position:absolute; top:0px; bottom:0px; left:0px; right:40px"></div>
   </div>
   <div id = "plots" style="position:relative; overflow-y: auto; top:0px; height:calc(60vh - 50px);">
