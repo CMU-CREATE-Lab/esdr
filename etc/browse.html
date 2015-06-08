@@ -674,7 +674,13 @@
       function searchAttributes() {
          var str = $('#search-bar').val().toLowerCase();     
          var wordList = str.split(" ") || [];
-         showNumList = []; 
+         showNumList = [];
+
+        //  $('[name = filter]').each(function(index, input) {
+        //     if (input.checked){
+              
+        //     }
+        // });
 
          var showConditions = "[class = sensors]"; 
          for (var i = 0; i < wordList.length; i++){
@@ -1057,7 +1063,17 @@
 </head>
 <body style="width:100%;height:100%">
 <input id = "search-bar" type = "search" placeholder="Search: " style = "width:19%; height:15px; position:absolute; left:3px; top: 5px; font-size:10px;"> 
-<div id="channels" style="width:20%; height:calc(100vh - 30px); position:absolute; left:0px; top:25px; font-size:10px; overflow-y:auto"></div>
+<form id = "filters" style="font-size:12px; position: absolute; width: 200px; height: 160px; top: 25px; left: 3px; background-color: white;">
+  <label><input type="checkbox" name="filter" onclick="searchAttributes()">PM2.5<br></label>
+  <label><input type="checkbox" name="filter" onclick="searchAttributes()">PM10<br></label>
+  <label><input type="checkbox" name="filter" onclick="searchAttributes()">Ozone (O<sub>3</sub>)<br></label>
+  <label><input type="checkbox" name="filter" onclick="searchAttributes()">Nitric Oxide (NO)<br></label>
+  <label><input type="checkbox" name="filter" onclick="searchAttributes()">Nitrogen Dioxide (NO<sub>2</sub>)<br></label>
+  <label><input type="checkbox" name="filter" onclick="searchAttributes()">Sulfur Dioxide (SO<sub>2</sub>)<br></label>
+  <label><input type="checkbox" name="filter" onclick="searchAttributes()">Carbon Monoxide (CO)<br></label>
+  <input type="reset" value="Clear Filters">
+</form>
+<div id="channels" style="width:20%; height:calc(100vh - 190px); position:absolute; left:0px; top:180px; font-size:10px; overflow-y:auto"></div>
 <div id="map-div" style="width:80%; height:40%; position:absolute; right:3px;"></div>
 <div id="charts" style="width:80%; height: 60%; position:absolute; right:0px; bottom:0px;">
   <div style="position:relative; height: 50px; width:100%; border-bottom:1px solid black">
