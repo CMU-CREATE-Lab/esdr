@@ -213,7 +213,7 @@
                      // "rangedColors" : "rgb(0,255,0); 3;rgb(47,255,0); 6;rgb(110,255,0); 9;rgb(180,255,0); 12;rgb(255,255,0); 15;rgb(255,177,0);18;rgb(255,107,0);21;rgb(255,46,0);24;rgb(255,0,0)"
                      "rangedColors" : "rgb(230,230,230); 3;rgb(210,210,210); 6;rgb(190,190,190); 9;rgb(170,170,170); 12;rgb(150,150,150); 15;rgb(130,130,130);18;rgb(110,110,110);21;rgb(90,90,90);24;rgb(70,70,70)"
                   },
-            { "type" : "line", "lineWidth" : 1, "show" : true, "color" : "light gray"}
+            //{ "type" : "line", "lineWidth" : 1, "show" : true, "color" : "light gray"}
          ],
          "highlight" : {
             "lineWidth" : 1,
@@ -308,12 +308,6 @@
          $('input[name="' + channel + '"]').prop('checked', true);
 
          var feedIndex = parseInt(channel.substr(0, channel.indexOf('.'))); 
-
-         $("#channels div[id = '#" + feedIndex + "']").each(function(index, element){
-            var inputTag = $(element).children().children().filter('input'); 
-
-            if ($(inputTag).attr('name') == channel) $(element).prependTo('#channels'); 
-         }); 
 
          changeColor(1,0,0, feedIndex);
       }
@@ -712,7 +706,7 @@
 
          var finalSearchConditions = ""; 
          var noneChecked = true; 
-         $('[type = checkbox]').each(function(index, input) {
+         $('#filters [type = checkbox]').each(function(index, input) {
             if (input.checked){
               noneChecked = false; 
               switch (input.name) {
@@ -753,13 +747,16 @@
             }
         });
         
-        finalSearchConditions = finalSearchConditions.substring(0,finalSearchConditions.length - 1); 
+        
 
         if (noneChecked){
           filterNumList = filterNumList.concat(allFeedNums);
           finalSearchConditions = showConditions; 
-        }
+        }else{
+          finalSearchConditions = finalSearchConditions.substring(0,finalSearchConditions.length - 1); 
+        };
 
+        
         //console.log($(finalSearchConditions));
 
         $(finalSearchConditions).each(function(){
@@ -775,9 +772,11 @@
           var $allSelect = $("div[class = sensors]");
           if($allSelect){
             $allSelect.hide(); 
+            console.log("Hide All");
             changeOpacity(allFeedNums, 0); 
 
             if (showNumList.length != 0){
+              console.log("ShowNumList > 0 and show finalSearchConditions");
               $(finalSearchConditions).show();
               changeOpacity(showNumList, alpha);
 
@@ -820,17 +819,33 @@
           
          }; 
          $("#notFoundMsg").hide();
+         $('hr').show(); 
         var $mapInfoWindow = $("#infowindow");
         if ($mapInfoWindow) {
           var visibleElements = $mapInfoWindow.children().filter(":visible");
-          if (visibleElements.length == 0) {
-            console.log('adding nothing is found')
+          var visibleDivs = $(visibleElements).filter(".sensors"); 
+          if (visibleDivs.length == 0) {
+            console.log("All Invisible.");
             $("#notFoundMsg").show();
-          } else {
-            console.log('removing nothing is found')
-            
-          }
-        }
+            $("#notFoundMsg").prevAll('hr').hide(); 
+            $("#notFoundMsg").nextAll('hr').hide(); 
+          }else{ 
+              $(visibleDivs).each(function(index, element){
+                if (index==0){
+                  $(this).prevAll('hr').hide(); 
+                }else if (index==$(visibleDivs).length - 1){
+                  $(this).nextAll('hr').hide(); 
+                }
+              });
+            visibleElements = $mapInfoWindow.children().filter(":visible");
+            visibleElements.each(function(index, element){
+              if ($(element).is('hr') && $(visibleElements).eq(index + 1).is('hr')){
+                $(element).hide(); 
+              };
+            });
+          }; 
+        };
+        console.log("-------------------")
       }; 
 
       function clearFilters(){
@@ -900,6 +915,11 @@
         // tell webgl how buffer is laid out 
         gl.vertexAttribPointer(gl.getAttribLocation(feedLocList.program, 'aColor'), 4, gl.FLOAT, false, 0, 0);}
 
+      }
+
+      function reColor(input){
+        var filterType = $(input).data("filter");
+        console.log(filterType);
       }
 
       function initializeMap() {
@@ -1084,6 +1104,7 @@
                     }); 
                   });
               };
+            console.log("*************************")
          });
 
           google.maps.event.addListener(map, 'mousemove', function(event) {
@@ -1161,10 +1182,21 @@
   <label><input type="checkbox" name="no2" onclick="searchAttributes()">Nitrogen Dioxide (NO<sub>2</sub>)<br></label>
   <label><input type="checkbox" name="so2" onclick="searchAttributes()">Sulfur Dioxide (SO<sub>2</sub>)<br></label>
   <label><input type="checkbox" name="co" onclick="searchAttributes()">Carbon Monoxide (CO)<br></label>
-  <input type="button" value="Clear Filters" onclick="clearFilters()">
+  <input type="button" value="Clear Search Filters" onclick="clearFilters()">
 </form>
 <div id="channels" style="width:20%; height:calc(100vh - 190px); position:absolute; left:0px; top:180px; font-size:10px; overflow-y:auto"></div>
 <div id="map-div" style="width:80%; height:40%; position:absolute; right:3px;"></div>
+<!-- <form id = "filters" style="font-size:12px; position: absolute; width: 160px; height: 150px; bottom: 60%; right: 3px; background-color: white;">
+
+  <label><input type="radio" name="map-filter" data-filter = "pm25" onclick="reColor(this)">PM2.5<br></label>
+  <label><input type="radio" name="map-filter" data-filter = "pm10" onclick="reColor(this)">PM10<br></label>
+  <label><input type="radio" name="map-filter" data-filter = "ozone" onclick="reColor(this)">Ozone (O<sub>3</sub>)<br></label>
+  <label><input type="radio" name="map-filter" data-filter = "no" onclick="reColor(this)">Nitric Oxide (NO)<br></label>
+  <label><input type="radio" name="map-filter" data-filter = "no2" onclick="reColor(this)">Nitrogen Dioxide (NO<sub>2</sub>)<br></label>
+  <label><input type="radio" name="map-filter" data-filter = "so2" onclick="reColor(this)">Sulfur Dioxide (SO<sub>2</sub>)<br></label>
+  <label><input type="radio" name="map-filter" data-filter = "co" onclick="reColor(this)">Carbon Monoxide (CO)<br></label>
+  <input type="reset" value="Clear Map Filters">
+</form> -->
 <div id="charts" style="width:80%; height: 60%; position:absolute; right:0px; bottom:0px;">
   <div style="position:relative; height: 50px; width:100%; border-bottom:1px solid black">
       <div id="date_axis" style="position:absolute; top:0px; bottom:0px; left:0px; right:40px"></div>
