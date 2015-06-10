@@ -119,7 +119,7 @@
 
 
       //Jquery cache for all selectors 
-      var $allSelect = null; 
+      //var $allSelect = null; 
 
       var allFeedNums = []; 
 
@@ -210,9 +210,10 @@
                      "type" : "bar",
                      "stripPosition" : "center",
                      "stripWidthSecs" : 3600,
-                     "rangedColors" : "rgb(0,255,0); 3;rgb(47,255,0); 6;rgb(110,255,0); 9;rgb(180,255,0); 12;rgb(255,255,0); 15;rgb(255,177,0);18;rgb(255,107,0);21;rgb(255,46,0);24;rgb(255,0,0)"
+                     // "rangedColors" : "rgb(0,255,0); 3;rgb(47,255,0); 6;rgb(110,255,0); 9;rgb(180,255,0); 12;rgb(255,255,0); 15;rgb(255,177,0);18;rgb(255,107,0);21;rgb(255,46,0);24;rgb(255,0,0)"
+                     "rangedColors" : "rgb(230,230,230); 3;rgb(210,210,210); 6;rgb(190,190,190); 9;rgb(170,170,170); 12;rgb(150,150,150); 15;rgb(130,130,130);18;rgb(110,110,110);21;rgb(90,90,90);24;rgb(70,70,70)"
                   },
-            { "type" : "line", "lineWidth" : 1, "show" : true, "color" : "black" }
+            { "type" : "line", "lineWidth" : 1, "show" : true, "color" : "light gray"}
          ],
          "highlight" : {
             "lineWidth" : 1,
@@ -392,12 +393,12 @@
 
                for (var c = 0; c < channels.length; c++) {
                   var channel = channels[c];
-                  sortChannel(feed.productId, feed.id, channel); 
+                  var channelId = sortChannel(feed.productId, feed.id, channel); 
                   var label = feed.name + ' (' + feed.id + ').' + channel;
                   var id = feed.id + '.' + channel;
                   var idHashTag = feed.id; 
                   channelLabels[id] = label;
-                  html.push('<div class="sensors" id="' + label.toLowerCase() + " #" + idHashTag + '"> <label> <input type="checkbox" onclick="clickChannel(this)" name="' + id +'">' + label + '<br></label></div>');
+                  html.push('<div class="sensors" data-channel-type="' + channelId + '" id="' + label.toLowerCase() + " #" + idHashTag + '"> <label> <input type="checkbox" onclick="clickChannel(this)" name="' + id +'">' + label + '<br></label></div>');
                }
             }
             //for (var channel = 0; i < feed.channelBounds.channels
@@ -414,9 +415,9 @@
             feedLocList.index = new Float32Array(feedLocList.index); 
             feedLocList.color = new Float32Array(feedLocList.color); 
 
-            $allSelect = $("div[class = sensors]"); 
+            
 
-            ($allSelect).each(function(){
+            $("div[class = sensors]").each(function(){
 
                 var currentNum = $(this).attr('id').substr($(this).attr('id').lastIndexOf('#') + 1); 
                 
@@ -446,72 +447,93 @@
         if (productId == 1){
           console.log("ACHD Found"); 
           if (channel.indexOf("PM25") > -1){
-            pm25.push(feedID); 
+            pm25.push(feedID);
+            return "pm25";  
           }
           else if (channel.indexOf("PM10") > -1){
             pm10.push(feedID); 
+            return "pm10"; 
           }
           else if (channel.indexOf("OZONE") > -1){
-            ozone.push(feedID); 
+            ozone.push(feedID);
+            return "ozone";  
           }
           else if (channel.indexOf("NO_") > -1){
             no.push(feedID);
+            return "no"; 
           }
           else if (channel.indexOf("NO2_") > -1){
             no2.push(feedID);
+            return "no2"; 
           }
           else if (channel.indexOf("SO2") > -1){
             so2.push(feedID);
+            return "so2"; 
           }
           else if (channel.indexOf("CO_") > -1){
             co.push(feedID);
+            return "co"; 
           }
         }else if(productId == 11){
           console.log("AirNow Found");
           if (channel.indexOf("PM2_5") > -1){
-            pm25.push(feedID); 
+            pm25.push(feedID);
+            return "pm25";  
           }
           else if (channel.indexOf("PM10") > -1){
-            pm10.push(feedID); 
+            pm10.push(feedID);
+            return "pm10";  
           }
           else if (channel.indexOf("OZONE") > -1){
             ozone.push(feedID); 
+            return "ozone"; 
           }
           else if (channel.indexOf("NO2") > -1){
             no2.push(feedID);
+            return "no2"; 
           }
           else if (channel.indexOf("NO") > -1){
             no.push(feedID);
+            return "no"; 
           }
           else if (channel.indexOf("SO2") > -1){
             so2.push(feedID);
+            return "so2"; 
           }
           else if (channel.indexOf("CO") > -1){
             co.push(feedID);
+            return "co"; 
           }  
         }else if(productId == 35){
           console.log("BAAQMD Found");
           if (channel === "PM2_5"){
-            pm25.push(feedID); 
+            pm25.push(feedID);
+            return "pm25";  
           }
           else if (channel === "Ozone_O3"){
             ozone.push(feedID); 
+            return "ozone"; 
           }
           else if (channel === "Nitrogen_Dioxide_NO2"){
             no2.push(feedID);
+            return "no2"; 
           }
           else if (channel === "Nitric_Oxide_NO"){
             no.push(feedID);
+            return "no"; 
           }
           else if (channel === "Sulfur_Dioxide_SO2"){
             so2.push(feedID);
+            return "so2"; 
           }
           else if (channel === "Carbon_Monoxide_CO"){
             co.push(feedID);
+            return "co"; 
           }
         }else if(productId == 9){
           console.log("Speck Found"); 
           speck.push(feedID); 
+          return "speck"; 
         }
         // }else if(feedName.indexOf("Speck") > -1){
         //   console.log("Speck Found");
@@ -523,9 +545,12 @@
         //   console.log("Rodeo Found");
         // }else if(feedName.indexOf("fenceline_org") > -1){
         //   console.log("fenceline_org Found");
-        // }else{
-        //   console.log("Other: " + channel);
-        // }
+        else{
+          console.log("Other Found");
+          return "other"; 
+        }
+
+        return "other"; 
 
         // switch (expression) {
         //   case value1:
@@ -675,45 +700,87 @@
          var str = $('#search-bar').val().toLowerCase();     
          var wordList = str.split(" ") || [];
          showNumList = [];
+         var filterNumList = [];
 
-        //  $('[name = filter]').each(function(index, input) {
-        //     if (input.checked){
-              
-        //     }
-        // });
 
-         var showConditions = "[class = sensors]"; 
+         var showConditions = "div[class = sensors]"; 
          for (var i = 0; i < wordList.length; i++){
             if (wordList[i] != "") {
-               showConditions = showConditions + "[id *= '" + wordList[i] + "']";  
+               showConditions += "[id *= '" + wordList[i] + "']";  
             }
          }; 
 
-        $('div' + showConditions).each(function(){
+         var finalSearchConditions = ""; 
+         var noneChecked = true; 
+         $('[type = checkbox]').each(function(index, input) {
+            if (input.checked){
+              noneChecked = false; 
+              switch (input.name) {
+                  case "pm25":
+                    filterNumList = filterNumList.concat(pm25);
+                    console.log("pm25 checked"); 
+                    finalSearchConditions += showConditions + "[data-channel-type = 'pm25'],"; 
+                    break;
+                  case "pm10":
+                    filterNumList = filterNumList.concat(pm10);
+                    console.log("pm10 checked"); 
+                    finalSearchConditions += showConditions + "[data-channel-type = 'pm10'],"; 
+                    break;
+                  case "ozone":
+                    filterNumList = filterNumList.concat(ozone);
+                    console.log("ozone checked"); 
+                    finalSearchConditions += showConditions + "[data-channel-type = 'ozone'],"; 
+                    break;
+                  case "no":
+                    filterNumList = filterNumList.concat(no);
+                    console.log("no checked");
+                    finalSearchConditions += showConditions + "[data-channel-type = 'no'],"; 
+                    break;
+                  case "no2":
+                    filterNumList = filterNumList.concat(no2);
+                    console.log("no2 checked"); 
+                    finalSearchConditions += showConditions + "[data-channel-type = 'no2'],"; 
+                  case "so2":
+                    filterNumList = filterNumList.concat(so2);
+                    console.log("so2 checked")
+                    finalSearchConditions += showConditions + "[data-channel-type = 'so2'],"; 
+                    break;
+                  case "co":
+                    filterNumList = filterNumList.concat(co);
+                    console.log("co checked");
+                    finalSearchConditions += showConditions + "[data-channel-type = 'co'],"; 
+              }
+            }
+        });
+        
+        finalSearchConditions = finalSearchConditions.substring(0,finalSearchConditions.length - 1); 
+
+        if (noneChecked){
+          filterNumList = filterNumList.concat(allFeedNums);
+          finalSearchConditions = showConditions; 
+        }
+
+        //console.log($(finalSearchConditions));
+
+        $(finalSearchConditions).each(function(){
 
           var currentNum = $(this).attr('id').substr($(this).attr('id').lastIndexOf('#') + 1); 
 
-          if (showNumList.length == 0 || currentNum != showNumList[showNumList.length - 1]) {
-            
-            showNumList.push(parseInt(currentNum));
-
-          } 
-
-        })
-         if (str == ""){
-            if ($allSelect) {
-              $allSelect.show(); 
-              changeOpacity(allFeedNums, alpha)
+          if (filterNumList.indexOf(parseInt(currentNum)) > -1 && (showNumList.length == 0 || currentNum != showNumList[showNumList.length - 1])) {
+              showNumList.push(parseInt(currentNum)); 
             }
-         } else {
-            if($allSelect){
-              $allSelect.hide(); 
-              changeOpacity(allFeedNums, 0); 
+          });
 
-              
-              if (showNumList.length != 0){
-                $('div' + showConditions).show(); 
-                changeOpacity(showNumList, alpha)
+
+          var $allSelect = $("div[class = sensors]");
+          if($allSelect){
+            $allSelect.hide(); 
+            changeOpacity(allFeedNums, 0); 
+
+            if (showNumList.length != 0){
+              $(finalSearchConditions).show();
+              changeOpacity(showNumList, alpha);
+
               }//else{
 
               //   geocoder.geocode( { 'address': str}, function(results, status) {
@@ -750,10 +817,28 @@
 
               // };
               
-          }
+          
          }; 
-
+         $("#notFoundMsg").hide();
+        var $mapInfoWindow = $("#infowindow");
+        if ($mapInfoWindow) {
+          var visibleElements = $mapInfoWindow.children().filter(":visible");
+          if (visibleElements.length == 0) {
+            console.log('adding nothing is found')
+            $("#notFoundMsg").show();
+          } else {
+            console.log('removing nothing is found')
+            
+          }
+        }
       }; 
+
+      function clearFilters(){
+          $('[type = checkbox]').each(function(index, input){
+            $(input).prop('checked', false); 
+          }); 
+          searchAttributes(); 
+      }
 
       function printFoundDivs($divList){
         var string = ""; 
@@ -856,10 +941,6 @@
 
       google.maps.event.addDomListener(window, 'load', initializeMap); 
 
-      function codeAddress(address) {
-        
-      }
-
       function drawFrame() {
         gl.enable(gl.BLEND);
         gl.blendFunc( gl.SRC_ALPHA, gl.ONE );
@@ -936,7 +1017,7 @@
 
          if (!initWebGL()) {
              $('#map-div').append('<div align="center" style="position: absolute; z-index:1000000; margin:50px; padding:10px; border-color:black; border-style:solid; border-width:1px; box-shadow:5px 5px 5px grey; background-color:white; font-size:20px"><b>WebGL required</b><br>Please try using a browser that supports WebGL,<br>such as Chrome, Firefox, or Internet Explorer 11.</div>');
-           }
+           }9
 
           // Convert from latlng to xy for map, and set up shader programs
          prepareSeries(gl, feedLocList);
@@ -946,7 +1027,7 @@
 
          var infoWindow; 
          google.maps.event.addListener(map, 'click', function(event) {
-                var finalDiv = $('<div></div>'); 
+                var finalDiv = $('<div id="infowindow"><div id="notFoundMsg" style="display:none;">No channels found based on search criteria.</div></div>'); 
                 var finalInput = $('<div></div>'); 
                 var sectionBreak = $('<hr>');
                 var meanLat = 0; 
@@ -954,31 +1035,39 @@
                 var maxDistInPixels = currentPointSize/2 + 10;
                 var eltList = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
                 var inputNodes = null; 
+                var count = 0; 
                 for (var i = 0; i < eltList.length; i++){
 
                    if (feedLocList.color[eltList[i].i * 4 + 3] != 0) {
-
+                    count++; 
                     console.log("Feed Number: " + feedLocList.index[eltList[i].i] + ", Location in Array: " + eltList[i].i);
-
-                    var clickedNode = null; 
                     
-                    clickedNode = $("#channels div[id $= '#" + feedLocList.index[eltList[i].i] + "']");
+                    var clickedNode = $("#channels div[id $= '#" + feedLocList.index[eltList[i].i] + "']");
                     inputNodes = $(clickedNode).children().children().filter('input');
 
                     $(finalInput).append(inputNodes.clone()); 
 
-                    console.log(finalDiv);
-
+                    console.log(i, eltList.length);
                     if(i > 0 && i < eltList.length)$(finalDiv).append(sectionBreak.clone());
                     $(finalDiv).append(clickedNode.clone()); 
                     $('input[name="' + $(this).attr('name') + '"]').prop('checked', $(this).prop('checked'));
                     
-                    meanLat += eltList[i].lat/eltList.length; 
-                    meanLng += eltList[i].lng/eltList.length; 
-                  }
-                     
-              }
+                    meanLat += eltList[i].lat; 
+                    meanLng += eltList[i].lng; 
+                    console.log("-----")
+                    console.log(eltList[i].lat, eltList[i].lng)
+                    console.log(meanLat, meanLng);
+                    console.log("-----")
+                  } else {
+                        console.log('i am hidden')
 
+                  }    
+              }
+              if (count != 0){
+                meanLat = meanLat/count; 
+                meanLng = meanLng/count; 
+              }
+              
               if (eltList.length != 0){
                   if (infoWindow){
                     infoWindow.close();
@@ -1058,20 +1147,21 @@
         gl_FragColor = vColor * clamp((.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
 
       }
-    </script>
+
+    </script> 
 
 </head>
 <body style="width:100%;height:100%">
 <input id = "search-bar" type = "search" placeholder="Search: " style = "width:19%; height:15px; position:absolute; left:3px; top: 5px; font-size:10px;"> 
 <form id = "filters" style="font-size:12px; position: absolute; width: 200px; height: 160px; top: 25px; left: 3px; background-color: white;">
-  <label><input type="checkbox" name="filter" onclick="searchAttributes()">PM2.5<br></label>
-  <label><input type="checkbox" name="filter" onclick="searchAttributes()">PM10<br></label>
-  <label><input type="checkbox" name="filter" onclick="searchAttributes()">Ozone (O<sub>3</sub>)<br></label>
-  <label><input type="checkbox" name="filter" onclick="searchAttributes()">Nitric Oxide (NO)<br></label>
-  <label><input type="checkbox" name="filter" onclick="searchAttributes()">Nitrogen Dioxide (NO<sub>2</sub>)<br></label>
-  <label><input type="checkbox" name="filter" onclick="searchAttributes()">Sulfur Dioxide (SO<sub>2</sub>)<br></label>
-  <label><input type="checkbox" name="filter" onclick="searchAttributes()">Carbon Monoxide (CO)<br></label>
-  <input type="reset" value="Clear Filters">
+  <label><input type="checkbox" name="pm25" onclick="searchAttributes()">PM2.5<br></label>
+  <label><input type="checkbox" name="pm10" onclick="searchAttributes()">PM10<br></label>
+  <label><input type="checkbox" name="ozone" onclick="searchAttributes()">Ozone (O<sub>3</sub>)<br></label>
+  <label><input type="checkbox" name="no" onclick="searchAttributes()">Nitric Oxide (NO)<br></label>
+  <label><input type="checkbox" name="no2" onclick="searchAttributes()">Nitrogen Dioxide (NO<sub>2</sub>)<br></label>
+  <label><input type="checkbox" name="so2" onclick="searchAttributes()">Sulfur Dioxide (SO<sub>2</sub>)<br></label>
+  <label><input type="checkbox" name="co" onclick="searchAttributes()">Carbon Monoxide (CO)<br></label>
+  <input type="button" value="Clear Filters" onclick="clearFilters()">
 </form>
 <div id="channels" style="width:20%; height:calc(100vh - 190px); position:absolute; left:0px; top:180px; font-size:10px; overflow-y:auto"></div>
 <div id="map-div" style="width:80%; height:40%; position:absolute; right:3px;"></div>
