@@ -441,87 +441,87 @@
         if (productId == 1){
           console.log("ACHD Found"); 
           if (channel.indexOf("PM25") > -1){
-            pm25.push(feedID);
+            if (pm25[pm25.length - 1] != feedID) pm25.push(feedID);
             return "pm25";  
           }
           else if (channel.indexOf("PM10") > -1){
-            pm10.push(feedID); 
+            if (pm10[pm10.length - 1] != feedID) pm10.push(feedID); 
             return "pm10"; 
           }
           else if (channel.indexOf("OZONE") > -1){
-            ozone.push(feedID);
+            if (ozone[ozone.length - 1] != feedID) ozone.push(feedID);
             return "ozone";  
           }
           else if (channel.indexOf("NO_") > -1){
-            no.push(feedID);
+            if (no[no.length - 1] != feedID) no.push(feedID);
             return "no"; 
           }
           else if (channel.indexOf("NO2_") > -1){
-            no2.push(feedID);
+            if (no2[no2.length - 1] != feedID) no2.push(feedID);
             return "no2"; 
           }
           else if (channel.indexOf("SO2") > -1){
-            so2.push(feedID);
+            if (so2[so2.length - 1] != feedID) so2.push(feedID);
             return "so2"; 
           }
           else if (channel.indexOf("CO_") > -1){
-            co.push(feedID);
+            if (co[co.length - 1] != feedID) co.push(feedID);
             return "co"; 
           }
         }else if(productId == 11){
           console.log("AirNow Found");
           if (channel.indexOf("PM2_5") > -1){
-            pm25.push(feedID);
+            if (pm25[pm25.length - 1] != feedID) pm25.push(feedID);
             return "pm25";  
           }
           else if (channel.indexOf("PM10") > -1){
-            pm10.push(feedID);
+            if (pm10[pm10.length - 1] != feedID) pm10.push(feedID);
             return "pm10";  
           }
           else if (channel.indexOf("OZONE") > -1){
-            ozone.push(feedID); 
+            if (ozone[ozone.length - 1] != feedID) ozone.push(feedID); 
             return "ozone"; 
           }
           else if (channel.indexOf("NO2") > -1){
-            no2.push(feedID);
+             if (no2[no2.length - 1] != feedID) no2.push(feedID);
             return "no2"; 
           }
           else if (channel.indexOf("NO") > -1){
-            no.push(feedID);
+            if (no[no.length - 1] != feedID) no.push(feedID);
             return "no"; 
           }
           else if (channel.indexOf("SO2") > -1){
-            so2.push(feedID);
+            if (so2[so2.length - 1] != feedID) so2.push(feedID);
             return "so2"; 
           }
           else if (channel.indexOf("CO") > -1){
-            co.push(feedID);
+            if (co[co.length - 1] != feedID) co.push(feedID);
             return "co"; 
           }  
         }else if(productId == 35){
           console.log("BAAQMD Found");
           if (channel === "PM2_5"){
-            pm25.push(feedID);
+            if (pm25[pm25.length - 1] != feedID) pm25.push(feedID);
             return "pm25";  
           }
           else if (channel === "Ozone_O3"){
-            ozone.push(feedID); 
+            if (ozone[ozone.length - 1] != feedID) ozone.push(feedID); 
             return "ozone"; 
           }
           else if (channel === "Nitrogen_Dioxide_NO2"){
-            no2.push(feedID);
+            if (no2[no2.length - 1] != feedID) no2.push(feedID);
             return "no2"; 
           }
           else if (channel === "Nitric_Oxide_NO"){
-            no.push(feedID);
+            if (no[no.length - 1] != feedID) no.push(feedID);
             return "no"; 
           }
           else if (channel === "Sulfur_Dioxide_SO2"){
-            so2.push(feedID);
+            if (so2[so2.length - 1] != feedID) so2.push(feedID);
             return "so2"; 
           }
           else if (channel === "Carbon_Monoxide_CO"){
-            co.push(feedID);
+            if (co[co.length - 1] != feedID) co.push(feedID);
             return "co"; 
           }
         }else if(productId == 9){
@@ -543,24 +543,10 @@
           console.log("Other Found");
           return "other"; 
         }
-
         return "other"; 
+      }
 
-        // switch (expression) {
-        //   case value1:
-        //     //Statements executed when the result of expression matches value1
-        //     [break;]
-        //   case value2:
-        //     //Statements executed the result of expression matches value2
-        //     [break;]
-        //   ...
-        //   case valueN:
-        //     //Statements executed when the result of expression matches valueN
-        //     [break;]
-        //   default:
-        //     //Statements executed when none of the values match the value of the expression
-        //     [break;]
-        // }
+      function prepareJSON(){
 
       }
       
@@ -1186,7 +1172,7 @@
 </form>
 <div id="channels" style="width:20%; height:calc(100vh - 190px); position:absolute; left:0px; top:180px; font-size:10px; overflow-y:auto"></div>
 <div id="map-div" style="width:80%; height:40%; position:absolute; right:3px;"></div>
-<!-- <form id = "filters" style="font-size:12px; position: absolute; width: 160px; height: 150px; bottom: 60%; right: 3px; background-color: white;">
+<form id = "filters" style="font-size:12px; position: absolute; width: 160px; height: 150px; bottom: 61.5%; right: 3px; background-color: white;">
 
   <label><input type="radio" name="map-filter" data-filter = "pm25" onclick="reColor(this)">PM2.5<br></label>
   <label><input type="radio" name="map-filter" data-filter = "pm10" onclick="reColor(this)">PM10<br></label>
@@ -1196,7 +1182,7 @@
   <label><input type="radio" name="map-filter" data-filter = "so2" onclick="reColor(this)">Sulfur Dioxide (SO<sub>2</sub>)<br></label>
   <label><input type="radio" name="map-filter" data-filter = "co" onclick="reColor(this)">Carbon Monoxide (CO)<br></label>
   <input type="reset" value="Clear Map Filters">
-</form> -->
+</form>
 <div id="charts" style="width:80%; height: 60%; position:absolute; right:0px; bottom:0px;">
   <div style="position:relative; height: 50px; width:100%; border-bottom:1px solid black">
       <div id="date_axis" style="position:absolute; top:0px; bottom:0px; left:0px; right:40px"></div>
