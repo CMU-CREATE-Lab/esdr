@@ -1056,9 +1056,11 @@
                 var eltList = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
                 var inputNodes = null; 
                 var count = 0; 
+                var visible = false; 
                 for (var i = 0; i < eltList.length; i++){
 
                    if (feedLocList.color[eltList[i].i * 4 + 3] != 0) {
+                    visible = true; 
                     count++; 
                     console.log("Feed Number: " + feedLocList.index[eltList[i].i] + ", Location in Array: " + eltList[i].i);
                     
@@ -1079,16 +1081,15 @@
                     console.log(meanLat, meanLng);
                     console.log("-----")
                   } else {
-                        console.log('i am hidden')
-
+                        console.log('i am hidden'); 
                   }    
               }
               if (count != 0){
                 meanLat = meanLat/count; 
                 meanLng = meanLng/count; 
               }
-              
-              if (eltList.length != 0){
+              console.log(visible); 
+              if (eltList.length != 0 && visible){
                   if (infoWindow){
                     infoWindow.close();
                   };
