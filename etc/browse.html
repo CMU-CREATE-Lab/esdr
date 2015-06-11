@@ -1041,11 +1041,13 @@
                 var maxDistInPixels = currentPointSize/2 + 10;
                 var eltList = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
                 var inputNodes = null; 
-                var count = 0; 
+                var count = 0;
+                var visible = false; 
                 for (var i = 0; i < eltList.length; i++){
 
                    if (feedLocList.color[eltList[i].i * 4 + 3] != 0) {
                     count++; 
+                    visible = true; 
                     console.log("Feed Number: " + feedLocList.index[eltList[i].i] + ", Location in Array: " + eltList[i].i);
                     
                     var clickedNode = $("#channels div[id $= '#" + feedLocList.index[eltList[i].i] + "']");
@@ -1074,7 +1076,7 @@
                 meanLng = meanLng/count; 
               }
               
-              if (eltList.length != 0){
+              if (eltList.length != 0 && visible){
                   if (infoWindow){
                     infoWindow.close();
                   };
