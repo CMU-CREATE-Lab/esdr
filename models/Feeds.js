@@ -410,6 +410,74 @@ module.exports = function(databaseHelper) {
       );
    };
 
+   this.getMostRecent = function(feed, channelName, callback) {
+      var deviceName = getDatastoreDeviceNameForFeed(feed.id);
+
+      var options = {
+         userId : feed.userId,
+         deviceName : deviceName,
+         willFindMostRecentSample : true
+      };
+
+      if (isString(channelName)) {
+         options.channelName = channelName;
+      }
+
+      datastore.getInfo(options,
+                        function(err, rawInfo) {
+                           if (err) {
+                              // See if the error contains a JSend data object.  If so, pass it on through.
+                              if (typeof err.data !== 'undefined' &&
+                                  typeof err.data.code !== 'undefined' &&
+                                  typeof err.data.status !== 'undefined') {
+                                 return callback(err);
+                              }
+                              return callback(new Error("Failed to get feed info"));
+                           }
+
+                           console.log(JSON.stringify(rawInfo, null, 3));
+
+                           var channelInfo = {
+                              channels : {}
+                           };
+
+                           // If there's data in the datastore for this device, rawInfo.channel_specs will be non-empty
+                           if (rawInfo && rawInfo.channel_specs) {
+                              // Iterate over each of the channels in the info from the datastore
+                              // and copy to our channelInfo object.
+                              var deviceAndChannelPrefixLength = (deviceName + ".").length;
+                              Object.keys(rawInfo.channel_specs).forEach(function(deviceAndChannel) {
+                                 var channelName = deviceAndChannel.slice(deviceAndChannelPrefixLength);
+                                 var rawChannelInfo = rawInfo.channel_specs[deviceAndChannel];
+
+                                 channelInfo.channels[channelName] = {};
+
+                                 // copy the bounds and most recent data sample (changing from snake to camel case)
+                                 if (rawChannelInfo.channel_bounds) {
+                                    channelInfo.channels[channelName].channelBounds = {
+                                       minTimeSecs : rawChannelInfo.channel_bounds.min_time,
+                                       maxTimeSecs : rawChannelInfo.channel_bounds.max_time,
+                                       minValue : rawChannelInfo.channel_bounds.min_value,
+                                       maxValue : rawChannelInfo.channel_bounds.max_value
+                                    };
+                                 }
+                                 if (rawChannelInfo.most_recent_data_sample) {
+                                    channelInfo.channels[channelName].mostRecentDataSample = {
+                                       timeSecs : rawChannelInfo.most_recent_data_sample.time,
+                                       value : rawChannelInfo.most_recent_data_sample.value
+                                    };
+                                 }
+                              });
+
+                              return callback(null, channelInfo);
+                           }
+                           else {
+                              return callback(null, channelInfo);
+                           }
+                        });
+
+   };
+
    /**
     * Exports the specified feed channels, optionally filtered with the given filter.  Data is returned to the callback
     * via an EventEmitter.
@@ -466,7 +534,7 @@ module.exports = function(databaseHelper) {
                            }
 
                            // remember whether the user is requesting the user ID
-                           var isRequestingUserId = queryParts.selectFields.indexOf('userId') >=0;
+                           var isRequestingUserId = queryParts.selectFields.indexOf('userId') >= 0;
 
                            // we need the user ID in order to do the feed ownership security check below, so make sure
                            // it gets requested in the query
@@ -646,5 +714,14 @@ module.exports = function(databaseHelper) {
 
          callback(null, filteredFeed);
       });
+   };
+
+   /**
+    * Returns <code>true</code> if the given value is a string; returns <code>false</code> otherwise.
+    *
+    * Got this from http://stackoverflow.com/a/9436948/703200
+    */
+   var isString = function(o) {
+      return (typeof o == 'string' || o instanceof String)
    };
 };

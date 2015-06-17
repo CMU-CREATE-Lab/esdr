@@ -4627,6 +4627,884 @@ describe("ESDR", function() {
                      });      // end API Key Authentication
                   });      // end Get Info
 
+                  describe("Get Most Recent Data Sample", function() {
+
+                     var validateSuccessfulMostRecentDatSampleFetch = function(res, expectedInfo) {
+                        res.should.have.property('status', httpStatus.OK);
+                        res.body.should.have.property('code', httpStatus.OK);
+                        res.body.should.have.property('status', 'success');
+                        res.body.should.have.property('data');
+                        res.body.data.should.have.property('channels');
+                        should(res.body.data.channels).eql(expectedInfo); // deep equal
+                     };
+
+                     describe("For All Channels In A Feed", function() {
+                        var channelInfoFeed1a = {
+                           "battery_voltage" : {
+                              "channelBounds" : {
+                                 "minTimeSecs" : 1380276279.1,
+                                 "maxTimeSecs" : 1382054188,
+                                 "minValue" : 3.84,
+                                 "maxValue" : 3.85
+                              },
+                              "mostRecentDataSample" : {
+                                 "timeSecs" : 1382054188,
+                                 "value" : 3.84
+                              }
+                           },
+                           "conductivity" : {
+                              "channelBounds" : {
+                                 "minTimeSecs" : 1380276279.1,
+                                 "maxTimeSecs" : 1382054188,
+                                 "minValue" : 464,
+                                 "maxValue" : 624
+                              },
+                              "mostRecentDataSample" : {
+                                 "timeSecs" : 1382054188,
+                                 "value" : 517
+                              }
+                           },
+                           "temperature" : {
+                              "channelBounds" : {
+                                 "minTimeSecs" : 1380270001,
+                                 "maxTimeSecs" : 1382055042,
+                                 "minValue" : 14.2,
+                                 "maxValue" : 33.9
+                              },
+                              "mostRecentDataSample" : {
+                                 "timeSecs" : 1382055042,
+                                 "value" : 33.9
+                              }
+                           }
+                        };
+
+                        var channelInfoFeed1b = {
+                           "battery_voltage" : {
+                              "channelBounds" : {
+                                 "minTimeSecs" : 1381238902.42,
+                                 "maxTimeSecs" : 1382054188,
+                                 "minValue" : 3.84,
+                                 "maxValue" : 3.84
+                              },
+                              "mostRecentDataSample" : {
+                                 "timeSecs" : 1382054188,
+                                 "value" : 3.84
+                              }
+                           },
+                           "conductivity" : {
+                              "channelBounds" : {
+                                 "minTimeSecs" : 1381238902.42,
+                                 "maxTimeSecs" : 1382054188,
+                                 "minValue" : 478,
+                                 "maxValue" : 624
+                              },
+                              "mostRecentDataSample" : {
+                                 "timeSecs" : 1382054188,
+                                 "value" : 517
+                              }
+                           },
+                           "temperature" : {
+                              "channelBounds" : {
+                                 "minTimeSecs" : 1381238902.42,
+                                 "maxTimeSecs" : 1382054188,
+                                 "minValue" : 17.7,
+                                 "maxValue" : 20.8
+                              },
+                              "mostRecentDataSample" : {
+                                 "timeSecs" : 1382054188,
+                                 "value" : 19.6
+                              }
+                           }
+                        };
+                        describe("OAuth2 Authentication", function() {
+                           it("Should be able to get most recent data samples for a public feed without authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/most-recent")
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1a);
+                                            done();
+                                         });
+                           });
+
+                           it("Should be able to get most recent data samples for a public feed with valid authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/most-recent")
+                                    .set({
+                                       Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                    })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1a);
+                                            done();
+                                         });
+                           });
+
+                           it("Should be able to get most recent data samples for a public feed with valid authentication, but for the wrong user", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/most-recent")
+                                    .set({
+                                       Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                    })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1a);
+                                            done();
+                                         });
+                           });
+
+                           it("Should be able to get most recent data samples for a public feed with invalid authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/most-recent")
+                                    .set({
+                                       Authorization : "Bearer " + "bogus"
+                                    })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1a);
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to get most recent data samples for a private feed without authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/most-recent")
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.UNAUTHORIZED);
+                                            res.body.should.have.property('code', httpStatus.UNAUTHORIZED);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data', null);
+                                            done();
+                                         });
+                           });
+
+                           it("Should be able to get most recent data samples for a private feed with valid authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/most-recent")
+                                    .set({
+                                       Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                    })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1b);
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to get most recent data samples for a private feed with valid authentication, but for the wrong user", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/most-recent")
+                                    .set({
+                                       Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                    })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.FORBIDDEN);
+                                            res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data', null);
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to get most recent data samples for a private feed with invalid authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/most-recent")
+                                    .set({
+                                       Authorization : "Bearer " + "bogus"
+                                    })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.FORBIDDEN);
+                                            res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data', null);
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to get most recent data samples for a public feed with an invalid ID (valid ID plus extra non-numeric characters appended)", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1a.id + "abc" + "/most-recent")
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.NOT_FOUND);
+                                            res.body.should.have.property('code', httpStatus.NOT_FOUND);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data', null);
+                                            done();
+                                         });
+                           });
+                        });      // end OAuth2 Authentication
+
+                        describe("API Key Authentication", function() {
+                           describe("Feed API Key in the request header", function() {
+                              it("Should be able to get most recent data samples for a public feed with valid read-write authentication", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/most-recent")
+                                       .set({
+                                               FeedApiKey : feeds.testFeed1a.apiKey
+                                            })
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1a);
+                                               done();
+                                            });
+                              });
+
+                              it("Should be able to get most recent data samples for a public feed with valid read-only authentication", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/most-recent")
+                                       .set({
+                                               FeedApiKey : feeds.testFeed1a.apiKeyReadOnly
+                                            })
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1a);
+                                               done();
+                                            });
+                              });
+
+                              it("Should be able to get most recent data samples for a public feed with valid read-write authentication, but for the wrong feed", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/most-recent")
+                                       .set({
+                                               FeedApiKey : feeds.testFeed1b.apiKey
+                                            })
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1a);
+                                               done();
+                                            });
+                              });
+
+                              it("Should be able to get most recent data samples for a public feed with valid read-only authentication, but for the wrong feed", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/most-recent")
+                                       .set({
+                                               FeedApiKey : feeds.testFeed1b.apiKeyReadOnly
+                                            })
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1a);
+                                               done();
+                                            });
+                              });
+
+                              it("Should be able to get most recent data samples for a private feed with valid read-write authentication", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/most-recent")
+                                       .set({
+                                               FeedApiKey : feeds.testFeed1b.apiKey
+                                            })
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1b);
+                                               done();
+                                            });
+                              });
+
+                              it("Should be able to get most recent data samples for a private feed with valid read-only authentication", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/most-recent")
+                                       .set({
+                                               FeedApiKey : feeds.testFeed1b.apiKeyReadOnly
+                                            })
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1b);
+                                               done();
+                                            });
+                              });
+
+                              it("Should fail to get most recent data samples for a private feed with invalid authentication", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/most-recent")
+                                       .set({
+                                          FeedApiKey : "bogus"
+                                            })
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.should.have.property('status', httpStatus.FORBIDDEN);
+                                               done();
+                                            });
+                              });
+
+                              it("Should fail to get most recent data samples for a private feed with valid read-write authentication, but for the wrong feed", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/most-recent")
+                                       .set({
+                                          FeedApiKey : feeds.testFeed1a.apiKey
+                                            })
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.should.have.property('status', httpStatus.FORBIDDEN);
+                                               done();
+                                            });
+                              });
+
+                              it("Should fail to get most recent data samples for a private feed with valid read-only authentication, but for the wrong feed", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/most-recent")
+                                       .set({
+                                          FeedApiKey : feeds.testFeed1a.apiKeyReadOnly
+                                            })
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.should.have.property('status', httpStatus.FORBIDDEN);
+                                               done();
+                                            });
+                              });
+
+                              it("Should fail to get most recent data samples for a private feed without authentication", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/most-recent")
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.should.have.property('status', httpStatus.UNAUTHORIZED);
+                                               done();
+                                            });
+                              });
+                           });      // end Feed API Key in the request header
+
+                           describe("Feed API Key in the URL", function() {
+                              it("Should be able to get most recent data samples for a public feed with valid read-write authentication", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1a.apiKey + "/most-recent")
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1a);
+                                               done();
+                                            });
+                              });
+
+                              it("Should be able to get most recent data samples for a public feed with valid read-only authentication", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1a.apiKeyReadOnly + "/most-recent")
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1a);
+                                               done();
+                                            });
+                              });
+
+                              it("Should be able to get most recent data samples for a private feed with valid read-write authentication", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1b.apiKey + "/most-recent")
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1b);
+                                               done();
+                                            });
+                              });
+
+                              it("Should be able to get most recent data samples for a private feed with valid read-only authentication", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1b.apiKeyReadOnly + "/most-recent")
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1b);
+                                               done();
+                                            });
+                              });
+
+                              it("Should fail to get most recent data samples for a private feed with invalid authentication", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + "012345678901234567890123456789012345678901234567890123456789abcd" + "/most-recent")
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.should.have.property('status', httpStatus.NOT_FOUND);
+                                               done();
+                                            });
+                              });
+                           });      // end Feed API Key in the URL
+                        });      // end API Key Authentication
+                     });   // end For All Channels In A Feed
+
+                     describe("For A Single Channel In A Feed", function() {
+                        var channelInfoFeed1aChannelConductivity = {
+                           "conductivity" : {
+                              "channelBounds" : {
+                                 "minTimeSecs" : 1380276279.1,
+                                 "maxTimeSecs" : 1382054188,
+                                 "minValue" : 464,
+                                 "maxValue" : 624
+                              },
+                              "mostRecentDataSample" : {
+                                 "timeSecs" : 1382054188,
+                                 "value" : 517
+                              }
+                           }
+                        };
+
+                        var channelInfoFeed1bChannelConductivity = {
+                           "conductivity" : {
+                              "channelBounds" : {
+                                 "minTimeSecs" : 1381238902.42,
+                                 "maxTimeSecs" : 1382054188,
+                                 "minValue" : 478,
+                                 "maxValue" : 624
+                              },
+                              "mostRecentDataSample" : {
+                                 "timeSecs" : 1382054188,
+                                 "value" : 517
+                              }
+                           }
+                        };
+
+                        describe("OAuth2 Authentication", function() {
+                           it("Should be able to get most recent data sample for a channel in a public feed without authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/channels/conductivity/most-recent")
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1aChannelConductivity);
+                                            done();
+                                         });
+                           });
+
+                           it("Should be able to get most recent data sample for a channel in a public feed with valid authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/channels/conductivity/most-recent")
+                                    .set({
+                                       Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                    })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1aChannelConductivity);
+                                            done();
+                                         });
+                           });
+
+                           it("Should be able to get most recent data sample for a channel in a public feed with valid authentication, but for the wrong user", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/channels/conductivity/most-recent")
+                                    .set({
+                                       Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                    })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1aChannelConductivity);
+                                            done();
+                                         });
+                           });
+
+                           it("Should be able to get most recent data sample for a channel in a public feed with invalid authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/channels/conductivity/most-recent")
+                                    .set({
+                                       Authorization : "Bearer " + "bogus"
+                                    })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1aChannelConductivity);
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to get most recent data sample for a channel in a private feed without authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/conductivity/most-recent")
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.UNAUTHORIZED);
+                                            res.body.should.have.property('code', httpStatus.UNAUTHORIZED);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data', null);
+                                            done();
+                                         });
+                           });
+
+                           it("Should be able to get most recent data sample for a channel in a private feed with valid authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/conductivity/most-recent")
+                                    .set({
+                                       Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                    })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1bChannelConductivity);
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to get most recent data sample for a channel in a private feed with valid authentication, but for the wrong user", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/conductivity/most-recent")
+                                    .set({
+                                       Authorization : "Bearer " + accessTokens.testUser2.access_token
+                                    })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.FORBIDDEN);
+                                            res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data', null);
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to get most recent data sample for a channel in a private feed with invalid authentication", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/conductivity/most-recent")
+                                    .set({
+                                       Authorization : "Bearer " + "bogus"
+                                    })
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.FORBIDDEN);
+                                            res.body.should.have.property('code', httpStatus.FORBIDDEN);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data', null);
+                                            done();
+                                         });
+                           });
+
+                           it("Should fail to get most recent data sample for a channel in a public feed with an invalid ID (valid ID plus extra non-numeric characters appended)", function(done) {
+                              agent(url)
+                                    .get("/api/v1/feeds/" + feeds.testFeed1a.id + "abc" + "/channels/conductivity/most-recent")
+                                    .end(function(err, res) {
+                                            if (err) {
+                                               return done(err);
+                                            }
+
+                                            res.should.have.property('status', httpStatus.NOT_FOUND);
+                                            res.body.should.have.property('code', httpStatus.NOT_FOUND);
+                                            res.body.should.have.property('status', 'error');
+                                            res.body.should.have.property('data', null);
+                                            done();
+                                         });
+                           });
+                        });      // end OAuth2 Authentication
+
+                        describe("API Key Authentication", function() {
+                           describe("Feed API Key in the request header", function() {
+                              it("Should be able to get most recent data sample for a channel in a public feed with valid read-write authentication", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/channels/conductivity/most-recent")
+                                       .set({
+                                               FeedApiKey : feeds.testFeed1a.apiKey
+                                            })
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1aChannelConductivity);
+                                               done();
+                                            });
+                              });
+
+                              it("Should be able to get most recent data sample for a channel in a public feed with valid read-only authentication", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/channels/conductivity/most-recent")
+                                       .set({
+                                               FeedApiKey : feeds.testFeed1a.apiKeyReadOnly
+                                            })
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1aChannelConductivity);
+                                               done();
+                                            });
+                              });
+
+                              it("Should be able to get most recent data sample for a channel in a public feed with valid read-write authentication, but for the wrong feed", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/channels/conductivity/most-recent")
+                                       .set({
+                                               FeedApiKey : feeds.testFeed1b.apiKey
+                                            })
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1aChannelConductivity);
+                                               done();
+                                            });
+                              });
+
+                              it("Should be able to get most recent data sample for a channel in a public feed with valid read-only authentication, but for the wrong feed", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1a.id + "/channels/conductivity/most-recent")
+                                       .set({
+                                               FeedApiKey : feeds.testFeed1b.apiKeyReadOnly
+                                            })
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1aChannelConductivity);
+                                               done();
+                                            });
+                              });
+
+                              it("Should be able to get most recent data sample for a channel in a private feed with valid read-write authentication", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/conductivity/most-recent")
+                                       .set({
+                                               FeedApiKey : feeds.testFeed1b.apiKey
+                                            })
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1bChannelConductivity);
+                                               done();
+                                            });
+                              });
+
+                              it("Should be able to get most recent data sample for a channel in a private feed with valid read-only authentication", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/conductivity/most-recent")
+                                       .set({
+                                               FeedApiKey : feeds.testFeed1b.apiKeyReadOnly
+                                            })
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1bChannelConductivity);
+                                               done();
+                                            });
+                              });
+
+                              it("Should fail to get most recent data sample for a channel in a private feed with invalid authentication", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/conductivity/most-recent")
+                                       .set({
+                                          FeedApiKey : "bogus"
+                                            })
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.should.have.property('status', httpStatus.FORBIDDEN);
+                                               done();
+                                            });
+                              });
+
+                              it("Should fail to get most recent data sample for a channel in a private feed with valid read-write authentication, but for the wrong feed", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/conductivity/most-recent")
+                                       .set({
+                                          FeedApiKey : feeds.testFeed1a.apiKey
+                                            })
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.should.have.property('status', httpStatus.FORBIDDEN);
+                                               done();
+                                            });
+                              });
+
+                              it("Should fail to get most recent data sample for a channel in a private feed with valid read-only authentication, but for the wrong feed", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/conductivity/most-recent")
+                                       .set({
+                                          FeedApiKey : feeds.testFeed1a.apiKeyReadOnly
+                                            })
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.should.have.property('status', httpStatus.FORBIDDEN);
+                                               done();
+                                            });
+                              });
+
+                              it("Should fail to get most recent data sample for a channel in a private feed without authentication", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1b.id + "/channels/conductivity/most-recent")
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.should.have.property('status', httpStatus.UNAUTHORIZED);
+                                               done();
+                                            });
+                              });
+                           });      // end Feed API Key in the request header
+
+                           describe("Feed API Key in the URL", function() {
+                              it("Should be able to get most recent data sample for a channel in a public feed with valid read-write authentication", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1a.apiKey + "/channels/conductivity/most-recent")
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1aChannelConductivity
+                                               );
+                                               done();
+                                            });
+                              });
+
+                              it("Should be able to get most recent data sample for a channel in a public feed with valid read-only authentication", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1a.apiKeyReadOnly + "/channels/conductivity/most-recent")
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1aChannelConductivity);
+                                               done();
+                                            });
+                              });
+
+                              it("Should be able to get most recent data sample for a channel in a private feed with valid read-write authentication", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1b.apiKey + "/channels/conductivity/most-recent")
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1bChannelConductivity);
+                                               done();
+                                            });
+                              });
+
+                              it("Should be able to get most recent data sample for a channel in a private feed with valid read-only authentication", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + feeds.testFeed1b.apiKeyReadOnly + "/channels/conductivity/most-recent")
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               validateSuccessfulMostRecentDatSampleFetch(res, channelInfoFeed1bChannelConductivity);
+                                               done();
+                                            });
+                              });
+
+                              it("Should fail to get most recent data sample for a channel in a private feed with invalid authentication", function(done) {
+                                 agent(url)
+                                       .get("/api/v1/feeds/" + "012345678901234567890123456789012345678901234567890123456789abcd" + "/channels/conductivity/most-recent")
+                                       .end(function(err, res) {
+                                               if (err) {
+                                                  return done(err);
+                                               }
+
+                                               res.should.have.property('status', httpStatus.NOT_FOUND);
+                                               done();
+                                            });
+                              });
+                           });      // end Feed API Key in the URL
+                        });      // end API Key Authentication
+                     });   // end For A Single Channel In A Feed
+                  });   // end Get Most Recent Data Sample
+
                   describe("Get Tile", function() {
                      describe("OAuth2 Authentication", function() {
 

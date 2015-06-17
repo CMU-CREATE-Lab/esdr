@@ -147,6 +147,46 @@ module.exports = function(FeedModel, feedRouteHelper) {
                                                req, res, next);
               });
 
+   // Get the most recent data for all channels, optionally authenticated using the user's OAuth2 access token or the
+   // feed's read-write or read-only API key in the URL or request header.
+   //
+   // NOTE: for a private feed, authenticating with the OAuth2 access token will be slower than authenticating with
+   // either of the feed's API keys because we have to make an extra call to the database to authenticate the user so we
+   // can determine whether she has access.
+   router.get('/:feedIdOrApiKey/most-recent',
+              function(req, res, next) {
+                 getMostRecentDataSamples(req, res, next, req.params.feedIdOrApiKey)
+              });
+
+   // Get the most recent data for the specified channel, optionally authenticated using the user's OAuth2 access token or the
+   // feed's read-write or read-only API key in the URL or request header.
+   //
+   // NOTE: for a private feed, authenticating with the OAuth2 access token will be slower than authenticating with
+   // either of the feed's API keys because we have to make an extra call to the database to authenticate the user so we
+   // can determine whether she has access.
+   router.get('/:feedIdOrApiKey/channels/:channelName/most-recent',
+              function(req, res, next) {
+                 getMostRecentDataSamples(req, res, next, req.params.feedIdOrApiKey, req.params.channelName)
+              });
+
+   var getMostRecentDataSamples = function(req, res, next, feedIdOrApiKey, channelName){
+      getFeedForReadingByIdOrApiKey(feedIdOrApiKey,
+                                    'id,userId,isPublic,apiKey,apiKeyReadOnly',
+                                    function(feed) {
+                                       FeedModel.getMostRecent(feed, isString(channelName) ? channelName : null, function(err, mostRecentInfo) {
+                                          if (err) {
+                                             if (err.data && err.data.code == httpStatus.UNPROCESSABLE_ENTITY) {
+                                                return res.jsendPassThrough(err.data);
+                                             }
+                                             return res.jsendServerError(err.message, null);
+                                          }
+
+                                          res.jsendSuccess(mostRecentInfo);
+                                       });
+                                    }, req, res, next);
+   };
+
+
    // For tile requests, optionally authenticated using the user's OAuth2 access token or the feed's read-write or
    // read-only API key in the URL or request header.
    //
