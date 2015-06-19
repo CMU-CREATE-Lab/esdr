@@ -974,14 +974,14 @@
                           ]
 
            var mapOptions = {
-            // //start at middle of US
-            // zoom: 4,
-            // center: new google.maps.LatLng(39.3, -95.8)
+            //start at middle of US
+            zoom: 4,
+            center: new google.maps.LatLng(39.3, -95.8)
 
             // start in Pittsburgh 
-            zoom: 13,
-            center: new google.maps.LatLng(40.442493, -79.942553),
-            styles: myStyle, 
+            // zoom: 13,
+            // center: new google.maps.LatLng(40.442493, -79.942553),
+            // styles: myStyle, 
 
          };
          
@@ -1015,7 +1015,7 @@
         // Compute point diameter, in pixels, based on zoom level
 
         // map.zoom is approx 4 at country level
-        var countryPointSizePixels = 8;
+        var countryPointSizePixels = 4.5;
 
         // map.zoom is approx 18 at block level
         var blockPointSizePixels = 50;
@@ -1203,9 +1203,6 @@
         // TODO(rsargent):  shouldn't we just be adjusting the alpha here?  Maybe we're taking
         // advantage of the double-multiplication to get something other than linear.
         // But multiplying all the channels will break if we do something other than an additive blend.
-        // gl_FragColor = color * clamp((0.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
-
-        //gl_FragColor = vColor * clamp((0.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
         
         gl_FragColor = vColor * clamp((.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
 
