@@ -103,17 +103,23 @@ function findIndex(index, series) {
   return test;
 }
 
-function findClosestElement(gl, transform, series, pixelXY, maxDistInPixels) {
+function findClosestElements(gl, transform, series, pixelXY, maxDistInPixels) {
   var glXY = divToGl(gl, transform, pixelXY);
 
   var closest_distsq = 1e30;
   var selectedGL = []; 
   var selectedPixel = []; 
   var closest = []; 
+
+  var offSetXYCoordinate = divToGl(gl, transform, {x: pixelXY.x + maxDistInPixels, y: pixelXY.y + maxDistInPixels}); 
+  var mouseXYCoordinate = divToGl(gl, transform, pixelXY); 
+  var offSet = Math.sqrt(Math.pow(offSetXYCoordinate.x - mouseXYCoordinate.x, 2) + Math.pow(offSetXYCoordinate.y - mouseXYCoordinate.y, 2));
+
   for (var i = 0; i < series.xy.length / 2; i++) {
     var distsq = Math.pow(series.xy[i * 2] - glXY.x, 2) + Math.pow(series.xy[i * 2 + 1] - glXY.y, 2);
-    if (distsq < closest_distsq) {
-      closest_distsq = distsq;
+    if (distsq <= closest_distsq) {
+      closest_distsq = distsq + offSet;
+      //console.log(closest_distsq);
       closest.push(i); 
       currentGL = {x: series.xy[i * 2], y: series.xy[i * 2 + 1]}
       selectedGL.push(currentGL)
@@ -131,7 +137,6 @@ function findClosestElement(gl, transform, series, pixelXY, maxDistInPixels) {
       eltList.push(elt); 
     } 
   }
-
 
   return eltList; 
 }

@@ -117,11 +117,11 @@
       var co = []; 
       var speck = []; 
 
-
       //Jquery cache for all selectors 
       //var $allSelect = null; 
 
       var allFeedNums = []; 
+      var channelNames = {pm25: [], pm10: [], ozone: [], no: [], no2: [], so2: [], co: []};
 
       // grapher stuff
       var plotManager;
@@ -130,7 +130,7 @@
       var isAutoScaleOn = false;
 
       //WebGL stuff
-      var alpha = 0.70; 
+      var alpha = 0.65; 
       var currentPointSize = 0; 
 
       function setRangeFromSecondsAgoToNow(numSecondsAgo) {
@@ -429,103 +429,95 @@
 
       }
 
-      // var pm25 = []; 
-      // var pm10 = []; 
-      // var ozone = []; 
-      // var no = []; 
-      // var no2 = []; 
-      // var so2 = []; 
-      // var co = []; 
-
       function sortChannel(productId, feedID, channel){
         if (productId == 1){
-          console.log("ACHD Found"); 
+          //console.log("ACHD Found"); 
           if (channel.indexOf("PM25") > -1){
-            if (pm25[pm25.length - 1] != feedID) pm25.push(feedID);
+            if (pm25[pm25.length - 1] != feedID) pm25.push(feedID), channelNames.pm25.push(channel);
             return "pm25";  
           }
           else if (channel.indexOf("PM10") > -1){
-            if (pm10[pm10.length - 1] != feedID) pm10.push(feedID); 
+            if (pm10[pm10.length - 1] != feedID) pm10.push(feedID), channelNames.pm10.push(channel);
             return "pm10"; 
           }
           else if (channel.indexOf("OZONE") > -1){
-            if (ozone[ozone.length - 1] != feedID) ozone.push(feedID);
+            if (ozone[ozone.length - 1] != feedID) ozone.push(feedID), channelNames.ozone.push(channel);
             return "ozone";  
           }
           else if (channel.indexOf("NO_") > -1){
-            if (no[no.length - 1] != feedID) no.push(feedID);
+            if (no[no.length - 1] != feedID) no.push(feedID), channelNames.no.push(channel);
             return "no"; 
           }
           else if (channel.indexOf("NO2_") > -1){
-            if (no2[no2.length - 1] != feedID) no2.push(feedID);
+            if (no2[no2.length - 1] != feedID) no2.push(feedID), channelNames.no2.push(channel);
             return "no2"; 
           }
           else if (channel.indexOf("SO2") > -1){
-            if (so2[so2.length - 1] != feedID) so2.push(feedID);
+            if (so2[so2.length - 1] != feedID) so2.push(feedID), channelNames.so2.push(channel);
             return "so2"; 
           }
           else if (channel.indexOf("CO_") > -1){
-            if (co[co.length - 1] != feedID) co.push(feedID);
+            if (co[co.length - 1] != feedID) co.push(feedID), channelNames.co.push(channel);
             return "co"; 
           }
         }else if(productId == 11){
-          console.log("AirNow Found");
+          //console.log("AirNow Found");
           if (channel.indexOf("PM2_5") > -1){
-            if (pm25[pm25.length - 1] != feedID) pm25.push(feedID);
+            if (pm25[pm25.length - 1] != feedID) pm25.push(feedID), channelNames.pm25.push(channel);
             return "pm25";  
           }
           else if (channel.indexOf("PM10") > -1){
-            if (pm10[pm10.length - 1] != feedID) pm10.push(feedID);
+            if (pm10[pm10.length - 1] != feedID) pm10.push(feedID), channelNames.pm10.push(channel);
             return "pm10";  
           }
           else if (channel.indexOf("OZONE") > -1){
-            if (ozone[ozone.length - 1] != feedID) ozone.push(feedID); 
+            if (ozone[ozone.length - 1] != feedID) ozone.push(feedID), channelNames.ozone.push(channel);
             return "ozone"; 
           }
           else if (channel.indexOf("NO2") > -1){
-             if (no2[no2.length - 1] != feedID) no2.push(feedID);
+             if (no2[no2.length - 1] != feedID) no2.push(feedID), channelNames.no2.push(channel);
             return "no2"; 
           }
           else if (channel.indexOf("NO") > -1){
-            if (no[no.length - 1] != feedID) no.push(feedID);
+            if (no[no.length - 1] != feedID) no.push(feedID), channelNames.no.push(channel);
             return "no"; 
           }
           else if (channel.indexOf("SO2") > -1){
-            if (so2[so2.length - 1] != feedID) so2.push(feedID);
+            if (so2[so2.length - 1] != feedID) so2.push(feedID), channelNames.so2.push(channel);
             return "so2"; 
           }
           else if (channel.indexOf("CO") > -1){
-            if (co[co.length - 1] != feedID) co.push(feedID);
+            if (co[co.length - 1] != feedID) co.push(feedID), channelNames.co.push(channel);
             return "co"; 
           }  
         }else if(productId == 35){
-          console.log("BAAQMD Found");
+          //console.log("BAAQMD Found");
           if (channel === "PM2_5"){
-            if (pm25[pm25.length - 1] != feedID) pm25.push(feedID);
+            if (pm25[pm25.length - 1] != feedID) pm25.push(feedID), channelNames.pm25.push(channel);
             return "pm25";  
           }
           else if (channel === "Ozone_O3"){
-            if (ozone[ozone.length - 1] != feedID) ozone.push(feedID); 
+            if (ozone[ozone.length - 1] != feedID) ozone.push(feedID), channelNames.ozone.push(channel);; 
             return "ozone"; 
           }
           else if (channel === "Nitrogen_Dioxide_NO2"){
-            if (no2[no2.length - 1] != feedID) no2.push(feedID);
+            if (no2[no2.length - 1] != feedID) no2.push(feedID), channelNames.no2.push(channel);;
             return "no2"; 
           }
           else if (channel === "Nitric_Oxide_NO"){
-            if (no[no.length - 1] != feedID) no.push(feedID);
+            if (no[no.length - 1] != feedID) no.push(feedID), channelNames.no.push(channel);;
             return "no"; 
           }
           else if (channel === "Sulfur_Dioxide_SO2"){
-            if (so2[so2.length - 1] != feedID) so2.push(feedID);
+            if (so2[so2.length - 1] != feedID) so2.push(feedID), channelNames.so2.push(channel);;
             return "so2"; 
           }
           else if (channel === "Carbon_Monoxide_CO"){
-            if (co[co.length - 1] != feedID) co.push(feedID);
+            if (co[co.length - 1] != feedID) co.push(feedID), channelNames.co.push(channel);;
             return "co"; 
           }
         }else if(productId == 9){
-          console.log("Speck Found"); 
+          //console.log("Speck Found"); 
           speck.push(feedID); 
           return "speck"; 
         }
@@ -540,13 +532,13 @@
         // }else if(feedName.indexOf("fenceline_org") > -1){
         //   console.log("fenceline_org Found");
         else{
-          console.log("Other Found");
+          //console.log("Other Found");
           return "other"; 
         }
         return "other"; 
       }
 
-      function prepareJSON(){
+      function prepareJSON(feedNumArray, channelNames){
 
       }
       
@@ -801,14 +793,25 @@
               //   });
 
               // };
-              
-          
          }; 
-         $("#notFoundMsg").hide();
-         $('hr').show(); 
+
+         drawInfoWindowLines(); 
+        console.log("-------------------")
+      }; 
+
+      function drawInfoWindowLines(){
         var $mapInfoWindow = $("#infowindow");
         if ($mapInfoWindow) {
+          $("#notFoundMsg").hide();
+          $('hr').show(); 
+
           var visibleElements = $mapInfoWindow.children().filter(":visible");
+          visibleElements.each(function(index, element){
+              if ($(element).is('hr') && $(visibleElements).eq(index + 1).is('hr')){
+                $(element).hide(); 
+              };
+            });
+
           var visibleDivs = $(visibleElements).filter(".sensors"); 
           if (visibleDivs.length == 0) {
             console.log("All Invisible.");
@@ -819,23 +822,17 @@
               $(visibleDivs).each(function(index, element){
                 if (index==0){
                   $(this).prevAll('hr').hide(); 
-                }else if (index==$(visibleDivs).length - 1){
+                }
+                if (index==$(visibleDivs).length - 1){
                   $(this).nextAll('hr').hide(); 
                 }
               });
-            visibleElements = $mapInfoWindow.children().filter(":visible");
-            visibleElements.each(function(index, element){
-              if ($(element).is('hr') && $(visibleElements).eq(index + 1).is('hr')){
-                $(element).hide(); 
-              };
-            });
           }; 
         };
-        console.log("-------------------")
-      }; 
+      };
 
       function clearFilters(){
-          $('[type = checkbox]').each(function(index, input){
+          $('#filters [type = checkbox]').each(function(index, input){
             $(input).prop('checked', false); 
           }); 
           searchAttributes(); 
@@ -903,9 +900,59 @@
 
       }
 
-      function reColor(input){
-        var filterType = $(input).data("filter");
+      function reColor(radioInput){
+        var now = Date.now() / 1000; 
+        var oneHourBeforeNow = now - 2 * 60 * 60;
+        var level = 7; 
+        var offset = parseInt(now / (512 * Math.pow(2, level))); 
+        var filterType = $(radioInput).data("filter");
+        var colorNumList = []; 
+        var feedNumList = [3,23,24,27,29,30,31]; 
         console.log(filterType);
+
+        if (filterType == "pm10"){
+          var url = "https://esdr.cmucreatelab.org/api/v1/multifeeds/achd_pm_10/tiles/" + level + "." + offset; 
+          window.open(url);
+          jQuery.getJSON(url, function(data){
+            $(data.data).each(function(index, dataArray){
+              if (dataArray[0] > oneHourBeforeNow && dataArray[0] < now){
+                console.log("within time range");
+                console.log(dataArray);
+                var allNull = true; 
+                var currentVals = []; 
+                console.log(dataArray.length);
+                for (var i=1; i < dataArray.length; i++){
+                  if (!(dataArray[i] == null)){
+                    allNull = false; 
+                  };
+                  currentVals.push(dataArray[i]); 
+                  console.log(currentVals); 
+                };
+                if(!allNull){
+                    colorNumList.push(currentVals); 
+                };
+              }
+            });
+            console.log("colorNumList: ", colorNumList);
+            if (colorNumList[0].length == feedNumList.length){
+              var valueList = colorNumList[0];  
+              console.log("Begin For Loop:")
+              for (var i = 0; i < feedNumList.length; i++){
+                if (valueList[i] == null){
+                  changeColor(.5, .5, .5);
+                }else if (valueList[i] <= 54){
+                  changeColor(0, 1, 0, feedNumList[i]); 
+                }else if (valueList[i] <= 154){
+                  changeColor(1, 1, 0, feedNumList[i]); 
+                }else if (valueList[i] <= 254){
+                  changeColor(1, .5, 0, feedNumList[i]); 
+                }else {
+                  changeColor(1, 0, 0, feedNumList[i])
+                };
+              }; 
+            }
+          }); 
+        };
       }
 
       function initializeMap() {
@@ -927,14 +974,14 @@
                           ]
 
            var mapOptions = {
-            //start at middle of US
-            zoom: 4,
-            center: new google.maps.LatLng(39.3, -95.8)
+            // //start at middle of US
+            // zoom: 4,
+            // center: new google.maps.LatLng(39.3, -95.8)
 
-            // // start in Pittsburgh 
-            // zoom: 13,
-            // center: new google.maps.LatLng(40.442493, -79.942553),
-            // styles: myStyle, 
+            // start in Pittsburgh 
+            zoom: 13,
+            center: new google.maps.LatLng(40.442493, -79.942553),
+            styles: myStyle, 
 
          };
          
@@ -949,7 +996,8 @@
 
       function drawFrame() {
         gl.enable(gl.BLEND);
-        gl.blendFunc( gl.SRC_ALPHA, gl.ONE );
+        gl.blendEquationSeparate( gl.FUNC_ADD, gl.FUNC_ADD );
+        gl.blendFuncSeparate(gl.ONE, gl.ONE, gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA );
 
         // Compute WebGL transform from world xy coords to screen
         // copy pixel->webgl matrix
@@ -967,7 +1015,7 @@
         // Compute point diameter, in pixels, based on zoom level
 
         // map.zoom is approx 4 at country level
-        var countryPointSizePixels = 5;
+        var countryPointSizePixels = 8;
 
         // map.zoom is approx 18 at block level
         var blockPointSizePixels = 50;
@@ -1038,17 +1086,19 @@
                 var sectionBreak = $('<hr>');
                 var meanLat = 0; 
                 var meanLng = 0; 
-                var maxDistInPixels = currentPointSize/2 + 10;
-                var eltList = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
+                var maxDistInPixels = currentPointSize/2;
+          
+                var eltList = findClosestElements(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
+                console.log(eltList);
                 var inputNodes = null; 
                 var count = 0;
                 var visible = false; 
                 for (var i = 0; i < eltList.length; i++){
-
+                   console.log("Feed Number: " + feedLocList.index[eltList[i].i] + ", Location in Array: " + eltList[i].i);
+                   console.log(feedLocList.color[eltList[i].i * 4 + 3]); 
                    if (feedLocList.color[eltList[i].i * 4 + 3] != 0) {
                     count++; 
                     visible = true; 
-                    console.log("Feed Number: " + feedLocList.index[eltList[i].i] + ", Location in Array: " + eltList[i].i);
                     
                     var clickedNode = $("#channels div[id $= '#" + feedLocList.index[eltList[i].i] + "']");
                     inputNodes = $(clickedNode).children().children().filter('input');
@@ -1068,6 +1118,9 @@
                     console.log("-----")
                   } else {
                         console.log('i am hidden')
+                        console.log("Feed Number: " + feedLocList.index[eltList[i].i] + ", Location in Array: " + eltList[i].i);
+                        console.log(feedLocList.color[eltList[i].i * 4 + 3]); 
+                        console.log(i, eltList.length);
 
                   }    
               }
@@ -1084,20 +1137,22 @@
                  infoWindow = new google.maps.InfoWindow(
                       {content: printFoundDivs(finalDiv), 
                       position: new google.maps.LatLng(meanLat, meanLng)});
-                  infoWindow.open(map); 
+                  infoWindow.open(map);
 
                   google.maps.event.addListener(infoWindow, 'domready', function() {
                     $(finalInput).children().each(function (index, inputs){
                       $('input[name="' + $(this).attr('name') + '"]').prop('checked', $(this).prop('checked'));
                     }); 
+                    drawInfoWindowLines();
                   });
               };
             console.log("*************************")
          });
 
           google.maps.event.addListener(map, 'mousemove', function(event) {
-                var maxDistInPixels = currentPointSize/2 + 1 / (currentPointSize + .00001) ;
-                var eltList = findClosestElement(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
+                var maxDistInPixels = currentPointSize/2;
+                var eltList = findClosestElements(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
+                changeOpacity(showNumList, alpha);
                 for (var i = 0; i < eltList.length; i++){
                     if (feedLocList.color[eltList[i].i * 4 + 3] != 0) {
                       map.setOptions({ draggableCursor: 'default' });
@@ -1107,7 +1162,6 @@
 
                 if (eltList.length == 0){
                     map.setOptions({ draggableCursor: null });
-                    changeOpacity(showNumList, alpha);
                 }
           });
       }
@@ -1174,7 +1228,7 @@
 </form>
 <div id="channels" style="width:20%; height:calc(100vh - 190px); position:absolute; left:0px; top:180px; font-size:10px; overflow-y:auto"></div>
 <div id="map-div" style="width:80%; height:40%; position:absolute; right:3px;"></div>
-<form id = "filters" style="font-size:12px; position: absolute; width: 160px; height: 150px; bottom: 61.5%; right: 3px; background-color: white;">
+<!-- <form id = "filters" style="font-size:12px; position: absolute; width: 160px; height: 150px; bottom: 61.5%; right: 3px; background-color: white;">
 
   <label><input type="radio" name="map-filter" data-filter = "pm25" onclick="reColor(this)">PM2.5<br></label>
   <label><input type="radio" name="map-filter" data-filter = "pm10" onclick="reColor(this)">PM10<br></label>
@@ -1184,7 +1238,7 @@
   <label><input type="radio" name="map-filter" data-filter = "so2" onclick="reColor(this)">Sulfur Dioxide (SO<sub>2</sub>)<br></label>
   <label><input type="radio" name="map-filter" data-filter = "co" onclick="reColor(this)">Carbon Monoxide (CO)<br></label>
   <input type="reset" value="Clear Map Filters">
-</form>
+</form> -->
 <div id="charts" style="width:80%; height: 60%; position:absolute; right:0px; bottom:0px;">
   <div style="position:relative; height: 50px; width:100%; border-bottom:1px solid black">
       <div id="date_axis" style="position:absolute; top:0px; bottom:0px; left:0px; right:40px"></div>
