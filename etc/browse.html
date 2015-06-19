@@ -959,24 +959,31 @@
             var myStyle = [
                             {
                               "featureType": "poi",
-                              "elementType": "labels.icon",
-                              "stylers": [
-                                { "visibility": "on" }
-                              ]
-                            },
-                            {
-                              "featureType": "poi",
                               "elementType": "labels.text",
                               "stylers": [
                                 { "visibility": "off" }
                               ]
-                            }
+                            },
+                            {
+                              "featureType": "road",
+                              "elementType": "labels.icon",
+                              "stylers": [
+                                { "visibility": "off" }
+                              ]
+                            },{
+                                "featureType": "road",
+                                "elementType": "geometry.stroke",
+                                "stylers": [
+                                  { "visibility": "off" }
+                                ]
+                              }
                           ]
 
            var mapOptions = {
             //start at middle of US
             zoom: 4,
-            center: new google.maps.LatLng(39.3, -95.8)
+            center: new google.maps.LatLng(39.3, -95.8),
+            styles: myStyle, 
 
             // start in Pittsburgh 
             // zoom: 13,
