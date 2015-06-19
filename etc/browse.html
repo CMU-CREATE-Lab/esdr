@@ -997,7 +997,7 @@
       function drawFrame() {
         gl.enable(gl.BLEND);
         gl.blendEquationSeparate( gl.FUNC_ADD, gl.FUNC_ADD );
-        gl.blendFuncSeparate(gl.ONE, gl.ONE, gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA );
+        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE, gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
         // Compute WebGL transform from world xy coords to screen
         // copy pixel->webgl matrix
@@ -1018,7 +1018,7 @@
         var countryPointSizePixels = 4.5;
 
         // map.zoom is approx 18 at block level
-        var blockPointSizePixels = 50;
+        var blockPointSizePixels = 60;
 
         var pointSize = .75 * countryPointSizePixels * Math.pow(blockPointSizePixels / countryPointSizePixels, (map.zoom - 4) / (18 - 4));
 
@@ -1026,7 +1026,7 @@
 
         var color = [0, 0, 255, alpha];
 
-        var hardFraction = .90;  
+        var hardFraction = .95;  
 
         var count = feedLocList.index.length;
 
