@@ -106,7 +106,8 @@
 
       var channelUnits = null;
 
-      var showNumList = []; 
+      var showNumList = [];
+      var clickedNumList = [];  
 
       var pm25 = []; 
       var pm10 = []; 
@@ -794,7 +795,7 @@
 
               // };
          }; 
-
+         resetClickedList();
          drawInfoWindowLines(); 
         console.log("-------------------")
       }; 
@@ -877,6 +878,16 @@
           gl.vertexAttribPointer(gl.getAttribLocation(feedLocList.program, 'aColor'), 4, gl.FLOAT, false, 0, 0);
         }
 
+      }
+
+      function resetClickedList(){
+        for (var i = 0; i < clickedNumList.length; i++){
+          if (showNumList.indexOf(clickedNumList[i]) == -1) {
+            clickedNumList.splice(i, 1); 
+          }; 
+        };
+        changeOpacity(showNumList, alpha);
+        changeOpacity(clickedNumList, 1);
       }
 
       function changeOpacity(feedNumArray, alpha){
@@ -975,6 +986,25 @@
                                 "elementType": "geometry.stroke",
                                 "stylers": [
                                   { "visibility": "off" }
+                                ]
+                              },{
+                                "featureType": "road.highway",
+                                "elementType": "geometry.fill",
+                                "stylers": [
+                                  { "color": "#bbbbbb" }
+                                ]
+                              },{
+                                "featureType": "road"  },{
+                                "featureType": "road",
+                                "elementType": "labels.text.fill",
+                                "stylers": [
+                                  { "color": "#888888" }
+                                ]
+                              },{
+                                "featureType": "administrative",
+                                "elementType": "labels.text.fill",
+                                "stylers": [
+                                  { "color": "#606060" }
                                 ]
                               }
                           ]
@@ -1094,6 +1124,8 @@
                 var meanLat = 0; 
                 var meanLng = 0; 
                 var maxDistInPixels = currentPointSize/2;
+
+                clickedNumList = []; 
           
                 var eltList = findClosestElements(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
                 console.log(eltList);
@@ -1106,6 +1138,8 @@
                    if (feedLocList.color[eltList[i].i * 4 + 3] != 0) {
                     count++; 
                     visible = true; 
+
+                    clickedNumList.push(feedLocList.index[eltList[i].i]); 
                     
                     var clickedNode = $("#channels div[id $= '#" + feedLocList.index[eltList[i].i] + "']");
                     inputNodes = $(clickedNode).children().children().filter('input');
@@ -1139,6 +1173,7 @@
               if (eltList.length != 0 && visible){
                   if (infoWindow){
                     infoWindow.close();
+                    changeOpacity(showNumList, alpha); 
                   };
 
                  infoWindow = new google.maps.InfoWindow(
@@ -1146,13 +1181,21 @@
                       position: new google.maps.LatLng(meanLat, meanLng)});
                   infoWindow.open(map);
 
+                  changeOpacity(clickedNumList, 1);
+
                   google.maps.event.addListener(infoWindow, 'domready', function() {
                     $(finalInput).children().each(function (index, inputs){
                       $('input[name="' + $(this).attr('name') + '"]').prop('checked', $(this).prop('checked'));
                     }); 
                     drawInfoWindowLines();
                   });
+
+                  google.maps.event.addListener(infoWindow,'closeclick',function(){
+                    changeOpacity(showNumList, alpha);
+                    clickedNumList = []; 
+                  });
               };
+            console.log(clickedNumList);
             console.log("*************************")
          });
 
@@ -1160,6 +1203,7 @@
                 var maxDistInPixels = currentPointSize/2;
                 var eltList = findClosestElements(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
                 changeOpacity(showNumList, alpha);
+                changeOpacity(clickedNumList, 1);
                 for (var i = 0; i < eltList.length; i++){
                     if (feedLocList.color[eltList[i].i * 4 + 3] != 0) {
                       map.setOptions({ draggableCursor: 'default' });
@@ -1171,6 +1215,8 @@
                     map.setOptions({ draggableCursor: null });
                 }
           });
+
+
       }
 
 </script>
