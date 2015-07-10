@@ -4,6 +4,11 @@ if (!RunMode.isValid()) {
    process.exit(1);
 }
 
+// Use New Relic everywhere except in test
+if (!RunMode.isTest()) {
+   require('newrelic');
+}
+
 var log4js = require('log4js');
 log4js.configure('log4js-config-' + RunMode.get() + '.json');
 var log = log4js.getLogger('esdr');
@@ -81,7 +86,7 @@ Database.create(function(err, db) {
 
          app.engine('hbs', handlebars.engine);
          app.set('view engine', '.hbs');
-         app.set('view cache', RunMode.isProduction());           // only cache views in production
+         app.set('view cache', RunMode.isStaging() || RunMode.isProduction());           // only cache views in staging and production
          log.info("View cache enabled = " + app.enabled('view cache'));
 
          // MIDDLEWARE -------------------------------------------------------------------------------------------------
@@ -102,7 +107,7 @@ Database.create(function(err, db) {
          });
 
          // set up HTTP request logging (do this AFTER the static file serving so we don't log those)
-         if (RunMode.isProduction()) {
+         if (RunMode.isStaging() || RunMode.isProduction()) {
             // create a write stream (in append mode)
             var fs = require('fs');
             var httpAccessLogDirectory = config.get("httpAccessLogDirectory");
@@ -153,7 +158,7 @@ Database.create(function(err, db) {
 
          // CUSTOM MIDDLEWARE ------------------------------------------------------------------------------------------
 
-         if (RunMode.isProduction()) {
+         if (RunMode.isStaging() || RunMode.isProduction()) {
             app.set('trust proxy', 1); // trust first proxy
          }
 
@@ -175,7 +180,7 @@ Database.create(function(err, db) {
                           httpOnly : true,
                           secure : config.get("cookie:isSecure")   // whether to enable secure cookies (must be true when using HTTPS)
                        },
-                       proxy : RunMode.isProduction(),       // we use a proxy in production
+                       proxy : RunMode.isStaging() || RunMode.isProduction(),       // we use a proxy in staging and production
                        saveUninitialized : true,
                        resave : true,
                        unset : "destroy"
@@ -258,8 +263,8 @@ Database.create(function(err, db) {
          // custom 404
          app.use(error_handlers.http404);
 
-         // dev and prod should handle errors differently: e.g. don't show stacktraces in prod
-         app.use(RunMode.isProduction() ? error_handlers.prod : error_handlers.dev);
+         // dev and prod should handle errors differently: e.g. don't show stacktraces in staging or production
+         app.use(RunMode.isStaging() || RunMode.isProduction() ? error_handlers.prod : error_handlers.dev);
 
          // ------------------------------------------------------------------------------------------------------------
 

@@ -5,6 +5,11 @@ node_modules
 out
 logs/*.log
 
+newrelic.js
+newrelic_agent.log
+
 config-prod.json
+config-stage.json
 mail-config-dev.json
+mail-config-stage.json
 mail-config-prod.json

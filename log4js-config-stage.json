@@ -1,0 +1,17 @@
+{
+   "replaceConsole": true,
+   "appenders" : [
+      {
+         "type" : "dateFile",
+         "filename" : "./logs/esdr",
+         "pattern" : "-yyyy-MM-dd.log",
+         "alwaysIncludePattern" : true,
+         "layout" : {
+            "type" : "basic"
+         }
+      }
+   ],
+   "levels" : {
+      "[all]":"INFO"
+   }
+}
