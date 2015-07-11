@@ -97,6 +97,7 @@
    <script language="JavaScript" type="text/javascript">
 
       //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   esdr start  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
       var feedLocList = {latlng: [], index: [], color: []}; 
       var ESDR_API_ROOT_URL = 'https://esdr.cmucreatelab.org/api/v1';
       var DEFAULT_CHANNEL = 'particle_concentration';
@@ -543,17 +544,58 @@
 
       }
 
+      //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   Timeline start  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+    /*      [1500, 1600, 1700, 1800, 1900]
+
+              1550  
+
+        //Fires when cursor position changes or date axis bound changes 
+        plotManager.getDateAxis().addAxisChangeListener(function(dateAxisProperties) { 
+              //dateAxisProperties.min; 
+              //dateAxisProperties.max; 
+              //dateAxisProperties.cursorPosition; 
+        });
+
+        plotManager.getDateAxis().setCursorPosition(time)*/
+
+
+      function updateMultifeed(beginTime, endTime){
+        timelineQueue = [];
+        console.log(beginTime, endTime);
+        for (var i = 0; i < multifeedList.length; i++){
+          getTiles(beginTime, endTime, multifeedList[i]);
+          // getGrapherTimeTiles(multifeedList[i]);
+        }
+        
+      }
+
+
+      var multifeedList = ["achd_pm_10"]; 
+      var dateProperties; 
       var timelineReady = false;
       var timelineQueue = []; 
+      var pause = true;
+      var onLoop = false;
+      var playing = false;
+      var speed = 25;   
+
+      function offsetLimitCalculator(beginTime, endTime){
+        var level = Math.ceil(Math.log(Math.abs(endTime - beginTime)/512)/Math.log(2));
+        var offset = Math.floor(beginTime/(512*Math.pow(2, level))); 
+        return {level: level, offset: offset};
+      }
 
       //beginTime and endTime are in Epoch
       function getTiles(beginTime, endTime, multifeedName){
+        pause = true;
         timelineReady = false; 
-        timelineQueue = [];
         var dataList = [];
         var feedNums = []; 
-        var level = Math.ceil(Math.log(Math.abs(endTime - beginTime)/512)/Math.log(2))
-        var offset = Math.floor(beginTime/(512*Math.pow(2, level))); 
+        var result = offsetLimitCalculator(beginTime, endTime); 
+        var level = result.level;
+        var offset = result.offset;
         console.log(level, offset);
         var url = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + offset;
         // window.open(url);
@@ -571,7 +613,8 @@
             feedNums.push(parseInt(name.split(".", 2)[1].split("_")[1])); 
           });
 
-          console.log(dataList, feedNums); 
+          console.log(dataList, feedNums);
+          if (dataList.length == 0) return; 
           processData(dataList, feedNums, multifeedName); 
 
         }); 
@@ -579,9 +622,9 @@
       }
 
       function getGrapherTimeTiles(multifeedName){
-        var timeRange = plotManager.getDateAxis().getRange();
-        var beginTime = timeRange.min; 
-        var endTime = timeRange.max; 
+        var beginTime = dateProperties.min; 
+        var endTime = dateProperties.max;
+        console.log("Getting tiles between " + beginTime + "and " + endTime); 
         getTiles(beginTime, endTime, multifeedName); 
       }
 
@@ -591,15 +634,15 @@
         }
       }
 
+      //TODO: sort chronologically the colorFunctions by timeStamp before pushing to timeline
       function processData(dataList, feedNums, multifeedName){
-        currentIndex = 0;
         pause = true;
         switch (multifeedName){
           case "achd_pm_10":
             for (var i = 0; i < dataList.length; i++){
               var colorFunctions = {
                   functionList: [],
-                  time: dataList[i][0],
+                  timeStamp: dataList[i][0],
               };
 
               for (var k = 1; k < dataList[i].length; k++){
@@ -622,10 +665,44 @@
             break; 
         }
 
-        timelineReady = true; 
+        timelineReady = true;
+        if (playing) playTimeline(speed);
+      }
+
+      //inpsiratino from binarySearch.js
+      function findIndexAtTime(list, time){
+        var min = 0; 
+        var max = list.length - 1; 
+        var guess;
+        var minDifference = Number.MAX_SAFE_INTEGER;
+        var answer = -1;   
+
+        while (min <= max){
+          guess = Math.floor((min + max)/2);
+          var difference = time - list[guess].timeStamp; 
+
+          if (Math.abs(difference) < Number.EPSILON){
+            return guess;
+          }else if(Math.abs(difference) <= minDifference){
+            minDifference = Math.abs(difference);
+            answer = guess; 
+          }else if (min == max){
+            break;
+          }
+
+          if (difference > 0){
+            min = guess + 1; 
+          }else{
+            max = guess - 1; 
+          }
+          
+        } 
+        return answer; 
+
       }
 
       function showColorAtIndex(index){
+        console.log("showing index: " + index);
         if (timelineReady){
           var functionList = timelineQueue[index].functionList; 
           for (var i = 0; i < functionList.length; i++){
@@ -634,34 +711,30 @@
         }
       }
 
-      var pause = true;
-      var currentIndex = 0;
-      var onLoop = false;  
-
       function playTimeline(speed){
         pause = false;
-        playNext(currentIndex, speed); 
+        playing = true;
+        playNext(dateProperties.cursorPosition, speed); 
       }
 
-      function playNext(index, speed){
-        if (index < timelineQueue.length){
+      function playNext(time, speed){
+        if (time < dateProperties.max){
 
           if (!pause){
             setTimeout(function() {
-              showColorAtIndex(index); 
-              currentIndex++;
-              console.log("Showing index: " + index); 
-              setTimeout(playNext(index+1, speed), 1); 
+              plotManager.getDateAxis().setCursorPosition(time);
+              var timeIncrement = (dateProperties.max - dateProperties.min)/600; 
+              setTimeout(playNext(plotManager.getDateAxis().getCursorPosition() + timeIncrement, speed), 1); 
             }, speed);
           }
           
         }else{
           if (onLoop){
-            playNext(0, speed)
+            playNext(dateProperties.min, speed); 
           }else{
             console.log('Timeline Done'); 
             pause = true;
-            currentIndex = 0;
+            playing = false; 
             return; 
           }
         }
@@ -669,6 +742,7 @@
 
       function pauseTimeline(){
         pause = true;
+        playing = false;
       }
 
       function toggleLoop(){
@@ -796,10 +870,35 @@
 
          plotManager = new org.bodytrack.grapher.PlotManager("date_axis", minTimeSecs, maxTimeSecs);
 
-      plotManager.setWillAutoResizeWidth(true, function() {
-               return $('#plots').width()         // window width
-                      - 30;
-            });
+         plotManager.setWillAutoResizeWidth(true, function() {
+                 return $('#plots').width()         // window width
+                        - 30;
+              });
+          
+         //Fires when cursor position changes or date axis bound changes 
+
+         dateProperties = plotManager.getDateAxis().getRange();
+
+         plotManager.getDateAxis().addAxisChangeListener(function(dateAxisProperties) { 
+              
+            if (timelineReady){
+              if (Math.abs(dateProperties.min - dateAxisProperties.min) >= Number.EPSILON 
+                  && Math.abs(dateProperties.max - dateAxisProperties.max) >= Number.EPSILON){
+                updateMultifeed(dateAxisProperties.min, dateAxisProperties.max); 
+                if (dateAxisProperties.cursorPosition < dateAxisProperties.min){
+                  plotManager.getDateAxis().setCursorPosition(dateAxisProperties.min); 
+                }else if(dateAxisProperties.cursorPosition > dateAxisProperties.max){
+                  plotManager.getDateAxis().setCursorPosition(dateAxisProperties.max);
+                }
+                showColorAtIndex(findIndexAtTime(timelineQueue, dateAxisProperties.cursorPosition));
+              }
+
+              if (Math.abs(dateProperties.cursorPosition - dateAxisProperties.cursorPosition) >= Number.EPSILON)
+                showColorAtIndex(findIndexAtTime(timelineQueue, dateAxisProperties.cursorPosition));
+            }
+
+            dateProperties = dateAxisProperties;
+        });
       }
 
       function searchAttributes() {
