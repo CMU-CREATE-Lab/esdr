@@ -540,8 +540,39 @@
         return "other"; 
       }
 
-      function prepareJSON(feedNumArray, channelNames){
+      function prepareJSON(){
+        var pm25Array = [];
+        var index = 0; 
+        var alreadySorted = [];
 
+        while(index < channelNames.pm25.length){
+          if (alreadySorted.indexOf(index) == -1){
+            var sameChannelName = []; 
+            var checkValue = channelNames.pm25[index];
+            var idx = channelNames.pm25.indexOf(checkValue); 
+            while (idx != -1){
+              sameChannelName.push(idx);
+              alreadySorted.push(idx);
+              idx = channelNames.pm25.indexOf(checkValue, idx + 1); 
+            }
+            pm25Array.push(sameChannelName);
+          }
+          index++;
+        }
+
+        var pm25JSON = {name:"pm_25", spec:[]}; 
+        
+        for(var i = 0; i < pm25Array.length; i++){
+          var feedString = "whereOr="; 
+          console.log(pm25Array[i].length);
+          for (var k = 0; k < pm25Array[i].length; k++){
+            feedString += "id=" + pm25[pm25Array[i][k]] + ",";
+          }
+          feedString = feedString.substring(0, feedString.length - 1);
+          pm25JSON.spec.push({feeds: feedString, channels: [channelNames.pm25[pm25Array[i][0]]]});  
+        }
+
+        console.log(JSON.stringify(pm25JSON));
       }
       
       //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ init() function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -678,20 +709,32 @@
          dateProperties = plotManager.getDateAxis().getRange();
 
          plotManager.getDateAxis().addAxisChangeListener(function(dateAxisProperties) { 
-            if (timelineReady){
-              if (Math.abs(dateProperties.min - dateAxisProperties.min) >= Number.EPSILON 
-                  && Math.abs(dateProperties.max - dateAxisProperties.max) >= Number.EPSILON){
-                  pauseTimeline();
-                  clearTimeout(refreshTimer);
-                  refreshTimer = setTimeout(function() {
-                    updateMultifeed(dateAxisProperties.min, dateAxisProperties.max); 
-                  }, 500);
-                  
-                if(playing) showColorAtIndex(findIndexAtTime(timelineQueue, dateAxisProperties.cursorPosition));
-              }
 
-              if (Math.abs(dateProperties.cursorPosition - dateAxisProperties.cursorPosition) >= Number.EPSILON)
-                showColorAtIndex(findIndexAtTime(timelineQueue, dateAxisProperties.cursorPosition));
+            if (Math.abs(dateProperties.min - dateAxisProperties.min) >= Number.EPSILON 
+                && Math.abs(dateProperties.max - dateAxisProperties.max) >= Number.EPSILON){
+                pauseTimeline();
+                $('#play').attr('disabled','disabled');
+                $('#loop').attr('disabled','disabled');
+                timelinReady = false;
+                clearTimeout(refreshTimer);
+                refreshTimer = setTimeout(function() {
+                  updateMultifeed(dateAxisProperties.min, dateAxisProperties.max); 
+                }, 500);
+
+              if(playing) showColorAtIndex(findIndexAtTime(timelineQueue, dateAxisProperties.cursorPosition));
+            }
+
+            if (Math.abs(dateProperties.cursorPosition - dateAxisProperties.cursorPosition) >= Number.EPSILON)
+              showColorAtIndex(findIndexAtTime(timelineQueue, dateAxisProperties.cursorPosition));
+
+            if (dateAxisProperties.cursorPosition > Date.now()/1000){
+                  $('#play').attr('disabled','disabled');
+                  $('#loop').attr('disabled','disabled');
+            }else{
+              if (timelineReady){
+                $('#play').removeAttr('disabled');
+                $('#loop').removeAttr('disabled');
+              }
             }
 
             dateProperties = dateAxisProperties;
@@ -893,6 +936,39 @@
       var dragTimer; 
       var playInterval; 
 
+      function reColor(radioInput){
+        resetTimeline(20, 20, 20);
+        switch(radioInput.dataset.filter){
+          case "pm10":
+            multifeedList.push("pm_10");
+            break;
+          case "pm25":
+            multifeedList.push("pm_25");
+            break; 
+        };
+
+        initializeTimeline();
+      }
+
+      function clearColors(r,g,b){
+        for (var i = 0; i < allFeedNums.length; i++){
+          changeColor(r,g,b,allFeedNums[i]);
+        }
+      };
+
+      function resetTimeline(r,g,b){
+          $('#play').attr('disabled','disabled');
+          $('#loop').attr('disabled','disabled');
+          pauseTimeline(); 
+          playing = false; 
+          timelineReady = false; 
+          timelineQueue = []; 
+          multifeedList = []; 
+          clearTimeout(dragTimer);
+          clearTimeout(refreshTimer);
+          clearColors(r,g,b);
+      }
+
       function setSpeed(){
         if ($("#speed").val() <= 1){
           $("#speed").val(1);
@@ -908,6 +984,7 @@
       }
 
       function initializeTimeline(){
+        console.log(multifeedList);
         for (var i = 0; i < multifeedList.length; i++){
           getGrapherTimeTiles(multifeedList[i]);
         }
@@ -932,8 +1009,6 @@
       //beginTime and endTime are in Epoch
       function getTiles(beginTime, endTime, multifeedName){
         timelineReady = false; 
-        $('#play').attr('disabled','disabled');
-        $('#loop').attr('disabled','disabled');
         var dataList = [];
         var feedNums = []; 
         var result = offsetLimitCalculator(beginTime, endTime); 
@@ -980,7 +1055,7 @@
       //TODO: sort chronologically the colorFunctions by timeStamp before pushing to timeline
       function processData(dataList, feedNums, multifeedName){
         switch (multifeedName){
-          case "achd_pm_10":
+          case "pm_10":
             for (var i = 0; i < dataList.length; i++){
               var colorFunctions = {
                   functionList: [],
@@ -1005,12 +1080,37 @@
               timelineQueue.push(colorFunctions); 
             }
             break; 
+          case "pm_25":
+            for (var i = 0; i < dataList.length; i++){
+              var colorFunctions = {
+                  functionList: [],
+                  timeStamp: dataList[i][0],
+              };
+
+              for (var k = 1; k < dataList[i].length; k++){
+                 if (dataList[i][k] == null){
+                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [20, 20, 20, feedNums[k - 1]])); 
+                  }else if (dataList[i][k] <= 12){
+                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [0, 255, 0, feedNums[k - 1]]));
+                  }else if(dataList[i][k] <= 35.4){
+                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 255, 0, feedNums[k - 1]]));
+                  }else if(dataList[i][k] <= 55.4){
+                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 125, 0, feedNums[k - 1]])); 
+                  }else if(dataList[i][k] <= 150.4){
+                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 0, 0, feedNums[k - 1]])); 
+                  }else
+                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [125, 0, 0, feedNums[k - 1]])); 
+              }
+
+              timelineQueue.push(colorFunctions); 
+            }
         }
 
         timelineReady = true;
         $('#play').removeAttr('disabled');
         $('#loop').removeAttr('disabled');
         if (playing) playTimeline();
+        showColorAtIndex(findIndexAtTime(timelineQueue, dateProperties.cursorPosition));
       }
 
       //inpsiratino from binarySearch.js
@@ -1067,20 +1167,17 @@
         pause = false;
         playing = true;
         cursorInBound();
-
         playInterval = setInterval(function(){
-          playNext(dateProperties.cursorPosition)
+            playNext(dateProperties.cursorPosition)
         }, speed); 
-
       }
 
       function playNext(time){
         var timeIncrement = (dateProperties.max - dateProperties.min)/timeSlices;
-        cursorInBound();
          
         time += timeIncrement; 
 
-        if (time < dateProperties.max){
+        if (time < dateProperties.max && time <= Date.now() / 1000){
           
           if (time != dateProperties.cursorPosition + timeIncrement){
             console.log("Dragging.");
@@ -1098,11 +1195,16 @@
         }else{
           if (onLoop){
             console.log("loop.")
+            if (time - timeIncrement > Date.now()/1000){
+              pauseTimeline(); 
+              return;
+            }
             plotManager.getDateAxis().setCursorPosition(dateProperties.min - timeIncrement); 
           }else{
             console.log('Timeline Done'); 
             pauseTimeline();
-            playing = false;            
+            playing = false; 
+            plotManager.getDateAxis().setCursorPosition(dateProperties.min);     
             return; 
           }
         }
@@ -1123,8 +1225,10 @@
           playTimeline();
         }else{
           pauseTimeline();
+          playing = false;
         }
       }
+
 
       $(init);
 
@@ -1188,25 +1292,6 @@
         gl.vertexAttribPointer(gl.getAttribLocation(feedLocList.program, 'aColor'), 4, gl.FLOAT, false, 0, 0);}
 
       }
-
-      function reColor(radioInput){
-        multifeedList = []; 
-        switch(radioInput.dataset.filter){
-          case "pm10":
-            multifeedList.push("achd_pm_10");
-            break;
-          case "pm25":
-            break; 
-        };
-
-        initializeTimeline();
-      }
-
-      function clearColors(){
-        for (var i = 0; i < allFeedNums.length; i++){
-          changeColor(0,0,255,allFeedNums[i]);
-        }
-      };
 
       function initializeMap() {
             var myStyle = [
@@ -1294,10 +1379,10 @@
         // Compute point diameter, in pixels, based on zoom level
 
         // map.zoom is approx 4 at country level
-        var countryPointSizePixels = 4.5;
+        var countryPointSizePixels = 7;
 
         // map.zoom is approx 18 at block level
-        var blockPointSizePixels = 60;
+        var blockPointSizePixels = 40;
 
         var pointSize = .75 * countryPointSizePixels * Math.pow(blockPointSizePixels / countryPointSizePixels, (map.zoom - 4) / (18 - 4));
 
@@ -1523,7 +1608,7 @@
 <form id = "map-filters" style="font-size:12px; position: absolute; width: 120px; height: 60px; bottom: 61.5%; right: 10px; background-color: rgba(240, 240, 240, .5)">
   <label><input type="radio" name="map-filter" data-filter = "pm25" onclick="reColor(this)">PM2.5<br></label>
   <label><input type="radio" name="map-filter" data-filter = "pm10" onclick="reColor(this)">PM10<br></label>
-  <input type="reset" value="Clear Map Filters" onclick="clearColors()">
+  <input type="reset" value="Clear Map Filters" onclick="resetTimeline(0, 0, 255)">
 </form>
 <form action="" class="timeline" style="font-size:12px; position: absolute; width: 260px; height: 25px; bottom: 61%; right: 200px;">
   <input type="button" id="play" onclick="togglePlayPause()" value="Play/Pause" disabled>
