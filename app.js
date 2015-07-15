@@ -4,15 +4,17 @@ if (!RunMode.isValid()) {
    process.exit(1);
 }
 
-// Use New Relic everywhere except in test
-if (!RunMode.isTest()) {
-   require('newrelic');
+if (RunMode.isTest()) {
+   process.env['NEW_RELIC_APP_NAME'] = "ESDR Test";
 }
+var nr = require('newrelic');
 
 var log4js = require('log4js');
 log4js.configure('log4js-config-' + RunMode.get() + '.json');
 var log = log4js.getLogger('esdr');
 log.info("Run Mode: " + RunMode.get());
+
+log.info("New Relic enabled for app: " + ((nr.agent && nr.agent.config && nr.agent.config.app_name) ? nr.agent.config.app_name : "unknown"));
 
 // dependencies
 var config = require('./config');
