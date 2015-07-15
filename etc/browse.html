@@ -708,11 +708,14 @@
 
          dateProperties = plotManager.getDateAxis().getRange();
 
+         timeIncrement = (dateProperties.max - dateProperties.min)/timeSlices;
+
          plotManager.getDateAxis().addAxisChangeListener(function(dateAxisProperties) { 
 
             if (Math.abs(dateProperties.min - dateAxisProperties.min) >= Number.EPSILON 
                 && Math.abs(dateProperties.max - dateAxisProperties.max) >= Number.EPSILON){
                 pauseTimeline();
+                timeIncrement = (dateProperties.max - dateProperties.min)/timeSlices;
                 $('#play').attr('disabled','disabled');
                 $('#loop').attr('disabled','disabled');
                 timelinReady = false;
@@ -930,8 +933,9 @@
       var pause = true;
       var onLoop = false;
       var playing = false;
-      var timeSlices = 600;
+      var timeSlices = 1000;
       var speed = 15/timeSlices*1000; 
+      var timeIncrement;
       var refreshTimer;
       var dragTimer; 
       var playInterval; 
@@ -963,7 +967,7 @@
           playing = false; 
           timelineReady = false; 
           timelineQueue = []; 
-          multifeed = ''; 
+          multifeed = ""; 
           clearTimeout(dragTimer);
           clearTimeout(refreshTimer);
           clearColors(r,g,b);
@@ -1168,9 +1172,6 @@
       }
 
       function playNext(time){
-        var timeIncrement = (dateProperties.max - dateProperties.min)/timeSlices;
-         
-        time += timeIncrement; 
 
         if (time < dateProperties.max && time <= Date.now() / 1000){
           
