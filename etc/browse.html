@@ -708,14 +708,11 @@
 
          dateProperties = plotManager.getDateAxis().getRange();
 
-         timeIncrement = (dateProperties.max - dateProperties.min)/timeSlices;
-
          plotManager.getDateAxis().addAxisChangeListener(function(dateAxisProperties) { 
 
             if (Math.abs(dateProperties.min - dateAxisProperties.min) >= Number.EPSILON 
                 && Math.abs(dateProperties.max - dateAxisProperties.max) >= Number.EPSILON){
                 pauseTimeline();
-                timeIncrement = (dateProperties.max - dateProperties.min)/timeSlices;
                 $('#play').attr('disabled','disabled');
                 $('#loop').attr('disabled','disabled');
                 timelinReady = false;
@@ -933,12 +930,11 @@
       var pause = true;
       var onLoop = false;
       var playing = false;
-      var timeSlices = 1000;
+      var timeSlices = 600;
       var speed = 15/timeSlices*1000; 
-      var timeIncrement;
       var refreshTimer;
       var dragTimer; 
-      var playInterval; 
+      var playAnimation; 
 
       function reColor(radioInput){
         resetTimeline(20, 20, 20);
@@ -967,7 +963,7 @@
           playing = false; 
           timelineReady = false; 
           timelineQueue = []; 
-          multifeed = ""; 
+          multifeed = ''; 
           clearTimeout(dragTimer);
           clearTimeout(refreshTimer);
           clearColors(r,g,b);
@@ -1172,6 +1168,9 @@
       }
 
       function playNext(time){
+        var timeIncrement = (dateProperties.max - dateProperties.min)/timeSlices;
+         
+        time += timeIncrement; 
 
         if (time < dateProperties.max && time <= Date.now() / 1000){
           
@@ -1589,7 +1588,7 @@
 </head>
 <body style="width:100%;height:100%">
 <input id = "search-bar" type = "search" placeholder="Search: " style = "width:19%; height:15px; position:absolute; left:3px; top: 5px; font-size:10px;"> 
-<form id = "filters" style="font-size:12px; position: absolute; width: 200px; height: 160px; top: 35px; left: 3px; background-color: white;">
+<form id = "filters" style="font-size:12px; position: absolute; width: 200px; height: 160px; top: 25px; left: 3px; background-color: white;">
   <label><input type="checkbox" name="pm25" onclick="searchAttributes()">PM2.5<br></label>
   <label><input type="checkbox" name="pm10" onclick="searchAttributes()">PM10<br></label>
   <label><input type="checkbox" name="ozone" onclick="searchAttributes()">Ozone (O<sub>3</sub>)<br></label>
@@ -1599,17 +1598,17 @@
   <label><input type="checkbox" name="co" onclick="searchAttributes()">Carbon Monoxide (CO)<br></label>
   <input type="button" value="Clear Search Filters" onclick="clearFilters()">
 </form>
-<div id="channels" style="width:20%; height:calc(100vh - 190px); position:absolute; left:0px; top:190px; font-size:10px; overflow-y:auto"></div>
+<div id="channels" style="width:20%; height:calc(100vh - 190px); position:absolute; left:0px; top:180px; font-size:10px; overflow-y:auto"></div>
 <div id="map-div" style="width:80%; height:40%; position:absolute; right:3px;"></div>
 <form id = "map-filters" style="font-size:12px; position: absolute; width: 120px; height: 60px; bottom: 61.5%; right: 10px; background-color: rgba(240, 240, 240, .5)">
   <label><input type="radio" name="map-filter" data-filter = "pm25" onclick="reColor(this)">PM2.5<br></label>
   <label><input type="radio" name="map-filter" data-filter = "pm10" onclick="reColor(this)">PM10<br></label>
   <input type="reset" value="Clear Map Filters" onclick="resetTimeline(0, 0, 255)">
 </form>
-<form action="" class="timeline" style="font-size:12px; position: absolute; width: 265px; height: 25px; bottom: 61%; right: 200px;">
+<form action="" class="timeline" style="font-size:12px; position: absolute; width: 260px; height: 25px; bottom: 61%; right: 200px;">
   <input type="button" id="play" onclick="togglePlayPause()" value="Play/Pause" disabled>
   <input type="button" id="loop" onclick="toggleLoop()" value="Loop" disabled>
-  <label>Duration of Loop:<input type="number" min= "1" id="speed" value="15" style="width: 30px; float: right;"></label>
+  <label>Duration of Loop:<input type="number" id="speed" value="15" style="width: 35px; float: right;"></label>
 </form>);
 <div id="charts" style="width:80%; height: 60%; position:absolute; right:0px; bottom:0px;">
   <div style="position:relative; height: 50px; width:100%; border-bottom:1px solid black">
