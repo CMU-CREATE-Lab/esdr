@@ -404,7 +404,7 @@
             // That was the last data.  Ready to process
             loadHash();
             // TODO(rsargent): let's update this only when panning or zooming the time axis
-            window.setInterval(updateHash, 100);
+            // xwindow.setInterval(updateHash, 100);
             window.onhashchange = loadHash; 
 
             feedLocList.latlng = new Float32Array(feedLocList.latlng); 
@@ -609,7 +609,7 @@
             searchAttributes(); 
          }); 
 
-         $('#speed').change(function(){
+         $('#duration').change(function(){
             setSpeed();
          })
       }
@@ -709,7 +709,7 @@
          dateProperties = plotManager.getDateAxis().getRange();
 
          plotManager.getDateAxis().addAxisChangeListener(function(dateAxisProperties) { 
-
+            updateHash();
             if (Math.abs(dateProperties.min - dateAxisProperties.min) >= Number.EPSILON 
                 && Math.abs(dateProperties.max - dateAxisProperties.max) >= Number.EPSILON){
                 pauseTimeline();
@@ -930,11 +930,11 @@
       var pause = true;
       var onLoop = false;
       var playing = false;
-      var timeSlices = 600;
-      var speed = 15/timeSlices*1000; 
+      var speed = 35;
+      var timeSlices = 15/speed*1000; 
       var refreshTimer;
       var dragTimer; 
-      var playAnimation; 
+      var playInterval; 
 
       function reColor(radioInput){
         resetTimeline(20, 20, 20);
@@ -970,15 +970,14 @@
       }
 
       function setSpeed(){
-        if ($("#speed").val() <= 1){
-          $("#speed").val(1);
-        }else {
-          speed = ($("#speed").val()/timeSlices)*1000;
+        if ($("#duration").val() <= 1){
+          $("#duration").val(1);
         }
 
+        timeSlices = $("#duration").val()/speed*1000
+
         if (playing){
-          console.log("Reset Speed to: " + speed);
-          clearInterval(playInterval); 
+          pauseTimeline();
           playTimeline();
         }
       }
@@ -1141,7 +1140,6 @@
       }
 
       function showColorAtIndex(index){
-        console.log("showing index: " + index);
         if (timelineReady){
           var functionList = timelineQueue[index].functionList; 
           for (var i = 0, len = functionList.length; i < len; i++){
@@ -1162,6 +1160,7 @@
         pause = false;
         playing = true;
         cursorInBound();
+        clearInterval(playInterval);
         playInterval = setInterval(function(){
             playNext(dateProperties.cursorPosition)
         }, speed); 
@@ -1185,7 +1184,9 @@
             }, 300);
           }        
           
-          plotManager.getDateAxis().setCursorPosition(time);
+          window.requestAnimationFrame(function(){
+             plotManager.getDateAxis().setCursorPosition(time);
+          });
 
         }else{
           if (onLoop){
@@ -1608,7 +1609,7 @@
 <form action="" class="timeline" style="font-size:12px; position: absolute; width: 260px; height: 25px; bottom: 61%; right: 200px;">
   <input type="button" id="play" onclick="togglePlayPause()" value="Play/Pause" disabled>
   <input type="button" id="loop" onclick="toggleLoop()" value="Loop" disabled>
-  <label>Duration of Loop:<input type="number" id="speed" value="15" style="width: 35px; float: right;"></label>
+  <label>Duration of Loop:<input type="number" min = "1" id="duration" value="15" style="width: 35px; float: right;"></label>
 </form>);
 <div id="charts" style="width:80%; height: 60%; position:absolute; right:0px; bottom:0px;">
   <div style="position:relative; height: 50px; width:100%; border-bottom:1px solid black">
