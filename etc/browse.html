@@ -15,7 +15,7 @@
       }
 
       .plot_container {
-         position: relative;``
+         position: relative;
          border: 1px solid black;
       }
 
@@ -130,6 +130,11 @@
       var feed = null;
       var availableChannels = [];
       var isAutoScaleOn = false;
+      var hashTimer; 
+
+      //Timeline Stuff
+      var DEFAULT_SPEED = 35; 
+      var DEFAULT_DURATION = 15;
 
       //WebGL stuff
       var alpha = 0.65; 
@@ -312,6 +317,7 @@
          var feedIndex = parseInt(channel.substr(0, channel.indexOf('.'))); 
 
          changeColor(75,0,130, feedIndex);
+         updateHash()
       }
 
       function removePlot(channel) {
@@ -344,7 +350,6 @@
         } else {
           removePlot(input.name);
         }
-        updateHash();
       } 
 
       function checkIfAnyChecked(index){
@@ -404,7 +409,7 @@
             // That was the last data.  Ready to process
             loadHash();
             // TODO(rsargent): let's update this only when panning or zooming the time axis
-            // xwindow.setInterval(updateHash, 100);
+            // window.setInterval(updateHash, 100);
             window.onhashchange = loadHash; 
 
             feedLocList.latlng = new Float32Array(feedLocList.latlng); 
@@ -499,23 +504,23 @@
             return "pm25";  
           }
           else if (channel === "Ozone_O3"){
-            if (ozone[ozone.length - 1] != feedID) ozone.push(feedID), channelNames.ozone.push(channel);; 
+            if (ozone[ozone.length - 1] != feedID) ozone.push(feedID), channelNames.ozone.push(channel); 
             return "ozone"; 
           }
           else if (channel === "Nitrogen_Dioxide_NO2"){
-            if (no2[no2.length - 1] != feedID) no2.push(feedID), channelNames.no2.push(channel);;
+            if (no2[no2.length - 1] != feedID) no2.push(feedID), channelNames.no2.push(channel);
             return "no2"; 
           }
           else if (channel === "Nitric_Oxide_NO"){
-            if (no[no.length - 1] != feedID) no.push(feedID), channelNames.no.push(channel);;
+            if (no[no.length - 1] != feedID) no.push(feedID), channelNames.no.push(channel);
             return "no"; 
           }
           else if (channel === "Sulfur_Dioxide_SO2"){
-            if (so2[so2.length - 1] != feedID) so2.push(feedID), channelNames.so2.push(channel);;
+            if (so2[so2.length - 1] != feedID) so2.push(feedID), channelNames.so2.push(channel);
             return "so2"; 
           }
           else if (channel === "Carbon_Monoxide_CO"){
-            if (co[co.length - 1] != feedID) co.push(feedID), channelNames.co.push(channel);;
+            if (co[co.length - 1] != feedID) co.push(feedID), channelNames.co.push(channel);
             return "co"; 
           }
         }else if(productId == 9){
@@ -690,6 +695,7 @@
          var feedIndex = parseInt(channel.substr(0, channel.indexOf('.'))); 
 
          if (!(checkIfAnyChecked(feedIndex))) changeColor(0,0,255,feedIndex);
+         updateHash();
       }
       
 
@@ -709,13 +715,14 @@
          dateProperties = plotManager.getDateAxis().getRange();
 
          plotManager.getDateAxis().addAxisChangeListener(function(dateAxisProperties) { 
-            updateHash();
             if (Math.abs(dateProperties.min - dateAxisProperties.min) >= Number.EPSILON 
                 && Math.abs(dateProperties.max - dateAxisProperties.max) >= Number.EPSILON){
+                clearTimeout(hashTimer);
+                hashTimer = setTimeout(updateHash, 1000);
                 pauseTimeline();
                 $('#play').attr('disabled','disabled');
                 $('#loop').attr('disabled','disabled');
-                timelinReady = false;
+                timelineReady = false;
                 clearTimeout(refreshTimer);
                 refreshTimer = setTimeout(function() {
                   updateMultifeed(dateAxisProperties.min, dateAxisProperties.max); 
@@ -930,11 +937,13 @@
       var pause = true;
       var onLoop = false;
       var playing = false;
-      var speed = 35;
-      var timeSlices = 15/speed*1000; 
+      var speed = DEFAULT_SPEED;
+      var timeSlices = DEFAULT_DURATION/speed*1000; 
+      var duration = DEFAULT_DURATION; 
       var refreshTimer;
       var dragTimer; 
       var playInterval; 
+      var prevTime; 
 
       function reColor(radioInput){
         resetTimeline(20, 20, 20);
@@ -967,6 +976,8 @@
           clearTimeout(dragTimer);
           clearTimeout(refreshTimer);
           clearColors(r,g,b);
+          speed = DEFAULT_SPEED; 
+          timeSlices = duration/speed*1000; 
       }
 
       function setSpeed(){
@@ -974,7 +985,8 @@
           $("#duration").val(1);
         }
 
-        timeSlices = $("#duration").val()/speed*1000
+        duration = $("#duration").val();
+        timeSlices = duration/speed*1000
 
         if (playing){
           pauseTimeline();
@@ -982,11 +994,20 @@
         }
       }
 
+      function checkSpeed(){
+        var now = new Date().getTime(), dt = now - prevTime; 
+        if (dt > speed){
+          speed = dt; 
+          timeSlices = duration/speed*1000;
+          console.log("Change speed: " + speed);
+          pauseTimeline();
+          playTimeline();
+        }
+      }
+
 
       function updateMultifeed(beginTime, endTime){
-        timelineQueue = [];
-        console.log(beginTime, endTime);
-       
+        timelineQueue = [];       
         if (multifeed) getTiles(beginTime, endTime, multifeed);
         
       } 
@@ -1005,7 +1026,6 @@
         var result = offsetLimitCalculator(beginTime, endTime); 
         var level = result.level;
         var offset = result.offset;
-        console.log(level, offset);
         var url = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + offset;
         // window.open(url);
         jQuery.getJSON(url, function(data){
@@ -1024,7 +1044,6 @@
             feedNums.push(parseInt(name.split(".", 2)[1].split("_")[1])); 
           });
 
-          console.log(dataList, feedNums);
           if (dataList.length == 0) return; 
 
           processData(dataList, feedNums, multifeedName); 
@@ -1036,7 +1055,6 @@
       function getGrapherTimeTiles(multifeedName){
         var beginTime = dateProperties.min; 
         var endTime = dateProperties.max;
-        console.log("Getting tiles between " + beginTime + "and " + endTime); 
         getTiles(beginTime, endTime, multifeedName); 
       }
 
@@ -1162,6 +1180,7 @@
         cursorInBound();
         clearInterval(playInterval);
         playInterval = setInterval(function(){
+            prevTime = Date.now();
             playNext(dateProperties.cursorPosition)
         }, speed); 
       }
@@ -1186,6 +1205,7 @@
           
           window.requestAnimationFrame(function(){
              plotManager.getDateAxis().setCursorPosition(time);
+             checkSpeed();
           });
 
         }else{
@@ -1405,7 +1425,16 @@
         };
         canvasLayer = new CanvasLayer(canvasLayerOptions);
 
-        window.addEventListener('resize', function(){ google.maps.event.trigger(map, 'resize') }, false);
+        window.addEventListener('resize', function(){ 
+          google.maps.event.trigger(map, 'resize'); 
+          if ($('#channels').width() == 250){
+            $('#map-div').css('left', 250); 
+            $('#charts').css('left', 250); 
+          }else{
+            $('#map-div').css('left', "20%");
+            $('#charts').css('left', "20%"); 
+          }
+        }, false);
 
         // initialize WebGL
         gl = canvasLayer.canvas.getContext('experimental-webgl');
@@ -1430,7 +1459,7 @@
       function initializeWebGL(){
 
          if (!initWebGL()) {
-             $('#map-div').append('<div align="center" style="position: absolute; z-index:1000000; margin:50px; padding:10px; border-color:black; border-style:solid; border-width:1px; box-shadow:5px 5px 5px grey; background-color:white; font-size:20px"><b>WebGL required</b><br>Please try using a browser that supports WebGL,<br>such as Chrome, Firefox, or Internet Explorer 11.</div>');
+             $('#map-div').append('<div align="center" style="position: absolute; z-index:1000000; margin:50px; padding:10px; border-color:black; border-style:solid; border-width:1px;ground-color:white; font-size:20px"><b>WebGL required</b><br>Please try using a browser that supports WebGL,<br>such as Chrome, Firefox, or Internet Explorer 11.</div>');
            }9
 
           // Convert from latlng to xy for map, and set up shader programs
@@ -1587,35 +1616,61 @@
     </script> 
 
 </head>
-<body style="width:100%;height:100%">
-<input id = "search-bar" type = "search" placeholder="Search: " style = "width:19%; height:15px; position:absolute; left:3px; top: 5px; font-size:10px;"> 
-<form id = "filters" style="font-size:12px; position: absolute; width: 200px; height: 160px; top: 25px; left: 3px; background-color: white;">
-  <label><input type="checkbox" name="pm25" onclick="searchAttributes()">PM2.5<br></label>
-  <label><input type="checkbox" name="pm10" onclick="searchAttributes()">PM10<br></label>
-  <label><input type="checkbox" name="ozone" onclick="searchAttributes()">Ozone (O<sub>3</sub>)<br></label>
-  <label><input type="checkbox" name="no" onclick="searchAttributes()">Nitric Oxide (NO)<br></label>
-  <label><input type="checkbox" name="no2" onclick="searchAttributes()">Nitrogen Dioxide (NO<sub>2</sub>)<br></label>
-  <label><input type="checkbox" name="so2" onclick="searchAttributes()">Sulfur Dioxide (SO<sub>2</sub>)<br></label>
-  <label><input type="checkbox" name="co" onclick="searchAttributes()">Carbon Monoxide (CO)<br></label>
-  <input type="button" value="Clear Search Filters" onclick="clearFilters()">
+<body style="width:100%; min-width: 250px; height:100%; background-color: rgba(225, 225, 225, .5)">
+<form style="width: 19%; min-width: 250px">
+  <input id = "search-bar" type = "search" placeholder="Search Channel Name:" style="font-size:10px; width: 100%;">
 </form>
-<div id="channels" style="width:20%; height:calc(100vh - 190px); position:absolute; left:0px; top:180px; font-size:10px; overflow-y:auto"></div>
-<div id="map-div" style="width:80%; height:40%; position:absolute; right:3px;"></div>
-<form id = "map-filters" style="font-size:12px; position: absolute; width: 120px; height: 60px; bottom: 61.5%; right: 10px; background-color: rgba(240, 240, 240, .5)">
-  <label><input type="radio" name="map-filter" data-filter = "pm25" onclick="reColor(this)">PM2.5<br></label>
-  <label><input type="radio" name="map-filter" data-filter = "pm10" onclick="reColor(this)">PM10<br></label>
-  <input type="reset" value="Clear Map Filters" onclick="resetTimeline(0, 0, 255)">
+<div style="position: absolute; height: 35px; width: 20%; min-width: 250px; background-color: rgba(50,50,50,1); top: 30px; left: 0px;"></div>
+<form id = "filters" style="font-size:12.5px; position: absolute; width: 20%; min-width: 250px; height: 195px; top: 30px; left: 0px; background-color: rgba(200, 200, 200, .4);">
+  <fieldset style="border: none;">
+   <section>
+    <legend style="padding-top: 7px; padding-bottom: 15px; font-size: 14.5px; width: 100%; font-weight: bold; color: rgba(255,255,255,.9)">Pollutant Filter</legend>
+      <label><input type="checkbox" name="pm25" onclick="searchAttributes()">PM2.5<br></label>
+      <label><input type="checkbox" name="pm10" onclick="searchAttributes()">PM10<br></label>
+      <label><input type="checkbox" name="ozone" onclick="searchAttributes()">Ozone (O<sub>3</sub>)<br></label>
+      <label><input type="checkbox" name="no" onclick="searchAttributes()">Nitric Oxide (NO)<br></label>
+      <label><input type="checkbox" name="no2" onclick="searchAttributes()">Nitrogen Dioxide (NO<sub>2</sub>)<br></label>
+      <label><input type="checkbox" name="so2" onclick="searchAttributes()">Sulfur Dioxide (SO<sub>2</sub>)<br></label>
+      <label><input type="checkbox" name="co" onclick="searchAttributes()">Carbon Monoxide (CO)<br></label>
+      <input type="button" value="Clear Search Filters" onclick="clearFilters();" >
+    </section>
+  </fieldset>
 </form>
-<form action="" class="timeline" style="font-size:12px; position: absolute; width: 260px; height: 25px; bottom: 61%; right: 200px;">
-  <input type="button" id="play" onclick="togglePlayPause()" value="Play/Pause" disabled>
-  <input type="button" id="loop" onclick="toggleLoop()" value="Loop" disabled>
-  <label>Duration of Loop:<input type="number" min = "1" id="duration" value="15" style="width: 35px; float: right;"></label>
-</form>);
-<div id="charts" style="width:80%; height: 60%; position:absolute; right:0px; bottom:0px;">
+
+<div style="position: absolute; height: 35px; width: 20%; min-width: 250px; background-color: rgba(50,50,50,.75); top: 225px; left: 0px; font-weight: bold;">
+    <p style="vertical-align: middle; padding-left: 10px; font-size: 14.5px; line-height: 5px; color: rgba(255,255,255,.9)">Channels</p>
+</div>
+
+<div id="channels" style="width:20%; min-width: 250px; height:calc(100vh - 215px); position:absolute; left:0px; top:260px; font-size:10px; overflow-y:auto; background-color: rgba(225, 225, 225, .5);"></div>
+
+<div id="map-div" style="width:80%; height:55%; position:absolute; left: 20%; top:0px; z-index: -1"></div>
+
+<div class="tool bar" style="width: 80%; height: 5%; position: absolute; left: 20%; top: 50%; background-color: rgba(50,50,50,.75);">
+  <form id = "map-filters" style="font-size:12px; position: absolute; width: 250px; transform: translateY(-50%); top:50%; right: 10px;">
+    <fieldset>
+      <legend style="color: white;">Color Map:</legend>
+      <label style="display: inline-block; margin: 0px 5px;"><input type="radio" name="map-filter" data-filter = "pm25" onclick="reColor(this)"><span style="color: white"> PM2.5</span><br></label>
+      <label style="display: inline-block; margin: 0px 5px;"><input type="radio" name="map-filter" data-filter = "pm10" onclick="reColor(this)"><span style="color: white"> PM10</span><br></label>
+      <input type="reset" value="Reset Map" onclick="resetTimeline(0, 0, 255)" style="display: inline; margin: 0px 5px;">
+    </fieldset>
+  </form>
+
+  <form action="" class="timeline" style="font-size:12px; position: absolute; width: 325px; transform: translateY(-50%); top:50%; right: 300px;">
+    <fieldset>
+      <legend style="color: white;">Playback:</legend>
+      <input style="display: inline-block; margin: 0px 5px;" type="button" id="play" onclick="togglePlayPause()" value="Play/Pause" disabled>
+      <input style="display: inline-block; margin: 0px 5px;" type="button" id="loop" onclick="toggleLoop()" value="Loop" disabled>
+      <label style="display: inline-block; margin: 0px 5px;"><span style="color:white">Duration of Loop:</span><input type="number" min = "1" id="duration" value="15" style="width: 35px; display: inline-block; margin: 0px 5px; float: right;"></label>
+    </fieldset>
+  </form>
+</div>
+<div id="charts" style="width:80%; height: 45%; position:absolute; left: 20%; bottom: 0px;">
   <div style="position:relative; height: 50px; width:100%; border-bottom:1px solid black">
       <div id="date_axis" style="position:absolute; top:0px; bottom:0px; left:0px; right:40px"></div>
   </div>
-  <div id = "plots" style="position:relative; overflow-y: auto; top:0px; height:calc(60vh - 50px);">
+
+  <div id = "plots" style="position:relative; overflow-y: auto; top:0px; height:calc(45vh - 50px);"></div> 
+
 </div>
 </body>
 </html>
