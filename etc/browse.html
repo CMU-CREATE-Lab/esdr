@@ -709,19 +709,19 @@
                  return $('#plots').width()         // window width
                         - 30;
               });
-          
-         //Fires when cursor position changes or date axis bound changes 
 
          dateProperties = plotManager.getDateAxis().getRange();
 
+         //Fires when cursor position changes or date axis bound changes 
          plotManager.getDateAxis().addAxisChangeListener(function(dateAxisProperties) { 
-            if (Math.abs(dateProperties.min - dateAxisProperties.min) >= Number.EPSILON 
-                && Math.abs(dateProperties.max - dateAxisProperties.max) >= Number.EPSILON){
+            if (timelineReady 
+                && ((Math.abs(dateAxisProperties.max - dateAxisProperties.min - dateProperties.max + dateProperties.min) >= Number.EPSILON)
+                || (dateAxisProperties.max > timelineQueue[timelineQueue.length - 1].timeStamp && dateAxisProperties.max < maxTimeSecs)
+                || (dateAxisProperties.min < timelineQueue[0].timeStamp))){
+                pauseTimeline();
                 clearTimeout(hashTimer);
                 hashTimer = setTimeout(updateHash, 1000);
-                pauseTimeline();
                 $('#play').attr('disabled','disabled');
-                $('#loop').attr('disabled','disabled');
                 timelineReady = false;
                 clearTimeout(refreshTimer);
                 refreshTimer = setTimeout(function() {
@@ -736,11 +736,9 @@
 
             if (dateAxisProperties.cursorPosition > Date.now()/1000){
                   $('#play').attr('disabled','disabled');
-                  $('#loop').attr('disabled','disabled');
             }else{
               if (timelineReady){
                 $('#play').removeAttr('disabled');
-                $('#loop').removeAttr('disabled');
               }
             }
 
@@ -934,6 +932,7 @@
       var dateProperties; 
       var timelineReady = false;
       var timelineQueue = []; 
+      var dataProcessQueue = [];
       var pause = true;
       var onLoop = false;
       var playing = false;
@@ -947,6 +946,7 @@
 
       function reColor(radioInput){
         resetTimeline(20, 20, 20);
+        cursorInBound();
         switch(radioInput.dataset.filter){
           case "pm10":
             multifeed = "pm_10";
@@ -967,11 +967,11 @@
 
       function resetTimeline(r,g,b){
           $('#play').attr('disabled','disabled');
-          $('#loop').attr('disabled','disabled');
           pauseTimeline(); 
           playing = false; 
           timelineReady = false; 
           timelineQueue = []; 
+          dataProcessQueue = [];
           multifeed = ''; 
           clearTimeout(dragTimer);
           clearTimeout(refreshTimer);
@@ -1013,7 +1013,7 @@
       } 
 
       function offsetLimitCalculator(beginTime, endTime){
-        var level = Math.ceil(Math.log(Math.abs(endTime - beginTime)/512)/Math.log(2)) + 2;
+        var level = Math.ceil(Math.log(Math.abs(endTime - beginTime)/512)/Math.log(2)) + 1;
         var offset = Math.floor(beginTime/(512*Math.pow(2, level))); 
         return {level: level, offset: offset};
       }
@@ -1021,13 +1021,26 @@
       //beginTime and endTime are in Epoch
       function getTiles(beginTime, endTime, multifeedName){
         timelineReady = false; 
-        var dataList = [];
-        var feedNums = []; 
+        dataPocessQueue = []; 
         var result = offsetLimitCalculator(beginTime, endTime); 
         var level = result.level;
         var offset = result.offset;
-        var url = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + offset;
+        var url1 = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + offset;
+        var url2 = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + (offset + 1);
         // window.open(url);
+        getData(url1, multifeedName);
+        getData(url2, multifeedName);
+      }
+
+      function getGrapherTimeTiles(multifeedName){
+        var beginTime = dateProperties.min; 
+        var endTime = dateProperties.max;
+        getTiles(beginTime, endTime, multifeedName); 
+      }
+
+      function getData(url, multifeedName){
+        var dataList = [];
+        var feedNums = []; 
         jQuery.getJSON(url, function(data){
           var dataSet = data.data; 
 
@@ -1037,25 +1050,89 @@
             for (var k = 1, lenth = dataArray.length; k < lenth; k++){
               if (dataArray[k] != null) allNull = false; 
             }
-            if (!allNull && dataArray[0] >= beginTime && dataArray[0] <= endTime) dataList.push(dataArray);
+            if (!allNull) dataList.push(dataArray);
           }
 
           $(data.full_channel_names).each(function(index, name){
             feedNums.push(parseInt(name.split(".", 2)[1].split("_")[1])); 
           });
 
-          if (dataList.length == 0) return; 
-
-          processData(dataList, feedNums, multifeedName); 
-
+          // if (dataList.length == 0) return; 
+          dataProcessQueue.push(wrapFunction(processData, this, [dataList, feedNums, multifeedName]));
+          dataWorkhorse();
         }); 
-
       }
 
-      function getGrapherTimeTiles(multifeedName){
-        var beginTime = dateProperties.min; 
-        var endTime = dateProperties.max;
-        getTiles(beginTime, endTime, multifeedName); 
+      function dataWorkhorse(){
+        if (dataProcessQueue.length == 2){
+          while (dataProcessQueue.length){
+            dataProcessQueue[0](); 
+            dataProcessQueue.shift();
+          }
+          checkChronological();
+          timelineReady = true;
+          $('#play').removeAttr('disabled');
+          if (playing) playTimeline();
+          showColorAtIndex(findIndexAtTime(timelineQueue, dateProperties.cursorPosition));
+        }
+      }
+
+      function queuePush(element){
+        var min = 0; 
+        var max = timelineQueue.length - 1; 
+        var guess;
+        var minDifference = Number.MAX_SAFE_INTEGER;
+        var answer = -1; 
+        while (min <= max){
+          guess = Math.floor((min + max)/2);
+          var difference = element.timeStamp - timelineQueue[guess].timeStamp; 
+
+          if (Math.abs(difference) < Number.EPSILON){
+            timelineQueue[guess] = element;
+            return; 
+          }else if(Math.abs(difference) < Math.abs(minDifference)){
+            minDifference = difference;
+            answer = guess; 
+          }else if (min == max){
+            break;
+          }
+
+          if (difference > 0){
+            min = guess + 1; 
+          }else{
+            max = guess - 1; 
+          }
+          
+        } 
+        if (answer == -1){
+          timelineQueue.push(element); 
+        }else if(answer == 0){
+          if (minDifference < 0){
+            timelineQueue.splice(0,0,element); 
+          }else{
+            timelineQueue.splice(1,0,element);
+          }
+        }else if(minDifference > 0){
+          timelineQueue.splice(answer + 1, 0, element); 
+        }else{
+          timelineQueue.splice(answer - 1, 0, element); 
+        }
+      }
+
+      function checkChronological(){
+        var preVal = timelineQueue[0].timeStamp; 
+        var checkIndex = 0; 
+        while (checkIndex < timelineQueue.length){
+          if (timelineQueue[checkIndex].timeStamp < preVal){
+            timelineQueue.splice(checkIndex - 1, 2, timelineQueue[checkIndex], timelineQueue[checkIndex - 1]); 
+            checkIndex -= 1; 
+            preVal = timelineQueue[checkIndex - 1].timeStamp;
+          }else{
+            preVal = timelineQueue[checkIndex].timeStamp;
+            checkIndex++ 
+          }
+
+        }
       }
 
       function wrapFunction(fn, context, params){
@@ -1089,7 +1166,7 @@
                     colorFunctions.functionList.push(wrapFunction(changeColor, this, [125, 0, 0, feedNums[k - 1]])); 
               }
 
-              timelineQueue.push(colorFunctions); 
+              queuePush(colorFunctions); 
             }
             break; 
           case "pm_25":
@@ -1114,15 +1191,9 @@
                     colorFunctions.functionList.push(wrapFunction(changeColor, this, [125, 0, 0, feedNums[k - 1]])); 
               }
 
-              timelineQueue.push(colorFunctions); 
+              queuePush(colorFunctions); 
             }
         }
-
-        timelineReady = true;
-        $('#play').removeAttr('disabled');
-        $('#loop').removeAttr('disabled');
-        if (playing) playTimeline();
-        showColorAtIndex(findIndexAtTime(timelineQueue, dateProperties.cursorPosition));
       }
 
       //inspiratini's from binarySearch.js
@@ -1159,7 +1230,7 @@
 
       function showColorAtIndex(index){
         if (timelineReady){
-          var functionList = timelineQueue[index].functionList; 
+          var functionList = timelineQueue[index].functionList || []; 
           for (var i = 0, len = functionList.length; i < len; i++){
             functionList[i](); 
           }
@@ -1430,9 +1501,11 @@
           if ($('#channels').width() == 250){
             $('#map-div').css('left', 250); 
             $('#charts').css('left', 250); 
+            $('#tool-bar').css('left', 250); 
           }else{
             $('#map-div').css('left', "20%");
             $('#charts').css('left', "20%"); 
+            $('#tool-bar').css('left', "20%"); 
           }
         }, false);
 
@@ -1480,13 +1553,10 @@
                 clickedNumList = []; 
           
                 var eltList = findClosestElements(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
-                console.log(eltList);
                 var inputNodes = null; 
                 var count = 0;
                 var visible = false; 
                 for (var i = 0; i < eltList.length; i++){
-                   console.log("Feed Number: " + feedLocList.index[eltList[i].i] + ", Location in Array: " + eltList[i].i);
-                   console.log(feedLocList.color[eltList[i].i * 4 + 3]); 
                    if (feedLocList.color[eltList[i].i * 4 + 3] != 0) {
                     count++; 
                     visible = true; 
@@ -1498,24 +1568,13 @@
 
                     $(finalInput).append(inputNodes.clone()); 
 
-                    console.log(i, eltList.length);
                     if(i > 0 && i < eltList.length)$(finalDiv).append(sectionBreak.clone());
                     $(finalDiv).append(clickedNode.clone()); 
                     $('input[name="' + $(this).attr('name') + '"]').prop('checked', $(this).prop('checked'));
                     
                     meanLat += eltList[i].lat; 
                     meanLng += eltList[i].lng; 
-                    console.log("-----")
-                    console.log(eltList[i].lat, eltList[i].lng)
-                    console.log(meanLat, meanLng);
-                    console.log("-----")
-                  } else {
-                        console.log('i am hidden')
-                        console.log("Feed Number: " + feedLocList.index[eltList[i].i] + ", Location in Array: " + eltList[i].i);
-                        console.log(feedLocList.color[eltList[i].i * 4 + 3]); 
-                        console.log(i, eltList.length);
-
-                  }    
+                  }   
               }
               if (count != 0){
                 meanLat = meanLat/count; 
@@ -1547,8 +1606,6 @@
                     clickedNumList = []; 
                   });
               };
-            console.log(clickedNumList);
-            console.log("*************************")
          });
 
           google.maps.event.addListener(map, 'mousemove', function(event) {
@@ -1645,8 +1702,8 @@
 
 <div id="map-div" style="width:80%; height:55%; position:absolute; left: 20%; top:0px; z-index: -1"></div>
 
-<div class="tool bar" style="width: 80%; height: 5%; position: absolute; left: 20%; top: 50%; background-color: rgba(50,50,50,.75);">
-  <form id = "map-filters" style="font-size:12px; position: absolute; width: 250px; transform: translateY(-50%); top:50%; right: 10px;">
+<div id="tool-bar" style="width: 80%; height: 5%; min-height: 50px; position: absolute; left: 20%; bottom: 45%; background-color: rgba(50,50,50,.75);">
+  <form id = "map-filters" style="font-size:12px; position: relative; width: 250px; transform: translateY(-50%); top:50%; float: left; margin: 0px 10px;">
     <fieldset>
       <legend style="color: white;">Color Map:</legend>
       <label style="display: inline-block; margin: 0px 5px;"><input type="radio" name="map-filter" data-filter = "pm25" onclick="reColor(this)"><span style="color: white"> PM2.5</span><br></label>
@@ -1655,11 +1712,11 @@
     </fieldset>
   </form>
 
-  <form action="" class="timeline" style="font-size:12px; position: absolute; width: 325px; transform: translateY(-50%); top:50%; right: 300px;">
+  <form action="" class="timeline" style="font-size:12px; position: relative; width: 325px; transform: translateY(-50%); top:50%; float: left; margin: 0px 10px;">
     <fieldset>
       <legend style="color: white;">Playback:</legend>
       <input style="display: inline-block; margin: 0px 5px;" type="button" id="play" onclick="togglePlayPause()" value="Play/Pause" disabled>
-      <input style="display: inline-block; margin: 0px 5px;" type="button" id="loop" onclick="toggleLoop()" value="Loop" disabled>
+      <input style="display: inline-block; margin: 0px 5px;" type="button" id="loop" onclick="toggleLoop()" value="Loop">
       <label style="display: inline-block; margin: 0px 5px;"><span style="color:white">Duration of Loop:</span><input type="number" min = "1" id="duration" value="15" style="width: 35px; display: inline-block; margin: 0px 5px; float: right;"></label>
     </fieldset>
   </form>
