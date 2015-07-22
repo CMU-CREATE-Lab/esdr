@@ -91,7 +91,7 @@
 
    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
    <script src="http://api.cmucreatelab.org/exp-0.1/js/utils.js"></script>
-   <script src="..\series2.js"></script> 
+   <script src="../series2.js"></script> 
    <script src="http://api.cmucreatelab.org/exp-0.1/js/CanvasLayer.js"></script>
 
    <script language="JavaScript" type="text/javascript">
@@ -618,6 +618,8 @@
             setSpeed();
          })
 
+         playTransform()
+
         if ($('#channels').width() == 225){
           $('#map-div').css('left', 225); 
           $('#charts').css('left', 225); 
@@ -633,7 +635,6 @@
         if (winWidth <= 320){
           $('#tool-bar').css('height', 150);
         }else if(winWidth <= 590){
-          $('#tool-bar').css('height', 200);
           $('#map-filters').css('width', 130); 
           $('.timeline').css({'width': 130,
                               'clear' : 'left',
@@ -749,7 +750,6 @@
          //Fires when cursor position changes or date axis bound changes 
          plotManager.getDateAxis().addAxisChangeListener(function(dateAxisProperties) { 
             if (timelineReady){
-              if (((Math.abs(dateAxisProperties.max - dateAxisProperties.min - dateProperties.max + dateProperties.min) >= Number.EPSILON)
                   || (dateAxisProperties.max > timelineQueue[timelineQueue.length - 1].timeStamp && dateAxisProperties.max < maxTimeSecs)
                   || (dateAxisProperties.min < timelineQueue[0].timeStamp))){
                   pauseTimeline();
@@ -766,7 +766,6 @@
                 if(playing) showColorAtIndex(findIndexAtTime(timelineQueue, dateAxisProperties.cursorPosition));
               }
 
-              if (Math.abs(dateProperties.cursorPosition - dateAxisProperties.cursorPosition) >= Number.EPSILON)
                 showColorAtIndex(findIndexAtTime(timelineQueue, dateAxisProperties.cursorPosition));
 
               if (dateAxisProperties.cursorPosition > maxTimeSecs){
@@ -1113,7 +1112,6 @@
             dataProcessQueue[0](); 
             dataProcessQueue.shift();
           }
-          checkChronological();
           timelineReady = true;
           // cancelSpin(); 
           enablePlayButton();
@@ -1132,13 +1130,11 @@
         var min = 0; 
         var max = timelineQueue.length - 1; 
         var guess;
-        var minDifference = Number.MAX_SAFE_INTEGER;
         var answer = -1; 
         while (min <= max){
           guess = Math.floor((min + max)/2);
           var difference = element.timeStamp - timelineQueue[guess].timeStamp; 
 
-          if (Math.abs(difference) < Number.EPSILON){
             timelineQueue[guess] = element;
             return; 
           }else if(Math.abs(difference) < Math.abs(minDifference)){
@@ -1167,22 +1163,6 @@
           timelineQueue.splice(answer + 1, 0, element); 
         }else{
           timelineQueue.splice(answer - 1, 0, element); 
-        }
-      }
-
-      function checkChronological(){
-        var preVal = timelineQueue[0].timeStamp; 
-        var checkIndex = 0; 
-        while (checkIndex < timelineQueue.length){
-          if (timelineQueue[checkIndex].timeStamp < preVal){
-            timelineQueue.splice(checkIndex - 1, 2, timelineQueue[checkIndex], timelineQueue[checkIndex - 1]); 
-            checkIndex -= 1; 
-            preVal = timelineQueue[checkIndex - 1].timeStamp;
-          }else{
-            preVal = timelineQueue[checkIndex].timeStamp;
-            checkIndex++ 
-          }
-
         }
       }
 
@@ -1252,14 +1232,12 @@
         var min = 0; 
         var max = list.length - 1; 
         var guess;
-        var minDifference = Number.MAX_SAFE_INTEGER;
         var answer = -1;   
 
         while (min <= max){
           guess = Math.floor((min + max)/2);
           var difference = time - list[guess].timeStamp; 
 
-          if (Math.abs(difference) < Number.EPSILON){
             return guess;
           }else if(Math.abs(difference) <= minDifference){
             minDifference = Math.abs(difference);
@@ -1403,39 +1381,16 @@
 
       function pauseTranform(){
         $('#bar1').css({'transition' : "transform .5s ease-out",
-                        'transform'  : pauseTransformation.bar1}); 
         $('#bar2').css({'transition' : "transform .5s ease-out", 
-                          'transform'  : pauseTransformation.bar2});
       }
       function playTransform(){
         $('#bar1').css({'transition' : "transform .5s ease-out",
-                        'transform'  : playTransformation.bar1}); 
         $('#bar2').css({'transition' : "transform .5s ease-out", 
-                        'transform'  : playTransformation.bar2});
       }
-
-      // function spin(){
-      //   rotation += 5; 
-      //   spinnerTransformation = {bar1: 'translateX(21px) translateY(10px) rotate('+(135 + rotation)+'deg)', bar2: 'translateX(21px) translateY(10px) rotate('+(45+rotation)+'deg)'};
-      //   $('#bar1').css('transform', spinnerTransformation.bar1);
-      //   $('#bar2').css('transform', spinnerTransformation.bar2);
-      //   spinning = window.requestAnimationFrame(spin);
-      // }
 
       function spinnerTransform(){
         $('#bar1').css({'transition' : "transform .3s ease-out",
-                        'transform'  : spinnerTransformation.bar1}); 
-        $('#bar2').css({'transition' : "transform .3s ease-out", 
-                        'transform'  : spinnerTransformation.bar2});
-        // rotation = 0;
-        // window.cancelAnimationFrame(spinning);
-        // spinning = window.requestAnimationFrame(spin); 
       }
-
-      // function cancelSpin(){
-      //   window.cancelAnimationFrame(spinning);
-      // }
-
 
       $(init);
 
@@ -1635,20 +1590,14 @@
             $('#tool-bar').css('height', 150);
           }else if(winWidth <= 590){
             $('#tool-bar').css('height', 160);
-            $('#map-filters').css('width', 130); 
-            $('.timeline').css({'width': 130,
                                 'clear' : 'left',
                                 'margin': '-50px 10px 0px'});
           }else if(winWidth <= 870){
             $('#tool-bar').css('height', 100); 
-            $('#map-filters').css('width', 260); 
-            $('.timeline').css({'width' : 260,
                                 'clear' : 'left',
                                 'margin': '-50px 10px 0px'});
           }else{
             $('#tool-bar').css('height', 55); 
-            $('#map-filters').css('width', 260);
-            $('.timeline').css({'width' : 260,
                                 'clear' : 'right',
                                 'margin': '-25px 10px 0px'});
           }
@@ -1850,29 +1799,20 @@
 <div id="map-div" style="width:80%; height:55%; position:absolute; left: 20%; top:0px; z-index: -1"></div>
 
 <div id="tool-bar" style="width: 80%; height: 55px; position: absolute; left: 20%; bottom: 45%; background-color: rgba(50,50,50,.75);">
-  <form id = "map-filters" style="font-size:12px; position: relative; height: 50px; width: 260px; float: left; margin: 0px 10px;">
     <fieldset>
       <legend style="color: white;">Color Map:</legend>
       <label style="display: inline-block; margin: 0px 5px;"><input type="radio" name="map-filter" data-filter = "pm25" onclick="reColor(this)"><span style="color: white"> PM2.5</span><br></label>
       <label style="display: inline-block; margin: 0px 5px;"><input type="radio" name="map-filter" data-filter = "pm10" onclick="reColor(this)"><span style="color: white"> PM10</span><br></label>
-      <input type="reset" value="Reset Map" onclick="resetTimeline(0, 0, 255)" style="display: inline; margin: 0px 5px;" disabled>
     </fieldset>
   </form>
 
-  <div class="play-pause" style="position: relative; float: left; height: 50px; width: 50px; top: 50%; margin: -25px 10px 0px; border-radius: 50%; background-color: rgba(200, 200, 200, .75); opacity: .30;">
-    <div class="bar" id="bar1" style="position: absolute; height: 30px; width: 8px; background-color: rgba(50,50,50,.75); transition: transform .25s; transform: translateX(24px) translateY(2px) rotate(135deg);"></div>
-    <div class="bar" id="bar2" style="position: absolute; height: 30px; width: 8px; background-color: rgba(50,50,50,.75); transition: transform .25s; transform: translateX(24px) translateY(18px) rotate(45deg);"></div>
   </div>
 
-  <form action="" class="timeline" style="font-size:12px; position: relative; height: 50px; width: 260px; float: left; top: 50%; margin: -25px 10px 0px;">
     <fieldset>
       <legend style="color: white;">Playback Options:</legend>
-      <input style="display: inline-block; margin: 0px 5px; width: 65px" type="button" id="loop" onclick="toggleLoop()" value="Loop: Off">
-      <label style="display: inline-block; margin: 0px 5px;"><span style="color:white">Duration of Loop:</span><input type="number" min = "1" id="duration" value="15" style="width: 35px; display: inline-block; margin: 0px 5px; float: right;"></label>
     </fieldset>
   </form>
 </div>
-
 
 <div id="charts" style="width:80%; height: 45%; position:absolute; left: 20%; bottom: 0px;">
   <div style="position:relative; height: 50px; width:100%; border-bottom:1px solid black">
