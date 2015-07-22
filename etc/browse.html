@@ -617,6 +617,40 @@
          $('#duration').change(function(){
             setSpeed();
          })
+
+        if ($('#channels').width() == 225){
+          $('#map-div').css('left', 225); 
+          $('#charts').css('left', 225); 
+          $('#tool-bar').css('left', 225); 
+        }else{
+          $('#map-div').css('left', "20%");
+          $('#charts').css('left', "20%"); 
+          $('#tool-bar').css('left', "20%"); 
+        }
+
+        var winWidth = $(window).width(); 
+
+        if (winWidth <= 320){
+          $('#tool-bar').css('height', 150);
+        }else if(winWidth <= 590){
+          $('#tool-bar').css('height', 200);
+          $('#map-filters').css('width', 130); 
+          $('.timeline').css({'width': 130,
+                              'clear' : 'left',
+                              'margin': '-50px 10px 0px'});
+        }else if(winWidth <= 870){
+          $('#tool-bar').css('height', 100); 
+          $('#map-filters').css('width', 260); 
+          $('.timeline').css({'width' : 260,
+                              'clear' : 'left',
+                              'margin': '-50px 10px 0px'});
+        }else{
+          $('#tool-bar').css('height', 55); 
+          $('#map-filters').css('width', 260);
+          $('.timeline').css({'width' : 260,
+                              'clear' : 'right',
+                              'margin': '-25px 10px 0px'});
+        }
       }
 
    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ init() function END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -714,31 +748,33 @@
 
          //Fires when cursor position changes or date axis bound changes 
          plotManager.getDateAxis().addAxisChangeListener(function(dateAxisProperties) { 
-            if (timelineReady 
-                && ((Math.abs(dateAxisProperties.max - dateAxisProperties.min - dateProperties.max + dateProperties.min) >= Number.EPSILON)
-                || (dateAxisProperties.max > timelineQueue[timelineQueue.length - 1].timeStamp && dateAxisProperties.max < maxTimeSecs)
-                || (dateAxisProperties.min < timelineQueue[0].timeStamp))){
-                pauseTimeline();
-                clearTimeout(hashTimer);
-                hashTimer = setTimeout(updateHash, 1000);
-                $('#play').attr('disabled','disabled');
-                timelineReady = false;
-                clearTimeout(refreshTimer);
-                refreshTimer = setTimeout(function() {
-                  updateMultifeed(dateAxisProperties.min, dateAxisProperties.max); 
-                }, 500);
+            if (timelineReady){
+              if (((Math.abs(dateAxisProperties.max - dateAxisProperties.min - dateProperties.max + dateProperties.min) >= Number.EPSILON)
+                  || (dateAxisProperties.max > timelineQueue[timelineQueue.length - 1].timeStamp && dateAxisProperties.max < maxTimeSecs)
+                  || (dateAxisProperties.min < timelineQueue[0].timeStamp))){
+                  pauseTimeline();
+                  clearTimeout(hashTimer);
+                  hashTimer = setTimeout(updateHash, 1000);
+                  timelineReady = false;
+                  clearTimeout(refreshTimer);
+                  refreshTimer = setTimeout(function() {
+                    disablePlayButton();
+                    spinnerTransform();
+                    updateMultifeed(dateAxisProperties.min, dateAxisProperties.max); 
+                  }, 500);
 
-              if(playing) showColorAtIndex(findIndexAtTime(timelineQueue, dateAxisProperties.cursorPosition));
-            }
+                if(playing) showColorAtIndex(findIndexAtTime(timelineQueue, dateAxisProperties.cursorPosition));
+              }
 
-            if (Math.abs(dateProperties.cursorPosition - dateAxisProperties.cursorPosition) >= Number.EPSILON)
-              showColorAtIndex(findIndexAtTime(timelineQueue, dateAxisProperties.cursorPosition));
+              if (Math.abs(dateProperties.cursorPosition - dateAxisProperties.cursorPosition) >= Number.EPSILON)
+                showColorAtIndex(findIndexAtTime(timelineQueue, dateAxisProperties.cursorPosition));
 
-            if (dateAxisProperties.cursorPosition > Date.now()/1000){
-                  $('#play').attr('disabled','disabled');
-            }else{
-              if (timelineReady){
-                $('#play').removeAttr('disabled');
+              if (dateAxisProperties.cursorPosition > maxTimeSecs){
+                  pauseTimeline();
+                  playTransform();
+                  disablePlayButton();
+              }else{
+                  enablePlayButton();
               }
             }
 
@@ -944,8 +980,15 @@
       var playInterval; 
       var prevTime; 
 
+      var pauseTransformation = {bar1: 'translateX(13px) translateY(10px)', bar2: 'translateX(28px) translateY(10px)'}; 
+      var playTransformation = {bar1: 'translateX(24px) translateY(2px) rotate(135deg)', bar2: 'translateX(24px) translateY(18px) rotate(45deg)'};
+      var rotation = 0; 
+      var spinnerTransformation = {bar1: 'translateX(21px) translateY(10px) rotate('+(135 + rotation)+'deg)', bar2: 'translateX(21px) translateY(10px) rotate('+(45+rotation)+'deg)'};
+      // var spinning; 
+
       function reColor(radioInput){
         resetTimeline(20, 20, 20);
+        $('#map-filters').children().children().filter(':reset').removeAttr('disabled');
         cursorInBound();
         switch(radioInput.dataset.filter){
           case "pm10":
@@ -955,7 +998,8 @@
             multifeed = "pm_25";
             break; 
         };
-
+        disablePlayButton();
+        spinnerTransform();
         getGrapherTimeTiles(multifeed);
       }
 
@@ -966,8 +1010,10 @@
       };
 
       function resetTimeline(r,g,b){
-          $('#play').attr('disabled','disabled');
+          $('#map-filters').children().children().filter(':reset').attr('disabled','disabled');
+          disablePlayButton();
           pauseTimeline(); 
+          playTransform();
           playing = false; 
           timelineReady = false; 
           timelineQueue = []; 
@@ -976,8 +1022,7 @@
           clearTimeout(dragTimer);
           clearTimeout(refreshTimer);
           clearColors(r,g,b);
-          speed = DEFAULT_SPEED; 
-          timeSlices = duration/speed*1000; 
+          // rotation = 0;
       }
 
       function setSpeed(){
@@ -999,7 +1044,6 @@
         if (dt > speed){
           speed = dt; 
           timeSlices = duration/speed*1000;
-          console.log("Change speed: " + speed);
           pauseTimeline();
           playTimeline();
         }
@@ -1019,7 +1063,7 @@
       }
 
       //beginTime and endTime are in Epoch
-      function getTiles(beginTime, endTime, multifeedName){
+      function getTiles(beginTime, endTime, multifeedName){ 
         timelineReady = false; 
         dataPocessQueue = []; 
         var result = offsetLimitCalculator(beginTime, endTime); 
@@ -1059,11 +1103,11 @@
 
           // if (dataList.length == 0) return; 
           dataProcessQueue.push(wrapFunction(processData, this, [dataList, feedNums, multifeedName]));
-          dataWorkhorse();
+          dataWorkHorse();
         }); 
       }
 
-      function dataWorkhorse(){
+      function dataWorkHorse(){
         if (dataProcessQueue.length == 2){
           while (dataProcessQueue.length){
             dataProcessQueue[0](); 
@@ -1071,8 +1115,15 @@
           }
           checkChronological();
           timelineReady = true;
-          $('#play').removeAttr('disabled');
-          if (playing) playTimeline();
+          // cancelSpin(); 
+          enablePlayButton();
+          if (playing) {
+            playTimeline();
+            pauseTranform();
+          }else{
+            playTransform();
+          }
+
           showColorAtIndex(findIndexAtTime(timelineQueue, dateProperties.cursorPosition));
         }
       }
@@ -1229,7 +1280,7 @@
       }
 
       function showColorAtIndex(index){
-        if (timelineReady){
+        if (timelineReady && timelineQueue[index]){
           var functionList = timelineQueue[index].functionList || []; 
           for (var i = 0, len = functionList.length; i < len; i++){
             functionList[i](); 
@@ -1290,6 +1341,7 @@
           }else{
             console.log('Timeline Done'); 
             pauseTimeline();
+            playTransform();
             playing = false; 
             plotManager.getDateAxis().setCursorPosition(dateProperties.min);     
             return; 
@@ -1304,17 +1356,85 @@
 
       function toggleLoop(){
         onLoop = !onLoop; 
+        if (onLoop){
+          $('#loop').val('Loop: On');
+        }else{
+          $('#loop').val('Loop: Off');
+        }
         console.log("onLoop is " + onLoop);
       }
 
       function togglePlayPause(){
         if(pause){
+          pauseTranform();
           playTimeline();
         }else{
+          playTransform();
           pauseTimeline();
           playing = false;
         }
       }
+
+      function enablePlayButton(){
+        if ($('.play-pause').css('opacity') != 1){
+          $('.play-pause').css('opacity', .75);
+        }
+        $('.play-pause')
+          .unbind('mouseenter mouseleave click')
+          .on({
+            click: togglePlayPause, 
+            mouseenter: function(){
+                          $('.play-pause').css('opacity', 1);
+                        }, 
+            mouseleave: function(){
+                         $('.play-pause').css('opacity', .75);
+            }
+          });
+
+        if($('.play-pause').is(':hover')) $('.play-pause').css('opacity', 1);
+
+      }
+
+      function disablePlayButton(){
+        $('.play-pause')
+          .unbind('mouseenter mouseleave click')
+          .css('opacity', .30);
+      }
+
+      function pauseTranform(){
+        $('#bar1').css({'transition' : "transform .5s ease-out",
+                        'transform'  : pauseTransformation.bar1}); 
+        $('#bar2').css({'transition' : "transform .5s ease-out", 
+                          'transform'  : pauseTransformation.bar2});
+      }
+      function playTransform(){
+        $('#bar1').css({'transition' : "transform .5s ease-out",
+                        'transform'  : playTransformation.bar1}); 
+        $('#bar2').css({'transition' : "transform .5s ease-out", 
+                        'transform'  : playTransformation.bar2});
+      }
+
+      // function spin(){
+      //   rotation += 5; 
+      //   spinnerTransformation = {bar1: 'translateX(21px) translateY(10px) rotate('+(135 + rotation)+'deg)', bar2: 'translateX(21px) translateY(10px) rotate('+(45+rotation)+'deg)'};
+      //   $('#bar1').css('transform', spinnerTransformation.bar1);
+      //   $('#bar2').css('transform', spinnerTransformation.bar2);
+      //   spinning = window.requestAnimationFrame(spin);
+      // }
+
+      function spinnerTransform(){
+        $('#bar1').css({'transition' : "transform .3s ease-out",
+                        'transform'  : spinnerTransformation.bar1}); 
+        $('#bar2').css({'transition' : "transform .3s ease-out", 
+                        'transform'  : spinnerTransformation.bar2});
+        // rotation = 0;
+        // window.cancelAnimationFrame(spinning);
+        // spinning = window.requestAnimationFrame(spin); 
+      }
+
+      // function cancelSpin(){
+      //   window.cancelAnimationFrame(spinning);
+      // }
 
 
       $(init);
@@ -1498,15 +1618,42 @@
 
         window.addEventListener('resize', function(){ 
           google.maps.event.trigger(map, 'resize'); 
-          if ($('#channels').width() == 250){
-            $('#map-div').css('left', 250); 
-            $('#charts').css('left', 250); 
-            $('#tool-bar').css('left', 250); 
+
+          if ($('#channels').width() == 225){
+            $('#map-div').css('left', 225); 
+            $('#charts').css('left', 225); 
+            $('#tool-bar').css('left', 225); 
           }else{
             $('#map-div').css('left', "20%");
             $('#charts').css('left', "20%"); 
             $('#tool-bar').css('left', "20%"); 
           }
+
+          var winWidth = $(window).width(); 
+
+          if (winWidth <= 320){
+            $('#tool-bar').css('height', 150);
+          }else if(winWidth <= 590){
+            $('#tool-bar').css('height', 160);
+            $('#map-filters').css('width', 130); 
+            $('.timeline').css({'width': 130,
+                                'clear' : 'left',
+                                'margin': '-50px 10px 0px'});
+          }else if(winWidth <= 870){
+            $('#tool-bar').css('height', 100); 
+            $('#map-filters').css('width', 260); 
+            $('.timeline').css({'width' : 260,
+                                'clear' : 'left',
+                                'margin': '-50px 10px 0px'});
+          }else{
+            $('#tool-bar').css('height', 55); 
+            $('#map-filters').css('width', 260);
+            $('.timeline').css({'width' : 260,
+                                'clear' : 'right',
+                                'margin': '-25px 10px 0px'});
+          }
+
+
         }, false);
 
         // initialize WebGL
@@ -1673,12 +1820,12 @@
     </script> 
 
 </head>
-<body style="width:100%; min-width: 250px; height:100%; background-color: rgba(225, 225, 225, .5)">
-<form style="width: 19%; min-width: 250px">
+<body style="width:100%; min-width: 225px; height:100%; background-color: rgba(225, 225, 225, .5)">
+<form style="width: 19%; min-width: 210px; margin-left: 5px;">
   <input id = "search-bar" type = "search" placeholder="Search Channel Name:" style="font-size:10px; width: 100%;">
 </form>
-<div style="position: absolute; height: 35px; width: 20%; min-width: 250px; background-color: rgba(50,50,50,1); top: 30px; left: 0px;"></div>
-<form id = "filters" style="font-size:12.5px; position: absolute; width: 20%; min-width: 250px; height: 195px; top: 30px; left: 0px; background-color: rgba(200, 200, 200, .4);">
+<div style="position: absolute; height: 35px; width: 20%; min-width: 225px; background-color: rgba(50,50,50,1); top: 30px; left: 0px;"></div>
+<form id = "filters" style="font-size:12.5px; position: absolute; width: 20%; min-width: 225px; height: 195px; top: 30px; left: 0px; background-color: rgba(200, 200, 200, .4);">
   <fieldset style="border: none;">
    <section>
     <legend style="padding-top: 7px; padding-bottom: 15px; font-size: 14.5px; width: 100%; font-weight: bold; color: rgba(255,255,255,.9)">Pollutant Filter</legend>
@@ -1694,33 +1841,39 @@
   </fieldset>
 </form>
 
-<div style="position: absolute; height: 35px; width: 20%; min-width: 250px; background-color: rgba(50,50,50,.75); top: 225px; left: 0px; font-weight: bold;">
+<div style="position: absolute; height: 35px; width: 20%; min-width: 225px; background-color: rgba(50,50,50,.75); top: 225px; left: 0px; font-weight: bold;">
     <p style="vertical-align: middle; padding-left: 10px; font-size: 14.5px; line-height: 5px; color: rgba(255,255,255,.9)">Channels</p>
 </div>
 
-<div id="channels" style="width:20%; min-width: 250px; height:calc(100vh - 215px); position:absolute; left:0px; top:260px; font-size:10px; overflow-y:auto; background-color: rgba(225, 225, 225, .5);"></div>
+<div id="channels" style="width:20%; min-width: 225px; height:calc(100vh - 215px); position:absolute; left:0px; top:260px; font-size:10px; overflow-y:auto; background-color: rgba(225, 225, 225, .5);"></div>
 
 <div id="map-div" style="width:80%; height:55%; position:absolute; left: 20%; top:0px; z-index: -1"></div>
 
-<div id="tool-bar" style="width: 80%; height: 5%; min-height: 50px; position: absolute; left: 20%; bottom: 45%; background-color: rgba(50,50,50,.75);">
-  <form id = "map-filters" style="font-size:12px; position: relative; width: 250px; transform: translateY(-50%); top:50%; float: left; margin: 0px 10px;">
+<div id="tool-bar" style="width: 80%; height: 55px; position: absolute; left: 20%; bottom: 45%; background-color: rgba(50,50,50,.75);">
+  <form id = "map-filters" style="font-size:12px; position: relative; height: 50px; width: 260px; float: left; margin: 0px 10px;">
     <fieldset>
       <legend style="color: white;">Color Map:</legend>
       <label style="display: inline-block; margin: 0px 5px;"><input type="radio" name="map-filter" data-filter = "pm25" onclick="reColor(this)"><span style="color: white"> PM2.5</span><br></label>
       <label style="display: inline-block; margin: 0px 5px;"><input type="radio" name="map-filter" data-filter = "pm10" onclick="reColor(this)"><span style="color: white"> PM10</span><br></label>
-      <input type="reset" value="Reset Map" onclick="resetTimeline(0, 0, 255)" style="display: inline; margin: 0px 5px;">
+      <input type="reset" value="Reset Map" onclick="resetTimeline(0, 0, 255)" style="display: inline; margin: 0px 5px;" disabled>
     </fieldset>
   </form>
 
-  <form action="" class="timeline" style="font-size:12px; position: relative; width: 325px; transform: translateY(-50%); top:50%; float: left; margin: 0px 10px;">
+  <div class="play-pause" style="position: relative; float: left; height: 50px; width: 50px; top: 50%; margin: -25px 10px 0px; border-radius: 50%; background-color: rgba(200, 200, 200, .75); opacity: .30;">
+    <div class="bar" id="bar1" style="position: absolute; height: 30px; width: 8px; background-color: rgba(50,50,50,.75); transition: transform .25s; transform: translateX(24px) translateY(2px) rotate(135deg);"></div>
+    <div class="bar" id="bar2" style="position: absolute; height: 30px; width: 8px; background-color: rgba(50,50,50,.75); transition: transform .25s; transform: translateX(24px) translateY(18px) rotate(45deg);"></div>
+  </div>
+
+  <form action="" class="timeline" style="font-size:12px; position: relative; height: 50px; width: 260px; float: left; top: 50%; margin: -25px 10px 0px;">
     <fieldset>
-      <legend style="color: white;">Playback:</legend>
-      <input style="display: inline-block; margin: 0px 5px;" type="button" id="play" onclick="togglePlayPause()" value="Play/Pause" disabled>
-      <input style="display: inline-block; margin: 0px 5px;" type="button" id="loop" onclick="toggleLoop()" value="Loop">
+      <legend style="color: white;">Playback Options:</legend>
+      <input style="display: inline-block; margin: 0px 5px; width: 65px" type="button" id="loop" onclick="toggleLoop()" value="Loop: Off">
       <label style="display: inline-block; margin: 0px 5px;"><span style="color:white">Duration of Loop:</span><input type="number" min = "1" id="duration" value="15" style="width: 35px; display: inline-block; margin: 0px 5px; float: right;"></label>
     </fieldset>
   </form>
 </div>
+
+
 <div id="charts" style="width:80%; height: 45%; position:absolute; left: 20%; bottom: 0px;">
   <div style="position:relative; height: 50px; width:100%; border-bottom:1px solid black">
       <div id="date_axis" style="position:absolute; top:0px; bottom:0px; left:0px; right:40px"></div>
