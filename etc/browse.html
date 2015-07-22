@@ -399,7 +399,7 @@
                   var id = feed.id + '.' + channel;
                   var idHashTag = feed.id; 
                   channelLabels[id] = label;
-                  html.push('<div class="sensors" data-channel-type="' + channelId + '" id="' + label.toLowerCase() + " #" + idHashTag + '"> <label> <input type="checkbox" onclick="clickChannel(this)" name="' + id +'">' + label + '<br></label></div>');
+                  html.push('<div class="sensors" style="margin-left: 3px" data-channel-type="' + channelId + '" id="' + label.toLowerCase() + " #" + idHashTag + '"> <label> <input type="checkbox" onclick="clickChannel(this)" name="' + id +'">' + label + '<br></label></div>');
                }
             }
             //for (var channel = 0; i < feed.channelBounds.channels
@@ -631,7 +631,7 @@
         }
 
         var winWidth = $(window).width(); 
-        
+
         if (winWidth <= 320){
           $('#tool-bar').css('height', 180);
         }else if(winWidth <= 590){
@@ -1026,31 +1026,6 @@
           // rotation = 0;
       }
 
-      function setSpeed(){
-        if ($("#duration").val() <= 1){
-          $("#duration").val(1);
-        }
-
-        duration = $("#duration").val();
-        timeSlices = duration/speed*1000
-
-        if (playing){
-          pauseTimeline();
-          playTimeline();
-        }
-      }
-
-      function checkSpeed(){
-        var now = new Date().getTime(), dt = now - prevTime; 
-        if (dt > speed){
-          speed = dt; 
-          timeSlices = duration/speed*1000;
-          pauseTimeline();
-          playTimeline();
-        }
-      }
-
-
       function updateMultifeed(beginTime, endTime){
         timelineQueue = [];       
         if (multifeed) getTiles(beginTime, endTime, multifeed);
@@ -1280,6 +1255,30 @@
         }
       }
 
+      function setSpeed(){
+        if ($("#duration").val() <= 1){
+          $("#duration").val(1);
+        }
+
+        duration = $("#duration").val();
+        timeSlices = duration/speed*1000
+
+        if (playing){
+          pauseTimeline();
+          playTimeline();
+        }
+      }
+
+      function checkSpeed(){
+        var now = new Date().getTime(), dt = now - prevTime; 
+        if (dt > speed){
+          speed = dt; 
+          timeSlices = duration/speed*1000;
+          pauseTimeline();
+          playTimeline();
+        }
+      }
+
       function playTimeline(){
         pause = false;
         playing = true;
@@ -1297,7 +1296,6 @@
         time += timeIncrement; 
 
         if (time < dateProperties.max && time <= Date.now() / 1000){
-          
           if (time != dateProperties.cursorPosition + timeIncrement){
             console.log("Dragging.");
             cursorInBound();
@@ -1323,6 +1321,7 @@
             }
             plotManager.getDateAxis().setCursorPosition(dateProperties.min - timeIncrement); 
           }else{
+            console.log(time - dateProperties.max, time - Date.now() / 1000);
             console.log('Timeline Done'); 
             pauseTimeline();
             playTransform();
@@ -1387,21 +1386,21 @@
 
       function pauseTranform(){
         $('#bar1').css({'transition' : "transform .5s ease-out",
-                        'transition' : "-webkit-transform .5s ease-out",
+                        '-webkit-transition' : "-webkit-transform .5s ease-out",
                         'transform'  : pauseTransformation.bar1,
                         '-webkit-transform'  : pauseTransformation.bar1}); 
         $('#bar2').css({'transition' : "transform .5s ease-out", 
-                        'transition' : "-webkit-transform .5s ease-out",
+                        '-webkit-transition' : "-webkit-transform .5s ease-out",
                         'transform'  : pauseTransformation.bar2,
                         '-webkit-transform'  : pauseTransformation.bar2});
       }
       function playTransform(){
         $('#bar1').css({'transition' : "transform .5s ease-out",
-                        'transition' : "-webkit-transform .5s ease-out",
+                        '-webkit-transition' : "-webkit-transform .5s ease-out",
                         'transform'  : playTransformation.bar1,
                         '-webkit-transform'  : playTransformation.bar1}); 
         $('#bar2').css({'transition' : "transform .5s ease-out", 
-                        'transition' : "-webkit-transform .5s ease-out", 
+                        '-webkit-transition' : "-webkit-transform .5s ease-out", 
                         'transform'  : playTransformation.bar2,
                         '-webkit-transform'  : playTransformation.bar2});
       }
@@ -1659,10 +1658,12 @@
 
          if (!initWebGL()) {
              $('#map-div').append('<div align="center" style="position: absolute; z-index:1000000; margin:50px; padding:10px; border-color:black; border-style:solid; border-width:1px;ground-color:white; font-size:20px"><b>WebGL required</b><br>Please try using a browser that supports WebGL,<br>such as Chrome, Firefox, or Internet Explorer 11.</div>');
-           }9
+           }
 
           // Convert from latlng to xy for map, and set up shader programs
          prepareSeries(gl, feedLocList);
+
+         $('#tool-bar').show()
 
          currentIndex = minIndex = feedLocList.index[0];
          maxIndex = feedLocList.index[feedLocList.index.length - 1];
@@ -1824,22 +1825,22 @@
     <p style="vertical-align: middle; padding-left: 10px; font-size: 14.5px; line-height: 5px; color: rgba(255,255,255,.9)">Channels</p>
 </div>
 
-<div id="channels" style="width:20%; min-width: 225px; height:calc(100vh - 215px); position:absolute; left:0px; top:260px; font-size:10px; overflow-y:auto; background-color: rgba(225, 225, 225, .5);"></div>
+<div id="channels" style="width:20%; min-width: 225px; height:calc(100vh - 260px); position:absolute; left:0px; top:260px; font-size:10px; overflow-y:auto; background-color: rgba(225, 225, 225, .5);"></div>
 
 <div id="map-div" style="width:80%; height:55%; position:absolute; left: 20%; top:0px; z-index: -1"></div>
 
-<div id="tool-bar" style="width: 80%; height: 55px; position: absolute; left: 20%; bottom: 45%; background-color: rgba(50,50,50,.75);">
+<div id="tool-bar" style="width: 80%; height: 55px; position: absolute; left: 20%; bottom: 45%; background-color: rgba(50,50,50,.75); display: none;">
 
   <form id = "map-filters" style="font-size:12px; position: relative; height: 50px; width: 280px; text-align: center; float: left; margin: 0px 10px;">
     <fieldset>
       <legend style="color: white;">Color Map:</legend>
       <label style="display: inline-block; margin: 0px 5px;"><input type="radio" name="map-filter" data-filter = "pm25" onclick="reColor(this)"><span style="color: white"> PM2.5</span><br></label>
       <label style="display: inline-block; margin: 0px 5px;"><input type="radio" name="map-filter" data-filter = "pm10" onclick="reColor(this)"><span style="color: white"> PM10</span><br></label>
-      <input style="display: inline; margin: 0px 5px;" type="reset" value="Reset Map" onclick="resetTimeline(0, 0, 255)"  disabled>
+      <input style="display: inline; margin: 0px 5px;" type="reset" value="Reset Map" onclick="resetTimeline(0, 0, 255)">
     </fieldset>
   </form>
 
-  <div class="play-pause" style="position: relative; float: left; height: 50px; width: 50px; top: 50%; margin: -25px 10px 0px; border-radius: 50%; background-color: rgba(200, 200, 200, .75); opacity: .30; float: left;">
+  <div class="play-pause" style="position: relative; float: left; height: 50px; width: 50px; top: 50%; margin: -25px 10px 0px; border-radius: 50%; background-color: rgba(200, 200, 200, 1); opacity: .30; float: left;">
     <div class="bar" id="bar1" style="position: absolute; height: 30px; width: 8px; background-color: rgba(50,50,50,.75); transition: transform .25s; transform: translateX(24px) translateY(2px) rotate(135deg); border: 1px solid transparent"></div>
     <div class="bar" id="bar2" style="position: absolute; height: 30px; width: 8px; background-color: rgba(50,50,50,.75); transition: transform .25s; transform: translateX(24px) translateY(18px) rotate(45deg); border: 1px solid transparent"></div>
   </div>
