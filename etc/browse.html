@@ -631,26 +631,26 @@
         }
 
         var winWidth = $(window).width(); 
-
+        
         if (winWidth <= 320){
-          $('#tool-bar').css('height', 150);
+          $('#tool-bar').css('height', 180);
         }else if(winWidth <= 590){
-          $('#map-filters').css('width', 130); 
-          $('.timeline').css({'width': 130,
-                              'clear' : 'left',
-                              'margin': '-50px 10px 0px'});
-        }else if(winWidth <= 870){
+          $('#tool-bar').css('height', 170);
+          $('#map-filters').css({'width' : 130,
+                                 'margin' : '0px 10px 35px'}); 
+          $('#timeline').css({'width': 130,
+                              'clear' : 'left'});
+        }else if(winWidth <= 890){
           $('#tool-bar').css('height', 100); 
-          $('#map-filters').css('width', 260); 
-          $('.timeline').css({'width' : 260,
-                              'clear' : 'left',
-                              'margin': '-50px 10px 0px'});
+          $('#map-filters').css({'width' : 280,
+                                 'margin' : '0px 10px'}); 
+          $('#timeline').css({'width' : 280,
+                              'clear' : 'left'});
         }else{
           $('#tool-bar').css('height', 55); 
-          $('#map-filters').css('width', 260);
-          $('.timeline').css({'width' : 260,
-                              'clear' : 'right',
-                              'margin': '-25px 10px 0px'});
+          $('#map-filters').css('width', 280);
+          $('#timeline').css({'width' : 280,
+                              'clear' : 'right'});
         }
       }
 
@@ -750,6 +750,7 @@
          //Fires when cursor position changes or date axis bound changes 
          plotManager.getDateAxis().addAxisChangeListener(function(dateAxisProperties) { 
             if (timelineReady){
+              if (((Math.abs(dateAxisProperties.max - dateAxisProperties.min - dateProperties.max + dateProperties.min) >= Number.MIN_VALUE)
                   || (dateAxisProperties.max > timelineQueue[timelineQueue.length - 1].timeStamp && dateAxisProperties.max < maxTimeSecs)
                   || (dateAxisProperties.min < timelineQueue[0].timeStamp))){
                   pauseTimeline();
@@ -766,6 +767,7 @@
                 if(playing) showColorAtIndex(findIndexAtTime(timelineQueue, dateAxisProperties.cursorPosition));
               }
 
+              if (Math.abs(dateProperties.cursorPosition - dateAxisProperties.cursorPosition) >= Number.MIN_VALUE)
                 showColorAtIndex(findIndexAtTime(timelineQueue, dateAxisProperties.cursorPosition));
 
               if (dateAxisProperties.cursorPosition > maxTimeSecs){
@@ -1130,11 +1132,13 @@
         var min = 0; 
         var max = timelineQueue.length - 1; 
         var guess;
+        var minDifference = Number.MAX_VALUE;
         var answer = -1; 
         while (min <= max){
           guess = Math.floor((min + max)/2);
           var difference = element.timeStamp - timelineQueue[guess].timeStamp; 
 
+          if (Math.abs(difference) < Number.MIN_VALUE){
             timelineQueue[guess] = element;
             return; 
           }else if(Math.abs(difference) < Math.abs(minDifference)){
@@ -1232,12 +1236,14 @@
         var min = 0; 
         var max = list.length - 1; 
         var guess;
+        var minDifference = Number.MAX_VALUE;
         var answer = -1;   
 
         while (min <= max){
           guess = Math.floor((min + max)/2);
           var difference = time - list[guess].timeStamp; 
 
+          if (Math.abs(difference) < Number.MIN_VALUE){
             return guess;
           }else if(Math.abs(difference) <= minDifference){
             minDifference = Math.abs(difference);
@@ -1381,15 +1387,34 @@
 
       function pauseTranform(){
         $('#bar1').css({'transition' : "transform .5s ease-out",
+                        'transition' : "-webkit-transform .5s ease-out",
+                        'transform'  : pauseTransformation.bar1,
+                        '-webkit-transform'  : pauseTransformation.bar1}); 
         $('#bar2').css({'transition' : "transform .5s ease-out", 
+                        'transition' : "-webkit-transform .5s ease-out",
+                        'transform'  : pauseTransformation.bar2,
+                        '-webkit-transform'  : pauseTransformation.bar2});
       }
       function playTransform(){
         $('#bar1').css({'transition' : "transform .5s ease-out",
+                        'transition' : "-webkit-transform .5s ease-out",
+                        'transform'  : playTransformation.bar1,
+                        '-webkit-transform'  : playTransformation.bar1}); 
         $('#bar2').css({'transition' : "transform .5s ease-out", 
+                        'transition' : "-webkit-transform .5s ease-out", 
+                        'transform'  : playTransformation.bar2,
+                        '-webkit-transform'  : playTransformation.bar2});
       }
 
       function spinnerTransform(){
         $('#bar1').css({'transition' : "transform .3s ease-out",
+                        '-webkit-transition' : "transform .3s ease-out",
+                        'transform'  : spinnerTransformation.bar1,
+                        '-webkit-transform'  : spinnerTransformation.bar1}); 
+        $('#bar2').css({'transition' : "transform .3s ease-out",
+                        '-webkit-transition' : "transform .3s ease-out", 
+                        'transform'  : spinnerTransformation.bar2,
+                        '-webkit-transform'  : spinnerTransformation.bar2});
       }
 
       $(init);
@@ -1587,19 +1612,24 @@
           var winWidth = $(window).width(); 
 
           if (winWidth <= 320){
-            $('#tool-bar').css('height', 150);
+            $('#tool-bar').css('height', 180);
           }else if(winWidth <= 590){
-            $('#tool-bar').css('height', 160);
-                                'clear' : 'left',
-                                'margin': '-50px 10px 0px'});
-          }else if(winWidth <= 870){
+            $('#tool-bar').css('height', 170);
+            $('#map-filters').css({'width' : 130,
+                                   'margin' : '0px 10px 35px'}); 
+            $('#timeline').css({'width': 130,
+                                'clear' : 'left'});
+          }else if(winWidth <= 890){
             $('#tool-bar').css('height', 100); 
-                                'clear' : 'left',
-                                'margin': '-50px 10px 0px'});
+            $('#map-filters').css({'width' : 280,
+                                   'margin' : '0px 10px'}); 
+            $('#timeline').css({'width' : 280,
+                                'clear' : 'left'});
           }else{
             $('#tool-bar').css('height', 55); 
-                                'clear' : 'right',
-                                'margin': '-25px 10px 0px'});
+            $('#map-filters').css('width', 280);
+            $('#timeline').css({'width' : 280,
+                                'clear' : 'right'});
           }
 
 
@@ -1799,17 +1829,26 @@
 <div id="map-div" style="width:80%; height:55%; position:absolute; left: 20%; top:0px; z-index: -1"></div>
 
 <div id="tool-bar" style="width: 80%; height: 55px; position: absolute; left: 20%; bottom: 45%; background-color: rgba(50,50,50,.75);">
+
+  <form id = "map-filters" style="font-size:12px; position: relative; height: 50px; width: 280px; text-align: center; float: left; margin: 0px 10px;">
     <fieldset>
       <legend style="color: white;">Color Map:</legend>
       <label style="display: inline-block; margin: 0px 5px;"><input type="radio" name="map-filter" data-filter = "pm25" onclick="reColor(this)"><span style="color: white"> PM2.5</span><br></label>
       <label style="display: inline-block; margin: 0px 5px;"><input type="radio" name="map-filter" data-filter = "pm10" onclick="reColor(this)"><span style="color: white"> PM10</span><br></label>
+      <input style="display: inline; margin: 0px 5px;" type="reset" value="Reset Map" onclick="resetTimeline(0, 0, 255)"  disabled>
     </fieldset>
   </form>
 
+  <div class="play-pause" style="position: relative; float: left; height: 50px; width: 50px; top: 50%; margin: -25px 10px 0px; border-radius: 50%; background-color: rgba(200, 200, 200, .75); opacity: .30; float: left;">
+    <div class="bar" id="bar1" style="position: absolute; height: 30px; width: 8px; background-color: rgba(50,50,50,.75); transition: transform .25s; transform: translateX(24px) translateY(2px) rotate(135deg); border: 1px solid transparent"></div>
+    <div class="bar" id="bar2" style="position: absolute; height: 30px; width: 8px; background-color: rgba(50,50,50,.75); transition: transform .25s; transform: translateX(24px) translateY(18px) rotate(45deg); border: 1px solid transparent"></div>
   </div>
 
+  <form id="timeline" style="font-size:12px; position: relative; height: 50px; width: 280px; text-align: center; float: left; margin: 0px 10px;">
     <fieldset>
       <legend style="color: white;">Playback Options:</legend>
+      <input style="display: inline-block; margin: 0px 5px;" type="button" id="loop" onclick="toggleLoop()" value="Loop: Off">
+      <label style="display: inline-block; margin: 0px 5px;"><span style="color:white">Loop Duration:</span><input type="number" min = "1" id="duration" value="15" style="display: inline-block; width: 30px; margin: 0px 5px; "></label>
     </fieldset>
   </form>
 </div>
