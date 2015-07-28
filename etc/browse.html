@@ -1163,6 +1163,7 @@
             dataProcessQueue.shift();
           }
           $('#map-filters').children().children().filter(':reset').removeAttr('disabled');
+          cursorInBound();
           timelineReady = true;
           // cancelSpin(); 
           enablePlayButton();
@@ -1881,7 +1882,6 @@
                   if (Math.abs(feedLocList.color[listIndex*5+3] - ALPHA) <= 1e-7){
                     hoverAndAlphaList.push(feedLocList.index[listIndex]);
                   }else{
-                    console.log(feedLocList.color[listIndex*5+3])
                     hoverNumList.push(feedLocList.index[listIndex]);
                   }
                   changeOpacity([feedLocList.index[listIndex]], 1); 
