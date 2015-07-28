@@ -1,12 +1,12 @@
 function drawPoints(gl, transform, series, from, to, settings) {
   gl.useProgram(series.program);
-  gl.vertexAttrib1f(gl.getAttribLocation(series.program, "aPointSize"), settings.pointSize);
+  gl.vertexAttrib1f(gl.getAttribLocation(series.program, 'aPointSize'), settings.pointSize);
 
   // attach matrix value to 'mapMatrix' uniform in shader
   gl.uniformMatrix4fv(gl.getUniformLocation(series.program, 'mapMatrix'), false, transform);
 
   // set color for shader
-  gl.uniform4fv(gl.getUniformLocation(series.program, 'color'), settings.color);
+  // gl.uniform4fv(gl.getUniformLocation(series.program, 'color'), settings.color);
 
   // set hardFraction
   // TODO(rsargent): make sure hardFraction is at least 1 pixel less than 100% for antialiasing
@@ -60,11 +60,16 @@ function prepareSeries(gl, series, settings) {
   gl.bindBuffer(gl.ARRAY_BUFFER, series.colorBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, series.color, gl.STATIC_DRAW);
 
+
+
   // enable the 'aColor' attribute in the shader to receive buffer
   gl.enableVertexAttribArray(gl.getAttribLocation(series.program, 'aColor'));
 
   // tell webgl how buffer is laid out 
-  gl.vertexAttribPointer(gl.getAttribLocation(series.program, 'aColor'), 4, gl.FLOAT, false, 0, 0);
+  gl.vertexAttribPointer(gl.getAttribLocation(series.program, 'aColor'), 4, gl.FLOAT, false, 20, 0);
+
+  gl.enableVertexAttribArray(gl.getAttribLocation(series.program, 'aEnabled'));
+  gl.vertexAttribPointer(gl.getAttribLocation(series.program, 'aEnabled'), 1, gl.FLOAT, false, 20, 16);
 
 }
 
