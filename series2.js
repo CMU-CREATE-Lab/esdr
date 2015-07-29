@@ -66,10 +66,13 @@ function prepareSeries(gl, series, settings) {
   gl.enableVertexAttribArray(gl.getAttribLocation(series.program, 'aColor'));
 
   // tell webgl how buffer is laid out 
-  gl.vertexAttribPointer(gl.getAttribLocation(series.program, 'aColor'), 4, gl.FLOAT, false, 20, 0);
+  gl.vertexAttribPointer(gl.getAttribLocation(series.program, 'aColor'), 4, gl.FLOAT, false, 24, 0);
 
   gl.enableVertexAttribArray(gl.getAttribLocation(series.program, 'aEnabled'));
-  gl.vertexAttribPointer(gl.getAttribLocation(series.program, 'aEnabled'), 1, gl.FLOAT, false, 20, 16);
+  gl.vertexAttribPointer(gl.getAttribLocation(series.program, 'aEnabled'), 1, gl.FLOAT, false, 24, 16);
+
+  gl.enableVertexAttribArray(gl.getAttribLocation(series.program, 'aCircled'));
+  gl.vertexAttribPointer(gl.getAttribLocation(series.program, 'aCircled'), 1, gl.FLOAT, false, 24, 20);
 
 }
 

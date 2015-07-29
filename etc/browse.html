@@ -109,6 +109,7 @@
 
       var showNumList = [];
       var clickedNumList = [];
+      var clickedandAlphaList = [];
       var hoverNumList = [];
       var hoverAndAlphaList = [];
 
@@ -139,7 +140,7 @@
       var DEFAULT_DURATION = 15;
 
       //WebGL stuff
-      var ALPHA = 0.70; 
+      var ALPHA = 0.55; 
       var currentAlpha = ALPHA;
       var currentPointSize = 0; 
 
@@ -221,7 +222,7 @@
                      "stripPosition" : "center",
                      "stripWidthSecs" : 3600,
                      // "rangedColors" : "rgb(0,255,0); 3;rgb(47,255,0); 6;rgb(110,255,0); 9;rgb(180,255,0); 12;rgb(255,255,0); 15;rgb(255,177,0);18;rgb(255,107,0);21;rgb(255,46,0);24;rgb(255,0,0)"
-                     "rangedColors" : "rgb(230,230,230); 8;rgb(210,210,210); 16;rgb(190,190,190); 24;rgb(170,170,170); 32;rgb(150,150,150); 40;rgb(130,130,130);48;rgb(110,110,110);56;rgb(90,90,90);64;rgb(70,70,70)"
+                     "rangedColors" : "rgb(210,210,210); 8;rgb(190,190,190); 16;rgb(170,170,170); 24;rgb(150,150,150); 32;rgb(130,130,130); 40;rgb(110,110,110);48;rgb(90,90,90);56;rgb(70,70,70);64;rgb(50,50,50)"
                   },
             //{ "type" : "line", "lineWidth" : 1, "show" : true, "color" : "light gray"}
          ],
@@ -307,11 +308,12 @@
          
          plotManager.addDataSeriesPlot(plotName, createDatasource(channel), plotName, yAxisName, 0, 100, style);
          var thisPlotIdx = plotCount;
-         // TODO: Always polling to auto-scale the Y axis -- not ideal!
-         // Someday, let's push this API to PlotManager and the actual implementation into the grapher.
-         plotScalers[plotCount] = window.setInterval(function() {
+
+         setTimeout(function(){
             clampNumberAxisToDataRange(thisPlotIdx);
-         }, 100);
+         }, 1000);
+          
+         plotScalers[plotCount] = thisPlotIdx;
          channelToPlotIdx[channel] = plotCount;
          plotIdxToChannel[plotCount] = channel;
          plotCount++;
@@ -319,23 +321,10 @@
 
          var feedIndex = parseInt(channel.substr(0, channel.indexOf('.'))); 
 
-         if(!timelineReady) changeColor(75,0,130, feedIndex);
+         changeCircled(feedIndex, 1); 
          updateHash()
       }
 
-      function removePlot(channel) {
-         var plotIdx = channelToPlotIdx[channel];
-         var plotName = 'plot' + plotIdx;
-         plotManager.getPlotContainer(plotName).removePlot(plotManager.getPlot(plotName));
-         $('#plot' + plotIdx).parent().remove();
-         window.clearInterval(plotScalers[plotIdx]);
-         $('input[name="' + channel + '"]').prop('checked', false);
-
-         var feedIndex = parseInt(channel.substr(0, channel.indexOf('.'))); 
-
-         if (!(checkIfAnyChecked(feedIndex) || timelineReady)) changeColor(0,0, 255,feedIndex);
-
-      }
 
       function clampNumberAxisToDataRange(plotIdx) {
          var plot = plotManager.getPlot('plot' + plotIdx);
@@ -392,7 +381,7 @@
                if (channels.length > 0) {
                 feedLocList.latlng.push(feed.latitude, feed.longitude); 
                 feedLocList.index.push(feed.id);
-                feedLocList.color.push(0, 0, 1, ALPHA, 1);
+                feedLocList.color.push(0, 0, 1, ALPHA, 1, 0);
                }
 
                for (var c = 0; c < channels.length; c++) {
@@ -737,12 +726,11 @@
          var plotName = 'plot' + plotIdx;
          plotManager.getPlotContainer(plotName).removePlot(plotManager.getPlot(plotName));
          $('#plot' + plotIdx).parent().remove();
-         window.clearInterval(plotScalers[plotIdx]);
+         // window.clearInterval(plotScalers[plotIdx]);
+         delete plotScalers[plotIdx]; 
          $('input[name="' + channel + '"]').prop('checked', false);
-
          var feedIndex = parseInt(channel.substr(0, channel.indexOf('.'))); 
-
-         if (!(checkIfAnyChecked(feedIndex) || timelineReady)) changeColor(0,0,255,feedIndex);
+         if (!(checkIfAnyChecked(feedIndex))) changeCircled(feedIndex, 0);
          updateHash();
       }
       
@@ -762,32 +750,39 @@
 
          //Fires when cursor position changes or date axis bound changes 
          plotManager.getDateAxis().addAxisChangeListener(function(dateAxisProperties) { 
-            clearTimeout(hashTimer);
-            hashTimer = setTimeout(updateHash, 300);
+            
+            if (Math.abs(dateAxisProperties.max - dateProperties.max) >= Number.MIN_VALUE +  Math.abs(dateAxisProperties.min - dateProperties.min) >= Number.MIN_VALUE){
+              clearTimeout(hashTimer);
+              hashTimer = setTimeout(updateHash, 300);
+              for (var key in plotScalers) {
+                if (plotScalers.hasOwnProperty(key)) {
+                  clampNumberAxisToDataRange(plotScalers[key]);
+                }
+              }
+            }
+
             if (timelineReady){
               var now = Date.now() / 1000;
-              if (((Math.abs(dateAxisProperties.max - dateAxisProperties.min - dateProperties.max + dateProperties.min) >= Number.MIN_VALUE)
-                  || ((dateAxisProperties.max > timelineQueue[timelineQueue.length - 1].timeStamp && dateAxisProperties.max < now)
-                  && !((timelineQueue[timelineQueue.length - 1].timeStamp) < dateAxisProperties.max && dateAxisProperties.max < now))
-                  || (dateAxisProperties.min < timelineQueue[0].timeStamp))){
+              var lastDataTime = timelineQueue[timelineQueue.length - 1].timeStamp; 
+              var firstDataTime = timelineQueue[0].timeStamp; 
+              if (   (Math.abs(dateAxisProperties.max - dateAxisProperties.min - dateProperties.max + dateProperties.min) >= Number.MIN_VALUE)
+                  || ((dateAxisProperties.max > lastDataTime && dateAxisProperties.max < now)
+                  && !(lastDataTime < dateAxisProperties.max && dateAxisProperties.max < now))
+                  || (dateAxisProperties.min < firstDataTime)){
                   pauseTimeline();
                   timelineReady = false;
+                  disablePlayButton();
+                  spinnerTransform();
                   clearTimeout(refreshTimer);
                   refreshTimer = setTimeout(function() {
-                    disablePlayButton();
-                    spinnerTransform();
                     updateMultifeed(dateAxisProperties.min, dateAxisProperties.max); 
                   }, 1000);
-
-                if(playing) showColorAtIndex(findIndexAtTime(timelineQueue, dateAxisProperties.cursorPosition));
               }
 
               if (Math.abs(dateProperties.cursorPosition - dateAxisProperties.cursorPosition) >= Number.MIN_VALUE){
-                prevTime = Date.now();
-                window.requestAnimationFrame(function(){
-                  showColorAtIndex(findIndexAtTime(timelineQueue, dateAxisProperties.cursorPosition));
-                  // checkSpeed();
-                });
+                  window.requestAnimationFrame(function(){
+                    showColorAtIndex(findIndexAtTime(timelineQueue, dateAxisProperties.cursorPosition));
+                  });
               }
 
               if (dateAxisProperties.cursorPosition > maxTimeSecs){
@@ -937,10 +932,9 @@
 
               // };
          }; 
-         resetClickedList();
          drawInfoWindowLines(); 
         console.log("-------------------")
-      }; 
+      }
 
       function drawInfoWindowLines(){
         var $mapInfoWindow = $("#infowindow");
@@ -1006,16 +1000,15 @@
       var refreshTimer;
       var dragTimer; 
       var playInterval; 
-      var prevTime; 
+      var playButtonEnabled = false; 
 
       var pauseTransformation = {bar1: 'translateX(13px) translateY(10px)', bar2: 'translateX(28px) translateY(10px)'}; 
       var playTransformation = {bar1: 'translateX(24px) translateY(2px) rotate(135deg)', bar2: 'translateX(24px) translateY(18px) rotate(45deg)'};
       var rotation = 0; 
       var spinnerTransformation = {bar1: 'translateX(21px) translateY(10px) rotate('+(135 + rotation)+'deg)', bar2: 'translateX(21px) translateY(10px) rotate('+(45+rotation)+'deg)'};
-      // var spinning; 
 
       function reColor(radioInput){
-        resetTimeline(60, 60, 60, ALPHA/2);
+        resetTimeline(60, 60, 60, ALPHA*.75);
         cursorInBound();
         switch(radioInput.dataset.filter){
           case "pm10":
@@ -1095,6 +1088,7 @@
           clearColors(r,g,b);
           currentAlpha = a; 
           resetOpacity(a);
+          reBindBuffer();
       }
 
       function updateMultifeed(beginTime, endTime){
@@ -1165,7 +1159,7 @@
           $('#map-filters').children().children().filter(':reset').removeAttr('disabled');
           cursorInBound();
           timelineReady = true;
-          // cancelSpin(); 
+          cursorInBound(); 
           enablePlayButton();
           if (playing) {
             playTimeline();
@@ -1262,9 +1256,10 @@
                   }
               }
               colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [feedNums, ALPHA])); 
-              colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [nullList, ALPHA/2]));
+              colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [nullList, ALPHA*.75]));
               colorFunctions.functionList.push(wrapFunction(clickedOpaque, this, [1]));
               colorFunctions.functionList.push(wrapFunction(hoverOpaque, this, [1]));
+              colorFunctions.functionList.push(wrapFunction(reBindBuffer, this, []));
               queuePush(colorFunctions); 
             }
             break; 
@@ -1293,9 +1288,10 @@
                     colorFunctions.functionList.push(wrapFunction(changeColor, this, [125, 0, 0, feedNums[k - 1]])); 
               }
               colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [feedNums, ALPHA])); 
-              colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [nullList, ALPHA/2]));
+              colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [nullList, ALPHA*.75]));
               colorFunctions.functionList.push(wrapFunction(clickedOpaque, this, [1]));
               colorFunctions.functionList.push(wrapFunction(hoverOpaque, this, [1]));
+              colorFunctions.functionList.push(wrapFunction(reBindBuffer, this, []));
               queuePush(colorFunctions); 
             }
         }
@@ -1343,7 +1339,7 @@
       }
 
       function cursorInBound(){
-        if (dateProperties.cursorPosition < dateProperties.min){
+        if (dateProperties.cursorPosition < dateProperties.min || !dateProperties.cursorPosition){
             plotManager.getDateAxis().setCursorPosition(dateProperties.min); 
         }else if(dateProperties.cursorPosition > dateProperties.max){
             plotManager.getDateAxis().setCursorPosition(dateProperties.max);
@@ -1364,12 +1360,6 @@
           pauseTimeline();
           playTimeline();
         }
-      }
-
-      function checkSpeed(){
-        var now = Date.now(), dt = now - prevTime; 
-        speed = dt; 
-        timeSlices = duration/speed*1000;
       }
 
       function playTimeline(){
@@ -1455,29 +1445,35 @@
       }
 
       function enablePlayButton(){
-        if ($('.play-pause').css('opacity') != 1){
-          $('.play-pause').css('opacity', .75);
+        if (!playButtonEnabled){
+          if ($('.play-pause').css('opacity') != 1){
+            $('.play-pause').css('opacity', .75);
+          }
+          $('.play-pause')
+            .unbind('mouseenter mouseleave click')
+            .on({
+              click: togglePlayPause, 
+              mouseenter: function(){
+                            $('.play-pause').css('opacity', 1);
+                          }, 
+              mouseleave: function(){
+                           $('.play-pause').css('opacity', .75);
+              }
+            });
+
+          if($('.play-pause').is(':hover')) $('.play-pause').css('opacity', 1);
+          playButtonEnabled = true;
         }
-        $('.play-pause')
-          .unbind('mouseenter mouseleave click')
-          .on({
-            click: togglePlayPause, 
-            mouseenter: function(){
-                          $('.play-pause').css('opacity', 1);
-                        }, 
-            mouseleave: function(){
-                         $('.play-pause').css('opacity', .75);
-            }
-          });
-
-        if($('.play-pause').is(':hover')) $('.play-pause').css('opacity', 1);
-
       }
 
       function disablePlayButton(){
-        $('.play-pause')
-          .unbind('mouseenter mouseleave click')
-          .css('opacity', .30);
+        if (playButtonEnabled){
+          $('.play-pause')
+            .unbind('mouseenter mouseleave click')
+            .css('opacity', .30);
+            playButtonEnabled = false;
+        }
+        
       }
 
       function pauseTranform(){
@@ -1522,75 +1518,69 @@
       var pixelsToWebGLMatrix = new Float32Array(16);
       var mapMatrix = new Float32Array(16);
       var currentIndex, minIndex, maxIndex;
+      var countryPointSizePixels = 7; 
+      var blockPointSizePixels = 60; 
 
-      function changeColor(r, g, b, feedNum){
+      function searchArray(searchElement, array){
+         'use strict';
+          var minIndex = 0;
+          var maxIndex = array.length - 1;
+          var currentIndex;
+          var currentElement;
 
-        var listIndex = feedLocList.index.indexOf(feedNum);
+          while (minIndex <= maxIndex) {
+              currentIndex = (minIndex + maxIndex) / 2 | 0;
+              currentElement = array[currentIndex];
 
-        feedLocList.color[listIndex * 5 + 0] = r/255; 
-        feedLocList.color[listIndex * 5 + 1] = g/255; 
-        feedLocList.color[listIndex * 5 + 2] = b/255; 
+              if (currentElement < searchElement) {
+                  minIndex = currentIndex + 1;
+              }
+              else if (currentElement > searchElement) {
+                  maxIndex = currentIndex - 1;
+              }
+              else {
+                  return currentIndex;
+              }
+          }
 
-        if(!!gl){
-          gl.bindBuffer(gl.ARRAY_BUFFER, feedLocList.colorBuffer);
-          gl.bufferData(gl.ARRAY_BUFFER, feedLocList.color, gl.STATIC_DRAW);
-
-          // enable the 'aColor' attribute in the shader to receive buffer
-          gl.enableVertexAttribArray(gl.getAttribLocation(feedLocList.program, 'aColor'));
-
-          // tell webgl how buffer is laid out 
-          gl.vertexAttribPointer(gl.getAttribLocation(feedLocList.program, 'aColor'), 4, gl.FLOAT, false, 20, 0);
-        }
-
+          return -1;
       }
 
-      function resetClickedList(){
-        for (var i = 0, len = clickedNumList.length; i < len; i++){
-          if (showNumList.indexOf(clickedNumList[i]) == -1) {
-            clickedNumList.splice(i, 1); 
-          }; 
-        };
-        changeOpacity(showNumList, currentAlpha);
-        changeOpacity(clickedNumList, 1);
+      function reBindBuffer(){
+        if(!!gl){
+          gl.bindBuffer(gl.ARRAY_BUFFER, feedLocList.colorBuffer);
+
+          gl.bufferData(gl.ARRAY_BUFFER, feedLocList.color, gl.STATIC_DRAW);
+        }
       }
 
       function changeEnabled(feedNumArray, value){
         for(var i = 0, len = feedNumArray.length; i < len; i++){
-            var listIndex = feedLocList.index.indexOf(feedNumArray[i]);
-            feedLocList.color[listIndex * 5 + 4] = value;
+            var listIndex = searchArray(feedNumArray[i], feedLocList.index);
+            feedLocList.color[listIndex * 6 + 4] = value;
         }
+        reBindBuffer();
+      }
 
-        if(!!gl){
-          gl.bindBuffer(gl.ARRAY_BUFFER, feedLocList.colorBuffer);
+      function changeCircled(feedNum, value){
+        var listIndex = searchArray(feedNum, feedLocList.index);
+        feedLocList.color[listIndex * 6 + 5] = value;
+        reBindBuffer(); 
+      }
 
-          gl.bufferData(gl.ARRAY_BUFFER, feedLocList.color, gl.STATIC_DRAW);
+      function changeColor(r, g, b, feedNum){
+        var listIndex = searchArray(feedNum, feedLocList.index);
+        feedLocList.color[listIndex * 6 + 0] = r/255; 
+        feedLocList.color[listIndex * 6 + 1] = g/255; 
+        feedLocList.color[listIndex * 6 + 2] = b/255; 
 
-          // enable the 'aColor' attribute in the shader to receive buffer
-          gl.enableVertexAttribArray(gl.getAttribLocation(feedLocList.program, 'aEnabled'));
-
-          // tell webgl how buffer is laid out 
-          gl.vertexAttribPointer(gl.getAttribLocation(feedLocList.program, 'aEnabled'), 1, gl.FLOAT, false, 20, 16);
-        }
       }
 
       function changeOpacity(feedNumArray, value){
         for(var i = 0, len = feedNumArray.length; i < len; i++){
-            var listIndex = feedLocList.index.indexOf(feedNumArray[i]);
-            feedLocList.color[listIndex * 5 + 3] = value;
+            var listIndex = searchArray(feedNumArray[i], feedLocList.index);
+            feedLocList.color[listIndex * 6 + 3] = value;
         }
-
-        if(!!gl){
-          gl.bindBuffer(gl.ARRAY_BUFFER, feedLocList.colorBuffer);
-
-          gl.bufferData(gl.ARRAY_BUFFER, feedLocList.color, gl.STATIC_DRAW);
-
-          // enable the 'aColor' attribute in the shader to receive buffer
-          gl.enableVertexAttribArray(gl.getAttribLocation(feedLocList.program, 'aColor'));
-
-          // tell webgl how buffer is laid out 
-          gl.vertexAttribPointer(gl.getAttribLocation(feedLocList.program, 'aColor'), 4, gl.FLOAT, false, 20, 0);
-        }
-
       }
 
       function initializeMap() {
@@ -1677,22 +1667,16 @@
         gl.clear(gl.COLOR_BUFFER_BIT);
 
         if(timelineReady){
-          var countryPointSizePixels = 10;
-          var blockPointSizePixels = 50;
+          countryPointSizePixels = (countryPointSizePixels >= 13) ? 13 : countryPointSizePixels += .5;
         }else{
-          // Compute point diameter, in pixels, based on zoom level
-          // map.zoom is approx 4 at country level
-          var countryPointSizePixels = 7;
-
-          // map.zoom is approx 18 at block level
-          var blockPointSizePixels = 40;
+          countryPointSizePixels = (countryPointSizePixels <= 7) ? 7 : countryPointSizePixels -= .5;
         }
 
         var pointSize = .75 * countryPointSizePixels * Math.pow(blockPointSizePixels / countryPointSizePixels, (map.zoom - 4) / (18 - 4));
 
         currentPointSize = pointSize; 
 
-        var hardFraction = .95;  
+        var hardFraction = .90;  
 
         var count = feedLocList.index.length;
 
@@ -1805,20 +1789,25 @@
                 var meanLat = 0; 
                 var meanLng = 0; 
                 var maxDistInPixels = currentPointSize/2;
-
-                changeOpacity(clickedNumList, currentAlpha);
-                clickedNumList = []; 
           
                 var eltList = findClosestElements(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
                 var inputNodes = null; 
                 var count = 0;
                 var visible = false; 
                 for (var i = 0; i < eltList.length; i++){
-                   if (feedLocList.color[eltList[i].i * 5 + 3] != 0) {
+                   var listIndex = eltList[i].i; 
+                   if (feedLocList.color[listIndex * 6 + 3] != 0) {
                     count++; 
                     visible = true; 
-
-                    clickedNumList.push(feedLocList.index[eltList[i].i]); 
+                    changeOpacity(clickedNumList, currentAlpha);
+                    changeOpacity(clickedandAlphaList, ALPHA);
+                    clickedNumList = [];
+                    clickedandAlphaList = [];
+                    if (hoverAndAlphaList.indexOf(feedLocList.index[listIndex]) > -1){
+                      clickedandAlphaList.push(feedLocList.index[listIndex]);
+                    }else{
+                      clickedNumList.push(feedLocList.index[listIndex]);
+                    }
                     
                     var clickedNode = $("#channels div[id $= '#" + feedLocList.index[eltList[i].i] + "']");
                     inputNodes = $(clickedNode).children().children().filter('input');
@@ -1841,7 +1830,6 @@
               if (eltList.length != 0 && visible){
                   if (infoWindow){
                     infoWindow.close();
-                    // changeOpacity(showNumList, currentAlpha); 
                   };
 
                  infoWindow = new google.maps.InfoWindow(
@@ -1850,6 +1838,8 @@
                   infoWindow.open(map);
 
                   changeOpacity(clickedNumList, 1);
+                  changeOpacity(clickedandAlphaList, 1);
+                  reBindBuffer();
 
                   google.maps.event.addListener(infoWindow, 'domready', function() {
                     $(finalInput).children().each(function (index, inputs){
@@ -1859,8 +1849,11 @@
                   });
 
                   google.maps.event.addListener(infoWindow,'closeclick',function(){
-                    changeOpacity(showNumList, currentAlpha);
+                    changeOpacity(clickedNumList, currentAlpha);
+                    changeOpacity(clickedandAlphaList, ALPHA);
                     clickedNumList = []; 
+                    clickedandAlphaList = [];
+                    reBindBuffer();
                   });
               };
          });
@@ -1872,19 +1865,23 @@
             changeOpacity(hoverNumList, currentAlpha);
             changeOpacity(hoverAndAlphaList, ALPHA);
             changeOpacity(clickedNumList, 1);
+            changeOpacity(clickedandAlphaList, 1);
+            reBindBuffer();
+
             hoverNumList = [];
             hoverAndAlphaList = [];
 
             for (var i = 0; i < eltList.length; i++){
                 var listIndex = eltList[i].i; 
-                if (feedLocList.color[listIndex * 5 + 3] != 0) {
+                if (feedLocList.color[listIndex * 6 + 3] != 0) {
                   map.setOptions({ draggableCursor: 'default' });
-                  if (Math.abs(feedLocList.color[listIndex*5+3] - ALPHA) <= 1e-7){
+                  if (Math.abs(feedLocList.color[listIndex*6+3] - ALPHA) <= 1e-7){
                     hoverAndAlphaList.push(feedLocList.index[listIndex]);
                   }else{
                     hoverNumList.push(feedLocList.index[listIndex]);
                   }
-                  changeOpacity([feedLocList.index[listIndex]], 1); 
+                  changeOpacity([feedLocList.index[listIndex]], 1);
+                  reBindBuffer(); 
                 } 
             }
 
@@ -1893,6 +1890,7 @@
             }
               
           });
+          
       }
 
 </script>
@@ -1904,8 +1902,10 @@
       attribute float aPointSize;
       attribute vec4 aColor; 
       attribute float aEnabled;
+      attribute float aCircled;
 
-      varying vec4 vColor; 
+      varying vec4 vColor;
+      varying float vCircled;  
 
       uniform mat4 mapMatrix;
 
@@ -1918,12 +1918,15 @@
 
         vColor = aColor;
         vColor[3] = min(vColor[3], aEnabled);
+
+        vCircled = aCircled;
       }
     </script>
     <script id="pointFragmentShader" type="x-shader/x-fragment">
       precision mediump float;
-      uniform vec4 color;
-      varying vec4 vColor; 
+      varying vec4 vColor;
+
+      varying float vCircled; 
 
       uniform float hardFraction;
 
@@ -1935,7 +1938,14 @@
         // advantage of the double-multiplication to get something other than linear.
         // But multiplying all the channels will break if we do something other than an additive blend.
         
-        gl_FragColor = vColor * clamp((.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
+
+        // gl_FragColor = vColor * clamp((.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
+
+        if (vCircled > .0 && dist >= .35 && dist <= .75){
+          gl_FragColor = vec4(.0, .0, .0, 1) * clamp((.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
+        }else{
+          gl_FragColor = vColor * clamp((.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
+        }
 
       }
 
