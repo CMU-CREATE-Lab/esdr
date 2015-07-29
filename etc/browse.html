@@ -113,7 +113,7 @@
       var clickedNumList = [];
       var clickedandAlphaList = [];
       var hoverNumList = [];
-      var hoverAndAlphaList = [];
+      var hoverAndColored = [];
 
       var pm25 = []; 
       var pm10 = []; 
@@ -142,8 +142,10 @@
       var DEFAULT_DURATION = 15;
 
       //WebGL stuff
-      var ALPHA = 0.50; 
-      var currentAlpha = ALPHA;
+      var ALPHA = 0.50;
+      var COLOR_ALPHA = .7;
+      var NULL_ALPHA = .3; 
+      var currentAlpha = ALPHA; 
       var currentPointSize = 0; 
 
       function setRangeFromSecondsAgoToNow(numSecondsAgo) {
@@ -773,10 +775,10 @@
                   || (dateAxisProperties.min < firstDataTime)){
                   pauseTimeline();
                   timelineReady = false;
-                  disablePlayButton();
-                  spinnerTransform();
                   clearTimeout(refreshTimer);
                   refreshTimer = setTimeout(function() {
+                    disablePlayButton();
+                    spinnerTransform();
                     updateMultifeed(dateAxisProperties.min, dateAxisProperties.max); 
                   }, 1000);
               }
@@ -1010,50 +1012,50 @@
       var spinnerTransformation = {bar1: 'translateX(21px) translateY(10px) rotate('+(135 + rotation)+'deg)', bar2: 'translateX(21px) translateY(10px) rotate('+(45+rotation)+'deg)'};
 
       function reColor(radioInput){
-        resetTimeline(60, 60, 60, ALPHA*.75);
+        resetTimeline(60, 60, 60, NULL_ALPHA);
         cursorInBound();
         switch(radioInput.dataset.filter){
           case "pm10":
             multifeed = "pm_10";
             var legend = $('.legend-container').eq(0).children(); 
-            legend.eq(0).css('background-color', 'rgba(0, 255, 0,' + ALPHA +')'); 
+            legend.eq(0).css('background-color', 'rgba(0, 255, 0,' + COLOR_ALPHA +')'); 
             legend.eq(1).text('     0   -      54  μg/m3'); 
             legend = $('.legend-container').eq(1).children(); 
-            legend.eq(0).css('background-color', 'rgba(255, 255, 0,' + ALPHA +')'); 
+            legend.eq(0).css('background-color', 'rgba(255, 255, 0,' + COLOR_ALPHA +')'); 
             legend.eq(1).text('   55   -    154  μg/m3');
             legend = $('.legend-container').eq(2).children(); 
-            legend.eq(0).css('background-color', 'rgba(255, 125, 0,' + ALPHA +')'); 
+            legend.eq(0).css('background-color', 'rgba(255, 125, 0,' + COLOR_ALPHA +')'); 
             legend.eq(1).text(' 155   -    254  μg/m3');
             legend = $('.legend-container').eq(3).children(); 
-            legend.eq(0).css('background-color', 'rgba(255, 0, 0,' + ALPHA +')'); 
+            legend.eq(0).css('background-color', 'rgba(255, 0, 0,' + COLOR_ALPHA +')'); 
             legend.eq(1).text(' 255   -    354  μg/m3');
             legend = $('.legend-container').eq(4).children(); 
-            legend.eq(0).css('background-color', 'rgba(125, 0, 0,' + ALPHA +')'); 
+            legend.eq(0).css('background-color', 'rgba(125, 0, 0,' + COLOR_ALPHA +')'); 
             legend.eq(1).text('         >    354  μg/m3'); 
             legend = $('.legend-container').eq(5).children(); 
-            legend.eq(0).css('background-color', 'rgba(60, 60, 60,' + ALPHA +')'); 
+            legend.eq(0).css('background-color', 'rgba(60, 60, 60,' + COLOR_ALPHA +')'); 
             legend.eq(1).text('no data'); 
             $('#legend').show();
             break;
           case "pm25":
             multifeed = "pm_25";
             var legend = $('.legend-container').eq(0).children(); 
-            legend.eq(0).css('background-color', 'rgba(0, 255, 0,' + ALPHA +')'); 
+            legend.eq(0).css('background-color', 'rgba(0, 255, 0,' + COLOR_ALPHA +')'); 
             legend.eq(1).text('     0   -      12  μg/m3'); 
             legend = $('.legend-container').eq(1).children(); 
-            legend.eq(0).css('background-color', 'rgba(255, 255, 0,' + ALPHA +')'); 
+            legend.eq(0).css('background-color', 'rgba(255, 255, 0,' + COLOR_ALPHA +')'); 
             legend.eq(1).text('   13   -   35.4  μg/m3');
             legend = $('.legend-container').eq(2).children(); 
-            legend.eq(0).css('background-color', 'rgba(255, 125, 0,' + ALPHA +')'); 
+            legend.eq(0).css('background-color', 'rgba(255, 125, 0,' + COLOR_ALPHA +')'); 
             legend.eq(1).text('35.5   -   55.4  μg/m3');
             legend = $('.legend-container').eq(3).children(); 
-            legend.eq(0).css('background-color', 'rgba(255, 0, 0,' + ALPHA +')'); 
+            legend.eq(0).css('background-color', 'rgba(255, 0, 0,' + COLOR_ALPHA +')'); 
             legend.eq(1).text('55.5   - 150.4  μg/m3');
             legend = $('.legend-container').eq(4).children(); 
-            legend.eq(0).css('background-color', 'rgba(125, 0, 0,' + ALPHA +')'); 
+            legend.eq(0).css('background-color', 'rgba(125, 0, 0,' + COLOR_ALPHA +')'); 
             legend.eq(1).text('         > 150.4  μg/m3'); 
             legend = $('.legend-container').eq(5).children(); 
-            legend.eq(0).css('background-color', 'rgba(20, 20, 20,' + ALPHA +')'); 
+            legend.eq(0).css('background-color', 'rgba(20, 20, 20,' + COLOR_ALPHA +')'); 
             legend.eq(1).text('no data'); 
             $('#legend').show();
             break; 
@@ -1161,8 +1163,10 @@
           $('#map-filters').children().children().filter(':reset').removeAttr('disabled');
           cursorInBound();
           timelineReady = true;
-          cursorInBound(); 
-          enablePlayButton();
+          cursorInBound();
+          if (dateProperties.cursorPosition < Date.now()/1000){
+            enablePlayButton();
+          }
           if (playing) {
             playTimeline();
             pauseTranform();
@@ -1257,8 +1261,8 @@
                     colorFunctions.functionList.push(wrapFunction(changeColor, this, [125, 0, 0, feedNums[k - 1]])); 
                   }
               }
-              colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [feedNums, ALPHA])); 
-              colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [nullList, ALPHA*.75]));
+              colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [feedNums, COLOR_ALPHA])); 
+              colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [nullList, NULL_ALPHA]));
               colorFunctions.functionList.push(wrapFunction(clickedOpaque, this, [1]));
               colorFunctions.functionList.push(wrapFunction(hoverOpaque, this, [1]));
               colorFunctions.functionList.push(wrapFunction(reBindBuffer, this, []));
@@ -1289,8 +1293,8 @@
                   }else
                     colorFunctions.functionList.push(wrapFunction(changeColor, this, [125, 0, 0, feedNums[k - 1]])); 
               }
-              colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [feedNums, ALPHA])); 
-              colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [nullList, ALPHA*.75]));
+              colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [feedNums, COLOR_ALPHA])); 
+              colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [nullList, NULL_ALPHA]));
               colorFunctions.functionList.push(wrapFunction(clickedOpaque, this, [1]));
               colorFunctions.functionList.push(wrapFunction(hoverOpaque, this, [1]));
               colorFunctions.functionList.push(wrapFunction(reBindBuffer, this, []));
@@ -1473,7 +1477,8 @@
           $('.play-pause')
             .unbind('mouseenter mouseleave click')
             .css('opacity', .30);
-            playButtonEnabled = false;
+          
+          playButtonEnabled = false;
         }
         
       }
@@ -1521,7 +1526,7 @@
       var mapMatrix = new Float32Array(16);
       var currentIndex, minIndex, maxIndex;
       var countryPointSizePixels = 7; 
-      var blockPointSizePixels = 60; 
+      var blockPointSizePixels = 70; 
 
       function searchArray(searchElement, array){
          'use strict';
@@ -1624,6 +1629,55 @@
                                 "elementType": "labels.text.fill",
                                 "stylers": [
                                   { "color": "#606060" }
+                                ]
+                              },
+                              {
+                                "featureType": "administrative.locality",
+                                "elementType": "labels.icon",
+                                "stylers": [
+                                  { "visibility": "off" }
+                                ]
+                              },
+                              {
+                                "featureType": "road",
+                                "elementType": "geometry",
+                                "stylers": [
+                                    {
+                                        "lightness": 100
+                                    },
+                                    {
+                                        "visibility": "simplified"
+                                    }
+                                ]
+                              },
+                              {
+                                "featureType": "water",
+                                "elementType": "geometry",
+                                "stylers": [
+                                    {
+                                        "visibility": "on"
+                                    },
+                                    {
+                                        "color": "#C6E2FF"
+                                    }
+                                ]
+                              },
+                              {
+                                "featureType": "poi",
+                                "elementType": "geometry.fill",
+                                "stylers": [
+                                    {
+                                        "color": "#C5E3BF"
+                                    }
+                                ]
+                              },
+                              {
+                                "featureType": "road",
+                                "elementType": "geometry.fill",
+                                "stylers": [
+                                    {
+                                        "color": "#D1D1B8"
+                                    }
                                 ]
                               }
                           ]
@@ -1805,7 +1859,7 @@
                     changeOpacity(clickedandAlphaList, ALPHA);
                     clickedNumList = [];
                     clickedandAlphaList = [];
-                    if (hoverAndAlphaList.indexOf(feedLocList.index[listIndex]) > -1){
+                    if (hoverAndColored.indexOf(feedLocList.index[listIndex]) > -1){
                       clickedandAlphaList.push(feedLocList.index[listIndex]);
                     }else{
                       clickedNumList.push(feedLocList.index[listIndex]);
@@ -1865,20 +1919,20 @@
             var eltList = findClosestElements(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
 
             changeOpacity(hoverNumList, currentAlpha);
-            changeOpacity(hoverAndAlphaList, ALPHA);
+            changeOpacity(hoverAndColored, COLOR_ALPHA);
             changeOpacity(clickedNumList, 1);
             changeOpacity(clickedandAlphaList, 1);
             reBindBuffer();
 
             hoverNumList = [];
-            hoverAndAlphaList = [];
+            hoverAndColored = [];
 
             for (var i = 0; i < eltList.length; i++){
                 var listIndex = eltList[i].i; 
                 if (feedLocList.color[listIndex * 6 + 3] != 0) {
                   map.setOptions({ draggableCursor: 'default' });
-                  if (Math.abs(feedLocList.color[listIndex*6+3] - ALPHA) <= 1e-7){
-                    hoverAndAlphaList.push(feedLocList.index[listIndex]);
+                  if (Math.abs(feedLocList.color[listIndex*6+3] - COLOR_ALPHA) <= 1e-7){
+                    hoverAndColored.push(feedLocList.index[listIndex]);
                   }else{
                     hoverNumList.push(feedLocList.index[listIndex]);
                   }
@@ -1944,11 +1998,10 @@
         // gl_FragColor = vColor * clamp((.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
 
         if (vCircled > .0 && dist >= .35 && dist <= .75){
-          gl_FragColor = vec4(.0, .0, .0, 1) * clamp((.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
+          gl_FragColor = vec4(.0, .0, .0, 1.) * clamp((.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
         }else{
           gl_FragColor = vColor * clamp((.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
         }
-
       }
 
     </script> 
