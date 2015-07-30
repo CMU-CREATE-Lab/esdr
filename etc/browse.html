@@ -958,8 +958,7 @@
               if (   (Math.abs(dateAxisProperties.max - dateAxisProperties.min - dateProperties.max + dateProperties.min) >= Number.MIN_VALUE)
                   || ((dateAxisProperties.max > lastDataTime && dateAxisProperties.max < now)
                   && !(lastDataTime < dateAxisProperties.max && dateAxisProperties.max < now))
-                  || ((dateAxisProperties.min < firstDataTime)
-                  && !(dateAxisProperties.min < firstDataTime && dateAxisProperties.min > 0))){
+                  || ((dateAxisProperties.min < firstDataTime && dateAxisProperties.min > 1374638275))){
                   pauseTimeline();
                   timelineReady = false;
                   clearTimeout(refreshTimer);
@@ -1199,7 +1198,7 @@
       var spinnerTransformation = {bar1: 'translateX(21px) translateY(10px) rotate('+(135 + rotation)+'deg)', bar2: 'translateX(21px) translateY(10px) rotate('+(45+rotation)+'deg)'};
 
       function reColor(radioInput){
-        resetTimeline(60, 60, 60, NULL_ALPHA);
+        resetTimeline(30, 30, 30, NULL_ALPHA);
         cursorInBound();
         switch(radioInput.dataset.filter){
           case "pm10":
@@ -1220,7 +1219,7 @@
             legend.eq(0).css('background-color', 'rgba(125, 0, 0,' + COLOR_ALPHA +')'); 
             legend.eq(1).text('         >    354  μg/m3'); 
             legend = $('.legend-container').eq(5).children(); 
-            legend.eq(0).css('background-color', 'rgba(60, 60, 60,' + COLOR_ALPHA +')'); 
+            legend.eq(0).css('background-color', 'rgba(30, 30, 30,' + COLOR_ALPHA +')'); 
             legend.eq(1).text('no data'); 
             $('#legend').show();
             break;
@@ -1242,7 +1241,7 @@
             legend.eq(0).css('background-color', 'rgba(125, 0, 0,' + COLOR_ALPHA +')'); 
             legend.eq(1).text('         > 150.4  μg/m3'); 
             legend = $('.legend-container').eq(5).children(); 
-            legend.eq(0).css('background-color', 'rgba(20, 20, 20,' + COLOR_ALPHA +')'); 
+            legend.eq(0).css('background-color', 'rgba(30, 30, 30,' + COLOR_ALPHA +')'); 
             legend.eq(1).text('no data'); 
             $('#legend').show();
             break; 
@@ -1434,7 +1433,7 @@
 
               for (var k = 1, lenth = dataList[i].length; k < lenth; k++){
                  if (dataList[i][k] == null){
-                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [20, 20, 20, feedNums[k - 1]]));
+                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [30, 30, 30, feedNums[k - 1]]));
                     nullList.push(feedNums[k - 1]);  
                   }else if (dataList[i][k] <= 54){
                     colorFunctions.functionList.push(wrapFunction(changeColor, this, [0, 255, 0, feedNums[k - 1]]));
@@ -1467,7 +1466,7 @@
 
               for (var k = 1, lenth = dataList[i].length; k < lenth; k++){
                  if (dataList[i][k] == null){
-                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [20, 20, 20, feedNums[k - 1]])); 
+                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [30, 30, 30, feedNums[k - 1]])); 
                     nullList.push(feedNums[k - 1]); 
                   }else if (dataList[i][k] <= 12){
                     colorFunctions.functionList.push(wrapFunction(changeColor, this, [0, 255, 0, feedNums[k - 1]]));
