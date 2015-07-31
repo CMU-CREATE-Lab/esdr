@@ -10,7 +10,7 @@
          font-size: 16px !important;
          margin: 3px;
          width: 100%;
-         min-width: 225px; 
+         min-width: 280px; 
          height: 100%;
          overflow: hidden;
          background-color: rgb(225, 225, 225)
@@ -90,6 +90,10 @@
         width: 20%; 
         min-width: 225px;
         left: 0px;
+        border-right: 1px solid rgba(190, 190, 190, 0.9);
+        -moz-box-shadow:    1px 0px 2px #bbb;
+        -webkit-box-shadow: 1px 0px 2px #bbb;
+        box-shadow:         1px 0px 2px #bbb;
       }
 
       .title-bar{
@@ -106,41 +110,101 @@
         color: rgba(255,255,255,.9)
       }
 
+      .title-bar legend{
+        vertical-align: middle; 
+        padding-left: 10px; 
+        font-size: 14.5px; 
+        line-height: 5px; 
+        color: rgba(255,255,255,.9)
+      }
+
+      #channels-title{
+        top: 0px;
+      }
+
+      #search-box{
+        top:38px;
+      }
+
       #search-bar{
+        position: absolute;
+        height: 85%;
         width: 99%;
-        font-size: 10px;
+        left: 1%;
+        top: 7.5%;
+        font-size: 12px;
+        border: none;
+        border-top: 2px solid rgba(180,180,180, .75);
+        border-bottom: 2px solid rgba(180,180,180, .75);;
+        outline: none;
+        font-weight: normal;
+        color: rgba(100,100,100, .75);
+        background-color: white;
+        transition: background-color .3s ease-in-out;
+
+      }
+
+      #search-bar:focus{
+        background-color: rgba(100,100,100, .75);
+        color: white;
+      }
+
+      #search-bar::-webkit-search-cancel-button{
+          position: relative;
+          right: 10px;
+      }
+
+      #search-bar::-ms-clear{
+         margin-right: 10px
       }
 
       #filter-title{
-        top:30px;
+        top: 76px;
       }
 
       #filters{
         font-size:12.5px; 
         height: 195px; 
-        top: 30px; 
+        top: 110px; 
       }
 
       #filters fieldset{
         border: none;
       }
 
-      #filters legend{
-        padding-top: 7px; 
-        padding-bottom: 15px; 
-        font-size: 14.5px; 
-        width: 100%; 
-        font-weight: bold; 
-        color: rgb(255,255,255)
+      #clear-button{
+        cursor: pointer;
+        border-radius: 5px;
+        top: 255px;
+        left: 5%;
+        min-width: 120px;
+        width: 10%;
+        text-align: center;
+        transition: background-color .1s ease-in-out;
       }
 
-      #channels-title{
-        top: 225px;
+      #clear-button p{
+        font-size: 11px;
+        padding: 0px;
+        line-height: 14px;
+      }
+
+      #clear-button:hover{
+        background-color: rgba(90,90,90, .75)
+      }
+
+      #clear-button:active{
+        transition: background-color 0s;
+        background-color: rgba(190,190,190, .75)
+      }
+
+      #results-title{
+        top: 300px;
       }
 
       #channels{
-        height: calc(100vh - 260px); 
-        top:260px; 
+        height: calc(100vh - 335px); 
+        top:335px; 
         font-size:10px; 
         overflow-y:auto;
       }
@@ -151,6 +215,7 @@
         position:absolute; 
         left: 20%; 
         top:0px; 
+        z-index: -1;
       }
 
       #legend{
@@ -296,28 +361,35 @@
    </style>
 </head>
 <body>
-<form class="tool-bar">
-  <input id="search-bar" type="search" placeholder="Search Channel Name:">
-</form>
-<div class="tool-bar title-bar" id="filter-title"></div>
-<form class="tool-bar" id="filters">
-  <fieldset>
-   <section>
-    <legend>Pollutant Filters</legend>
-      <label><input type="checkbox" name="pm25" onclick="searchAttributes()">PM2.5<br></label>
-      <label><input type="checkbox" name="pm10" onclick="searchAttributes()">PM10<br></label>
-      <label><input type="checkbox" name="ozone" onclick="searchAttributes()">Ozone (O<sub>3</sub>)<br></label>
-      <label><input type="checkbox" name="no" onclick="searchAttributes()">Nitric Oxide (NO)<br></label>
-      <label><input type="checkbox" name="no2" onclick="searchAttributes()">Nitrogen Dioxide (NO<sub>2</sub>)<br></label>
-      <label><input type="checkbox" name="so2" onclick="searchAttributes()">Sulfur Dioxide (SO<sub>2</sub>)<br></label>
-      <label><input type="checkbox" name="co" onclick="searchAttributes()">Carbon Monoxide (CO)<br></label>
-      <input type="button" value="Clear Search Filters" onclick="clearFilters();" >
-    </section>
-  </fieldset>
-</form>
-
 <div class="title-bar tool-bar" id="channels-title">
-    <p style="">Channels</p>
+    <p>Channels</p>
+</div>
+<form class="tool-bar title-bar" id="search-box">
+  <input id="search-bar" type="search" autocomplete="off"placeholder=" search for channel name:" results="0">
+</form>
+<div class="tool-bar title-bar" id="filter-title">
+      <p>Search Result Filters</p>
+  </div>
+<div class="tool-bar" id="filters">
+  <form id="air-quality">
+    <fieldset>
+     <section>
+        <label><input type="checkbox" name="pm25" onclick="searchAttributes()">PM2.5<br></label>
+        <label><input type="checkbox" name="pm10" onclick="searchAttributes()">PM10<br></label>
+        <label><input type="checkbox" name="ozone" onclick="searchAttributes()">Ozone (O<sub>3</sub>)<br></label>
+        <label><input type="checkbox" name="no" onclick="searchAttributes()">Nitric Oxide (NO)<br></label>
+        <label><input type="checkbox" name="no2" onclick="searchAttributes()">Nitrogen Dioxide (NO<sub>2</sub>)<br></label>
+        <label><input type="checkbox" name="so2" onclick="searchAttributes()">Sulfur Dioxide (SO<sub>2</sub>)<br></label>
+        <label><input type="checkbox" name="co" onclick="searchAttributes()">Carbon Monoxide (CO)<br></label>
+      </section>
+    </fieldset>
+  </form>
+</div>
+<div class="title-bar tool-bar" id="clear-button" onclick="clearFilters()">
+  <p>Clear Search Filters</p>
+</div>
+<div class="title-bar tool-bar" id="results-title">
+    <p>Results (<span style="font-size:12px">Showing 0 of 0</span>):</p>
 </div>
 
 <div class="tool-bar" id="channels"></div>
@@ -357,7 +429,7 @@
       <legend>Color Map:</legend>
       <label><input type="radio" name="map-filter" data-filter = "pm25" onclick="reColor(this)"><span style="color: white">PM2.5</span><br></label>
       <label><input type="radio" name="map-filter" data-filter = "pm10" onclick="reColor(this)"><span style="color: white"> PM10</span><br></label>
-      <label><input type="radio" name="map-filter" onclick="resetTimeline(0, 0, 255, ALPHA)"><span style="color: white"> None</span><br></label>
+      <label><input type="radio" name="map-filter" checked="checked" onclick="resetTimeline(0, 0, 255, ALPHA)"><span style="color: white"> None</span><br></label>
     </fieldset>
   </form>
 
@@ -732,7 +804,6 @@
                   html.push('<div class="sensors" style="margin-left: 3px" data-channel-type="' + channelId + '" id="' + label.toLowerCase() + " #" + idHashTag + '"> <label> <input type="checkbox" onclick="clickChannel(this)" name="' + id +'">' + label + '<br></label></div>');
                }
             }
-            //for (var channel = 0; i < feed.channelBounds.channels
          }
          $('#channels').append(html.join(''));
          if (data.totalCount <= max) {
@@ -913,7 +984,6 @@
       function init() {
 
          $.ajax({url: ESDR_API_ROOT_URL + '/feeds', success: loadFeeds});
-         $('#search-bar').focus(); 
 
          $(document).on('click', function(event) {
             if (!$(event.target).closest('#search-bar').length) {
@@ -949,10 +1019,12 @@
          playTransform()
 
         if ($('#channels').width() == 225){
+          $("#clear-button").css('left', 50);
           $('#map-div').css('left', 225); 
           $('#charts').css('left', 225); 
           $('#map-bar').css('left', 225); 
         }else{
+          $("#clear-button").css('left', '5%');
           $('#map-div').css('left', "20%");
           $('#charts').css('left', "20%"); 
           $('#map-bar').css('left', "20%"); 
@@ -1139,13 +1211,6 @@
         
       }
 
-      function buildDrawNums(){
-        drawNums = []; 
-        if (showNumList.length != 0){
-
-        }
-      }
-
       function searchAttributes() {
          var str = $('#search-bar').val().toLowerCase();     
          var wordList = str.split(" ") || [];
@@ -1272,8 +1337,10 @@
 
               // };
          }; 
+
+         $('#results-title p').replaceWith('<p>Results (<span style="font-size:12px">Showing ' + $(finalSearchConditions).length + " of " + $allSelect.length + '</span>):</p>')
          drawInfoWindowLines(); 
-        console.log("-------------------")
+         console.log("-------------------")
       }
 
       function drawInfoWindowLines(){
@@ -1312,6 +1379,7 @@
           $('#filters [type = checkbox]').each(function(index, input){
             $(input).prop('checked', false); 
           }); 
+          $('#search-bar').val('');
           searchAttributes(); 
       }
 
@@ -1452,7 +1520,7 @@
         var offset = result.offset;
         var url1 = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + offset;
         var url2 = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + (offset + 1);
-        var url3 = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + (offset + 2);
+        var url3 = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + (offset - 1);
         // window.open(url);
         getData(url1, multifeedName);
         getData(url2, multifeedName);
@@ -2087,11 +2155,13 @@
           google.maps.event.trigger(map, 'resize'); 
 
           if ($('#channels').width() == 225){
+            $("#clear-button").css('left', 50);
             $('#map-div').css('left', 225); 
             $('#charts').css('left', 225); 
             $('#map-bar').css('left', 225); 
 
           }else{
+            $("#clear-button").css('left', '5%');
             $('#map-div').css('left', "20%");
             $('#charts').css('left', "20%"); 
             $('#map-bar').css('left', "20%"); 
