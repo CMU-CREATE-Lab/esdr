@@ -288,9 +288,11 @@
         color: white;
       }
 
-      #map-bar fieldset>input{
+      #map-bar fieldset>input{ 
         display: inline-block; 
         margin: 0px 5px;
+        width: 70px;
+        font-size: 14px;
       }
 
       #duration{
@@ -506,6 +508,7 @@
       var availableChannels = [];
       var isAutoScaleOn = false;
       var hashTimer; 
+      var clampTimer;
 
       //Timeline Stuff
       var DEFAULT_SPEED = 35; 
@@ -718,11 +721,9 @@
          
          plotManager.addDataSeriesPlot(plotName, createDatasource(channel), plotName, yAxisName, 0, 100, lineStyle);
          var thisPlotIdx = plotCount;
-
          setTimeout(function(){
             clampNumberAxisToDataRange(thisPlotIdx);
-         }, 1000);
-          
+         }, 2500);
          plotScalers[plotCount] = thisPlotIdx;
          channelToPlotIdx[channel] = plotCount;
          plotIdxToChannel[plotCount] = channel;
@@ -1068,6 +1069,14 @@
 
    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ init() function END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+      function clampAllPlots(){
+        for (var key in plotScalers) {
+          if (plotScalers.hasOwnProperty(key)) {
+            clampNumberAxisToDataRange(plotScalers[key]);
+          }
+        }
+      }
+
       function getChannels() {
          var plotDivs = $('#plots [id^=plot]');
          var channels = [];
@@ -1162,15 +1171,12 @@
 
          //Fires when cursor position changes or date axis bound changes 
          plotManager.getDateAxis().addAxisChangeListener(function(dateAxisProperties) { 
-            
+            clearTimeout(clampTimer);
+            clampTimer = setTimeout(clampAllPlots, 300);
+
             if (Math.abs(dateAxisProperties.max - dateProperties.max) >= Number.MIN_VALUE +  Math.abs(dateAxisProperties.min - dateProperties.min) >= Number.MIN_VALUE){
               clearTimeout(hashTimer);
               hashTimer = setTimeout(updateHash, 300);
-              for (var key in plotScalers) {
-                if (plotScalers.hasOwnProperty(key)) {
-                  clampNumberAxisToDataRange(plotScalers[key]);
-                }
-              }
             }
 
             if (timelineReady){
