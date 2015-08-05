@@ -4,16 +4,384 @@
    <title>Browse ESDR</title>
    <meta http-equiv="content-type" content="text/html;charset=utf-8" />
    <style type="text/css">
+      html{
+         height: 100%;
+         width: 100%;
+         overflow: scroll;
+         background-color: blue;
+      }
+
       body {
          font-family: 'Open Sans', 'Helvetica', sans-serif !important;
          font-weight: 400 !important;
          font-size: 16px !important;
-         margin: 3px;
-         width: 100%;
-         min-width: 280px; 
-         height: 100%;
-         overflow: hidden;
+         margin: 0px;
+         padding: 0px;
+         min-width: 100%; 
+         min-height: 100%;
+         /*overflow: hidden;*/
          background-color: rgb(225, 225, 225)
+      }
+
+      .tool-bar{
+        position: absolute;
+        width: 20%; 
+        min-width: 225px;
+        left: 0px;
+        -moz-box-shadow:    1px 0px 2px #bbb;
+        -webkit-box-shadow: 1px 0px 2px #bbb;
+        box-shadow:         1px 0px 2px #bbb;
+        z-index: 1;
+      }
+
+      .title-bar{
+        height: 35px; 
+        background-color: rgba(50,50,50, .75); 
+        font-weight: bold; 
+      }
+
+      .title-bar p{
+        vertical-align: middle; 
+        padding-left: 10px; 
+        font-size: 14.5px; 
+        line-height: 5px; 
+        color: rgba(255,255,255,.9)
+      }
+
+      .title-bar legend{
+        vertical-align: middle; 
+        padding-left: 10px; 
+        font-size: 14.5px; 
+        line-height: 5px; 
+        color: rgba(255,255,255,.9)
+      }
+
+      #channels-title{
+        top: 0px;
+      }
+
+      #search-box{
+        top:38px;
+      }
+
+      #search-bar{
+        position: absolute;
+        height: 85%;
+        width: 99%;
+        left: .5%;
+        top: 7.5%;
+        font-size: 12px;
+        border: none;
+        border-top: 2px solid rgba(180,180,180, .75);
+        border-bottom: 2px solid rgba(180,180,180, .75);;
+        outline: none;
+        font-weight: normal;
+        color: rgba(100,100,100, .75);
+        background-color: white;
+        transition: background-color .3s ease-in-out;
+
+      }
+
+      #search-bar:focus{
+        background-color: rgba(100,100,100, .75);
+        color: white;
+      }
+
+      #search-bar::-webkit-search-cancel-button{
+          position: relative;
+          right: 10px;
+      }
+
+      #search-bar::-ms-clear{
+         margin-right: 10px
+      }
+
+      #filter-title{
+        top: 76px;
+      }
+
+      #filters{
+        font-size: 13px; 
+        height: 190px; 
+        top: 110px; 
+      }
+
+      .filter-tab{
+         position: relative;
+         height: 25px;
+         width: 40%;
+         text-align: center;
+         margin: 5px 10px;
+         opacity: .5;
+      }
+
+      .filter-tab:hover{
+        cursor: pointer;
+        opacity: 1;
+      }
+
+      .filter-tab p{
+        font-weight: normal;
+        font-size: 12px;
+        padding: 0px;
+      }
+
+      #air-tab{
+        float: left;
+      }
+
+      #water-tab{
+        float: right;
+      }
+
+      #filters fieldset{
+        border: none;
+      }
+
+      #air-quality{
+        margin-top: 5px;
+      }
+
+      #clear-button{
+        cursor: pointer;
+        border-radius: 5px;
+        top: 255px;
+        left: 5%;
+        min-width: 120px;
+        width: 10%;
+        text-align: center;
+        transition: background-color .1s ease-in-out;
+      }
+
+      #clear-button p{
+        font-size: 11px;
+        padding: 0px;
+        line-height: 15px;
+      }
+
+      #clear-button:hover{
+        background-color: rgba(90,90,90, .75)
+      }
+
+      #clear-button:active{
+        transition: background-color 0s;
+        background-color: rgba(190,190,190, .75)
+      }
+
+      #results-title{
+        top: 300px;
+      }
+
+      #channels{
+        height: calc(100% - 335px);
+        bottom: 0px;
+        margin-bottom: 0px;
+        font-size:10px; 
+        overflow-y:auto;
+      }
+
+      .main-content{
+        position: absolute;
+        width: 80%;
+        left: 20%;
+      }
+
+      #map-div{
+        height:55%;  
+        top:0px; 
+      }
+
+      #legend{
+        position: absolute;
+        left: 0px;
+        width: 190px; 
+        height: 140px;  
+        right: 5px; 
+        bottom: calc(45% + 60px); 
+        background-color: rgba(200, 200, 200, .4); 
+        display: none;
+      }
+
+      .legend-container{
+        position: relative; 
+        width: 100%; 
+        height: 20px; 
+        line-height: 20px;
+      }
+      .greenYellow {
+        background: -moz-linear-gradient(left,  rgba(0,255,0,0.7) 0%, rgba(255,255,0,0.7) 100%);
+        background: -webkit-gradient(linear, left top, right top, color-stop(0%,rgba(0,255,0,0.7)), color-stop(100%,rgba(255,255,0,0.7)));
+        background: -webkit-linear-gradient(left,  rgba(0,255,0,0.7) 0%,rgba(255,255,0,0.7) 100%);
+        background: -o-linear-gradient(left,  rgba(0,255,0,0.7) 0%,rgba(255,255,0,0.7) 100%);
+        background: -ms-linear-gradient(left,  rgba(0,255,0,0.7) 0%,rgba(255,255,0,0.7) 100%);
+        background: linear-gradient(to right,  rgba(0,255,0,0.7) 0%,rgba(255,255,0,0.7) 100%);
+        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b300ff00', endColorstr='#b3ffff00',GradientType=1 );
+      }
+      
+      .yellowOrange {
+        background: -moz-linear-gradient(left,  rgba(255,255,0,0.7) 0%, rgba(255,125,0,0.7) 100%);
+        background: -webkit-gradient(linear, left top, right top, color-stop(0%,rgba(255,255,0,0.7)), color-stop(100%,rgba(255,125,0,0.7)));
+        background: -webkit-linear-gradient(left,  rgba(255,255,0,0.7) 0%,rgba(255,125,0,0.7) 100%);
+        background: -o-linear-gradient(left,  rgba(255,255,0,0.7) 0%,rgba(255,125,0,0.7) 100%);
+        background: -ms-linear-gradient(left,  rgba(255,255,0,0.7) 0%,rgba(255,125,0,0.7) 100%);
+        background: linear-gradient(to right,  rgba(255,255,0,0.7) 0%,rgba(255,125,0,0.7) 100%);
+        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b3ffff00', endColorstr='#b3ff7d00',GradientType=1 );
+      }
+
+      .orangeRed{
+        background: -moz-linear-gradient(left,  rgba(255,125,0,0.7) 0%, rgba(255,0,0,0.7) 100%);
+        background: -webkit-gradient(linear, left top, right top, color-stop(0%,rgba(255,125,0,0.7)), color-stop(100%,rgba(255,0,0,0.7)));
+        background: -webkit-linear-gradient(left,  rgba(255,125,0,0.7) 0%,rgba(255,0,0,0.7) 100%);
+        background: -o-linear-gradient(left,  rgba(255,125,0,0.7) 0%,rgba(255,0,0,0.7) 100%);
+        background: -ms-linear-gradient(left,  rgba(255,125,0,0.7) 0%,rgba(255,0,0,0.7) 100%);
+        background: linear-gradient(to right,  rgba(255,125,0,0.7) 0%,rgba(255,0,0,0.7) 100%);
+        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b3ff7d00', endColorstr='#b3ff0000',GradientType=1 );
+      }
+
+      .redPurple{
+        background: -moz-linear-gradient(left,  rgba(255,0,0,0.7) 0%, rgba(150,0,80,0.7) 100%);
+        background: -webkit-gradient(linear, left top, right top, color-stop(0%,rgba(255,0,0,0.7)), color-stop(100%,rgba(150,0,80,0.7)));
+        background: -webkit-linear-gradient(left,  rgba(255,0,0,0.7) 0%,rgba(150,0,80,0.7) 100%);
+        background: -o-linear-gradient(left,  rgba(255,0,0,0.7) 0%,rgba(150,0,80,0.7) 100%);
+        background: -ms-linear-gradient(left,  rgba(255,0,0,0.7) 0%,rgba(150,0,80,0.7) 100%);
+        background: linear-gradient(to right,  rgba(255,0,0,0.7) 0%,rgba(150,0,80,0.7) 100%);
+        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b3ff0000', endColorstr='#b3960050',GradientType=1 );
+
+      }
+
+      .purpleMaroon{
+        background: -moz-linear-gradient(left,  rgba(150,0,80,0.7) 0%, rgba(125,0,0,0.7) 100%);
+        background: -webkit-gradient(linear, left top, right top, color-stop(0%,rgba(150,0,80,0.7)), color-stop(100%,rgba(125,0,0,0.7)));
+        background: -webkit-linear-gradient(left,  rgba(150,0,80,0.7) 0%,rgba(125,0,0,0.7) 100%);
+        background: -o-linear-gradient(left,  rgba(150,0,80,0.7) 0%,rgba(125,0,0,0.7) 100%);
+        background: -ms-linear-gradient(left,  rgba(150,0,80,0.7) 0%,rgba(125,0,0,0.7) 100%);
+        background: linear-gradient(to right,  rgba(150,0,80,0.7) 0%,rgba(125,0,0,0.7) 100%);
+        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b3960050', endColorstr='#b37d0000',GradientType=1 );
+      }
+
+      .color-box{
+        position: absolute; 
+        width: 17px; 
+        height: 10px; 
+        border: 3px solid rgba(50,50,50,.75); 
+        top: 50%; 
+        transform: translateY(-50%); 
+        margin: 0px 8px;
+      }
+
+      .legend-container p{
+        position:absolute; 
+        width:100%; 
+        height: 100%; 
+        text-align: justify; 
+        margin: 0px 40px; 
+        white-space:pre-wrap;
+      }
+
+      #map-bar{
+        height: 55px; 
+        bottom: 45%; 
+        background-color: rgba(50,50,50,.75); 
+        display: none;
+      }
+
+      #map-bar form{
+        font-size: 12px; 
+        position: relative; 
+        height: 50px; 
+        width: 280px; 
+        text-align: center; 
+        float: left; 
+        margin: 0px 10px;
+      }
+
+      #map-bar form label{
+        display: inline-block; 
+        margin: 0px 5px;
+        text-align: left;
+      }
+
+      #map-bar form label~input{
+        display: inline-block; 
+        margin: 0px 5px;
+      }
+
+      #map-bar form legend{
+        color: white;
+      }
+
+      #map-bar fieldset>input{ 
+        display: inline-block; 
+        margin: 0px 5px;
+        width: 70px;
+        font-size: 14px;
+      }
+
+      #duration{
+        margin-left: 15px;
+        width: 30px;
+      }
+
+      .play-pause{
+        position: relative; 
+        float: left; 
+        height: 50px; 
+        width: 50px; 
+        top: 50%; 
+        margin: -25px 10px 0px; 
+        border-radius: 50%; 
+        background-color: rgba(200, 200, 200, 1); 
+        opacity: .30; 
+        float: left;
+      }
+
+      .bar{
+        position: absolute; 
+        height: 30px; 
+        width: 8px; 
+        background-color: rgba(50,50,50,.75); 
+        transition: transform .25s; 
+        border: 1px solid transparent
+      }
+      #bar1{
+        transform: translateX(24px) translateY(2px) rotate(135deg);
+      }
+
+      #bar2{
+        transform: translateX(24px) translateY(18px) rotate(45deg);
+      }
+
+      #charts{
+        height: 45%; 
+        bottom: 0px;
+      }
+
+      #axis-container{
+        position:relative; 
+        height: 50px; 
+        width:100%; 
+        border-bottom: 1px solid black;
+        overflow-x: hidden;
+      }
+
+      #date_axis{
+        overflow: hidden;
+        position:absolute; 
+        top:0px; 
+        bottom:0px; 
+        left:0px; 
+        right:40px
+
+      }
+
+      #plots{
+        position:relative; 
+        overflow-y: auto;
+        overflow-x: hidden; 
+        width: 100%;
+        top:0px; 
+        height: calc(100% - 50px);
+        margin-bottom: -5px;
       }
 
       .plot_container {
@@ -84,282 +452,7 @@
          font-size: 11px;
          line-height: 11px;
       }
-
-      .tool-bar{
-        position: absolute;
-        width: 20%; 
-        min-width: 225px;
-        left: 0px;
-        border-right: 1px solid rgba(190, 190, 190, 0.9);
-        -moz-box-shadow:    1px 0px 2px #bbb;
-        -webkit-box-shadow: 1px 0px 2px #bbb;
-        box-shadow:         1px 0px 2px #bbb;
       }
-
-      .title-bar{
-        height: 35px; 
-        background-color: rgba(50,50,50, .75); 
-        font-weight: bold; 
-      }
-
-      .title-bar p{
-        vertical-align: middle; 
-        padding-left: 10px; 
-        font-size: 14.5px; 
-        line-height: 5px; 
-        color: rgba(255,255,255,.9)
-      }
-
-      .title-bar legend{
-        vertical-align: middle; 
-        padding-left: 10px; 
-        font-size: 14.5px; 
-        line-height: 5px; 
-        color: rgba(255,255,255,.9)
-      }
-
-      #channels-title{
-        top: 0px;
-      }
-
-      #search-box{
-        top:38px;
-      }
-
-      #search-bar{
-        position: absolute;
-        height: 85%;
-        width: 99%;
-        left: .5%;
-        top: 7.5%;
-        font-size: 12px;
-        border: none;
-        border-top: 2px solid rgba(180,180,180, .75);
-        border-bottom: 2px solid rgba(180,180,180, .75);;
-        outline: none;
-        font-weight: normal;
-        color: rgba(100,100,100, .75);
-        background-color: white;
-        transition: background-color .3s ease-in-out;
-
-      }
-
-      #search-bar:focus{
-        background-color: rgba(100,100,100, .75);
-        color: white;
-      }
-
-      #search-bar::-webkit-search-cancel-button{
-          position: relative;
-          right: 10px;
-      }
-
-      #search-bar::-ms-clear{
-         margin-right: 10px
-      }
-
-      #filter-title{
-        top: 76px;
-      }
-
-      #filters{
-        font-size:12.5px; 
-        height: 195px; 
-        top: 110px; 
-      }
-
-      #filters fieldset{
-        border: none;
-      }
-
-      #clear-button{
-        cursor: pointer;
-        border-radius: 5px;
-        top: 255px;
-        left: 5%;
-        min-width: 120px;
-        width: 10%;
-        text-align: center;
-        transition: background-color .1s ease-in-out;
-      }
-
-      #clear-button p{
-        font-size: 11px;
-        padding: 0px;
-        line-height: 14px;
-      }
-
-      #clear-button:hover{
-        background-color: rgba(90,90,90, .75)
-      }
-
-      #clear-button:active{
-        transition: background-color 0s;
-        background-color: rgba(190,190,190, .75)
-      }
-
-      #results-title{
-        top: 300px;
-      }
-
-      #channels{
-        height: calc(100vh - 335px); 
-        top:335px; 
-        font-size:10px; 
-        overflow-y:auto;
-      }
-
-      #map-div{
-        width:80%; 
-        height:55%; 
-        position:absolute; 
-        left: 20%; 
-        top:0px; 
-        z-index: -1;
-      }
-
-      #legend{
-        position: absolute;
-        width: 190px; 
-        height: 120px;  
-        right: 5px; 
-        bottom: calc(45% + 60px); 
-        background-color: rgba(200, 200, 200, .4); 
-        display: none;
-      }
-
-      .legend-container{
-        position: relative; 
-        width: 100%; 
-        height: 20px; 
-        line-height: 20px;
-      }
-
-      .color-box{
-        position: absolute; 
-        width: 10px; 
-        height: 10px; 
-        border: 3px solid rgba(50,50,50,.75); 
-        top: 50%; 
-        transform: translateY(-50%); 
-        margin: 0px 10px;
-      }
-
-      .legend-container p{
-        position:absolute; 
-        width:100%; 
-        height: 100%; 
-        text-align: justify; 
-        margin: 0px 40px; 
-        white-space:pre-wrap;
-      }
-
-      #map-bar{
-        width: 80%; 
-        height: 55px; 
-        position: absolute; 
-        left: 20%; 
-        bottom: 45%; 
-        background-color: rgba(50,50,50,.75); 
-        display: none;
-      }
-
-      #map-bar form{
-        font-size: 12px; 
-        position: relative; 
-        height: 50px; 
-        width: 280px; 
-        text-align: center; 
-        float: left; 
-        margin: 0px 10px;
-      }
-
-      #map-bar form label{
-        display: inline-block; 
-        margin: 0px 5px;
-      }
-
-      #map-bar form label~input{
-        display: inline-block; 
-        margin: 0px 5px;
-      }
-
-      #map-bar form legend{
-        color: white;
-      }
-
-      #map-bar fieldset>input{ 
-        display: inline-block; 
-        margin: 0px 5px;
-        width: 70px;
-        font-size: 14px;
-      }
-
-      #duration{
-        margin-left: 10px;
-      }
-
-      .play-pause{
-        position: relative; 
-        float: left; 
-        height: 50px; 
-        width: 50px; 
-        top: 50%; 
-        margin: -25px 10px 0px; 
-        border-radius: 50%; 
-        background-color: rgba(200, 200, 200, 1); 
-        opacity: .30; 
-        float: left;
-      }
-
-      .bar{
-        position: absolute; 
-        height: 30px; 
-        width: 8px; 
-        background-color: rgba(50,50,50,.75); 
-        transition: transform .25s; 
-        border: 1px solid transparent
-      }
-      #bar1{
-        transform: translateX(24px) translateY(2px) rotate(135deg);
-      }
-
-      #bar2{
-        transform: translateX(24px) translateY(18px) rotate(45deg);
-      }
-
-      #charts{
-        width:80%; 
-        height: 45%; 
-        position:absolute; 
-        left: 20%; 
-        bottom: 0px;
-      }
-
-      #axis-container{
-        position:relative; 
-        height: 50px; 
-        width:100%; 
-        border-bottom: 1px solid black;
-      }
-
-      #date_axis{
-        position:absolute; 
-        top:0px; 
-        bottom:0px; 
-        left:0px; 
-        right:40px
-
-      }
-
-      #plots{
-        position:relative; 
-        overflow-y: auto; 
-        top:0px; 
-        height: calc(45vh - 50px);
-      }
-  
-
    </style>
 </head>
 <body>
@@ -371,8 +464,14 @@
 </form>
 <div class="tool-bar title-bar" id="filter-title">
       <p>Search Result Filters</p>
-  </div>
+</div>
 <div class="tool-bar" id="filters">
+  <!-- <div class="title-bar filter-tab" id="air-tab">
+    <p>Air</p>
+  </div>
+  <div class="title-bar filter-tab" id="water-tab">
+    <p>Water</p>
+  </div> -->
   <form id="air-quality">
     <fieldset>
      <section>
@@ -396,7 +495,7 @@
 
 <div class="tool-bar" id="channels"></div>
 
-<div id="map-div"></div>
+<div class="main-content" id="map-div"></div>
 
 <div id="legend">
   <div class="legend-container">
@@ -423,9 +522,13 @@
     <div class="color-box"></div>
     <p></p>
   </div>
+  <div class="legend-container">
+    <div class="color-box"></div>
+    <p></p>
+  </div>
 </div>
 
-<div id="map-bar">
+<div class="main-content" id="map-bar">
   <form id="map-filters" autocomplete="off">
     <fieldset>
       <legend>Color Map:</legend>
@@ -449,7 +552,7 @@
   </form>
 </div>
 
-<div id="charts">
+<div class="main-content" id="charts">
   <div id="axis-container">
       <div id="date_axis"></div>
   </div>
@@ -516,7 +619,7 @@
 
       //WebGL stuff
       var ALPHA = 0.50;
-      var COLOR_ALPHA = .7;
+      var COLOR_ALPHA = 1;
       var NULL_ALPHA = .3; 
       var currentAlpha = ALPHA; 
       var currentPointSize = 0; 
@@ -593,10 +696,10 @@
         "styles" : [
            { "type" : "bar",
              "stripPosition" : "center",
-             "stripWidthSecs" : 60, 
-             "rangedColors" : "rgb(210,210,210); 10;rgb(185,185,185); 20;rgb(160,160,160); 30;rgb(135,135,135); 40;rgb(110,110,110); 50;rgb(110,110,110);60;rgb(85,85,85);70;rgb(60,60,60);80;rgb(35,35,35)"
+             "stripWidthSecs" : 30, 
+             "rangedColors" : "rgba(210,210,210,.8); 10;rgba(185,185,185,.8); 20;rgba(160,160,160,.8); 30;rgba(135,135,135,.8); 40;rgba(110,110,110,.8); 50;rgba(110,110,110,.8);60;rgba(85,85,85,.8);70;rgba(70,70,70,.8);80;rgba(50,50,50,.8)"
            },
-           { "type" : "line", "lineWidth" : 3, "show" : true, "color" : "rgb(60,60,60)" }
+           { "type" : "line", "lineWidth" : 3, "show" : true, "color" : "rgba(60,60,60, .8)" }
         ],
         "highlight" : {
            "lineWidth" : 3,
@@ -1021,49 +1124,59 @@
 
         if ($('#channels').width() == 225){
           $("#clear-button").css('left', 50);
-          $('#map-div').css('left', 225); 
-          $('#charts').css('left', 225); 
-          $('#map-bar').css('left', 225); 
+          $('#legend').css('left', 225);
+          $('.main-content').css({'left' : 225,
+                                  'width' : "calc(100% - 225px)"});  
         }else{
           $("#clear-button").css('left', '5%');
-          $('#map-div').css('left', "20%");
-          $('#charts').css('left', "20%"); 
-          $('#map-bar').css('left', "20%"); 
+          $('#legend').css('left', null);
+          $('.main-content').css({'left' : "20%",
+                                  'width' : "80%"}); 
         }
 
         var winWidth = $(window).width(); 
-
-        if (winWidth <= 225 + 190){
+        if(winWidth <= 444){
+          $('#map-bar').css('height', 225);
+          $('#legend').css({'bottom' : "calc(45% + 225px)"});
+          $('#map-filters').css({'width' : 130,
+                                 'margin' : '0px 10px 20px'}); 
+          $('#timeline').css({'width': 130,
+                              'clear' : 'left',
+                              'margin' : '70px 10px'}); 
+          $('.play-pause').css({'margin' : '-25px 50px 0px',
+                                'float' : 'none'});
+        }else if(winWidth <= 600){
           $('#map-bar').css('height', 170);
-          $('#legend').css({'left' : 225, 
-                            'bottom' : "calc(45% + 170px)"});
           $('#map-filters').css({'width' : 130,
                                  'margin' : '0px 10px 35px'}); 
           $('#timeline').css({'width': 130,
-                              'clear' : 'left'}); 
-        }else if(winWidth <= 590){
-          $('#map-bar').css('height', 170);
-          $('#map-filters').css({'width' : 130,
-                                 'margin' : '0px 10px 35px'}); 
-          $('#timeline').css({'width': 130,
-                              'clear' : 'left'});
+                              'clear' : 'left',
+                              'margin' : '0px 10px'});
           $('#legend').css({'left' : 'auto', 
                             'bottom' : "calc(45% + 170px)"}); 
-        }else if(winWidth <= 890){
+          $('.play-pause').css({'margin' : '-25px 10px 0px',
+                                'float' : 'left'});
+        }else if(winWidth <= 900){
           $('#map-bar').css('height', 100); 
           $('#map-filters').css({'width' : 280,
                                  'margin' : '0px 10px'}); 
           $('#timeline').css({'width' : 280,
-                              'clear' : 'left'});
+                              'clear' : 'left',
+                              'margin' : '0px 10px'});
           $('#legend').css({'left' : 'auto',   
                             'bottom' : "calc(45% + 100px)"});
+          $('.play-pause').css({'margin' : '-25px 10px 0px',
+                                'float' : 'left'});
         }else{
           $('#map-bar').css('height', 55); 
           $('#map-filters').css('width', 280);
           $('#timeline').css({'width' : 280,
-                              'clear' : 'right'});
+                              'clear' : 'right',
+                              'margin' : '0px 10px'});
           $('#legend').css({'left' : 'auto',  
                             'bottom' : "calc(45% + 60px)"});
+          $('.play-pause').css({'margin' : '-25px 10px 0px',
+                                'float' : 'left'});
         }
       }
 
@@ -1162,7 +1275,7 @@
 
          plotManager.setWillAutoResizeWidth(true, function() {
                  return $('#plots').width()         // window width
-                        - 30;
+                        // - 30;
               });
 
          plotManager.getDateAxis().constrainRangeTo(0, 4118011200);
@@ -1187,12 +1300,8 @@
                   || ((dateAxisProperties.max > lastDataTime && dateAxisProperties.max < now)
                   && !(lastDataTime < dateAxisProperties.max && dateAxisProperties.max < now))
                   || ((dateAxisProperties.min < firstDataTime && dateAxisProperties.min > 1374638275))){
-                  pauseTimeline();
-                  timelineReady = false;
                   clearTimeout(refreshTimer);
                   refreshTimer = setTimeout(function() {
-                    disablePlayButton();
-                    spinnerTransform();
                     updateMultifeed(dateAxisProperties.min, dateAxisProperties.max); 
                   }, 800);
               }
@@ -1405,6 +1514,7 @@
       var timelineReady = false;
       var timelineQueue = []; 
       var dataProcessQueue = [];
+      var currentLevel = 0; 
       var pause = true;
       var onLoop = false;
       var playing = false;
@@ -1428,21 +1538,34 @@
           case "pm10":
             multifeed = "pm_10";
             var legend = $('.legend-container').eq(0).children(); 
-            legend.eq(0).css('background-color', 'rgba(0, 255, 0,' + COLOR_ALPHA +')'); 
+            // legend.eq(0).css('background-color', 'rgba(0, 255, 0,' + COLOR_ALPHA +')'); 
+            legend.eq(0).removeClass("greenYellow");
+            legend.eq(0).addClass("greenYellow");
             legend.eq(1).text('     0   -      54  μg/m3'); 
             legend = $('.legend-container').eq(1).children(); 
-            legend.eq(0).css('background-color', 'rgba(255, 255, 0,' + COLOR_ALPHA +')'); 
-            legend.eq(1).text('   55   -    154  μg/m3');
+            // legend.eq(0).css('background-color', 'rgba(255, 255, 0,' + COLOR_ALPHA +')'); 
+            legend.eq(0).removeClass("yellowOrange");
+            legend.eq(0).addClass("yellowOrange");
+            legend.eq(1).text('   54   -    154  μg/m3');
             legend = $('.legend-container').eq(2).children(); 
-            legend.eq(0).css('background-color', 'rgba(255, 125, 0,' + COLOR_ALPHA +')'); 
-            legend.eq(1).text(' 155   -    254  μg/m3');
+            // legend.eq(0).css('background-color', 'rgba(255, 125, 0,' + COLOR_ALPHA +')'); 
+            legend.eq(0).removeClass("orangeRed");
+            legend.eq(0).addClass("orangeRed");
+            legend.eq(1).text(' 154   -    254  μg/m3');
             legend = $('.legend-container').eq(3).children(); 
-            legend.eq(0).css('background-color', 'rgba(255, 0, 0,' + COLOR_ALPHA +')'); 
-            legend.eq(1).text(' 255   -    354  μg/m3');
+            // legend.eq(0).css('background-color', 'rgba(255, 0, 0,' + COLOR_ALPHA +')');
+            legend.eq(0).removeClass("redPurple");
+            legend.eq(0).addClass("redPurple"); 
+            legend.eq(1).text(' 254   -    354  μg/m3');
             legend = $('.legend-container').eq(4).children(); 
-            legend.eq(0).css('background-color', 'rgba(125, 0, 0,' + COLOR_ALPHA +')'); 
-            legend.eq(1).text('         >    354  μg/m3'); 
+            // legend.eq(0).css('background-color', 'rgba(150, 0, 80,' + COLOR_ALPHA +')'); 
+            legend.eq(0).removeClass("purpleMaroon");
+            legend.eq(0).addClass("purpleMaroon");
+            legend.eq(1).text(' 354   -    424  μg/m3');
             legend = $('.legend-container').eq(5).children(); 
+            legend.eq(0).css('background-color', 'rgba(125, 0, 0,' + COLOR_ALPHA +')'); 
+            legend.eq(1).text('         >    424  μg/m3'); 
+            legend = $('.legend-container').eq(6).children(); 
             legend.eq(0).css('background-color', 'rgba(30, 30, 30,' + COLOR_ALPHA +')'); 
             legend.eq(1).text('no data'); 
             $('#legend').show();
@@ -1450,21 +1573,34 @@
           case "pm25":
             multifeed = "pm_25";
             var legend = $('.legend-container').eq(0).children(); 
-            legend.eq(0).css('background-color', 'rgba(0, 255, 0,' + COLOR_ALPHA +')'); 
-            legend.eq(1).text('     0   -      12  μg/m3'); 
+             // legend.eq(0).css('background-color', 'rgba(0, 255, 0,' + COLOR_ALPHA +')'); 
+            legend.eq(0).removeClass("greenYellow");
+            legend.eq(0).addClass("greenYellow");
+            legend.eq(1).text('     0   -      13  μg/m3');
             legend = $('.legend-container').eq(1).children(); 
-            legend.eq(0).css('background-color', 'rgba(255, 255, 0,' + COLOR_ALPHA +')'); 
+            // legend.eq(0).css('background-color', 'rgba(255, 255, 0,' + COLOR_ALPHA +')'); 
+            legend.eq(0).removeClass("yellowOrange");
+            legend.eq(0).addClass("yellowOrange"); 
             legend.eq(1).text('   13   -   35.4  μg/m3');
             legend = $('.legend-container').eq(2).children(); 
-            legend.eq(0).css('background-color', 'rgba(255, 125, 0,' + COLOR_ALPHA +')'); 
-            legend.eq(1).text('35.5   -   55.4  μg/m3');
+            // legend.eq(0).css('background-color', 'rgba(255, 125, 0,' + COLOR_ALPHA +')'); 
+            legend.eq(0).removeClass("orangeRed");
+            legend.eq(0).addClass("orangeRed"); 
+            legend.eq(1).text('35.4   -   55.4  μg/m3');
             legend = $('.legend-container').eq(3).children(); 
-            legend.eq(0).css('background-color', 'rgba(255, 0, 0,' + COLOR_ALPHA +')'); 
-            legend.eq(1).text('55.5   - 150.4  μg/m3');
+            // legend.eq(0).css('background-color', 'rgba(255, 0, 0,' + COLOR_ALPHA +')');
+            legend.eq(0).removeClass("redPurple");
+            legend.eq(0).addClass("redPurple"); 
+            legend.eq(1).text('55.4   - 150.4  μg/m3');
             legend = $('.legend-container').eq(4).children(); 
-            legend.eq(0).css('background-color', 'rgba(125, 0, 0,' + COLOR_ALPHA +')'); 
-            legend.eq(1).text('         > 150.4  μg/m3'); 
+            // legend.eq(0).css('background-color', 'rgba(150, 0, 80,' + COLOR_ALPHA +')'); 
+            legend.eq(0).removeClass("purpleMaroon");
+            legend.eq(0).addClass("purpleMaroon");
+            legend.eq(1).text('150.4 - 250.4  μg/m3');
             legend = $('.legend-container').eq(5).children(); 
+            legend.eq(0).css('background-color', 'rgba(125, 0, 0,' + COLOR_ALPHA +')'); 
+            legend.eq(1).text('         > 250.4  μg/m3'); 
+            legend = $('.legend-container').eq(6).children(); 
             legend.eq(0).css('background-color', 'rgba(30, 30, 30,' + COLOR_ALPHA +')'); 
             legend.eq(1).text('no data'); 
             $('#legend').show();
@@ -1497,6 +1633,7 @@
           timelineQueue = []; 
           dataProcessQueue = [];
           multifeed = ''; 
+          currentLevel = 0;
           clearTimeout(dragTimer);
           clearTimeout(refreshTimer);
           clearColors(r,g,b);
@@ -1506,7 +1643,7 @@
       }
 
       function updateMultifeed(beginTime, endTime){
-        timelineQueue = [];       
+        // timelineQueue = [];       
         if (multifeed) getTiles(beginTime, endTime, multifeed);
         
       } 
@@ -1519,18 +1656,29 @@
 
       //beginTime and endTime are in Epoch
       function getTiles(beginTime, endTime, multifeedName){ 
-        timelineReady = false; 
         dataPocessQueue = []; 
         var result = offsetLimitCalculator(beginTime, endTime); 
         var level = result.level;
         var offset = result.offset;
-        var url1 = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + offset;
-        var url2 = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + (offset + 1);
-        var url3 = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + (offset - 1);
-        // window.open(url);
-        getData(url1, multifeedName);
-        getData(url2, multifeedName);
-        getData(url3, multifeedName);
+        if (level != currentLevel){
+          pauseTimeline();
+          currentLevel = level; 
+          timelineReady = false;
+          disablePlayButton();
+          spinnerTransform();
+          var url1 = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + offset;
+          var url2 = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + (offset + 1);
+          var url3 = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + (offset - 1);
+          getData(url1, multifeedName);
+          getData(url2, multifeedName);
+          getData(url3, multifeedName);
+        }else{
+          if (playing) {
+            playTimeline();
+            pauseTranform();
+          }
+        }
+        
       }
 
       function getGrapherTimeTiles(multifeedName){
@@ -1644,6 +1792,59 @@
         changeOpacity(hoverNumList, a); 
       }
 
+      //modified from http://stackoverflow.com/questions/2353211/hsl-to-rgb-color-conversion
+
+      function hslToRgb(h, s, l){
+          var r, g, b;
+
+          if(s == 0){
+              r = g = b = l; // achromatic
+          }else{
+              var hue2rgb = function hue2rgb(p, q, t){
+                  if(t < 0) t += 1;
+                  if(t > 1) t -= 1;
+                  if(t < 1/6) return p + (q - p) * 6 * t;
+                  if(t < 1/2) return q;
+                  if(t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                  return p;
+              }
+
+              var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+              var p = 2 * l - q;
+              r = hue2rgb(p, q, h + 1/3);
+              g = hue2rgb(p, q, h);
+              b = hue2rgb(p, q, h - 1/3);
+          }
+
+          return {r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255)};
+      }
+
+      function rgbToHsl(r, g, b){
+          r /= 255, g /= 255, b /= 255;
+          var max = Math.max(r, g, b), min = Math.min(r, g, b);
+          var h, s, l = (max + min) / 2;
+
+          if(max == min){
+              h = s = 0; // achromatic
+          }else{
+              var d = max - min;
+              s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+              switch(max){
+                  case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                  case g: h = (b - r) / d + 2; break;
+                  case b: h = (r - g) / d + 4; break;
+              }
+              h /= 6;
+          }
+
+          return {h: h, s: s, l: l};
+      }
+
+      function interpolateColors(r1, g1, b1, r2, g2, b2, min, max, val){
+        var t = (val - min)/(max - min); 
+        return {r:(1 - t)*r1 + t*r2, g:(1 - t)*g1 + t*g2,b:(1 - t)*b1 + t*b2}
+      }
+
       function processData(dataList, feedNums, multifeedName){
         switch (multifeedName){
           case "pm_10":
@@ -1656,17 +1857,30 @@
               var nullList = []; 
 
               for (var k = 1, lenth = dataList[i].length; k < lenth; k++){
-                 if (dataList[i][k] == null){
+                 var val = dataList[i][k]; 
+                  if (val == null){
                     colorFunctions.functionList.push(wrapFunction(changeColor, this, [30, 30, 30, feedNums[k - 1]]));
                     nullList.push(feedNums[k - 1]);  
-                  }else if (dataList[i][k] <= 54){
-                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [0, 255, 0, feedNums[k - 1]]));
-                  }else if(dataList[i][k] <= 154){
-                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 255, 0, feedNums[k - 1]]));
-                  }else if(dataList[i][k] <= 254){
-                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 125, 0, feedNums[k - 1]])); 
-                  }else if(dataList[i][k] <= 354){
-                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 0, 0, feedNums[k - 1]])); 
+                  }else if (val <= 54){
+                    var interColors = interpolateColors(0, 255, 0, 255, 255, 0, 0, 54, val); 
+                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                    // colorFunctions.functionList.push(wrapFunction(changeColor, this, [0, 255, 0, feedNums[k - 1]]));
+                  }else if(val <= 154){
+                    var interColors = interpolateColors(255, 255, 0, 255, 125, 0, 54, 154, val);
+                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                    // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 255, 0, feedNums[k - 1]]));
+                  }else if(val <= 254){
+                    var interColors = interpolateColors(255, 125, 0, 255, 0, 0, 154, 254, val);
+                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                    // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 125, 0, feedNums[k - 1]])); 
+                  }else if(val <= 354){
+                    var interColors = interpolateColors(255, 0, 0, 150, 0, 80, 254, 354, val);
+                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                    // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 0, 0, feedNums[k - 1]])); 
+                  }else if(val <= 424){
+                    var interColors = interpolateColors(150, 0, 80, 125, 0, 0, 354, 424, val);
+                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                    // colorFunctions.functionList.push(wrapFunction(changeColor, this, [150, 0, 80, feedNums[k - 1]])); 
                   }else{
                     colorFunctions.functionList.push(wrapFunction(changeColor, this, [125, 0, 0, feedNums[k - 1]])); 
                   }
@@ -1689,19 +1903,33 @@
               var nullList = [];
 
               for (var k = 1, lenth = dataList[i].length; k < lenth; k++){
-                 if (dataList[i][k] == null){
-                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [30, 30, 30, feedNums[k - 1]])); 
-                    nullList.push(feedNums[k - 1]); 
-                  }else if (dataList[i][k] <= 12){
-                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [0, 255, 0, feedNums[k - 1]]));
-                  }else if(dataList[i][k] <= 35.4){
-                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 255, 0, feedNums[k - 1]]));
-                  }else if(dataList[i][k] <= 55.4){
-                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 125, 0, feedNums[k - 1]])); 
-                  }else if(dataList[i][k] <= 150.4){
-                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 0, 0, feedNums[k - 1]])); 
-                  }else
+                 var val = dataList[i][k]; 
+                  if (val == null){
+                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [30, 30, 30, feedNums[k - 1]]));
+                    nullList.push(feedNums[k - 1]);  
+                  }else if (val <= 12){
+                    var interColors = interpolateColors(0, 255, 0, 255, 255, 0, 0, 12, val); 
+                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                    // colorFunctions.functionList.push(wrapFunction(changeColor, this, [0, 255, 0, feedNums[k - 1]]));
+                  }else if(val <= 35.4){
+                    var interColors = interpolateColors(255, 255, 0, 255, 125, 0, 12, 35.4, val);
+                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                    // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 255, 0, feedNums[k - 1]]));
+                  }else if(val <= 55.4){
+                    var interColors = interpolateColors(255, 125, 0, 255, 0, 0, 35.4, 55.4, val);
+                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                    // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 125, 0, feedNums[k - 1]])); 
+                  }else if(val <= 150.4){
+                    var interColors = interpolateColors(255, 0, 0, 150, 0, 80, 55.4, 150.4, val);
+                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                    // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 0, 0, feedNums[k - 1]])); 
+                  }else if(val <= 250.4){
+                    var interColors = interpolateColors(150, 0, 80, 125, 0, 0, 150.4, 250.4, val);
+                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                    // colorFunctions.functionList.push(wrapFunction(changeColor, this, [150, 0, 80, feedNums[k - 1]])); 
+                  }else{
                     colorFunctions.functionList.push(wrapFunction(changeColor, this, [125, 0, 0, feedNums[k - 1]])); 
+                  } 
               }
               colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [feedNums, COLOR_ALPHA])); 
               colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [nullList, NULL_ALPHA]));
@@ -2162,50 +2390,59 @@
 
           if ($('#channels').width() == 225){
             $("#clear-button").css('left', 50);
-            $('#map-div').css('left', 225); 
-            $('#charts').css('left', 225); 
-            $('#map-bar').css('left', 225); 
-
+            $('#legend').css('left', 225);
+            $('.main-content').css({'left' : 225,
+                                    'width' : "calc(100% - 225px)"});  
           }else{
             $("#clear-button").css('left', '5%');
-            $('#map-div').css('left', "20%");
-            $('#charts').css('left', "20%"); 
-            $('#map-bar').css('left', "20%"); 
+            $('#legend').css('left', null);
+            $('.main-content').css({'left' : "20%",
+                                    'width' : "80%"}); 
           }
 
           var winWidth = $(window).width(); 
-
-          if (winWidth <= 225 + 190){
+          if(winWidth <= 444){
+            $('#map-bar').css('height', 225);
+            $('#legend').css({'bottom' : "calc(45% + 225px)"});
+            $('#map-filters').css({'width' : 130,
+                                   'margin' : '0px 10px 20px'}); 
+            $('#timeline').css({'width': 130,
+                                'clear' : 'left',
+                                'margin' : '70px 10px'}); 
+            $('.play-pause').css({'margin' : '-25px 50px 0px',
+                                  'float' : 'none'});
+          }else if(winWidth <= 600){
             $('#map-bar').css('height', 170);
-            $('#legend').css({'left' : 225, 
-                              'bottom' : "calc(45% + 170px)"});
             $('#map-filters').css({'width' : 130,
                                    'margin' : '0px 10px 35px'}); 
             $('#timeline').css({'width': 130,
-                                'clear' : 'left'}); 
-          }else if(winWidth <= 590){
-            $('#map-bar').css('height', 170);
-            $('#map-filters').css({'width' : 130,
-                                   'margin' : '0px 10px 35px'}); 
-            $('#timeline').css({'width': 130,
-                                'clear' : 'left'});
+                                'clear' : 'left',
+                                'margin' : '0px 10px'});
             $('#legend').css({'left' : 'auto', 
                               'bottom' : "calc(45% + 170px)"}); 
-          }else if(winWidth <= 890){
+            $('.play-pause').css({'margin' : '-25px 10px 0px',
+                                  'float' : 'left'});
+          }else if(winWidth <= 900){
             $('#map-bar').css('height', 100); 
             $('#map-filters').css({'width' : 280,
                                    'margin' : '0px 10px'}); 
             $('#timeline').css({'width' : 280,
-                                'clear' : 'left'});
+                                'clear' : 'left',
+                                'margin' : '0px 10px'});
             $('#legend').css({'left' : 'auto',   
                               'bottom' : "calc(45% + 100px)"});
+            $('.play-pause').css({'margin' : '-25px 10px 0px',
+                                  'float' : 'left'});
           }else{
             $('#map-bar').css('height', 55); 
             $('#map-filters').css('width', 280);
             $('#timeline').css({'width' : 280,
-                                'clear' : 'right'});
+                                'clear' : 'right',
+                                'margin' : '0px 10px'});
             $('#legend').css({'left' : 'auto',  
                               'bottom' : "calc(45% + 60px)"});
+            $('.play-pause').css({'margin' : '-25px 10px 0px',
+                                  'float' : 'left'});
           }
 
 
@@ -2264,7 +2501,7 @@
                     count++; 
                     visible = true; 
                     changeOpacity(clickedNumList, currentAlpha);
-                    changeOpacity(clickedandAlphaList, ALPHA);
+                    changeOpacity(clickedandAlphaList, COLOR_ALPHA);
                     clickedNumList = [];
                     clickedandAlphaList = [];
                     if (hoverAndColored.indexOf(feedLocList.index[listIndex]) > -1){
@@ -2314,7 +2551,7 @@
 
                   google.maps.event.addListener(infoWindow,'closeclick',function(){
                     changeOpacity(clickedNumList, currentAlpha);
-                    changeOpacity(clickedandAlphaList, ALPHA);
+                    changeOpacity(clickedandAlphaList, COLOR_ALPHA);
                     clickedNumList = []; 
                     clickedandAlphaList = [];
                     reBindBuffer();
