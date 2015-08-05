@@ -8,19 +8,22 @@
          height: 100%;
          width: 100%;
          overflow: scroll;
-         background-color: blue;
+         /*background-color: blue;*/
       }
 
       body {
-         font-family: 'Open Sans', 'Helvetica', sans-serif !important;
+         font-family: 'Helvetica', 'Open Sans', sans-serif !important;
          font-weight: 400 !important;
          font-size: 16px !important;
          margin: 0px;
          padding: 0px;
          min-width: 100%; 
          min-height: 100%;
-         /*overflow: hidden;*/
          background-color: rgb(225, 225, 225)
+      }
+
+      label,input{
+        cursor: pointer;
       }
 
       .tool-bar{
@@ -207,6 +210,7 @@
         width: 100%; 
         height: 20px; 
         line-height: 20px;
+        overflow: hidden;
       }
       .greenYellow {
         background: -moz-linear-gradient(left,  rgba(0,255,0,0.7) 0%, rgba(255,255,0,0.7) 100%);
@@ -314,7 +318,7 @@
         display: inline-block; 
         margin: 0px 5px;
         width: 70px;
-        font-size: 14px;
+        font-size: 11px;
       }
 
       #duration{
@@ -1121,6 +1125,53 @@
          })
 
          playTransform()
+
+         $(document).keydown(function(e) {
+            switch(e.which) {
+                case 32: //space
+                  if (playButtonEnabled){
+                    togglePlayPause();
+                  }
+                break
+                case 37: //left arrow
+                  cursorInBound();
+                  if(!pause){
+                    playTransform();
+                    pauseTimeline();
+                    playing = false;
+                  }
+
+                  if (dateProperties.max > Date.now() / 1000){
+                    var timeIncrement = (Date.now() / 1000 - dateProperties.min)/timeSlices;
+                  }else{
+                    var timeIncrement = (dateProperties.max - dateProperties.min)/timeSlices;
+                  }
+                  plotManager.getDateAxis().setCursorPosition(dateProperties.cursorPosition - timeIncrement);
+                  cursorInBound();
+                break
+                case 39: //right arrow
+                  cursorInBound();
+                  if(!pause){
+                    playTransform();
+                    pauseTimeline();
+                    playing = false;
+                  }
+
+                  if (dateProperties.max > Date.now() / 1000){
+                    var timeIncrement = (Date.now() / 1000 - dateProperties.min)/timeSlices;
+                  }else{
+                    var timeIncrement = (dateProperties.max - dateProperties.min)/timeSlices;
+                  }
+                  plotManager.getDateAxis().setCursorPosition(dateProperties.cursorPosition + timeIncrement);
+                  cursorInBound();
+                break
+                default: return; 
+            }
+        });
+
+        $('#map-filters ').keydown(function(e){
+          e.preventDefault();
+        })
 
         if ($('#channels').width() == 225){
           $("#clear-button").css('left', 50);
@@ -2091,6 +2142,7 @@
           }
           $('.play-pause')
             .unbind('mouseenter mouseleave click')
+            .css('cursor', 'pointer')
             .on({
               click: togglePlayPause, 
               mouseenter: function(){
@@ -2110,7 +2162,8 @@
         if (playButtonEnabled){
           $('.play-pause')
             .unbind('mouseenter mouseleave click')
-            .css('opacity', .30);
+            .css({'opacity' : .30,
+                  'cursor' : 'default'});
           
           playButtonEnabled = false;
         }
