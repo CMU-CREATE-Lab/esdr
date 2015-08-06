@@ -571,8 +571,8 @@
 
    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
    <script src="http://api.cmucreatelab.org/exp-0.1/js/utils.js"></script>
-   <script src="../rAF.js"></script> 
-   <script src="../series2.js"></script> 
+   <script src="./rAF.js"></script>
+   <script src="./series2.js"></script>
    <script src="http://api.cmucreatelab.org/exp-0.1/js/CanvasLayer.js"></script>
 
    <script language="JavaScript" type="text/javascript">
@@ -929,7 +929,6 @@
 
                 var currentNum = $(this).attr('id').substr($(this).attr('id').lastIndexOf('#') + 1); 
                 
-                if (currentNum == 4712) console.log('hi')
                 if (allFeedNums.length == 0 || currentNum != allFeedNums[allFeedNums.length - 1]) {
                     allFeedNums.push(parseInt(currentNum));
                 }
