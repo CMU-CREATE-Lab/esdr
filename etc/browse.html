@@ -1343,7 +1343,7 @@
             clearTimeout(clampTimer);
             clampTimer = setTimeout(clampAllPlots, 300);
 
-            if (Math.abs(dateAxisProperties.max - dateProperties.max) >= Number.MIN_VALUE +  Math.abs(dateAxisProperties.min - dateProperties.min) >= Number.MIN_VALUE){
+            if (Math.abs(dateAxisProperties.max - dateProperties.max) >= Number.MIN_VALUE || Math.abs(dateAxisProperties.min - dateProperties.min) >= Number.MIN_VALUE){
               clearTimeout(hashTimer);
               hashTimer = setTimeout(updateHash, 300);
             }
@@ -1351,8 +1351,9 @@
             if (timelineReady){
               var now = Date.now() / 1000;
               var lastDataTime = timelineQueue[timelineQueue.length - 1].timeStamp; 
-              var firstDataTime = timelineQueue[0].timeStamp; 
-              if (   (Math.abs(dateAxisProperties.max - dateAxisProperties.min - dateProperties.max + dateProperties.min) >= Number.MIN_VALUE)
+              var firstDataTime = timelineQueue[0].timeStamp;
+              var level = offsetLimitCalculator(dateAxisProperties.min, dateAxisProperties.max).limit;  
+              if ((Math.abs(dateAxisProperties.max - dateAxisProperties.min - dateProperties.max + dateProperties.min) >= Number.MIN_VALUE && level != currentLevel)
                   || ((dateAxisProperties.max > lastDataTime && dateAxisProperties.max < now)
                   && !(lastDataTime < dateAxisProperties.max && dateAxisProperties.max < now))
                   || ((dateAxisProperties.min < firstDataTime && dateAxisProperties.min > 1374638275))){
@@ -1716,25 +1717,17 @@
         var result = offsetLimitCalculator(beginTime, endTime); 
         var level = result.level;
         var offset = result.offset;
-        if (level != currentLevel){
-          pauseTimeline();
-          currentLevel = level; 
-          timelineReady = false;
-          disablePlayButton();
-          spinnerTransform();
-          var url1 = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + offset;
-          var url2 = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + (offset + 1);
-          var url3 = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + (offset - 1);
-          getData(url1, multifeedName);
-          getData(url2, multifeedName);
-          getData(url3, multifeedName);
-        }else{
-          if (playing) {
-            playTimeline();
-            pauseTranform();
-          }
-        }
-        
+        pauseTimeline();
+        currentLevel = level; 
+        timelineReady = false;
+        disablePlayButton();
+        spinnerTransform();
+        var url1 = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + offset;
+        var url2 = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + (offset + 1);
+        var url3 = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + (offset - 1);
+        getData(url1, multifeedName);
+        getData(url2, multifeedName);
+        getData(url3, multifeedName);  
       }
 
       function getGrapherTimeTiles(multifeedName){
