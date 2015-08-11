@@ -37,6 +37,11 @@
         z-index: 1;
       }
 
+      .tool-bar input{
+        height: 12px;
+        width: 12px;
+      }
+
       .title-bar{
         height: 35px; 
         background-color: rgba(50,50,50, .75); 
@@ -104,7 +109,7 @@
       }
 
       #filters{
-        font-size: 13px; 
+        font-size: 12px; 
         height: 190px; 
         top: 110px; 
       }
@@ -456,112 +461,111 @@
          font-size: 11px;
          line-height: 11px;
       }
-      }
+
    </style>
 </head>
 <body>
 <div class="title-bar tool-bar" id="channels-title">
-    <p>Channels</p>
-</div>
-<form class="tool-bar title-bar" id="search-box">
-  <input id="search-bar" type="search" autocomplete="off"placeholder=" search for channel name:" results="0">
-</form>
-<div class="tool-bar title-bar" id="filter-title">
-      <p>Search Result Filters</p>
-</div>
-<div class="tool-bar" id="filters">
-  <!-- <div class="title-bar filter-tab" id="air-tab">
-    <p>Air</p>
+      <p>Channels</p>
   </div>
-  <div class="title-bar filter-tab" id="water-tab">
-    <p>Water</p>
-  </div> -->
-  <form id="air-quality">
-    <fieldset>
-     <section>
-        <label><input type="checkbox" name="pm25" onclick="searchAttributes()">PM2.5<br></label>
-        <label><input type="checkbox" name="pm10" onclick="searchAttributes()">PM10<br></label>
-        <label><input type="checkbox" name="ozone" onclick="searchAttributes()">Ozone (O<sub>3</sub>)<br></label>
-        <label><input type="checkbox" name="no" onclick="searchAttributes()">Nitric Oxide (NO)<br></label>
-        <label><input type="checkbox" name="no2" onclick="searchAttributes()">Nitrogen Dioxide (NO<sub>2</sub>)<br></label>
-        <label><input type="checkbox" name="so2" onclick="searchAttributes()">Sulfur Dioxide (SO<sub>2</sub>)<br></label>
-        <label><input type="checkbox" name="co" onclick="searchAttributes()">Carbon Monoxide (CO)<br></label>
-      </section>
-    </fieldset>
-  </form>
-</div>
-<div class="title-bar tool-bar" id="clear-button" onclick="clearFilters()">
-  <p>Clear Search Filters</p>
-</div>
-<div class="title-bar tool-bar" id="results-title">
-    <p>Results (<span style="font-size:12px">Showing 0 of 0</span>):</p>
-</div>
 
-<div class="tool-bar" id="channels"></div>
-
-<div class="main-content" id="map-div"></div>
-
-<div id="legend">
-  <div class="legend-container">
-    <div class="color-box"></div>
-    <p></p>
-  </div>
-  <div class="legend-container">
-    <div class="color-box"></div>
-    <p></p>
-  </div>
-  <div class="legend-container">
-    <div class="color-box"></div>
-    <p></p>
-  </div>
-  <div class="legend-container">
-    <div class="color-box"></div>
-    <p></p>
-  </div>
-  <div class="legend-container">
-    <div class="color-box"></div>
-    <p></p>
-  </div>
-  <div class="legend-container">
-    <div class="color-box"></div>
-    <p></p>
-  </div>
-  <div class="legend-container">
-    <div class="color-box"></div>
-    <p></p>
-  </div>
-</div>
-
-<div class="main-content" id="map-bar">
-  <form id="map-filters" autocomplete="off">
-    <fieldset>
-      <legend>Color Map:</legend>
-      <label><input type="radio" name="map-filter" data-filter = "pm25" onclick="reColor(this)"><span style="color: white">PM2.5</span><br></label>
-      <label><input type="radio" name="map-filter" data-filter = "pm10" onclick="reColor(this)"><span style="color: white"> PM10</span><br></label>
-      <label><input type="radio" name="map-filter" checked="checked" onclick="resetTimeline(0, 0, 255, ALPHA)"><span style="color: white"> None</span><br></label>
-    </fieldset>
+  <form class="tool-bar title-bar" id="search-box">
+    <input id="search-bar" type="search" autocomplete="off"placeholder=" search for channel name:" results="0">
   </form>
 
-  <div class="play-pause">
-    <div class="bar" id="bar1"></div>
-    <div class="bar" id="bar2"></div>
+  <div class="tool-bar title-bar" id="filter-title">
+        <p>Search Result Filters</p>
   </div>
 
-  <form id="timeline" autocomplete="off">
-    <fieldset>
-      <legend>Playback Options:</legend>
-      <input type="button" id="loop" onclick="toggleLoop()" value="Loop: Off">
-      <label><span style="color: white">Loop Duration:</span><input type="number" min="1" max="99" id="duration" value="15"></label>
-    </fieldset>
-  </form>
-</div>
-
-<div class="main-content" id="charts">
-  <div id="axis-container">
-      <div id="date_axis"></div>
+  <div class="tool-bar" id="filters">
+    <form id="air-quality">
+      <fieldset>
+       <section>
+          <label><input type="checkbox" name="pm25" onclick="searchAttributes()">PM2.5<br></label>
+          <label><input type="checkbox" name="pm10" onclick="searchAttributes()">PM10<br></label>
+          <label><input type="checkbox" name="ozone" onclick="searchAttributes()">Ozone (O<sub>3</sub>)<br></label>
+          <label><input type="checkbox" name="no" onclick="searchAttributes()">Nitric Oxide (NO)<br></label>
+          <label><input type="checkbox" name="no2" onclick="searchAttributes()">Nitrogen Dioxide (NO<sub>2</sub>)<br></label>
+          <label><input type="checkbox" name="so2" onclick="searchAttributes()">Sulfur Dioxide (SO<sub>2</sub>)<br></label>
+          <label><input type="checkbox" name="co" onclick="searchAttributes()">Carbon Monoxide (CO)<br></label>
+        </section>
+      </fieldset>
+    </form>
   </div>
-  <div id="plots"></div> 
-</div>
+
+  <div class="title-bar tool-bar" id="clear-button" onclick="clearFilters()">
+    <p>Clear Search Filters</p>
+  </div>
+
+  <div class="title-bar tool-bar" id="results-title">
+      <p>Results (<span style="font-size:12px">Showing 0 of 0</span>):</p>
+  </div>
+
+  <div class="tool-bar" id="channels"></div>
+
+  <div class="main-content" id="map-div"></div>
+
+  <div id="legend">
+    <div class="legend-container">
+      <div class="color-box"></div>
+      <p></p>
+    </div>
+    <div class="legend-container">
+      <div class="color-box"></div>
+      <p></p>
+    </div>
+    <div class="legend-container">
+      <div class="color-box"></div>
+      <p></p>
+    </div>
+    <div class="legend-container">
+      <div class="color-box"></div>
+      <p></p>
+    </div>
+    <div class="legend-container">
+      <div class="color-box"></div>
+      <p></p>
+    </div>
+    <div class="legend-container">
+      <div class="color-box"></div>
+      <p></p>
+    </div>
+    <div class="legend-container">
+      <div class="color-box"></div>
+      <p></p>
+    </div>
+  </div>
+
+  <div class="main-content" id="map-bar">
+    <form id="map-filters" autocomplete="off">
+      <fieldset>
+        <legend>Color Map:</legend>
+        <label><input type="radio" name="map-filter" data-filter = "pm25" onclick="reColor(this)"><span style="color: white">PM2.5</span><br></label>
+        <label><input type="radio" name="map-filter" data-filter = "pm10" onclick="reColor(this)"><span style="color: white"> PM10</span><br></label>
+        <label><input type="radio" name="map-filter" checked="checked" onclick="resetTimeline(0, 0, 255, ALPHA)"><span style="color: white"> None</span><br></label>
+      </fieldset>
+    </form>
+
+    <div class="play-pause">
+      <div class="bar" id="bar1"></div>
+      <div class="bar" id="bar2"></div>
+    </div>
+
+    <form id="timeline" autocomplete="off">
+      <fieldset>
+        <legend>Playback Options:</legend>
+        <input type="button" id="loop" onclick="toggleLoop()" value="Loop: Off">
+        <label><span style="color: white">Loop Duration:</span><input type="number" min="1" max="99" id="duration" value="15"></label>
+      </fieldset>
+    </form>
+  </div>
+
+  <div class="main-content" id="charts">
+    <div id="axis-container">
+        <div id="date_axis"></div>
+    </div>
+    <div id="plots"></div> 
+  </div>
 
    <script src="https://esdr.cmucreatelab.org/lib/jquery/jquery-1.11.1.min.js" type="text/javascript"></script>
    <script src="https://esdr.cmucreatelab.org/lib/superagent/superagent.js" type="text/javascript"></script>
@@ -577,600 +581,1809 @@
 
    <script language="JavaScript" type="text/javascript">
 
-      //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   esdr start  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    /*
+     * ~~~~~~~~~~~~~~~~~~~~~~~~~~ GLOBAL VARIABLES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     */
 
-      var feedLocList = {latlng: [], index: [], color: []}; 
-      var ESDR_API_ROOT_URL = 'https://esdr.cmucreatelab.org/api/v1';
-      var DEFAULT_CHANNEL = 'particle_concentration';
+    //___________________Initial loading feeds variables:_______________________
 
-      var selectedFeedIdOrApiKey = null;
-      var selectedChannelName = null;
+    var ESDR_API_ROOT_URL = 'https://esdr.cmucreatelab.org/api/v1';
+    var DEFAULT_CHANNEL = 'particle_concentration';
 
-      var channelUnits = null;
+    //___________________ Grapher variables ____________________________________
 
-      var showNumList = [];
-      var clickedNumList = [];
-      var clickedandAlphaList = [];
-      var hoverNumList = [];
-      var hoverAndColored = [];
+    var plotManager;           //handle for the PlotManager 
+    var feed = null;
 
-      var pm25 = []; 
-      var pm10 = []; 
-      var ozone = []; 
-      var no = []; 
-      var no2 = []; 
-      var so2 = []; 
-      var co = []; 
-      var speck = []; 
+    var plotCount = 0;        //records how many plots have come into existance
+    var channelLabels = {};   //records all channelLabels
+    var plotScalers = {};     //set of handles to iterate y-axis clamp
+    var channelToPlotIdx = {};//keys: channel names, value: plotId
+    var plotIdxToChannel = {};//keys: plotId, value: channel names
 
-      //Jquery cache for all selectors 
-      //var $allSelect = null; 
+    var hashTimer;   //timer to updateHash when dateAxis changes 
+    var clampTimer; //timer to clamp y-axis to data when dateAxis changes
 
-      var allFeedNums = []; 
-      var channelNames = {pm25: [], pm10: [], ozone: [], no: [], no2: [], so2: [], co: []};
-
-      // grapher stuff
-      var plotManager;
-      var feed = null;
-      var availableChannels = [];
-      var isAutoScaleOn = false;
-      var hashTimer; 
-      var clampTimer;
-
-      //Timeline Stuff
-      var DEFAULT_SPEED = 35; 
-      var DEFAULT_DURATION = 15;
-
-      //WebGL stuff
-      var ALPHA = 0.50;
-      var COLOR_ALPHA = 1;
-      var NULL_ALPHA = .3; 
-      var currentAlpha = ALPHA; 
-      var currentPointSize = 0; 
-
-      function setRangeFromSecondsAgoToNow(numSecondsAgo) {
-         var now = Date.now() / 1000;
-         var min = now - numSecondsAgo;
-         plotManager.getDateAxis().constrainRangeTo(Math.min(min, feed.minTimeSecs), now);
-         plotManager.getDateAxis().setRange(min, now);
-      }
-
-      var timeRangeOptions = [
-         {
-            "label" : "all data",
-            "handler" : function() {
-               plotManager.getDateAxis().setRange(feed.minTimeSecs, feed.maxTimeSecs);
-            }
+    //grapher styles
+    var lineStyle = {
+      "styles" : [
+         { "type" : "bar",
+           "stripPosition" : "center",
+           "stripWidthSecs" : 30, 
+           "rangedColors" : "rgba(210,210,210,.8); 10;rgba(185,185,185,.8); 20;rgba(160,160,160,.8); 30;rgba(135,135,135,.8); 40;rgba(110,110,110,.8); 50;rgba(110,110,110,.8);60;rgba(85,85,85,.8);70;rgba(70,70,70,.8);80;rgba(50,50,50,.8)"
          },
-         {
-            "label" : "past 30 days",
-            "handler" : function() {
-               setRangeFromSecondsAgoToNow(3600*24*30);
-            }
-         },
-         {
-            "label" : "past 7 days",
-            "handler" : function() {
-               setRangeFromSecondsAgoToNow(3600*24*7);
-            }
-         },
-         {
-            "label" : "past 24 hours",
-            "handler" : function() {
-               setRangeFromSecondsAgoToNow(3600*24);
-            }
-         },
-         {
-            "label" : "past 12 hours",
-            "handler" : function() {
-               setRangeFromSecondsAgoToNow(3600*12);
-            }
-         },
-         {
-            "label" : "past hour",
-            "handler" : function() {
-               setRangeFromSecondsAgoToNow(3600);
-            }
-         },
-      ];
-
-      function setTimeRange(rangeName) {
-         var rangeFunction = timeRangeOptions[rangeName];
-         if (typeof rangeFunction === 'function') {
-            var range = rangeFunction();
-            if (range && 'min' in range && 'max' in range) {
-               plotManager.getDateAxis().setRange(range['min'], range['max']);
-            }
-         }
-      }
-
-      // Got this from: http://css-tricks.com/snippets/javascript/get-url-variables/
-      function getQueryVariable(variable) {
-         var query = window.location.search.substring(1);
-         var vars = query.split("&");
-         for (var i = 0; i < vars.length; i++) {
-            var pair = vars[i].split("=");
-            if (pair[0] == variable) {
-               return pair[1];
-            }
-         }
-         return null;
-      }
-      var lineStyle = {
-        "styles" : [
-           { "type" : "bar",
-             "stripPosition" : "center",
-             "stripWidthSecs" : 30, 
-             "rangedColors" : "rgba(210,210,210,.8); 10;rgba(185,185,185,.8); 20;rgba(160,160,160,.8); 30;rgba(135,135,135,.8); 40;rgba(110,110,110,.8); 50;rgba(110,110,110,.8);60;rgba(85,85,85,.8);70;rgba(70,70,70,.8);80;rgba(50,50,50,.8)"
-           },
-           { "type" : "line", "lineWidth" : 3, "show" : true, "color" : "rgba(60,60,60, .8)" }
-        ],
-        "highlight" : {
-           "lineWidth" : 3,
-           "styles" : [
-              {
-                 "show" : true,
-                 "type" : "lollipop",
-                 "color" : "green",
-                 "radius" : 0,
-                 "lineWidth" : 1,
-                 "fill" : false
-              },
-              {
-                 "type" : "circle",
-                 radius : 3,
-                 "lineWidth" : 0.5,
-                 "show" : true,
-                 "color" : "#ff0000",
-                 fill : true
-              },
-              {
-                 "show" : true,
-                 "type" : "value",
-                 "fillColor" : "#000000",
-                 "marginWidth" : 10,
-                 "font" : "9pt Helvetica,Arial,Verdana,sans-serif",
-                 "verticalOffset" : 7
-              }
-           ]
-        }
-     };
-
-      var barStyle = {
+         { "type" : "line", "lineWidth" : 3, "show" : true, "color" : "rgba(60,60,60, .8)" }
+      ],
+      "highlight" : {
+         "lineWidth" : 3,
          "styles" : [
             {
-                     "type" : "bar",
-                     "stripPosition" : "center",
-                     "stripWidthSecs" : 3600,
-                     "rangedColors" : "rgb(210,210,210); 8;rgb(190,190,190); 16;rgb(170,170,170); 24;rgb(150,150,150); 32;rgb(130,130,130); 40;rgb(110,110,110);48;rgb(90,90,90);56;rgb(70,70,70);64;rgb(50,50,50)"
-                  },
-         ],
-         "highlight" : {
-            "lineWidth" : 1,
-            "styles" : [
-               {
-                  "show" : true,
-                  "type" : "lollipop",
-                  "color" : "green",
-                  "radius" : 0,
-                  "lineWidth" : 1,
-                  "fill" : false
-               },
-               {
-                  "type" : "circle",
-                  radius : 3,
-                  "lineWidth" : 0.5,
-                  "show" : true,
-                  "color" : "#ff0000",
-                  fill : true
-               },
-               {
-                  "show" : true,
-                  "type" : "value",
-                  "fillColor" : "#000000",
-                  "marginWidth" : 10,
-                  "font" : "9pt Helvetica,Arial,Verdana,sans-serif",
-                  "verticalOffset" : 7
-               }
-            ]
-         }
-      };
-
-      function createDatasource(source) {
-         var split = source.split('.');
-         if (split.length != 2) {
-            console.log('createDatasource must have source of form ID.channel but was ' + source);
-            return null;
-         }
-         var feedIdOrApiKey = split[0];
-         var channelName = split[1];
-         
-         return function(level, offset, successCallback) {
-            var url = ESDR_API_ROOT_URL + "/feeds/" + feedIdOrApiKey + "/channels/" + channelName + "/tiles/" + level + "." + offset;
-            console.log('getting ' + url);
-            superagent.get(url)
-                      .end(function(err, res) {
-                         console.log('done getting ' + url);
-                         if (err) {
-                            return console.log("Error: " + res.body);
-                         }
-                         switch (res.status) {
-                            case 200:
-                               return successCallback(JSON.stringify(res.body.data));
-                            case 401:
-                               return console.log("Unauthorized");
-                            case 403:
-                               return console.log("Forbidden");
-                            default:
-                               return console.log("Error: " + res.body);
-                         }
-                      });
-         };
-      }
-
-      var plotCount = 0;
-      var channelLabels = {};
-      var plotScalers = {};
-      var channelToPlotIdx = {};
-      var plotIdxToChannel = {};
-      
-      function addPlot(channel) {
-         console.log(channel);
-         var html = [];
-         html.push('<div style="height:100px; width:100%; position:relative; border-bottom:1px solid black">');
-         var plotName = 'plot' + plotCount;
-         var yAxisName = 'yaxis' + plotCount;
-         html.push('<div id="' + plotName + '" style="position:absolute; left:0px; top:0px; bottom:0px; right:30px"></div>');
-         html.push('<div id="' + yAxisName + '" style="position:absolute; width:30px; top:0px; bottom:0px; right:0px"></div>');
-         html.push('<div style="position:absolute"><span style="cursor:pointer" onclick="removePlot(\'' + channel + '\')">☒</span> <font size=-1>' + channelLabels[channel] + '</font></div>');
-         html.push('</div>');
-         $('#plots').append(html.join(''));
-         
-         plotManager.addDataSeriesPlot(plotName, createDatasource(channel), plotName, yAxisName, 0, 100, lineStyle);
-         var thisPlotIdx = plotCount;
-         setTimeout(function(){
-            clampNumberAxisToDataRange(thisPlotIdx);
-         }, 2500);
-         plotScalers[plotCount] = thisPlotIdx;
-         channelToPlotIdx[channel] = plotCount;
-         plotIdxToChannel[plotCount] = channel;
-         plotCount++;
-         $('input[name="' + channel + '"]').prop('checked', true);
-
-         var feedIndex = parseInt(channel.substr(0, channel.indexOf('.'))); 
-
-         changeCircled(feedIndex, 1); 
-         updateHash()
-      }
-
-
-      function clampNumberAxisToDataRange(plotIdx) {
-         var plot = plotManager.getPlot('plot' + plotIdx);
-         var yAxis = plotManager.getYAxis('yaxis' + plotIdx);
-         var stats = plot.getStatisticsWithinRange(plotManager.getDateAxis().getRange());
-         if (typeof stats['minValue'] !== 'undefined' && typeof stats['maxValue'] !== 'undefined') {
-            yAxis.setRange(stats['minValue'], stats['maxValue']);
-         }
-      }
-
-      function clickChannel(input) {
-        console.log('clickChannel ' + input.name); 
-        if (input.checked) {
-          addPlot(input.name);
-        } else {
-          removePlot(input.name);
-        }
-      } 
-
-      function checkIfAnyChecked(index){
-        
-        var foundDivs = $("#channels div[id $= '#" + index + "']"); 
-
-        var inputNodes = $(foundDivs).children().children().filter('input');
-        var result = false; 
-        $(inputNodes).each(function(){
-          if ($(this).get(0).checked){
-            result = true;
-          } 
-          console.log($(this).get(0).checked);
-        });
-
-        return result; 
-
-      }
-
-      function loadFeeds(response) {
-         var data = response.data;
-         var max = data.limit + data.offset;
-         console.log('Received feeds in range ' + data.offset + ' - ' + max);
-         if (data.totalCount > max) { 
-           $.ajax({url: ESDR_API_ROOT_URL + '/feeds?offset=' + max, success: loadFeeds});
-         }
-         // TODO(rsargent): get all the feeds not just the first 1K
-         var feeds = data.rows;
-         var html = [];
-
-         for (var i = 0; i < feeds.length; i++) {
-            var feed = feeds[i]; 
-
-            if (feed.channelBounds) {
-               var channels = Object.keys(feed.channelBounds.channels).sort();
-
-               if (channels.length > 0) {
-                feedLocList.latlng.push(feed.latitude, feed.longitude); 
-                feedLocList.index.push(feed.id);
-                feedLocList.color.push(0, 0, 1, ALPHA, 1, 0);
-               }
-
-               for (var c = 0; c < channels.length; c++) {
-                  var channel = channels[c];
-                  var channelId = sortChannel(feed.productId, feed.id, channel); 
-                  var label = feed.name + ' (' + feed.id + ').' + channel;
-                  var id = feed.id + '.' + channel;
-                  var idHashTag = feed.id; 
-                  channelLabels[id] = label;
-                  html.push('<div class="sensors" style="margin-left: 3px" data-channel-type="' + channelId + '" id="' + label.toLowerCase() + " #" + idHashTag + '"> <label> <input type="checkbox" onclick="clickChannel(this)" name="' + id +'">' + label + '<br></label></div>');
-               }
+               "show" : true,
+               "type" : "lollipop",
+               "color" : "green",
+               "radius" : 0,
+               "lineWidth" : 1,
+               "fill" : false
+            },
+            {
+               "type" : "circle",
+               radius : 3,
+               "lineWidth" : 0.5,
+               "show" : true,
+               "color" : "#ff0000",
+               fill : true
+            },
+            {
+               "show" : true,
+               "type" : "value",
+               "fillColor" : "#000000",
+               "marginWidth" : 10,
+               "font" : "9pt Helvetica,Arial,Verdana,sans-serif",
+               "verticalOffset" : 7
             }
-         }
-         $('#channels').append(html.join(''));
-         if (data.totalCount <= max) {
-            // That was the last data.  Ready to process
-            loadHash();
-            // TODO(rsargent): let's update this only when panning or zooming the time axis
-            // window.setInterval(updateHash, 100);
-            window.onhashchange = loadHash; 
-
-            feedLocList.latlng = new Float32Array(feedLocList.latlng); 
-            // feedLocList.index = new Float32Array(feedLocList.index); 
-            feedLocList.color = new Float32Array(feedLocList.color); 
-
-            $("div[class = sensors]").each(function(){
-
-                var currentNum = $(this).attr('id').substr($(this).attr('id').lastIndexOf('#') + 1); 
-                
-                if (allFeedNums.length == 0 || currentNum != allFeedNums[allFeedNums.length - 1]) {
-                    allFeedNums.push(parseInt(currentNum));
-                }
-            });  
-            
-            initializeWebGL();  
-
-         }
-
-         searchAttributes(); 
-
+         ]
       }
+    };
 
-      function sortChannel(productId, feedID, channel){
-        if (productId == 1){
-          //console.log("ACHD Found"); 
-          if (channel.indexOf("PM25") > -1){
-            if (pm25[pm25.length - 1] != feedID) pm25.push(feedID), channelNames.pm25.push(channel);
-            return "pm25";  
+    var barStyle = {
+       "styles" : [
+          {
+                   "type" : "bar",
+                   "stripPosition" : "center",
+                   "stripWidthSecs" : 3600,
+                   "rangedColors" : "rgb(210,210,210); 8;rgb(190,190,190); 16;rgb(170,170,170); 24;rgb(150,150,150); 32;rgb(130,130,130); 40;rgb(110,110,110);48;rgb(90,90,90);56;rgb(70,70,70);64;rgb(50,50,50)"
+                },
+       ],
+       "highlight" : {
+          "lineWidth" : 1,
+          "styles" : [
+             {
+                "show" : true,
+                "type" : "lollipop",
+                "color" : "green",
+                "radius" : 0,
+                "lineWidth" : 1,
+                "fill" : false
+             },
+             {
+                "type" : "circle",
+                radius : 3,
+                "lineWidth" : 0.5,
+                "show" : true,
+                "color" : "#ff0000",
+                fill : true
+             },
+             {
+                "show" : true,
+                "type" : "value",
+                "fillColor" : "#000000",
+                "marginWidth" : 10,
+                "font" : "9pt Helvetica,Arial,Verdana,sans-serif",
+                "verticalOffset" : 7
+             }
+          ]
+       }
+    };
+
+    //___________________ WebGL Variables: _____________________________________
+
+    var feedLocList = {latlng: [],  //Mutated by WebGL and parameters added for 
+                       index:  [],  //WebGL buffer 
+                       color:  []};
+
+    var ALPHA = 0.50;      //Initial page node alpha
+    var COLOR_ALPHA = 1;   //Alpha value for colored nodes 
+    var NULL_ALPHA = .3;   //Alpha value for gray, null nodes 
+
+    var currentAlpha = ALPHA;  //default alpha to change all values to
+    var currentPointSize = 0;  //size of nodes for hover radius
+
+    var map;
+    var geocoder;
+    var canvasLayer;
+    var gl;
+    var pixelsToWebGLMatrix = new Float32Array(16);
+    var mapMatrix = new Float32Array(16);
+    var currentIndex, minIndex, maxIndex;
+    var countryPointSizePixels = 7; 
+    var blockPointSizePixels = 70; 
+
+    //___________________ Search Filter Variables: _____________________________
+
+    // Sorting Feeds:
+    var sortedFeedIDs = { pm25:  [], 
+                          pm10:  [],
+                          ozone: [], 
+                          no:    [], 
+                          no2:   [], 
+                          so2:   [], 
+                          co:    [],
+                          speck: []};
+
+
+    var sortedChannelNames = { pm25:  [], 
+                               pm10:  [],
+                               ozone: [], 
+                               no:    [], 
+                               no2:   [], 
+                               so2:   [], 
+                               co:    []};
+
+    //Displaying Feed ID's: 
+    var allFeedNums = [];         //All Feed ID's 
+    var showNumList = [];         //Feed ID's to show
+    var clickedNumList = [];      //Feed ID's clicked on
+    var clickedandColoredList = []; //Feed ID's clicked on and are colored
+    var hoverNumList = [];        //Feed ID's hovered on
+    var hoverAndColored = [];     //Feed ID's hovered and colored
+ 
+    //_______________________ Timeline Variables: ______________________________
+
+    // Date Axis Timeline variables:
+    var dateProperties;         //current date axis properties 
+    var currentLevel = 0;       //current level of date axis
+
+    //Data Processing variables:
+    var multifeed = "";         //current multifeed name 
+    var timelineReady = false;  //flag if timeline is ready to play
+    var timelineQueue = [];     //contains elements with timeStamp and 
+                                //  functionList to call at each cursor position
+
+    var dataProcessQueue = [];  //queue for processing ajax data in order
+
+    var refreshTimer;           //timer for refreshing data
+
+    //Playback variables:
+    var DEFAULT_SPEED = 35;     //default speed for setInterval
+    var DEFAULT_DURATION = 15;  //default duration of timeline loop
+    
+    var pause = true;      
+    var onLoop = false;
+    var playing = false;
+    var playButtonEnabled = false; 
+
+    var speed = DEFAULT_SPEED;  //current speed of setInterval
+    var timeSlices = DEFAULT_DURATION/speed*1000; //distance of each tick
+    var duration = DEFAULT_DURATION; //current duration of timeline loop
+
+    var dragTimer;       //timer for when user is dragging
+    var playInterval;    //setInterval for play
+    
+    //Play button transformations
+    var pauseTransformation = {bar1: 'translateX(13px) translateY(10px)', 
+                               bar2: 'translateX(28px) translateY(10px)'}; 
+    var playTransformation = {bar1: 'translateX(24px) translateY(2px) rotate(135deg)', 
+                              bar2: 'translateX(24px) translateY(18px) rotate(45deg)'};
+    var spinnerTransformation = {bar1: 'translateX(21px) translateY(10px) rotate(135deg)',
+                                 bar2: 'translateX(21px) translateY(10px) rotate(45deg)'};
+
+    function setRangeFromSecondsAgoToNow(numSecondsAgo) {
+       var now = Date.now() / 1000;
+       var min = now - numSecondsAgo;
+       plotManager.getDateAxis().constrainRangeTo(Math.min(min, feed.minTimeSecs), now);
+       plotManager.getDateAxis().setRange(min, now);
+    }
+
+    function createDatasource(source) {
+       var split = source.split('.');
+       if (split.length != 2) {
+          console.log('createDatasource must have source of form ID.channel but was ' + source);
+          return null;
+       }
+       var feedIdOrApiKey = split[0];
+       var channelName = split[1];
+       
+       return function(level, offset, successCallback) {
+          var url = ESDR_API_ROOT_URL + "/feeds/" + feedIdOrApiKey + "/channels/" + channelName + "/tiles/" + level + "." + offset;
+          console.log('getting ' + url);
+          superagent.get(url)
+                    .end(function(err, res) {
+                       console.log('done getting ' + url);
+                       if (err) {
+                          return console.log("Error: " + res.body);
+                       }
+                       switch (res.status) {
+                          case 200:
+                              { var ret = successCallback(JSON.stringify(res.body.data));
+                                clearTimeout(clampTimer);
+                                clampTimer = setTimeout(clampAllPlots, 300);
+                                return ret;
+                              }
+                          case 401:
+                             return console.log("Unauthorized");
+                          case 403:
+                             return console.log("Forbidden");
+                          default:
+                             return console.log("Error: " + res.body);
+                       }
+                    });
+       };
+    }
+    
+    function addPlot(channel) {
+       console.log(channel);
+       var html = [];
+       html.push('<div style="height:100px; width:100%; position:relative; border-bottom:1px solid black">');
+       var plotName = 'plot' + plotCount;
+       var yAxisName = 'yaxis' + plotCount;
+       html.push('<div id="' + plotName + '" style="position:absolute; left:0px; top:0px; bottom:0px; right:30px"></div>');
+       html.push('<div id="' + yAxisName + '" style="position:absolute; width:30px; top:0px; bottom:0px; right:0px"></div>');
+       html.push('<div style="position:absolute"><span style="cursor:pointer" onclick="removePlot(\'' + channel + '\')">☒</span> <font size=-1>' + channelLabels[channel] + '</font></div>');
+       html.push('</div>');
+       $('#plots').append(html.join(''));
+       
+       plotManager.addDataSeriesPlot(plotName, createDatasource(channel), plotName, yAxisName, 0, 100, lineStyle);
+       var thisPlotIdx = plotCount;
+       setTimeout(function(){
+          clampNumberAxisToDataRange(thisPlotIdx);
+       }, 2500);
+       plotScalers[plotCount] = thisPlotIdx;
+       channelToPlotIdx[channel] = plotCount;
+       plotIdxToChannel[plotCount] = channel;
+       plotCount++;
+       $('input[name="' + channel + '"]').prop('checked', true);
+
+       var feedIndex = parseInt(channel.substr(0, channel.indexOf('.'))); 
+
+       changeCircled(feedIndex, 1); 
+       updateHash()
+    }
+
+
+    function clampNumberAxisToDataRange(plotIdx) {
+       var plot = plotManager.getPlot('plot' + plotIdx);
+       var yAxis = plotManager.getYAxis('yaxis' + plotIdx);
+       var stats = plot.getStatisticsWithinRange(plotManager.getDateAxis().getRange());
+       if (typeof stats['minValue'] !== 'undefined' && typeof stats['maxValue'] !== 'undefined') {
+          yAxis.setRange(stats['minValue'], stats['maxValue']);
+       }
+    }
+
+    function clickChannel(input) {
+      console.log('clickChannel ' + input.name); 
+      if (input.checked) {
+        addPlot(input.name);
+      } else {
+        removePlot(input.name);
+      }
+    } 
+
+    function checkIfAnyChecked(index){
+      
+      var foundDivs = $("#channels div[id $= '#" + index + "']"); 
+
+      var inputNodes = $(foundDivs).children().children().filter('input');
+      var result = false; 
+      $(inputNodes).each(function(){
+        if ($(this).get(0).checked){
+          result = true;
+        } 
+        console.log($(this).get(0).checked);
+      });
+
+      return result; 
+
+    }
+
+    function loadFeeds(response) {
+       var data = response.data;
+       var max = data.limit + data.offset;
+       console.log('Received feeds in range ' + data.offset + ' - ' + max);
+       if (data.totalCount > max) { 
+         $.ajax({url: ESDR_API_ROOT_URL + '/feeds?offset=' + max, success: loadFeeds});
+       }
+       // TODO(rsargent): get all the feeds not just the first 1K
+       var feeds = data.rows;
+       var html = [];
+
+       for (var i = 0; i < feeds.length; i++) {
+          var feed = feeds[i]; 
+
+          if (feed.channelBounds) {
+             var channels = Object.keys(feed.channelBounds.channels).sort();
+
+             if (channels.length > 0) {
+              feedLocList.latlng.push(feed.latitude, feed.longitude); 
+              feedLocList.index.push(feed.id);
+              feedLocList.color.push(0, 0, 1, ALPHA, 1, 0);
+             }
+
+             for (var c = 0; c < channels.length; c++) {
+                var channel = channels[c];
+                var channelId = sortChannel(feed.productId, feed.id, channel); 
+                var label = feed.name + ' (' + feed.id + ').' + channel;
+                var id = feed.id + '.' + channel;
+                var idHashTag = feed.id; 
+                channelLabels[id] = label;
+                html.push('<div class="sensors" style="margin-left: 3px" data-channel-type="' + channelId + '" id="' + label.toLowerCase() + " #" + idHashTag + '"> <label> <input type="checkbox" onclick="clickChannel(this)" name="' + id +'">' + label + '<br></label></div>');
+             }
           }
-          else if (channel.indexOf("PM10") > -1){
-            if (pm10[pm10.length - 1] != feedID) pm10.push(feedID), channelNames.pm10.push(channel);
-            return "pm10"; 
-          }
-          else if (channel.indexOf("OZONE") > -1){
-            if (ozone[ozone.length - 1] != feedID) ozone.push(feedID), channelNames.ozone.push(channel);
-            return "ozone";  
-          }
-          else if (channel.indexOf("NO_") > -1){
-            if (no[no.length - 1] != feedID) no.push(feedID), channelNames.no.push(channel);
-            return "no"; 
-          }
-          else if (channel.indexOf("NO2_") > -1){
-            if (no2[no2.length - 1] != feedID) no2.push(feedID), channelNames.no2.push(channel);
-            return "no2"; 
-          }
-          else if (channel.indexOf("SO2") > -1){
-            if (so2[so2.length - 1] != feedID) so2.push(feedID), channelNames.so2.push(channel);
-            return "so2"; 
-          }
-          else if (channel.indexOf("CO_") > -1){
-            if (co[co.length - 1] != feedID) co.push(feedID), channelNames.co.push(channel);
-            return "co"; 
-          }
-        }else if(productId == 11){
-          //console.log("AirNow Found");
-          if (channel.indexOf("PM2_5") > -1){
-            if (pm25[pm25.length - 1] != feedID) pm25.push(feedID), channelNames.pm25.push(channel);
-            return "pm25";  
-          }
-          else if (channel.indexOf("PM10") > -1){
-            if (pm10[pm10.length - 1] != feedID) pm10.push(feedID), channelNames.pm10.push(channel);
-            return "pm10";  
-          }
-          else if (channel.indexOf("OZONE") > -1){
-            if (ozone[ozone.length - 1] != feedID) ozone.push(feedID), channelNames.ozone.push(channel);
-            return "ozone"; 
-          }
-          else if (channel.indexOf("NO2") > -1){
-             if (no2[no2.length - 1] != feedID) no2.push(feedID), channelNames.no2.push(channel);
-            return "no2"; 
-          }
-          else if (channel.indexOf("NO") > -1){
-            if (no[no.length - 1] != feedID) no.push(feedID), channelNames.no.push(channel);
-            return "no"; 
-          }
-          else if (channel.indexOf("SO2") > -1){
-            if (so2[so2.length - 1] != feedID) so2.push(feedID), channelNames.so2.push(channel);
-            return "so2"; 
-          }
-          else if (channel.indexOf("CO") > -1){
-            if (co[co.length - 1] != feedID) co.push(feedID), channelNames.co.push(channel);
-            return "co"; 
-          }  
-        }else if(productId == 35){
-          //console.log("BAAQMD Found");
-          if (channel === "PM2_5"){
-            if (pm25[pm25.length - 1] != feedID) pm25.push(feedID), channelNames.pm25.push(channel);
-            return "pm25";  
-          }
-          else if (channel === "Ozone_O3"){
-            if (ozone[ozone.length - 1] != feedID) ozone.push(feedID), channelNames.ozone.push(channel); 
-            return "ozone"; 
-          }
-          else if (channel === "Nitrogen_Dioxide_NO2"){
-            if (no2[no2.length - 1] != feedID) no2.push(feedID), channelNames.no2.push(channel);
-            return "no2"; 
-          }
-          else if (channel === "Nitric_Oxide_NO"){
-            if (no[no.length - 1] != feedID) no.push(feedID), channelNames.no.push(channel);
-            return "no"; 
-          }
-          else if (channel === "Sulfur_Dioxide_SO2"){
-            if (so2[so2.length - 1] != feedID) so2.push(feedID), channelNames.so2.push(channel);
-            return "so2"; 
-          }
-          else if (channel === "Carbon_Monoxide_CO"){
-            if (co[co.length - 1] != feedID) co.push(feedID), channelNames.co.push(channel);
-            return "co"; 
-          }
-        }else if(productId == 9){
-          //console.log("Speck Found"); 
-          speck.push(feedID); 
-          return "speck"; 
+       }
+       $('#channels').append(html.join(''));
+       if (data.totalCount <= max) {
+          // That was the last data.  Ready to process
+          loadHash();
+          // TODO(rsargent): let's update this only when panning or zooming the time axis
+          // window.setInterval(updateHash, 100);
+          window.onhashchange = loadHash; 
+
+          feedLocList.latlng = new Float32Array(feedLocList.latlng); 
+          // feedLocList.index = new Float32Array(feedLocList.index); 
+          feedLocList.color = new Float32Array(feedLocList.color); 
+
+          $("div[class = sensors]").each(function(){
+
+              var currentNum = $(this).attr('id').substr($(this).attr('id').lastIndexOf('#') + 1); 
+              
+              if (currentNum == 4712) console.log('hi')
+              if (allFeedNums.length == 0 || currentNum != allFeedNums[allFeedNums.length - 1]) {
+                  allFeedNums.push(parseInt(currentNum));
+              }
+          });  
+          
+          initializeWebGL();  
+
+       }
+
+       searchAttributes(); 
+
+    }
+
+    function sortChannel(productId, feedID, channel){
+      if (productId == 1){
+        //console.log("ACHD Found"); 
+        if (channel.indexOf("PM25") > -1){
+          if (sortedFeedIDs.pm25[sortedFeedIDs.pm25.length - 1] != feedID) sortedFeedIDs.pm25.push(feedID), sortedChannelNames.pm25.push(channel);
+          return "pm25";  
         }
-        // }else if(feedName.indexOf("Speck") > -1){
-        //   console.log("Speck Found");
-        // }else if(feedName.indexOf("Retigo") > -1){
-        //   console.log("Retigo Found");
-        // }else if(feedName.indexOf("Tepper") > -1){
-        //   console.log("Tepper Found");
-        // }else if(feedName.indexOf("Rodeo") > -1){
-        //   console.log("Rodeo Found");
-        // }else if(feedName.indexOf("fenceline_org") > -1){
-        //   console.log("fenceline_org Found");
-        else{
-          //console.log("Other Found");
-          return "other"; 
+        else if (channel.indexOf("PM10") > -1){
+          if (sortedFeedIDs.pm10[sortedFeedIDs.pm10.length - 1] != feedID) sortedFeedIDs.pm10.push(feedID), sortedChannelNames.pm10.push(channel);
+          return "pm10"; 
         }
+        else if (channel.indexOf("OZONE") > -1){
+          if (sortedFeedIDs.ozone[sortedFeedIDs.ozone.length - 1] != feedID) sortedFeedIDs.ozone.push(feedID), sortedChannelNames.ozone.push(channel);
+          return "ozone";  
+        }
+        else if (channel.indexOf("NO_") > -1){
+          if (sortedFeedIDs.no[sortedFeedIDs.no.length - 1] != feedID) sortedFeedIDs.no.push(feedID), sortedChannelNames.no.push(channel);
+          return "no"; 
+        }
+        else if (channel.indexOf("NO2_") > -1){
+          if (sortedFeedIDs.no2[sortedFeedIDs.no2.length - 1] != feedID) sortedFeedIDs.no2.push(feedID), sortedChannelNames.no2.push(channel);
+          return "no2"; 
+        }
+        else if (channel.indexOf("SO2") > -1){
+          if (sortedFeedIDs.so2[sortedFeedIDs.so2.length - 1] != feedID) sortedFeedIDs.so2.push(feedID), sortedChannelNames.so2.push(channel);
+          return "so2"; 
+        }
+        else if (channel.indexOf("CO_") > -1){
+          if (sortedFeedIDs.co[sortedFeedIDs.co.length - 1] != feedID) sortedFeedIDs.co.push(feedID), sortedChannelNames.co.push(channel);
+          return "co"; 
+        }
+      }else if(productId == 11){
+        //console.log("AirNow Found");
+        if (channel.indexOf("PM2_5") > -1){
+          if (sortedFeedIDs.pm25[sortedFeedIDs.pm25.length - 1] != feedID) sortedFeedIDs.pm25.push(feedID), sortedChannelNames.pm25.push(channel);
+          return "pm25";  
+        }
+        else if (channel.indexOf("PM10") > -1){
+          if (sortedFeedIDs.pm10[sortedFeedIDs.pm10.length - 1] != feedID) sortedFeedIDs.pm10.push(feedID), sortedChannelNames.pm10.push(channel);
+          return "pm10";  
+        }
+        else if (channel.indexOf("OZONE") > -1){
+          if (sortedFeedIDs.ozone[sortedFeedIDs.ozone.length - 1] != feedID) sortedFeedIDs.ozone.push(feedID), sortedChannelNames.ozone.push(channel);
+          return "ozone"; 
+        }
+        else if (channel.indexOf("NO2") > -1){
+           if (sortedFeedIDs.no2[sortedFeedIDs.no2.length - 1] != feedID) sortedFeedIDs.no2.push(feedID), sortedChannelNames.no2.push(channel);
+          return "no2"; 
+        }
+        else if (channel.indexOf("NO") > -1){
+          if (sortedFeedIDs.no[sortedFeedIDs.no.length - 1] != feedID) sortedFeedIDs.no.push(feedID), sortedChannelNames.no.push(channel);
+          return "no"; 
+        }
+        else if (channel.indexOf("SO2") > -1){
+          if (sortedFeedIDs.so2[sortedFeedIDs.so2.length - 1] != feedID) sortedFeedIDs.so2.push(feedID), sortedChannelNames.so2.push(channel);
+          return "so2"; 
+        }
+        else if (channel.indexOf("CO") > -1){
+          if (sortedFeedIDs.co[sortedFeedIDs.co.length - 1] != feedID) sortedFeedIDs.co.push(feedID), sortedChannelNames.co.push(channel);
+          return "co"; 
+        }  
+      }else if(productId == 35){
+        //console.log("BAAQMD Found");
+        if (channel === "PM2_5"){
+          if (sortedFeedIDs.pm25[sortedFeedIDs.pm25.length - 1] != feedID) sortedFeedIDs.pm25.push(feedID), sortedChannelNames.pm25.push(channel);
+          return "pm25";  
+        }
+        else if (channel === "Ozone_O3"){
+          if (sortedFeedIDs.ozone[sortedFeedIDs.ozone.length - 1] != feedID) sortedFeedIDs.ozone.push(feedID), sortedChannelNames.ozone.push(channel); 
+          return "ozone"; 
+        }
+        else if (channel === "Nitrogen_Dioxide_NO2"){
+          if (sortedFeedIDs.no2[sortedFeedIDs.no2.length - 1] != feedID) sortedFeedIDs.no2.push(feedID), sortedChannelNames.no2.push(channel);
+          return "no2"; 
+        }
+        else if (channel === "Nitric_Oxide_NO"){
+          if (sortedFeedIDs.no[sortedFeedIDs.no.length - 1] != feedID) sortedFeedIDs.no.push(feedID), sortedChannelNames.no.push(channel);
+          return "no"; 
+        }
+        else if (channel === "Sulfur_Dioxide_SO2"){
+          if (sortedFeedIDs.so2[sortedFeedIDs.so2.length - 1] != feedID) sortedFeedIDs.so2.push(feedID), sortedChannelNames.so2.push(channel);
+          return "so2"; 
+        }
+        else if (channel === "Carbon_Monoxide_CO"){
+          if (sortedFeedIDs.co[sortedFeedIDs.co.length - 1] != feedID) sortedFeedIDs.co.push(feedID), sortedChannelNames.co.push(channel);
+          return "co"; 
+        }
+      }else if(productId == 9){
+        //console.log("Speck Found"); 
+        sortedFeedIDs.speck.push(feedID); 
+        return "speck"; 
+      }
+      // }else if(feedName.indexOf("Speck") > -1){
+      //   console.log("Speck Found");
+      // }else if(feedName.indexOf("Retigo") > -1){
+      //   console.log("Retigo Found");
+      // }else if(feedName.indexOf("Tepper") > -1){
+      //   console.log("Tepper Found");
+      // }else if(feedName.indexOf("Rodeo") > -1){
+      //   console.log("Rodeo Found");
+      // }else if(feedName.indexOf("fenceline_org") > -1){
+      //   console.log("fenceline_org Found");
+      else{
+        //console.log("Other Found");
         return "other"; 
       }
+      return "other"; 
+    }
 
-      function prepareJSON(){
-        var pm25Array = [];
-        var index = 0; 
-        var alreadySorted = [];
+    function prepareJSON(){
+      var pm25Array = [];
+      var index = 0; 
+      var alreadySorted = [];
 
-        while(index < channelNames.pm25.length){
-          if (alreadySorted.indexOf(index) == -1){
-            var sameChannelName = []; 
-            var checkValue = channelNames.pm25[index];
-            var idx = channelNames.pm25.indexOf(checkValue); 
-            while (idx != -1){
-              sameChannelName.push(idx);
-              alreadySorted.push(idx);
-              idx = channelNames.pm25.indexOf(checkValue, idx + 1); 
-            }
-            pm25Array.push(sameChannelName);
+      while(index < sortedChannelNames.pm25.length){
+        if (alreadySorted.indexOf(index) == -1){
+          var sameChannelName = []; 
+          var checkValue = sortedChannelNames.sortedFeedIDs.pm25[index];
+          var idx = sortedChannelNames.pm25.indexOf(checkValue); 
+          while (idx != -1){
+            sameChannelName.push(idx);
+            alreadySorted.push(idx);
+            idx = sortedChannelNames.pm25.indexOf(checkValue, idx + 1); 
           }
-          index++;
+          pm25Array.push(sameChannelName);
         }
-
-        var pm25JSON = {name:"pm_25", spec:[]}; 
-        
-        for(var i = 0; i < pm25Array.length; i++){
-          var feedString = "whereOr="; 
-          console.log(pm25Array[i].length);
-          for (var k = 0; k < pm25Array[i].length; k++){
-            feedString += "id=" + pm25[pm25Array[i][k]] + ",";
-          }
-          feedString = feedString.substring(0, feedString.length - 1);
-          pm25JSON.spec.push({feeds: feedString, channels: [channelNames.pm25[pm25Array[i][0]]]});  
-        }
-
-        console.log(JSON.stringify(pm25JSON));
+        index++;
       }
+
+      var pm25JSON = {name:"pm_25", spec:[]}; 
       
-      //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ init() function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   
-      function init() {
+      for(var i = 0; i < pm25Array.length; i++){
+        var feedString = "whereOr="; 
+        console.log(pm25Array[i].length);
+        for (var k = 0; k < pm25Array[i].length; k++){
+          feedString += "id=" + sortedFeedIDs.pm25[pm25Array[i][k]] + ",";
+        }
+        feedString = feedString.substring(0, feedString.length - 1);
+        pm25JSON.spec.push({feeds: feedString, channels: [sortedChannelNames.sortedFeedIDs.pm25[pm25Array[i][0]]]});  
+      }
 
-         $.ajax({url: ESDR_API_ROOT_URL + '/feeds', success: loadFeeds});
+      console.log(JSON.stringify(pm25JSON));
+    }
+    
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ init() function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 
+    function init() {
 
-         $(document).on('click', function(event) {
-            if (!$(event.target).closest('#search-bar').length) {
-               $('#search-bar').blur(); 
+       $.ajax({url: ESDR_API_ROOT_URL + '/feeds', success: loadFeeds});
+
+       $(document).on('click', function(event) {
+          if (!$(event.target).closest('#search-bar').length) {
+             $('#search-bar').blur(); 
+          }
+       }); 
+
+       var timer = null; 
+       $('#search-bar').keyup(function(){
+          if ($('#search-bar').val() == ""){
+             clearInterval(timer); 
+             timer = null; 
+             searchAttributes(); 
+          }else if (timer == null) {
+             timer = setTimeout(function(){
+             searchAttributes()}, 100)}
+       }).keydown(function(){
+          if (timer) {
+             clearInterval(timer);
+             timer = null; 
+          }
+       }).click(function(){
+          $(this).focus(); 
+
+       }).on("search", function(){
+          searchAttributes(); 
+       }); 
+
+       $('#duration').change(function(){
+          setSpeed();
+       })
+
+       playTransform()
+
+       $(document).keydown(function(e) {
+          switch(e.which) {
+              case 32: //space
+                if (playButtonEnabled){
+                  togglePlayPause();
+                }
+              break
+              case 37: //left arrow
+                cursorInBound();
+                if(!pause){
+                  playTransform();
+                  pauseTimeline();
+                  playing = false;
+                }
+
+                if (dateProperties.max > Date.now() / 1000){
+                  var timeIncrement = (Date.now() / 1000 - dateProperties.min)/timeSlices;
+                }else{
+                  var timeIncrement = (dateProperties.max - dateProperties.min)/timeSlices;
+                }
+                plotManager.getDateAxis().setCursorPosition(dateProperties.cursorPosition - timeIncrement);
+                cursorInBound();
+              break
+              case 39: //right arrow
+                cursorInBound();
+                if(!pause){
+                  playTransform();
+                  pauseTimeline();
+                  playing = false;
+                }
+
+                if (dateProperties.max > Date.now() / 1000){
+                  var timeIncrement = (Date.now() / 1000 - dateProperties.min)/timeSlices;
+                }else{
+                  var timeIncrement = (dateProperties.max - dateProperties.min)/timeSlices;
+                }
+                plotManager.getDateAxis().setCursorPosition(dateProperties.cursorPosition + timeIncrement);
+                cursorInBound();
+              break
+              default: return; 
+          }
+      });
+
+      $('#map-filters ').keydown(function(e){
+        e.preventDefault();
+      })
+
+      if ($('#channels').width() == 225){
+        $("#clear-button").css('left', 50);
+        $('#legend').css('left', 225);
+        $('.main-content').css({'left' : 225,
+                                'width' : "calc(100% - 225px)"});  
+      }else{
+        $("#clear-button").css('left', '5%');
+        $('#legend').css('left', null);
+        $('.main-content').css({'left' : "20%",
+                                'width' : "80%"}); 
+      }
+
+      var winWidth = $(window).width(); 
+      if(winWidth <= 444){
+        $('#map-bar').css('height', 225);
+        $('#legend').css({'bottom' : "calc(45% + 225px)"});
+        $('#map-filters').css({'width' : 130,
+                               'margin' : '0px 10px 20px'}); 
+        $('#timeline').css({'width': 130,
+                            'clear' : 'left',
+                            'margin' : '70px 10px'}); 
+        $('.play-pause').css({'margin' : '-25px 50px 0px',
+                              'float' : 'none'});
+      }else if(winWidth <= 600){
+        $('#map-bar').css('height', 170);
+        $('#map-filters').css({'width' : 130,
+                               'margin' : '0px 10px 35px'}); 
+        $('#timeline').css({'width': 130,
+                            'clear' : 'left',
+                            'margin' : '0px 10px'});
+        $('#legend').css({'left' : 'auto', 
+                          'bottom' : "calc(45% + 170px)"}); 
+        $('.play-pause').css({'margin' : '-25px 10px 0px',
+                              'float' : 'left'});
+      }else if(winWidth <= 900){
+        $('#map-bar').css('height', 100); 
+        $('#map-filters').css({'width' : 280,
+                               'margin' : '0px 10px'}); 
+        $('#timeline').css({'width' : 280,
+                            'clear' : 'left',
+                            'margin' : '0px 10px'});
+        $('#legend').css({'left' : 'auto',   
+                          'bottom' : "calc(45% + 100px)"});
+        $('.play-pause').css({'margin' : '-25px 10px 0px',
+                              'float' : 'left'});
+      }else{
+        $('#map-bar').css('height', 55); 
+        $('#map-filters').css('width', 280);
+        $('#timeline').css({'width' : 280,
+                            'clear' : 'right',
+                            'margin' : '0px 10px'});
+        $('#legend').css({'left' : 'auto',  
+                          'bottom' : "calc(45% + 60px)"});
+        $('.play-pause').css({'margin' : '-25px 10px 0px',
+                              'float' : 'left'});
+      }
+    }
+
+ //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ init() function END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    function clampAllPlots(){
+      for (var key in plotScalers) {
+        if (plotScalers.hasOwnProperty(key)) {
+          clampNumberAxisToDataRange(plotScalers[key]);
+        }
+      }
+    }
+
+    function getChannels() {
+       var plotDivs = $('#plots [id^=plot]');
+       var channels = [];
+       for (var i = 0; i < plotDivs.length; i++) {
+          var plotName = plotDivs[i].id;
+          var plotIdx = parseInt(plotName.slice(4));
+          var channel = plotIdxToChannel[plotIdx];
+          channels.push(channel);
+       }
+       return channels;
+    }
+    
+    function updateHash() {
+       var channels = getChannels();
+       var params = [];
+       if (channels.length > 0) {
+          params.push('channels=' + channels.join('|'));
+       }
+       var timeRange = plotManager.getDateAxis().getRange();
+       params.push('time=' + timeRange.min + ',' + timeRange.max);
+       var newHash = '#' + params.join('&');
+       if (window.location.hash != newHash) {
+          window.location.hash = newHash;
+       }
+    }
+
+    // from http://stackoverflow.com/questions/4197591/parsing-url-hash-fragment-identifier-with-javascript
+    function getHashParams() {
+       var hashParams = {};
+       var e,
+           a = /\+/g,  // Regex for replacing addition symbol with a space
+           r = /([^&;=]+)=?([^&;]*)/g,
+           d = function (s) { return decodeURIComponent(s.replace(a, " ")); },
+           q = window.location.hash.substring(1);
+      
+       while (e = r.exec(q)) hashParams[d(e[1])] = d(e[2]);
+      
+       return hashParams;
+    }
+
+    function loadHash() {
+       var params = getHashParams();
+
+       if (params.time) {
+          var split = params.time.split(',');
+          plotManager.getDateAxis().setRange(parseFloat(split[0]), parseFloat(split[1]));
+       }
+
+       var oldChannels = getChannels(); 
+       var newChannels = [];
+       if (params.channels) {
+          newChannels = params.channels.split('|');
+       }
+       if (oldChannels.join('|') != newChannels.join('|')) {
+          for (var i = 0; i < oldChannels.length; i++) {
+             removePlot(oldChannels[i]);
+          }
+          for (i = 0; i < newChannels.length; i++) {
+             addPlot(newChannels[i]);
+          }
+       }
+    }
+
+    function removePlot(channel) {
+       var plotIdx = channelToPlotIdx[channel];
+       var plotName = 'plot' + plotIdx;
+       plotManager.getPlotContainer(plotName).removePlot(plotManager.getPlot(plotName));
+       $('#plot' + plotIdx).parent().remove();
+       // window.clearInterval(plotScalers[plotIdx]);
+       delete plotScalers[plotIdx]; 
+       $('input[name="' + channel + '"]').prop('checked', false);
+       var feedIndex = parseInt(channel.substr(0, channel.indexOf('.'))); 
+       if (!(checkIfAnyChecked(feedIndex))) changeCircled(feedIndex, 0);
+       updateHash();
+    }
+    
+
+    window.grapherLoad = function() {
+       var maxTimeSecs = Date.now() / 1000;
+       var minTimeSecs = maxTimeSecs - 7 * 24 * 60 * 60;
+
+       plotManager = new org.bodytrack.grapher.PlotManager("date_axis", minTimeSecs, maxTimeSecs);
+
+       plotManager.setWillAutoResizeWidth(true, function() {
+               return $('#plots').width()         // window width
+                      // - 30;
+            });
+
+       plotManager.getDateAxis().constrainRangeTo(0, 4118011200);
+
+       dateProperties = plotManager.getDateAxis().getRange();
+
+       //Fires when cursor position changes or date axis bound changes 
+       plotManager.getDateAxis().addAxisChangeListener(function(dateAxisProperties) { 
+          clearTimeout(clampTimer);
+          clampTimer = setTimeout(clampAllPlots, 300);
+
+          if (Math.abs(dateAxisProperties.max - dateProperties.max) >= Number.MIN_VALUE || Math.abs(dateAxisProperties.min - dateProperties.min) >= Number.MIN_VALUE){
+            clearTimeout(hashTimer);
+            hashTimer = setTimeout(updateHash, 300);
+          }
+
+          if (timelineReady){
+            var now = Date.now() / 1000;
+            var lastDataTime = timelineQueue[timelineQueue.length - 1].timeStamp; 
+            var firstDataTime = timelineQueue[0].timeStamp;
+            var level = offsetLimitCalculator(dateAxisProperties.min, dateAxisProperties.max).limit;  
+            if ((Math.abs(dateAxisProperties.max - dateAxisProperties.min - dateProperties.max + dateProperties.min) >= Number.MIN_VALUE && level != currentLevel)
+                || ((dateAxisProperties.max > lastDataTime && dateAxisProperties.max < now)
+                && !(lastDataTime < dateAxisProperties.max && dateAxisProperties.max < now))
+                || ((dateAxisProperties.min < firstDataTime && dateAxisProperties.min > 1374638275))){
+                clearTimeout(refreshTimer);
+                refreshTimer = setTimeout(function() {
+                  updateMultifeed(dateAxisProperties.min, dateAxisProperties.max); 
+                }, 800);
             }
-         }); 
 
-         var timer = null; 
-         $('#search-bar').keyup(function(){
-            if ($('#search-bar').val() == ""){
-               clearInterval(timer); 
-               timer = null; 
-               searchAttributes(); 
-            }else if (timer == null) {
-               timer = setTimeout(function(){
-               searchAttributes()}, 100)}
-         }).keydown(function(){
-            if (timer) {
-               clearInterval(timer);
-               timer = null; 
+            if (Math.abs(dateProperties.cursorPosition - dateAxisProperties.cursorPosition) >= Number.MIN_VALUE){
+                window.requestAnimationFrame(function(){
+                  showColorAtIndex(findIndexAtTime(timelineQueue, dateAxisProperties.cursorPosition));
+                });
             }
-         }).click(function(){
-            $(this).focus(); 
 
-         }).on("search", function(){
-            searchAttributes(); 
-         }); 
-
-         $('#duration').change(function(){
-            setSpeed();
-         })
-
-         playTransform()
-
-         $(document).keydown(function(e) {
-            switch(e.which) {
-                case 32: //space
-                  if (playButtonEnabled){
-                    togglePlayPause();
-                  }
-                break
-                case 37: //left arrow
-                  cursorInBound();
-                  if(!pause){
-                    playTransform();
-                    pauseTimeline();
-                    playing = false;
-                  }
-
-                  if (dateProperties.max > Date.now() / 1000){
-                    var timeIncrement = (Date.now() / 1000 - dateProperties.min)/timeSlices;
-                  }else{
-                    var timeIncrement = (dateProperties.max - dateProperties.min)/timeSlices;
-                  }
-                  plotManager.getDateAxis().setCursorPosition(dateProperties.cursorPosition - timeIncrement);
-                  cursorInBound();
-                break
-                case 39: //right arrow
-                  cursorInBound();
-                  if(!pause){
-                    playTransform();
-                    pauseTimeline();
-                    playing = false;
-                  }
-
-                  if (dateProperties.max > Date.now() / 1000){
-                    var timeIncrement = (Date.now() / 1000 - dateProperties.min)/timeSlices;
-                  }else{
-                    var timeIncrement = (dateProperties.max - dateProperties.min)/timeSlices;
-                  }
-                  plotManager.getDateAxis().setCursorPosition(dateProperties.cursorPosition + timeIncrement);
-                  cursorInBound();
-                break
-                default: return; 
+            if (dateAxisProperties.cursorPosition > maxTimeSecs){
+                pauseTimeline();
+                playTransform();
+                disablePlayButton();
+            }else{
+                enablePlayButton();
             }
+          }
+
+          dateProperties = dateAxisProperties;
+      });
+      
+    }
+
+    function searchAttributes() {
+       var str = $('#search-bar').val().toLowerCase();     
+       var wordList = str.split(" ") || [];
+       showNumList = [];
+       var filterNumList = [];
+
+
+       var showConditions = "div[class = sensors]"; 
+       for (var i = 0; i < wordList.length; i++){
+          if (wordList[i] != "") {
+             showConditions += "[id *= '" + wordList[i] + "']";  
+          }
+       }; 
+
+       var finalSearchConditions = ""; 
+       var noneChecked = true; 
+       $('#filters [type = checkbox]').each(function(index, input) {
+          if (input.checked){
+            noneChecked = false; 
+            switch (input.name) {
+                case "pm25":
+                  filterNumList = filterNumList.concat(sortedFeedIDs.pm25);
+                  console.log("pm25 checked"); 
+                  finalSearchConditions += showConditions + "[data-channel-type = 'pm25'],"; 
+                  break;
+                case "pm10":
+                  filterNumList = filterNumList.concat(sortedFeedIDs.pm10);
+                  console.log("pm10 checked"); 
+                  finalSearchConditions += showConditions + "[data-channel-type = 'pm10'],"; 
+                  break;
+                case "ozone":
+                  filterNumList = filterNumList.concat(sortedFeedIDs.ozone);
+                  console.log("ozone checked"); 
+                  finalSearchConditions += showConditions + "[data-channel-type = 'ozone'],"; 
+                  break;
+                case "no":
+                  filterNumList = filterNumList.concat(sortedFeedIDs.no);
+                  console.log("no checked");
+                  finalSearchConditions += showConditions + "[data-channel-type = 'no'],"; 
+                  break;
+                case "no2":
+                  filterNumList = filterNumList.concat(sortedFeedIDs.no2);
+                  console.log("no2 checked"); 
+                  finalSearchConditions += showConditions + "[data-channel-type = 'no2'],"; 
+                case "so2":
+                  filterNumList = filterNumList.concat(sortedFeedIDs.so2);
+                  console.log("so2 checked")
+                  finalSearchConditions += showConditions + "[data-channel-type = 'so2'],"; 
+                  break;
+                case "co":
+                  filterNumList = filterNumList.concat(sortedFeedIDs.co);
+                  console.log("co checked");
+                  finalSearchConditions += showConditions + "[data-channel-type = 'co'],";
+                  break;
+
+            }
+          }
+      });
+      
+      
+
+      if (noneChecked){
+        filterNumList = filterNumList.concat(allFeedNums);
+        finalSearchConditions = showConditions; 
+      }else{
+        finalSearchConditions = finalSearchConditions.substring(0,finalSearchConditions.length - 1); 
+      };
+
+      
+      //console.log($(finalSearchConditions));
+
+      $(finalSearchConditions).each(function(){
+
+        var currentNum = $(this).attr('id').substr($(this).attr('id').lastIndexOf('#') + 1); 
+
+        if (filterNumList.indexOf(parseInt(currentNum)) > -1 && (showNumList.length == 0 || currentNum != showNumList[showNumList.length - 1])) {
+            showNumList.push(parseInt(currentNum)); 
+          }
         });
 
-        $('#map-filters ').keydown(function(e){
-          e.preventDefault();
-        })
+
+        var $allSelect = $("div[class = sensors]");
+        if($allSelect){
+          $allSelect.hide(); 
+          console.log("Hide All");
+          changeEnabled(allFeedNums, 0); 
+
+          if (showNumList.length != 0){
+            console.log("ShowNumList > 0 and show finalSearchConditions");
+            $(finalSearchConditions).show();
+            changeEnabled(showNumList, 1);
+
+            }//else{
+
+            //   geocoder.geocode( { 'address': str}, function(results, status) {
+            //     if (status == google.maps.GeocoderStatus.OK) { 
+            //       var latlng = {latlng: []}
+            //       console.log(results[0].geometry.viewport.northeast()); 
+            //       // latlng.latlng.push(results[0].geometry.viewport);
+            //       // latlng.xy = latlng.latlng;
+
+            //       // for (var i = 0; i < latlng.latlng.length; i += 2) {
+            //       //     var lat = latlng.latlng[i];
+            //       //     var lon = latlng.latlng[i + 1];
+            //       //     var pixel = LatLongToPixelXY(lat, lon);
+            //       //     latlng.xy[i] = pixel.x;
+            //       //     latlng.xy[i + 1] = pixel.y;
+            //       // }
+            //       // delete latlng.latlng;
+
+            //       // var foundIndexes = []; 
+            //       // for (var k = 0; k < feedLocList.index.length ; k++){
+            //       //   if (Math.pow(feedLocList.xy[k*2] - latlng.xy[0],2) + Math.pow(feedLocList.xy[k*2 + 1] - latlng.xy[1],2) <= .05){
+            //       //     foundIndexes.push(feedLocList.index[k]);
+            //       //   }
+            //       // } 
+
+            //       // console.log(foundIndexes); 
+            //       // changeEnabled(foundIndexes, currentAlpha); 
+
+            //     } else {
+            //       console.log("Geocode was not successful for the following reason: " + status);
+            //     }
+
+            //   });
+
+            // };
+       }; 
+
+       $('#results-title p').replaceWith('<p>Results (<span style="font-size:12px">Showing ' + $(finalSearchConditions).length + " of " + $allSelect.length + '</span>):</p>')
+       drawInfoWindowLines(); 
+       console.log("-------------------")
+    }
+
+    function drawInfoWindowLines(){
+      var $mapInfoWindow = $("#infowindow");
+      if ($mapInfoWindow) {
+        $("#notFoundMsg").hide();
+        $('hr').show(); 
+
+        var visibleElements = $mapInfoWindow.children().filter(":visible");
+        visibleElements.each(function(index, element){
+            if ($(element).is('hr') && $(visibleElements).eq(index + 1).is('hr')){
+              $(element).hide(); 
+            };
+          });
+
+        var visibleDivs = $(visibleElements).filter(".sensors"); 
+        if (visibleDivs.length == 0) {
+          console.log("All Invisible.");
+          $("#notFoundMsg").show();
+          $("#notFoundMsg").prevAll('hr').hide(); 
+          $("#notFoundMsg").nextAll('hr').hide(); 
+        }else{ 
+            $(visibleDivs).each(function(index, element){
+              if (index==0){
+                $(this).prevAll('hr').hide(); 
+              }
+              if (index==$(visibleDivs).length - 1){
+                $(this).nextAll('hr').hide(); 
+              }
+            });
+        }; 
+      };
+    };
+
+    function clearFilters(){
+        $('#filters [type = checkbox]').each(function(index, input){
+          $(input).prop('checked', false); 
+        }); 
+        $('#search-bar').val('');
+        searchAttributes(); 
+    }
+
+    function printFoundDivs($divList){
+      var string = ""; 
+      $($divList).each(function(index, element){
+        string += $(element).get(0).outerHTML; 
+      })
+
+      return string; 
+    }
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   Timeline start  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    function reColor(radioInput){
+      resetTimeline(30, 30, 30, NULL_ALPHA);
+      cursorInBound();
+      switch(radioInput.dataset.filter){
+        case "pm10":
+          multifeed = "pm_10";
+          var legend = $('.legend-container').eq(0).children(); 
+          // legend.eq(0).css('background-color', 'rgba(0, 255, 0,' + COLOR_ALPHA +')'); 
+          legend.eq(0).removeClass("greenYellow");
+          legend.eq(0).addClass("greenYellow");
+          legend.eq(1).text('     0   -      54  μg/m3'); 
+          legend = $('.legend-container').eq(1).children(); 
+          // legend.eq(0).css('background-color', 'rgba(255, 255, 0,' + COLOR_ALPHA +')'); 
+          legend.eq(0).removeClass("yellowOrange");
+          legend.eq(0).addClass("yellowOrange");
+          legend.eq(1).text('   54   -    154  μg/m3');
+          legend = $('.legend-container').eq(2).children(); 
+          // legend.eq(0).css('background-color', 'rgba(255, 125, 0,' + COLOR_ALPHA +')'); 
+          legend.eq(0).removeClass("orangeRed");
+          legend.eq(0).addClass("orangeRed");
+          legend.eq(1).text(' 154   -    254  μg/m3');
+          legend = $('.legend-container').eq(3).children(); 
+          // legend.eq(0).css('background-color', 'rgba(255, 0, 0,' + COLOR_ALPHA +')');
+          legend.eq(0).removeClass("redPurple");
+          legend.eq(0).addClass("redPurple"); 
+          legend.eq(1).text(' 254   -    354  μg/m3');
+          legend = $('.legend-container').eq(4).children(); 
+          // legend.eq(0).css('background-color', 'rgba(150, 0, 80,' + COLOR_ALPHA +')'); 
+          legend.eq(0).removeClass("purpleMaroon");
+          legend.eq(0).addClass("purpleMaroon");
+          legend.eq(1).text(' 354   -    424  μg/m3');
+          legend = $('.legend-container').eq(5).children(); 
+          legend.eq(0).css('background-color', 'rgba(125, 0, 0,' + COLOR_ALPHA +')'); 
+          legend.eq(1).text('         >    424  μg/m3'); 
+          legend = $('.legend-container').eq(6).children(); 
+          legend.eq(0).css('background-color', 'rgba(30, 30, 30,' + COLOR_ALPHA +')'); 
+          legend.eq(1).text('no data'); 
+          $('#legend').show();
+          break;
+        case "pm25":
+          multifeed = "pm_25";
+          var legend = $('.legend-container').eq(0).children(); 
+           // legend.eq(0).css('background-color', 'rgba(0, 255, 0,' + COLOR_ALPHA +')'); 
+          legend.eq(0).removeClass("greenYellow");
+          legend.eq(0).addClass("greenYellow");
+          legend.eq(1).text('     0   -      13  μg/m3');
+          legend = $('.legend-container').eq(1).children(); 
+          // legend.eq(0).css('background-color', 'rgba(255, 255, 0,' + COLOR_ALPHA +')'); 
+          legend.eq(0).removeClass("yellowOrange");
+          legend.eq(0).addClass("yellowOrange"); 
+          legend.eq(1).text('   13   -   35.4  μg/m3');
+          legend = $('.legend-container').eq(2).children(); 
+          // legend.eq(0).css('background-color', 'rgba(255, 125, 0,' + COLOR_ALPHA +')'); 
+          legend.eq(0).removeClass("orangeRed");
+          legend.eq(0).addClass("orangeRed"); 
+          legend.eq(1).text('35.4   -   55.4  μg/m3');
+          legend = $('.legend-container').eq(3).children(); 
+          // legend.eq(0).css('background-color', 'rgba(255, 0, 0,' + COLOR_ALPHA +')');
+          legend.eq(0).removeClass("redPurple");
+          legend.eq(0).addClass("redPurple"); 
+          legend.eq(1).text('55.4   - 150.4  μg/m3');
+          legend = $('.legend-container').eq(4).children(); 
+          // legend.eq(0).css('background-color', 'rgba(150, 0, 80,' + COLOR_ALPHA +')'); 
+          legend.eq(0).removeClass("purpleMaroon");
+          legend.eq(0).addClass("purpleMaroon");
+          legend.eq(1).text('150.4 - 250.4  μg/m3');
+          legend = $('.legend-container').eq(5).children(); 
+          legend.eq(0).css('background-color', 'rgba(125, 0, 0,' + COLOR_ALPHA +')'); 
+          legend.eq(1).text('         > 250.4  μg/m3'); 
+          legend = $('.legend-container').eq(6).children(); 
+          legend.eq(0).css('background-color', 'rgba(30, 30, 30,' + COLOR_ALPHA +')'); 
+          legend.eq(1).text('no data'); 
+          $('#legend').show();
+          break; 
+      };
+      disablePlayButton();
+      spinnerTransform();
+      getGrapherTimeTiles(multifeed);
+    }
+
+    function clearColors(r,g,b){
+      for (var i = 0, len = allFeedNums.length; i < len; i++){
+        changeColor(r,g,b,allFeedNums[i]);
+      }
+    };
+
+    function resetOpacity(a){
+      changeOpacity(allFeedNums, a);
+    }
+
+    function resetTimeline(r,g,b,a){
+        $('#map-filters').children().children().filter(':reset').attr('disabled','disabled');
+        $('#map-filters')
+        $('#legend').hide();
+        disablePlayButton();
+        pauseTimeline(); 
+        playTransform();
+        playing = false; 
+        timelineReady = false; 
+        timelineQueue = []; 
+        dataProcessQueue = [];
+        multifeed = ''; 
+        currentLevel = 0;
+        clearTimeout(dragTimer);
+        clearTimeout(refreshTimer);
+        clearColors(r,g,b);
+        currentAlpha = a; 
+        resetOpacity(a);
+        reBindBuffer();
+    }
+
+    function updateMultifeed(beginTime, endTime){
+      // timelineQueue = [];       
+      if (multifeed) getTiles(beginTime, endTime, multifeed);
+      
+    } 
+
+    function offsetLimitCalculator(beginTime, endTime){
+      var level = Math.ceil(Math.log(Math.abs(endTime - beginTime)/512)/Math.log(2));
+      var offset = Math.floor(beginTime/(512*Math.pow(2, level))); 
+      return {level: level, offset: offset};
+    }
+
+    //beginTime and endTime are in Epoch
+    function getTiles(beginTime, endTime, multifeedName){ 
+      dataPocessQueue = []; 
+      var result = offsetLimitCalculator(beginTime, endTime); 
+      var level = result.level;
+      var offset = result.offset;
+      pauseTimeline();
+      currentLevel = level; 
+      timelineReady = false;
+      disablePlayButton();
+      spinnerTransform();
+      var url1 = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + offset;
+      var url2 = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + (offset + 1);
+      var url3 = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + (offset - 1);
+      getData(url1, multifeedName);
+      getData(url2, multifeedName);
+      getData(url3, multifeedName);  
+    }
+
+    function getGrapherTimeTiles(multifeedName){
+      var beginTime = dateProperties.min; 
+      var endTime = dateProperties.max;
+      getTiles(beginTime, endTime, multifeedName); 
+    }
+
+    function getData(url, multifeedName){
+      var dataList = [];
+      var feedNums = []; 
+      jQuery.getJSON(url, function(data){
+        var dataSet = data.data; 
+
+        for (var i = 0, len = dataSet.length; i < len; i++){
+          var allNull = true;
+          var dataArray = dataSet[i]; 
+          for (var k = 1, lenth = dataArray.length; k < lenth; k++){
+            if (dataArray[k] != null) allNull = false; 
+          }
+          if (!allNull) dataList.push(dataArray);
+        }
+
+        $(data.full_channel_names).each(function(index, name){
+          feedNums.push(parseInt(name.split(".", 2)[1].split("_")[1])); 
+        });
+
+        // if (dataList.length == 0) return; 
+        dataProcessQueue.push(wrapFunction(processData, this, [dataList, feedNums, multifeedName]));
+        dataWorkHorse();
+      }); 
+    }
+
+    function dataWorkHorse(){
+      if (dataProcessQueue.length == 3){
+        while (dataProcessQueue.length){
+          dataProcessQueue[0](); 
+          dataProcessQueue.shift();
+        }
+        $('#map-filters').children().children().filter(':reset').removeAttr('disabled');
+        cursorInBound();
+        timelineReady = true;
+        cursorInBound();
+        if (dateProperties.cursorPosition < Date.now()/1000){
+          enablePlayButton();
+        }
+        if (playing) {
+          playTimeline();
+          pauseTranform();
+        }else{
+          playTransform();
+        }
+
+        showColorAtIndex(findIndexAtTime(timelineQueue, dateProperties.cursorPosition));
+      }
+    }
+
+    function queuePush(element){
+      var min = 0; 
+      var max = timelineQueue.length - 1; 
+      var guess;
+      var minDifference = Number.MAX_VALUE;
+      var answer = -1; 
+      while (min <= max){
+        guess = Math.floor((min + max)/2);
+        var difference = element.timeStamp - timelineQueue[guess].timeStamp; 
+
+        if (Math.abs(difference) < Number.MIN_VALUE){
+          timelineQueue[guess] = element;
+          return; 
+        }else if(Math.abs(difference) < Math.abs(minDifference)){
+          minDifference = difference;
+          answer = guess; 
+        }else if (min == max){
+          break;
+        }
+
+        if (difference > 0){
+          min = guess + 1; 
+        }else{
+          max = guess - 1; 
+        }
+        
+      } 
+      if (answer == -1){
+        timelineQueue.push(element); 
+      }else if(answer == 0){
+        if (minDifference < 0){
+          timelineQueue.splice(0,0,element); 
+        }else{
+          timelineQueue.splice(1,0,element);
+        }
+      }else if(minDifference > 0){
+        timelineQueue.splice(answer + 1, 0, element); 
+      }else{
+        timelineQueue.splice(answer - 1, 0, element); 
+      }
+    }
+
+    function wrapFunction(fn, context, params){
+      return function(){
+        fn.apply(context, params); 
+      }
+    }
+
+    function clickedOpaque(a){
+      changeOpacity(clickedNumList, a); 
+    }
+
+    function hoverOpaque(a){
+      changeOpacity(hoverNumList, a); 
+    }
+
+    function interpolateColors(r1, g1, b1, r2, g2, b2, min, max, val){
+      var t = (val - min)/(max - min); 
+      return {r:(1 - t)*r1 + t*r2, g:(1 - t)*g1 + t*g2,b:(1 - t)*b1 + t*b2}
+    }
+
+    function processData(dataList, feedNums, multifeedName){
+      switch (multifeedName){
+        case "pm_10":
+          for (var i = 0, len = dataList.length; i < len; i++){
+            var colorFunctions = {
+                functionList: [],
+                timeStamp: dataList[i][0],
+            };
+
+            var nullList = []; 
+
+            for (var k = 1, lenth = dataList[i].length; k < lenth; k++){
+               var val = dataList[i][k]; 
+                if (val == null){
+                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [30, 30, 30, feedNums[k - 1]]));
+                  nullList.push(feedNums[k - 1]);  
+                }else if (val <= 54){
+                  var interColors = interpolateColors(0, 255, 0, 255, 255, 0, 0, 54, val); 
+                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                  // colorFunctions.functionList.push(wrapFunction(changeColor, this, [0, 255, 0, feedNums[k - 1]]));
+                }else if(val <= 154){
+                  var interColors = interpolateColors(255, 255, 0, 255, 125, 0, 54, 154, val);
+                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                  // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 255, 0, feedNums[k - 1]]));
+                }else if(val <= 254){
+                  var interColors = interpolateColors(255, 125, 0, 255, 0, 0, 154, 254, val);
+                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                  // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 125, 0, feedNums[k - 1]])); 
+                }else if(val <= 354){
+                  var interColors = interpolateColors(255, 0, 0, 150, 0, 80, 254, 354, val);
+                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                  // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 0, 0, feedNums[k - 1]])); 
+                }else if(val <= 424){
+                  var interColors = interpolateColors(150, 0, 80, 125, 0, 0, 354, 424, val);
+                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                  // colorFunctions.functionList.push(wrapFunction(changeColor, this, [150, 0, 80, feedNums[k - 1]])); 
+                }else{
+                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [125, 0, 0, feedNums[k - 1]])); 
+                }
+            }
+            colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [feedNums, COLOR_ALPHA])); 
+            colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [nullList, NULL_ALPHA]));
+            colorFunctions.functionList.push(wrapFunction(clickedOpaque, this, [1]));
+            colorFunctions.functionList.push(wrapFunction(hoverOpaque, this, [1]));
+            colorFunctions.functionList.push(wrapFunction(reBindBuffer, this, []));
+            queuePush(colorFunctions); 
+          }
+          break; 
+        case "pm_25":
+          for (var i = 0, len = dataList.length; i < len; i++){
+            var colorFunctions = {
+                functionList: [],
+                timeStamp: dataList[i][0],
+            };
+
+            var nullList = [];
+
+            for (var k = 1, lenth = dataList[i].length; k < lenth; k++){
+               var val = dataList[i][k]; 
+                if (val == null){
+                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [30, 30, 30, feedNums[k - 1]]));
+                  nullList.push(feedNums[k - 1]);  
+                }else if (val <= 12){
+                  var interColors = interpolateColors(0, 255, 0, 255, 255, 0, 0, 12, val); 
+                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                  // colorFunctions.functionList.push(wrapFunction(changeColor, this, [0, 255, 0, feedNums[k - 1]]));
+                }else if(val <= 35.4){
+                  var interColors = interpolateColors(255, 255, 0, 255, 125, 0, 12, 35.4, val);
+                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                  // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 255, 0, feedNums[k - 1]]));
+                }else if(val <= 55.4){
+                  var interColors = interpolateColors(255, 125, 0, 255, 0, 0, 35.4, 55.4, val);
+                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                  // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 125, 0, feedNums[k - 1]])); 
+                }else if(val <= 150.4){
+                  var interColors = interpolateColors(255, 0, 0, 150, 0, 80, 55.4, 150.4, val);
+                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                  // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 0, 0, feedNums[k - 1]])); 
+                }else if(val <= 250.4){
+                  var interColors = interpolateColors(150, 0, 80, 125, 0, 0, 150.4, 250.4, val);
+                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                  // colorFunctions.functionList.push(wrapFunction(changeColor, this, [150, 0, 80, feedNums[k - 1]])); 
+                }else{
+                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [125, 0, 0, feedNums[k - 1]])); 
+                } 
+            }
+            colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [feedNums, COLOR_ALPHA])); 
+            colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [nullList, NULL_ALPHA]));
+            colorFunctions.functionList.push(wrapFunction(clickedOpaque, this, [1]));
+            colorFunctions.functionList.push(wrapFunction(hoverOpaque, this, [1]));
+            colorFunctions.functionList.push(wrapFunction(reBindBuffer, this, []));
+            queuePush(colorFunctions); 
+          }
+      }
+    }
+
+    //inspiratini's from binarySearch.js
+    function findIndexAtTime(list, time){
+      var min = 0; 
+      var max = list.length - 1; 
+      var guess;
+      var minDifference = Number.MAX_VALUE;
+      var answer = -1;   
+
+      while (min <= max){
+        guess = Math.floor((min + max)/2);
+        var difference = time - list[guess].timeStamp; 
+
+        if (Math.abs(difference) < Number.MIN_VALUE){
+          return guess;
+        }else if(Math.abs(difference) <= minDifference){
+          minDifference = Math.abs(difference);
+          answer = guess; 
+        }else if (min == max){
+          break;
+        }
+
+        if (difference > 0){
+          min = guess + 1; 
+        }else{
+          max = guess - 1; 
+        }
+        
+      } 
+      return answer; 
+
+    }
+
+    function showColorAtIndex(index){
+      if (timelineReady && timelineQueue[index]){
+        var functionList = timelineQueue[index].functionList || []; 
+        for (var i = 0, len = functionList.length; i < len; i++){
+          functionList[i](); 
+        }
+      }
+    }
+
+    function cursorInBound(){
+      if (dateProperties.cursorPosition < dateProperties.min || !dateProperties.cursorPosition){
+          plotManager.getDateAxis().setCursorPosition(dateProperties.min); 
+      }else if(dateProperties.cursorPosition > dateProperties.max){
+          plotManager.getDateAxis().setCursorPosition(dateProperties.max);
+      }
+    }
+
+    function setSpeed(){
+      if ($("#duration").val() < 1){
+        $("#duration").val(1);
+      }else if($("#duration").val() > 100){
+        $("#duration").val(99);
+      }
+
+      duration = $("#duration").val();
+      timeSlices = duration/speed*1000
+
+      if (playing){
+        pauseTimeline();
+        playTimeline();
+      }
+    }
+
+    function playTimeline(){
+      pause = false;
+      playing = true;
+      cursorInBound();
+      clearInterval(playInterval);
+      playInterval = setInterval(function(){
+          playNext(dateProperties.cursorPosition)
+      }, speed); 
+    }
+
+    function playNext(time){
+      if(time != dateProperties.cursorPosition){
+        console.log("Dragging.");
+        cursorInBound();
+        pauseTimeline();
+        clearTimeout(dragTimer);
+        dragTimer = setTimeout(function(){
+          playTimeline();
+        }, 300);
+      }else{
+        if (dateProperties.max > Date.now() / 1000){
+          var timeIncrement = (Date.now() / 1000 - dateProperties.min)/timeSlices;
+        }else{
+          var timeIncrement = (dateProperties.max - dateProperties.min)/timeSlices;
+        }
+        time += timeIncrement;
+        if (time < dateProperties.max && time <= Date.now() / 1000){        
+          window.requestAnimationFrame(function(){
+            plotManager.getDateAxis().setCursorPosition(time);
+          });
+
+        }else{
+          if (onLoop){
+            console.log("loop.")
+            if (time - timeIncrement > Date.now()/1000){
+              pauseTimeline(); 
+              return;
+            }
+            plotManager.getDateAxis().setCursorPosition(dateProperties.min - timeIncrement); 
+          }else{
+            console.log(time - dateProperties.max, time - Date.now() / 1000);
+            console.log('Timeline Done'); 
+            pauseTimeline();
+            playTransform();
+            playing = false; 
+            plotManager.getDateAxis().setCursorPosition(dateProperties.min);     
+            return; 
+          }
+        }
+      }
+    }
+
+    function pauseTimeline(){
+      pause = true;
+      clearInterval(playInterval);
+    }
+
+    function toggleLoop(){
+      onLoop = !onLoop; 
+      if (onLoop){
+        $('#loop').val('Loop: On');
+      }else{
+        $('#loop').val('Loop: Off');
+      }
+      console.log("onLoop is " + onLoop);
+    }
+
+    function togglePlayPause(){
+      if(pause){
+        pauseTranform();
+        playTimeline();
+      }else{
+        playTransform();
+        pauseTimeline();
+        playing = false;
+      }
+    }
+
+    function enablePlayButton(){
+      if (!playButtonEnabled){
+        if ($('.play-pause').css('opacity') != 1){
+          $('.play-pause').css('opacity', .75);
+        }
+        $('.play-pause')
+          .unbind('mouseenter mouseleave click')
+          .css('cursor', 'pointer')
+          .on({
+            click: togglePlayPause, 
+            mouseenter: function(){
+                          $('.play-pause').css('opacity', 1);
+                        }, 
+            mouseleave: function(){
+                         $('.play-pause').css('opacity', .75);
+            }
+          });
+
+        if($('.play-pause').is(':hover')) $('.play-pause').css('opacity', 1);
+        playButtonEnabled = true;
+      }
+    }
+
+    function disablePlayButton(){
+      if (playButtonEnabled){
+        $('.play-pause')
+          .unbind('mouseenter mouseleave click')
+          .css({'opacity' : .30,
+                'cursor' : 'default'});
+        
+        playButtonEnabled = false;
+      }
+      
+    }
+
+    function pauseTranform(){
+      $('#bar1').css({'transition' : "transform .5s ease-out",
+                      '-webkit-transition' : "-webkit-transform .5s ease-out",
+                      'transform'  : pauseTransformation.bar1,
+                      '-webkit-transform'  : pauseTransformation.bar1}); 
+      $('#bar2').css({'transition' : "transform .5s ease-out", 
+                      '-webkit-transition' : "-webkit-transform .5s ease-out",
+                      'transform'  : pauseTransformation.bar2,
+                      '-webkit-transform'  : pauseTransformation.bar2});
+    }
+    function playTransform(){
+      $('#bar1').css({'transition' : "transform .5s ease-out",
+                      '-webkit-transition' : "-webkit-transform .5s ease-out",
+                      'transform'  : playTransformation.bar1,
+                      '-webkit-transform'  : playTransformation.bar1}); 
+      $('#bar2').css({'transition' : "transform .5s ease-out", 
+                      '-webkit-transition' : "-webkit-transform .5s ease-out", 
+                      'transform'  : playTransformation.bar2,
+                      '-webkit-transform'  : playTransformation.bar2});
+    }
+
+    function spinnerTransform(){
+      $('#bar1').css({'transition' : "transform .3s ease-out",
+                      '-webkit-transition' : "transform .3s ease-out",
+                      'transform'  : spinnerTransformation.bar1,
+                      '-webkit-transform'  : spinnerTransformation.bar1}); 
+      $('#bar2').css({'transition' : "transform .3s ease-out",
+                      '-webkit-transition' : "transform .3s ease-out", 
+                      'transform'  : spinnerTransformation.bar2,
+                      '-webkit-transform'  : spinnerTransformation.bar2});
+    }
+
+    google.maps.event.addDomListener(window, 'load', initializeMap);
+
+    $(init);
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   WebGL START   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    function searchArray(searchElement, array){
+       'use strict';
+        var minIndex = 0;
+        var maxIndex = array.length - 1;
+        var currentIndex;
+        var currentElement;
+
+        while (minIndex <= maxIndex) {
+            currentIndex = (minIndex + maxIndex) / 2 | 0;
+            currentElement = array[currentIndex];
+
+            if (currentElement < searchElement) {
+                minIndex = currentIndex + 1;
+            }
+            else if (currentElement > searchElement) {
+                maxIndex = currentIndex - 1;
+            }
+            else {
+                return currentIndex;
+            }
+        }
+
+        return -1;
+    }
+
+    function reBindBuffer(){
+      if(!!gl){
+        gl.bindBuffer(gl.ARRAY_BUFFER, feedLocList.colorBuffer);
+
+        gl.bufferData(gl.ARRAY_BUFFER, feedLocList.color, gl.STATIC_DRAW);
+      }
+    }
+
+    function changeEnabled(feedNumArray, value){
+      for(var i = 0, len = feedNumArray.length; i < len; i++){
+          var listIndex = searchArray(feedNumArray[i], feedLocList.index);
+          feedLocList.color[listIndex * 6 + 4] = value;
+      }
+      reBindBuffer();
+      needWebGlRedraw = true;
+    }
+
+    function changeCircled(feedNum, value){
+      var listIndex = searchArray(feedNum, feedLocList.index);
+      feedLocList.color[listIndex * 6 + 5] = value;
+      reBindBuffer(); 
+      needWebGlRedraw = true;
+    }
+
+    function changeColor(r, g, b, feedNum){
+      var listIndex = searchArray(feedNum, feedLocList.index);
+      feedLocList.color[listIndex * 6 + 0] = r/255; 
+      feedLocList.color[listIndex * 6 + 1] = g/255; 
+      feedLocList.color[listIndex * 6 + 2] = b/255; 
+      needWebGlRedraw = true;
+    }
+
+    function changeOpacity(feedNumArray, value){
+      for(var i = 0, len = feedNumArray.length; i < len; i++){
+          var listIndex = searchArray(feedNumArray[i], feedLocList.index);
+          feedLocList.color[listIndex * 6 + 3] = value;
+      }
+      needWebGlRedraw = true;
+    }
+
+    function growShrink(){
+      if(timelineReady){
+        (countryPointSizePixels >= 13) ? countryPointSizePixels = 13 : (countryPointSizePixels += .5, needWebGlRedraw = true);
+      }else{
+        (countryPointSizePixels <= 7) ? countryPointSizePixels = 7 : (countryPointSizePixels -= .5, needWebGlRedraw = true);
+      }
+    }
+
+    function initializeMap() {
+          var myStyle = [
+                          {
+                            "featureType": "poi",
+                            "elementType": "labels.text",
+                            "stylers": [
+                              { "visibility": "off" }
+                            ]
+                          },
+                          {
+                            "featureType": "road",
+                            "elementType": "labels.icon",
+                            "stylers": [
+                              { "visibility": "off" }
+                            ]
+                          },{
+                              "featureType": "road",
+                              "elementType": "geometry.stroke",
+                              "stylers": [
+                                { "visibility": "off" }
+                              ]
+                            },{
+                              "featureType": "road.highway",
+                              "elementType": "geometry.fill",
+                              "stylers": [
+                                { "color": "#bbbbbb" }
+                              ]
+                            },{
+                              "featureType": "road"  },{
+                              "featureType": "road",
+                              "elementType": "labels.text.fill",
+                              "stylers": [
+                                { "color": "#888888" }
+                              ]
+                            },{
+                              "featureType": "administrative",
+                              "elementType": "labels.text.fill",
+                              "stylers": [
+                                { "color": "#606060" }
+                              ]
+                            },
+                            {
+                              "featureType": "administrative.locality",
+                              "elementType": "labels.icon",
+                              "stylers": [
+                                { "visibility": "off" }
+                              ]
+                            },
+                            {
+                              "featureType": "road",
+                              "elementType": "geometry",
+                              "stylers": [
+                                  {
+                                      "lightness": 100
+                                  },
+                                  {
+                                      "visibility": "simplified"
+                                  }
+                              ]
+                            },
+                            {
+                              "featureType": "water",
+                              "elementType": "geometry",
+                              "stylers": [
+                                  {
+                                      "visibility": "on"
+                                  },
+                                  {
+                                      "color": "#C6E2FF"
+                                  }
+                              ]
+                            },
+                            {
+                              "featureType": "poi",
+                              "elementType": "geometry.fill",
+                              "stylers": [
+                                  {
+                                      "color": "#C5E3BF"
+                                  }
+                              ]
+                            },
+                            {
+                              "featureType": "road",
+                              "elementType": "geometry.fill",
+                              "stylers": [
+                                  {
+                                      "color": "#D1D1B8"
+                                  }
+                              ]
+                            }
+                        ]
+
+         var mapOptions = {
+          //start at middle of US
+          zoom: 4,
+          center: new google.maps.LatLng(39.3, -95.8),
+          styles: myStyle, 
+
+          // start in Pittsburgh 
+          // zoom: 13,
+          // center: new google.maps.LatLng(40.442493, -79.942553),
+          // styles: myStyle, 
+
+       };
+       
+       map = new google.maps.Map(document.getElementById('map-div'),
+          mapOptions);
+
+       geocoder = new google.maps.Geocoder();
+
+    } 
+
+    var lastMapMatrix = new Float32Array(16);
+    var needWebGlRedraw = true;
+
+    function arrayEqual(a, b) {
+      if (a.length != b.length) return false;
+      for (var i = 0; i < a.length; i++) {
+        if (a[i] != b[i]) return false;
+      }
+      return true;
+    }
+
+    function drawFrame() {
+      // Compute WebGL transform from world xy coords to screen
+      // copy pixel->webgl matrix
+      mapMatrix.set(pixelsToWebGLMatrix);
+
+      var scale = canvasLayer.getMapScale();
+      scaleMatrix(mapMatrix, scale, scale);
+
+      var translation = canvasLayer.getMapTranslation();
+      translateMatrix(mapMatrix, translation.x, translation.y);
+
+      growShrink();
+
+      if (arrayEqual(mapMatrix, lastMapMatrix) && !needWebGlRedraw) return;
+
+      lastMapMatrix.set(mapMatrix);
+      needWebGlRedraw = false;
+
+      gl.enable(gl.BLEND);
+      gl.blendEquationSeparate( gl.FUNC_ADD, gl.FUNC_ADD );
+      gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+      // Erase frame
+      gl.clear(gl.COLOR_BUFFER_BIT);
+
+      var pointSize = .75 * countryPointSizePixels * Math.pow(blockPointSizePixels / countryPointSizePixels, (map.zoom - 4) / (18 - 4));
+
+      currentPointSize = pointSize; 
+
+      var hardFraction = .90;  
+
+      var count = feedLocList.index.length;
+
+      drawPoints(gl, mapMatrix, feedLocList, 0, count, 
+                 {pointSize: pointSize, hardFraction: hardFraction}); 
+    }
+
+    //for implementation of WebGL
+    function initWebGL() {
+      // initialize the canvasLayer
+      var canvasLayerOptions = {
+        map: map,
+        resizeHandler: resize,
+        animate: true,
+        updateHandler: drawFrame
+      };
+      canvasLayer = new CanvasLayer(canvasLayerOptions);
+
+      window.addEventListener('resize', function(){ 
+        google.maps.event.trigger(map, 'resize'); 
 
         if ($('#channels').width() == 225){
           $("#clear-button").css('left', 50);
@@ -1228,1480 +2441,212 @@
           $('.play-pause').css({'margin' : '-25px 10px 0px',
                                 'float' : 'left'});
         }
-      }
 
-   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ init() function END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-      function clampAllPlots(){
-        for (var key in plotScalers) {
-          if (plotScalers.hasOwnProperty(key)) {
-            clampNumberAxisToDataRange(plotScalers[key]);
-          }
-        }
-      }
+      }, false);
 
-      function getChannels() {
-         var plotDivs = $('#plots [id^=plot]');
-         var channels = [];
-         for (var i = 0; i < plotDivs.length; i++) {
-            var plotName = plotDivs[i].id;
-            var plotIdx = parseInt(plotName.slice(4));
-            var channel = plotIdxToChannel[plotIdx];
-            channels.push(channel);
-         }
-         return channels;
-      }
-      
-      function updateHash() {
-         var channels = getChannels();
-         var params = [];
-         if (channels.length > 0) {
-            params.push('channels=' + channels.join('|'));
-         }
-         var timeRange = plotManager.getDateAxis().getRange();
-         params.push('time=' + timeRange.min + ',' + timeRange.max);
-         var newHash = '#' + params.join('&');
-         if (window.location.hash != newHash) {
-            window.location.hash = newHash;
-         }
-      }
+      // initialize WebGL
+      gl = canvasLayer.canvas.getContext('experimental-webgl');
+      return !!gl;
+    }
 
-      // from http://stackoverflow.com/questions/4197591/parsing-url-hash-fragment-identifier-with-javascript
-      function getHashParams() {
-         var hashParams = {};
-         var e,
-             a = /\+/g,  // Regex for replacing addition symbol with a space
-             r = /([^&;=]+)=?([^&;]*)/g,
-             d = function (s) { return decodeURIComponent(s.replace(a, " ")); },
-             q = window.location.hash.substring(1);
-        
-         while (e = r.exec(q)) hashParams[d(e[1])] = d(e[2]);
-        
-         return hashParams;
-      }
+    function resize() {
+      var w = canvasLayer.canvas.width;
+      var h = canvasLayer.canvas.height;
 
-      function loadHash() {
-         var params = getHashParams();
+      // Extend viewport to entire canvas
+      gl.viewport(0, 0, w, h);
 
-         if (params.time) {
-            var split = params.time.split(',');
-            plotManager.getDateAxis().setRange(parseFloat(split[0]), parseFloat(split[1]));
+      // Map canvas pixel coordinates to WebGL coordinates
+      pixelsToWebGLMatrix.set([2/w, 0,   0, 0,
+                               0,  -2/h, 0, 0,
+                               0,   0,   1, 0,
+                              -1,   1,   0, 1]);
+    }
+
+    //When ready to draw points 
+    function initializeWebGL(){
+
+       if (!initWebGL()) {
+           $('#map-div').append('<div align="center" style="position: absolute; z-index:1000000; margin:50px; padding:10px; border-color:black; border-style:solid; border-width:1px;ground-color:white; font-size:20px"><b>WebGL required</b><br>Please try using a browser that supports WebGL,<br>such as Chrome, Firefox, or Internet Explorer 11.</div>');
          }
 
-         var oldChannels = getChannels(); 
-         var newChannels = [];
-         if (params.channels) {
-            newChannels = params.channels.split('|');
-         }
-         if (oldChannels.join('|') != newChannels.join('|')) {
-            for (var i = 0; i < oldChannels.length; i++) {
-               removePlot(oldChannels[i]);
-            }
-            for (i = 0; i < newChannels.length; i++) {
-               addPlot(newChannels[i]);
-            }
-         }
-      }
+        // Convert from latlng to xy for map, and set up shader programs
+       prepareSeries(gl, feedLocList);
 
-      function removePlot(channel) {
-         var plotIdx = channelToPlotIdx[channel];
-         var plotName = 'plot' + plotIdx;
-         plotManager.getPlotContainer(plotName).removePlot(plotManager.getPlot(plotName));
-         $('#plot' + plotIdx).parent().remove();
-         // window.clearInterval(plotScalers[plotIdx]);
-         delete plotScalers[plotIdx]; 
-         $('input[name="' + channel + '"]').prop('checked', false);
-         var feedIndex = parseInt(channel.substr(0, channel.indexOf('.'))); 
-         if (!(checkIfAnyChecked(feedIndex))) changeCircled(feedIndex, 0);
-         updateHash();
-      }
-      
+       $('#map-bar').show()
 
-      window.grapherLoad = function() {
-         var maxTimeSecs = Date.now() / 1000;
-         var minTimeSecs = maxTimeSecs - 7 * 24 * 60 * 60;
+       currentIndex = minIndex = feedLocList.index[0];
+       maxIndex = feedLocList.index[feedLocList.index.length - 1];
 
-         plotManager = new org.bodytrack.grapher.PlotManager("date_axis", minTimeSecs, maxTimeSecs);
-
-         plotManager.setWillAutoResizeWidth(true, function() {
-                 return $('#plots').width()         // window width
-                        // - 30;
-              });
-
-         plotManager.getDateAxis().constrainRangeTo(0, 4118011200);
-
-         dateProperties = plotManager.getDateAxis().getRange();
-
-         //Fires when cursor position changes or date axis bound changes 
-         plotManager.getDateAxis().addAxisChangeListener(function(dateAxisProperties) { 
-            clearTimeout(clampTimer);
-            clampTimer = setTimeout(clampAllPlots, 300);
-
-            if (Math.abs(dateAxisProperties.max - dateProperties.max) >= Number.MIN_VALUE +  Math.abs(dateAxisProperties.min - dateProperties.min) >= Number.MIN_VALUE){
-              clearTimeout(hashTimer);
-              hashTimer = setTimeout(updateHash, 300);
-            }
-
-            if (timelineReady){
-              var now = Date.now() / 1000;
-              var lastDataTime = timelineQueue[timelineQueue.length - 1].timeStamp; 
-              var firstDataTime = timelineQueue[0].timeStamp; 
-              if (   (Math.abs(dateAxisProperties.max - dateAxisProperties.min - dateProperties.max + dateProperties.min) >= Number.MIN_VALUE)
-                  || ((dateAxisProperties.max > lastDataTime && dateAxisProperties.max < now)
-                  && !(lastDataTime < dateAxisProperties.max && dateAxisProperties.max < now))
-                  || ((dateAxisProperties.min < firstDataTime && dateAxisProperties.min > 1374638275))){
-                  clearTimeout(refreshTimer);
-                  refreshTimer = setTimeout(function() {
-                    updateMultifeed(dateAxisProperties.min, dateAxisProperties.max); 
-                  }, 800);
-              }
-
-              if (Math.abs(dateProperties.cursorPosition - dateAxisProperties.cursorPosition) >= Number.MIN_VALUE){
-                  window.requestAnimationFrame(function(){
-                    showColorAtIndex(findIndexAtTime(timelineQueue, dateAxisProperties.cursorPosition));
-                  });
-              }
-
-              if (dateAxisProperties.cursorPosition > maxTimeSecs){
-                  pauseTimeline();
-                  playTransform();
-                  disablePlayButton();
-              }else{
-                  enablePlayButton();
-              }
-            }
-
-            dateProperties = dateAxisProperties;
-        });
+       var infoWindow; 
+       google.maps.event.addListener(map, 'click', function(event) {
+              var finalDiv = $('<div id="infowindow"><div id="notFoundMsg" style="display:none;">No channels found based on search criteria.</div></div>'); 
+              var finalInput = $('<div></div>'); 
+              var sectionBreak = $('<hr>');
+              var meanLat = 0; 
+              var meanLng = 0; 
+              var maxDistInPixels = currentPointSize/2;
         
-      }
-
-      function searchAttributes() {
-         var str = $('#search-bar').val().toLowerCase();     
-         var wordList = str.split(" ") || [];
-         showNumList = [];
-         var filterNumList = [];
-
-
-         var showConditions = "div[class = sensors]"; 
-         for (var i = 0; i < wordList.length; i++){
-            if (wordList[i] != "") {
-               showConditions += "[id *= '" + wordList[i] + "']";  
-            }
-         }; 
-
-         var finalSearchConditions = ""; 
-         var noneChecked = true; 
-         $('#filters [type = checkbox]').each(function(index, input) {
-            if (input.checked){
-              noneChecked = false; 
-              switch (input.name) {
-                  case "pm25":
-                    filterNumList = filterNumList.concat(pm25);
-                    console.log("pm25 checked"); 
-                    finalSearchConditions += showConditions + "[data-channel-type = 'pm25'],"; 
-                    break;
-                  case "pm10":
-                    filterNumList = filterNumList.concat(pm10);
-                    console.log("pm10 checked"); 
-                    finalSearchConditions += showConditions + "[data-channel-type = 'pm10'],"; 
-                    break;
-                  case "ozone":
-                    filterNumList = filterNumList.concat(ozone);
-                    console.log("ozone checked"); 
-                    finalSearchConditions += showConditions + "[data-channel-type = 'ozone'],"; 
-                    break;
-                  case "no":
-                    filterNumList = filterNumList.concat(no);
-                    console.log("no checked");
-                    finalSearchConditions += showConditions + "[data-channel-type = 'no'],"; 
-                    break;
-                  case "no2":
-                    filterNumList = filterNumList.concat(no2);
-                    console.log("no2 checked"); 
-                    finalSearchConditions += showConditions + "[data-channel-type = 'no2'],"; 
-                  case "so2":
-                    filterNumList = filterNumList.concat(so2);
-                    console.log("so2 checked")
-                    finalSearchConditions += showConditions + "[data-channel-type = 'so2'],"; 
-                    break;
-                  case "co":
-                    filterNumList = filterNumList.concat(co);
-                    console.log("co checked");
-                    finalSearchConditions += showConditions + "[data-channel-type = 'co'],"; 
-              }
-            }
-        });
-        
-        
-
-        if (noneChecked){
-          filterNumList = filterNumList.concat(allFeedNums);
-          finalSearchConditions = showConditions; 
-        }else{
-          finalSearchConditions = finalSearchConditions.substring(0,finalSearchConditions.length - 1); 
-        };
-
-        
-        //console.log($(finalSearchConditions));
-
-        $(finalSearchConditions).each(function(){
-
-          var currentNum = $(this).attr('id').substr($(this).attr('id').lastIndexOf('#') + 1); 
-
-          if (filterNumList.indexOf(parseInt(currentNum)) > -1 && (showNumList.length == 0 || currentNum != showNumList[showNumList.length - 1])) {
-              showNumList.push(parseInt(currentNum)); 
-            }
-          });
-
-
-          var $allSelect = $("div[class = sensors]");
-          if($allSelect){
-            $allSelect.hide(); 
-            console.log("Hide All");
-            changeEnabled(allFeedNums, 0); 
-
-            if (showNumList.length != 0){
-              console.log("ShowNumList > 0 and show finalSearchConditions");
-              $(finalSearchConditions).show();
-              changeEnabled(showNumList, 1);
-
-              }//else{
-
-              //   geocoder.geocode( { 'address': str}, function(results, status) {
-              //     if (status == google.maps.GeocoderStatus.OK) { 
-              //       var latlng = {latlng: []}
-              //       console.log(results[0].geometry.viewport.northeast()); 
-              //       // latlng.latlng.push(results[0].geometry.viewport);
-              //       // latlng.xy = latlng.latlng;
-
-              //       // for (var i = 0; i < latlng.latlng.length; i += 2) {
-              //       //     var lat = latlng.latlng[i];
-              //       //     var lon = latlng.latlng[i + 1];
-              //       //     var pixel = LatLongToPixelXY(lat, lon);
-              //       //     latlng.xy[i] = pixel.x;
-              //       //     latlng.xy[i + 1] = pixel.y;
-              //       // }
-              //       // delete latlng.latlng;
-
-              //       // var foundIndexes = []; 
-              //       // for (var k = 0; k < feedLocList.index.length ; k++){
-              //       //   if (Math.pow(feedLocList.xy[k*2] - latlng.xy[0],2) + Math.pow(feedLocList.xy[k*2 + 1] - latlng.xy[1],2) <= .05){
-              //       //     foundIndexes.push(feedLocList.index[k]);
-              //       //   }
-              //       // } 
-
-              //       // console.log(foundIndexes); 
-              //       // changeEnabled(foundIndexes, currentAlpha); 
-
-              //     } else {
-              //       console.log("Geocode was not successful for the following reason: " + status);
-              //     }
-
-              //   });
-
-              // };
-         }; 
-
-         $('#results-title p').replaceWith('<p>Results (<span style="font-size:12px">Showing ' + $(finalSearchConditions).length + " of " + $allSelect.length + '</span>):</p>')
-         drawInfoWindowLines(); 
-         console.log("-------------------")
-      }
-
-      function drawInfoWindowLines(){
-        var $mapInfoWindow = $("#infowindow");
-        if ($mapInfoWindow) {
-          $("#notFoundMsg").hide();
-          $('hr').show(); 
-
-          var visibleElements = $mapInfoWindow.children().filter(":visible");
-          visibleElements.each(function(index, element){
-              if ($(element).is('hr') && $(visibleElements).eq(index + 1).is('hr')){
-                $(element).hide(); 
-              };
-            });
-
-          var visibleDivs = $(visibleElements).filter(".sensors"); 
-          if (visibleDivs.length == 0) {
-            console.log("All Invisible.");
-            $("#notFoundMsg").show();
-            $("#notFoundMsg").prevAll('hr').hide(); 
-            $("#notFoundMsg").nextAll('hr').hide(); 
-          }else{ 
-              $(visibleDivs).each(function(index, element){
-                if (index==0){
-                  $(this).prevAll('hr').hide(); 
-                }
-                if (index==$(visibleDivs).length - 1){
-                  $(this).nextAll('hr').hide(); 
-                }
-              });
-          }; 
-        };
-      };
-
-      function clearFilters(){
-          $('#filters [type = checkbox]').each(function(index, input){
-            $(input).prop('checked', false); 
-          }); 
-          $('#search-bar').val('');
-          searchAttributes(); 
-      }
-
-      function printFoundDivs($divList){
-        var string = ""; 
-        $($divList).each(function(index, element){
-          string += $(element).get(0).outerHTML; 
-        })
-
-        return string; 
-      }
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   Timeline start  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-      var multifeed = ""; 
-      var dateProperties; 
-      var timelineReady = false;
-      var timelineQueue = []; 
-      var dataProcessQueue = [];
-      var currentLevel = 0; 
-      var pause = true;
-      var onLoop = false;
-      var playing = false;
-      var speed = DEFAULT_SPEED;
-      var timeSlices = DEFAULT_DURATION/speed*1000; 
-      var duration = DEFAULT_DURATION; 
-      var refreshTimer;
-      var dragTimer; 
-      var playInterval; 
-      var playButtonEnabled = false; 
-
-      var pauseTransformation = {bar1: 'translateX(13px) translateY(10px)', bar2: 'translateX(28px) translateY(10px)'}; 
-      var playTransformation = {bar1: 'translateX(24px) translateY(2px) rotate(135deg)', bar2: 'translateX(24px) translateY(18px) rotate(45deg)'};
-      var rotation = 0; 
-      var spinnerTransformation = {bar1: 'translateX(21px) translateY(10px) rotate('+(135 + rotation)+'deg)', bar2: 'translateX(21px) translateY(10px) rotate('+(45+rotation)+'deg)'};
-
-      function reColor(radioInput){
-        resetTimeline(30, 30, 30, NULL_ALPHA);
-        cursorInBound();
-        switch(radioInput.dataset.filter){
-          case "pm10":
-            multifeed = "pm_10";
-            var legend = $('.legend-container').eq(0).children(); 
-            // legend.eq(0).css('background-color', 'rgba(0, 255, 0,' + COLOR_ALPHA +')'); 
-            legend.eq(0).removeClass("greenYellow");
-            legend.eq(0).addClass("greenYellow");
-            legend.eq(1).text('     0   -      54  μg/m3'); 
-            legend = $('.legend-container').eq(1).children(); 
-            // legend.eq(0).css('background-color', 'rgba(255, 255, 0,' + COLOR_ALPHA +')'); 
-            legend.eq(0).removeClass("yellowOrange");
-            legend.eq(0).addClass("yellowOrange");
-            legend.eq(1).text('   54   -    154  μg/m3');
-            legend = $('.legend-container').eq(2).children(); 
-            // legend.eq(0).css('background-color', 'rgba(255, 125, 0,' + COLOR_ALPHA +')'); 
-            legend.eq(0).removeClass("orangeRed");
-            legend.eq(0).addClass("orangeRed");
-            legend.eq(1).text(' 154   -    254  μg/m3');
-            legend = $('.legend-container').eq(3).children(); 
-            // legend.eq(0).css('background-color', 'rgba(255, 0, 0,' + COLOR_ALPHA +')');
-            legend.eq(0).removeClass("redPurple");
-            legend.eq(0).addClass("redPurple"); 
-            legend.eq(1).text(' 254   -    354  μg/m3');
-            legend = $('.legend-container').eq(4).children(); 
-            // legend.eq(0).css('background-color', 'rgba(150, 0, 80,' + COLOR_ALPHA +')'); 
-            legend.eq(0).removeClass("purpleMaroon");
-            legend.eq(0).addClass("purpleMaroon");
-            legend.eq(1).text(' 354   -    424  μg/m3');
-            legend = $('.legend-container').eq(5).children(); 
-            legend.eq(0).css('background-color', 'rgba(125, 0, 0,' + COLOR_ALPHA +')'); 
-            legend.eq(1).text('         >    424  μg/m3'); 
-            legend = $('.legend-container').eq(6).children(); 
-            legend.eq(0).css('background-color', 'rgba(30, 30, 30,' + COLOR_ALPHA +')'); 
-            legend.eq(1).text('no data'); 
-            $('#legend').show();
-            break;
-          case "pm25":
-            multifeed = "pm_25";
-            var legend = $('.legend-container').eq(0).children(); 
-             // legend.eq(0).css('background-color', 'rgba(0, 255, 0,' + COLOR_ALPHA +')'); 
-            legend.eq(0).removeClass("greenYellow");
-            legend.eq(0).addClass("greenYellow");
-            legend.eq(1).text('     0   -      13  μg/m3');
-            legend = $('.legend-container').eq(1).children(); 
-            // legend.eq(0).css('background-color', 'rgba(255, 255, 0,' + COLOR_ALPHA +')'); 
-            legend.eq(0).removeClass("yellowOrange");
-            legend.eq(0).addClass("yellowOrange"); 
-            legend.eq(1).text('   13   -   35.4  μg/m3');
-            legend = $('.legend-container').eq(2).children(); 
-            // legend.eq(0).css('background-color', 'rgba(255, 125, 0,' + COLOR_ALPHA +')'); 
-            legend.eq(0).removeClass("orangeRed");
-            legend.eq(0).addClass("orangeRed"); 
-            legend.eq(1).text('35.4   -   55.4  μg/m3');
-            legend = $('.legend-container').eq(3).children(); 
-            // legend.eq(0).css('background-color', 'rgba(255, 0, 0,' + COLOR_ALPHA +')');
-            legend.eq(0).removeClass("redPurple");
-            legend.eq(0).addClass("redPurple"); 
-            legend.eq(1).text('55.4   - 150.4  μg/m3');
-            legend = $('.legend-container').eq(4).children(); 
-            // legend.eq(0).css('background-color', 'rgba(150, 0, 80,' + COLOR_ALPHA +')'); 
-            legend.eq(0).removeClass("purpleMaroon");
-            legend.eq(0).addClass("purpleMaroon");
-            legend.eq(1).text('150.4 - 250.4  μg/m3');
-            legend = $('.legend-container').eq(5).children(); 
-            legend.eq(0).css('background-color', 'rgba(125, 0, 0,' + COLOR_ALPHA +')'); 
-            legend.eq(1).text('         > 250.4  μg/m3'); 
-            legend = $('.legend-container').eq(6).children(); 
-            legend.eq(0).css('background-color', 'rgba(30, 30, 30,' + COLOR_ALPHA +')'); 
-            legend.eq(1).text('no data'); 
-            $('#legend').show();
-            break; 
-        };
-        disablePlayButton();
-        spinnerTransform();
-        getGrapherTimeTiles(multifeed);
-      }
-
-      function clearColors(r,g,b){
-        for (var i = 0, len = allFeedNums.length; i < len; i++){
-          changeColor(r,g,b,allFeedNums[i]);
-        }
-      };
-
-      function resetOpacity(a){
-        changeOpacity(allFeedNums, a);
-      }
-
-      function resetTimeline(r,g,b,a){
-          $('#map-filters').children().children().filter(':reset').attr('disabled','disabled');
-          $('#map-filters')
-          $('#legend').hide();
-          disablePlayButton();
-          pauseTimeline(); 
-          playTransform();
-          playing = false; 
-          timelineReady = false; 
-          timelineQueue = []; 
-          dataProcessQueue = [];
-          multifeed = ''; 
-          currentLevel = 0;
-          clearTimeout(dragTimer);
-          clearTimeout(refreshTimer);
-          clearColors(r,g,b);
-          currentAlpha = a; 
-          resetOpacity(a);
-          reBindBuffer();
-      }
-
-      function updateMultifeed(beginTime, endTime){
-        // timelineQueue = [];       
-        if (multifeed) getTiles(beginTime, endTime, multifeed);
-        
-      } 
-
-      function offsetLimitCalculator(beginTime, endTime){
-        var level = Math.ceil(Math.log(Math.abs(endTime - beginTime)/512)/Math.log(2));
-        var offset = Math.floor(beginTime/(512*Math.pow(2, level))); 
-        return {level: level, offset: offset};
-      }
-
-      //beginTime and endTime are in Epoch
-      function getTiles(beginTime, endTime, multifeedName){ 
-        dataPocessQueue = []; 
-        var result = offsetLimitCalculator(beginTime, endTime); 
-        var level = result.level;
-        var offset = result.offset;
-        if (level != currentLevel){
-          pauseTimeline();
-          currentLevel = level; 
-          timelineReady = false;
-          disablePlayButton();
-          spinnerTransform();
-          var url1 = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + offset;
-          var url2 = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + (offset + 1);
-          var url3 = "https://esdr.cmucreatelab.org/api/v1/multifeeds/" + multifeedName + "/tiles/" + level + "." + (offset - 1);
-          getData(url1, multifeedName);
-          getData(url2, multifeedName);
-          getData(url3, multifeedName);
-        }else{
-          if (playing) {
-            playTimeline();
-            pauseTranform();
-          }
-        }
-        
-      }
-
-      function getGrapherTimeTiles(multifeedName){
-        var beginTime = dateProperties.min; 
-        var endTime = dateProperties.max;
-        getTiles(beginTime, endTime, multifeedName); 
-      }
-
-      function getData(url, multifeedName){
-        var dataList = [];
-        var feedNums = []; 
-        jQuery.getJSON(url, function(data){
-          var dataSet = data.data; 
-
-          for (var i = 0, len = dataSet.length; i < len; i++){
-            var allNull = true;
-            var dataArray = dataSet[i]; 
-            for (var k = 1, lenth = dataArray.length; k < lenth; k++){
-              if (dataArray[k] != null) allNull = false; 
-            }
-            if (!allNull) dataList.push(dataArray);
-          }
-
-          $(data.full_channel_names).each(function(index, name){
-            feedNums.push(parseInt(name.split(".", 2)[1].split("_")[1])); 
-          });
-
-          // if (dataList.length == 0) return; 
-          dataProcessQueue.push(wrapFunction(processData, this, [dataList, feedNums, multifeedName]));
-          dataWorkHorse();
-        }); 
-      }
-
-      function dataWorkHorse(){
-        if (dataProcessQueue.length == 3){
-          while (dataProcessQueue.length){
-            dataProcessQueue[0](); 
-            dataProcessQueue.shift();
-          }
-          $('#map-filters').children().children().filter(':reset').removeAttr('disabled');
-          cursorInBound();
-          timelineReady = true;
-          cursorInBound();
-          if (dateProperties.cursorPosition < Date.now()/1000){
-            enablePlayButton();
-          }
-          if (playing) {
-            playTimeline();
-            pauseTranform();
-          }else{
-            playTransform();
-          }
-
-          showColorAtIndex(findIndexAtTime(timelineQueue, dateProperties.cursorPosition));
-        }
-      }
-
-      function queuePush(element){
-        var min = 0; 
-        var max = timelineQueue.length - 1; 
-        var guess;
-        var minDifference = Number.MAX_VALUE;
-        var answer = -1; 
-        while (min <= max){
-          guess = Math.floor((min + max)/2);
-          var difference = element.timeStamp - timelineQueue[guess].timeStamp; 
-
-          if (Math.abs(difference) < Number.MIN_VALUE){
-            timelineQueue[guess] = element;
-            return; 
-          }else if(Math.abs(difference) < Math.abs(minDifference)){
-            minDifference = difference;
-            answer = guess; 
-          }else if (min == max){
-            break;
-          }
-
-          if (difference > 0){
-            min = guess + 1; 
-          }else{
-            max = guess - 1; 
-          }
-          
-        } 
-        if (answer == -1){
-          timelineQueue.push(element); 
-        }else if(answer == 0){
-          if (minDifference < 0){
-            timelineQueue.splice(0,0,element); 
-          }else{
-            timelineQueue.splice(1,0,element);
-          }
-        }else if(minDifference > 0){
-          timelineQueue.splice(answer + 1, 0, element); 
-        }else{
-          timelineQueue.splice(answer - 1, 0, element); 
-        }
-      }
-
-      function wrapFunction(fn, context, params){
-        return function(){
-          fn.apply(context, params); 
-        }
-      }
-
-      function clickedOpaque(a){
-        changeOpacity(clickedNumList, a); 
-      }
-
-      function hoverOpaque(a){
-        changeOpacity(hoverNumList, a); 
-      }
-
-      //modified from http://stackoverflow.com/questions/2353211/hsl-to-rgb-color-conversion
-
-      function hslToRgb(h, s, l){
-          var r, g, b;
-
-          if(s == 0){
-              r = g = b = l; // achromatic
-          }else{
-              var hue2rgb = function hue2rgb(p, q, t){
-                  if(t < 0) t += 1;
-                  if(t > 1) t -= 1;
-                  if(t < 1/6) return p + (q - p) * 6 * t;
-                  if(t < 1/2) return q;
-                  if(t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-                  return p;
-              }
-
-              var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-              var p = 2 * l - q;
-              r = hue2rgb(p, q, h + 1/3);
-              g = hue2rgb(p, q, h);
-              b = hue2rgb(p, q, h - 1/3);
-          }
-
-          return {r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255)};
-      }
-
-      function rgbToHsl(r, g, b){
-          r /= 255, g /= 255, b /= 255;
-          var max = Math.max(r, g, b), min = Math.min(r, g, b);
-          var h, s, l = (max + min) / 2;
-
-          if(max == min){
-              h = s = 0; // achromatic
-          }else{
-              var d = max - min;
-              s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-              switch(max){
-                  case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-                  case g: h = (b - r) / d + 2; break;
-                  case b: h = (r - g) / d + 4; break;
-              }
-              h /= 6;
-          }
-
-          return {h: h, s: s, l: l};
-      }
-
-      function interpolateColors(r1, g1, b1, r2, g2, b2, min, max, val){
-        var t = (val - min)/(max - min); 
-        return {r:(1 - t)*r1 + t*r2, g:(1 - t)*g1 + t*g2,b:(1 - t)*b1 + t*b2}
-      }
-
-      function processData(dataList, feedNums, multifeedName){
-        switch (multifeedName){
-          case "pm_10":
-            for (var i = 0, len = dataList.length; i < len; i++){
-              var colorFunctions = {
-                  functionList: [],
-                  timeStamp: dataList[i][0],
-              };
-
-              var nullList = []; 
-
-              for (var k = 1, lenth = dataList[i].length; k < lenth; k++){
-                 var val = dataList[i][k]; 
-                  if (val == null){
-                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [30, 30, 30, feedNums[k - 1]]));
-                    nullList.push(feedNums[k - 1]);  
-                  }else if (val <= 54){
-                    var interColors = interpolateColors(0, 255, 0, 255, 255, 0, 0, 54, val); 
-                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
-                    // colorFunctions.functionList.push(wrapFunction(changeColor, this, [0, 255, 0, feedNums[k - 1]]));
-                  }else if(val <= 154){
-                    var interColors = interpolateColors(255, 255, 0, 255, 125, 0, 54, 154, val);
-                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
-                    // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 255, 0, feedNums[k - 1]]));
-                  }else if(val <= 254){
-                    var interColors = interpolateColors(255, 125, 0, 255, 0, 0, 154, 254, val);
-                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
-                    // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 125, 0, feedNums[k - 1]])); 
-                  }else if(val <= 354){
-                    var interColors = interpolateColors(255, 0, 0, 150, 0, 80, 254, 354, val);
-                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
-                    // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 0, 0, feedNums[k - 1]])); 
-                  }else if(val <= 424){
-                    var interColors = interpolateColors(150, 0, 80, 125, 0, 0, 354, 424, val);
-                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
-                    // colorFunctions.functionList.push(wrapFunction(changeColor, this, [150, 0, 80, feedNums[k - 1]])); 
+              var eltList = findClosestElements(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
+              var inputNodes = null; 
+              var count = 0;
+              var visible = false; 
+              for (var i = 0; i < eltList.length; i++){
+                 var listIndex = eltList[i].i; 
+                 if (feedLocList.color[listIndex * 6 + 3] != 0) {
+                  count++; 
+                  visible = true; 
+                  changeOpacity(clickedNumList, currentAlpha);
+                  changeOpacity(clickedandColoredList, COLOR_ALPHA);
+                  clickedNumList = [];
+                  clickedandColoredList = [];
+                  if (hoverAndColored.indexOf(feedLocList.index[listIndex]) > -1){
+                    clickedandColoredList.push(feedLocList.index[listIndex]);
                   }else{
-                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [125, 0, 0, feedNums[k - 1]])); 
+                    clickedNumList.push(feedLocList.index[listIndex]);
                   }
-              }
-              colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [feedNums, COLOR_ALPHA])); 
-              colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [nullList, NULL_ALPHA]));
-              colorFunctions.functionList.push(wrapFunction(clickedOpaque, this, [1]));
-              colorFunctions.functionList.push(wrapFunction(hoverOpaque, this, [1]));
-              colorFunctions.functionList.push(wrapFunction(reBindBuffer, this, []));
-              queuePush(colorFunctions); 
+                  
+                  var clickedNode = $("#channels div[id $= '#" + feedLocList.index[eltList[i].i] + "']");
+                  inputNodes = $(clickedNode).children().children().filter('input');
+
+                  $(finalInput).append(inputNodes.clone()); 
+
+                  if(i > 0 && i < eltList.length)$(finalDiv).append(sectionBreak.clone());
+                  $(finalDiv).append(clickedNode.clone()); 
+                  $('input[name="' + $(this).attr('name') + '"]').prop('checked', $(this).prop('checked'));
+                  
+                  meanLat += eltList[i].lat; 
+                  meanLng += eltList[i].lng; 
+                }   
             }
-            break; 
-          case "pm_25":
-            for (var i = 0, len = dataList.length; i < len; i++){
-              var colorFunctions = {
-                  functionList: [],
-                  timeStamp: dataList[i][0],
-              };
-
-              var nullList = [];
-
-              for (var k = 1, lenth = dataList[i].length; k < lenth; k++){
-                 var val = dataList[i][k]; 
-                  if (val == null){
-                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [30, 30, 30, feedNums[k - 1]]));
-                    nullList.push(feedNums[k - 1]);  
-                  }else if (val <= 12){
-                    var interColors = interpolateColors(0, 255, 0, 255, 255, 0, 0, 12, val); 
-                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
-                    // colorFunctions.functionList.push(wrapFunction(changeColor, this, [0, 255, 0, feedNums[k - 1]]));
-                  }else if(val <= 35.4){
-                    var interColors = interpolateColors(255, 255, 0, 255, 125, 0, 12, 35.4, val);
-                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
-                    // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 255, 0, feedNums[k - 1]]));
-                  }else if(val <= 55.4){
-                    var interColors = interpolateColors(255, 125, 0, 255, 0, 0, 35.4, 55.4, val);
-                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
-                    // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 125, 0, feedNums[k - 1]])); 
-                  }else if(val <= 150.4){
-                    var interColors = interpolateColors(255, 0, 0, 150, 0, 80, 55.4, 150.4, val);
-                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
-                    // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 0, 0, feedNums[k - 1]])); 
-                  }else if(val <= 250.4){
-                    var interColors = interpolateColors(150, 0, 80, 125, 0, 0, 150.4, 250.4, val);
-                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
-                    // colorFunctions.functionList.push(wrapFunction(changeColor, this, [150, 0, 80, feedNums[k - 1]])); 
-                  }else{
-                    colorFunctions.functionList.push(wrapFunction(changeColor, this, [125, 0, 0, feedNums[k - 1]])); 
-                  } 
-              }
-              colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [feedNums, COLOR_ALPHA])); 
-              colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [nullList, NULL_ALPHA]));
-              colorFunctions.functionList.push(wrapFunction(clickedOpaque, this, [1]));
-              colorFunctions.functionList.push(wrapFunction(hoverOpaque, this, [1]));
-              colorFunctions.functionList.push(wrapFunction(reBindBuffer, this, []));
-              queuePush(colorFunctions); 
+            if (count != 0){
+              meanLat = meanLat/count; 
+              meanLng = meanLng/count; 
             }
-        }
-      }
-
-      //inspiratini's from binarySearch.js
-      function findIndexAtTime(list, time){
-        var min = 0; 
-        var max = list.length - 1; 
-        var guess;
-        var minDifference = Number.MAX_VALUE;
-        var answer = -1;   
-
-        while (min <= max){
-          guess = Math.floor((min + max)/2);
-          var difference = time - list[guess].timeStamp; 
-
-          if (Math.abs(difference) < Number.MIN_VALUE){
-            return guess;
-          }else if(Math.abs(difference) <= minDifference){
-            minDifference = Math.abs(difference);
-            answer = guess; 
-          }else if (min == max){
-            break;
-          }
-
-          if (difference > 0){
-            min = guess + 1; 
-          }else{
-            max = guess - 1; 
-          }
-          
-        } 
-        return answer; 
-
-      }
-
-      function showColorAtIndex(index){
-        if (timelineReady && timelineQueue[index]){
-          var functionList = timelineQueue[index].functionList || []; 
-          for (var i = 0, len = functionList.length; i < len; i++){
-            functionList[i](); 
-          }
-        }
-      }
-
-      function cursorInBound(){
-        if (dateProperties.cursorPosition < dateProperties.min || !dateProperties.cursorPosition){
-            plotManager.getDateAxis().setCursorPosition(dateProperties.min); 
-        }else if(dateProperties.cursorPosition > dateProperties.max){
-            plotManager.getDateAxis().setCursorPosition(dateProperties.max);
-        }
-      }
-
-      function setSpeed(){
-        if ($("#duration").val() < 1){
-          $("#duration").val(1);
-        }else if($("#duration").val() > 100){
-          $("#duration").val(99);
-        }
-
-        duration = $("#duration").val();
-        timeSlices = duration/speed*1000
-
-        if (playing){
-          pauseTimeline();
-          playTimeline();
-        }
-      }
-
-      function playTimeline(){
-        pause = false;
-        playing = true;
-        cursorInBound();
-        clearInterval(playInterval);
-        playInterval = setInterval(function(){
-            playNext(dateProperties.cursorPosition)
-        }, speed); 
-      }
-
-      function playNext(time){
-        if(time != dateProperties.cursorPosition){
-          console.log("Dragging.");
-          cursorInBound();
-          pauseTimeline();
-          clearTimeout(dragTimer);
-          dragTimer = setTimeout(function(){
-            playTimeline();
-          }, 300);
-        }else{
-          if (dateProperties.max > Date.now() / 1000){
-            var timeIncrement = (Date.now() / 1000 - dateProperties.min)/timeSlices;
-          }else{
-            var timeIncrement = (dateProperties.max - dateProperties.min)/timeSlices;
-          }
-          time += timeIncrement;
-          if (time < dateProperties.max && time <= Date.now() / 1000){        
-            window.requestAnimationFrame(function(){
-              plotManager.getDateAxis().setCursorPosition(time);
-            });
-
-          }else{
-            if (onLoop){
-              console.log("loop.")
-              if (time - timeIncrement > Date.now()/1000){
-                pauseTimeline(); 
-                return;
-              }
-              plotManager.getDateAxis().setCursorPosition(dateProperties.min - timeIncrement); 
-            }else{
-              console.log(time - dateProperties.max, time - Date.now() / 1000);
-              console.log('Timeline Done'); 
-              pauseTimeline();
-              playTransform();
-              playing = false; 
-              plotManager.getDateAxis().setCursorPosition(dateProperties.min);     
-              return; 
-            }
-          }
-        }
-      }
-
-      function pauseTimeline(){
-        pause = true;
-        clearInterval(playInterval);
-      }
-
-      function toggleLoop(){
-        onLoop = !onLoop; 
-        if (onLoop){
-          $('#loop').val('Loop: On');
-        }else{
-          $('#loop').val('Loop: Off');
-        }
-        console.log("onLoop is " + onLoop);
-      }
-
-      function togglePlayPause(){
-        if(pause){
-          pauseTranform();
-          playTimeline();
-        }else{
-          playTransform();
-          pauseTimeline();
-          playing = false;
-        }
-      }
-
-      function enablePlayButton(){
-        if (!playButtonEnabled){
-          if ($('.play-pause').css('opacity') != 1){
-            $('.play-pause').css('opacity', .75);
-          }
-          $('.play-pause')
-            .unbind('mouseenter mouseleave click')
-            .css('cursor', 'pointer')
-            .on({
-              click: togglePlayPause, 
-              mouseenter: function(){
-                            $('.play-pause').css('opacity', 1);
-                          }, 
-              mouseleave: function(){
-                           $('.play-pause').css('opacity', .75);
-              }
-            });
-
-          if($('.play-pause').is(':hover')) $('.play-pause').css('opacity', 1);
-          playButtonEnabled = true;
-        }
-      }
-
-      function disablePlayButton(){
-        if (playButtonEnabled){
-          $('.play-pause')
-            .unbind('mouseenter mouseleave click')
-            .css({'opacity' : .30,
-                  'cursor' : 'default'});
-          
-          playButtonEnabled = false;
-        }
-        
-      }
-
-      function pauseTranform(){
-        $('#bar1').css({'transition' : "transform .5s ease-out",
-                        '-webkit-transition' : "-webkit-transform .5s ease-out",
-                        'transform'  : pauseTransformation.bar1,
-                        '-webkit-transform'  : pauseTransformation.bar1}); 
-        $('#bar2').css({'transition' : "transform .5s ease-out", 
-                        '-webkit-transition' : "-webkit-transform .5s ease-out",
-                        'transform'  : pauseTransformation.bar2,
-                        '-webkit-transform'  : pauseTransformation.bar2});
-      }
-      function playTransform(){
-        $('#bar1').css({'transition' : "transform .5s ease-out",
-                        '-webkit-transition' : "-webkit-transform .5s ease-out",
-                        'transform'  : playTransformation.bar1,
-                        '-webkit-transform'  : playTransformation.bar1}); 
-        $('#bar2').css({'transition' : "transform .5s ease-out", 
-                        '-webkit-transition' : "-webkit-transform .5s ease-out", 
-                        'transform'  : playTransformation.bar2,
-                        '-webkit-transform'  : playTransformation.bar2});
-      }
-
-      function spinnerTransform(){
-        $('#bar1').css({'transition' : "transform .3s ease-out",
-                        '-webkit-transition' : "transform .3s ease-out",
-                        'transform'  : spinnerTransformation.bar1,
-                        '-webkit-transform'  : spinnerTransformation.bar1}); 
-        $('#bar2').css({'transition' : "transform .3s ease-out",
-                        '-webkit-transition' : "transform .3s ease-out", 
-                        'transform'  : spinnerTransformation.bar2,
-                        '-webkit-transform'  : spinnerTransformation.bar2});
-      }
-
-      $(init);
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   WebGL START   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      var map;
-      var geocoder;
-      var canvasLayer;
-      var gl;
-      var pixelsToWebGLMatrix = new Float32Array(16);
-      var mapMatrix = new Float32Array(16);
-      var currentIndex, minIndex, maxIndex;
-      var countryPointSizePixels = 7; 
-      var blockPointSizePixels = 70; 
-
-      function searchArray(searchElement, array){
-         'use strict';
-          var minIndex = 0;
-          var maxIndex = array.length - 1;
-          var currentIndex;
-          var currentElement;
-
-          while (minIndex <= maxIndex) {
-              currentIndex = (minIndex + maxIndex) / 2 | 0;
-              currentElement = array[currentIndex];
-
-              if (currentElement < searchElement) {
-                  minIndex = currentIndex + 1;
-              }
-              else if (currentElement > searchElement) {
-                  maxIndex = currentIndex - 1;
-              }
-              else {
-                  return currentIndex;
-              }
-          }
-
-          return -1;
-      }
-
-      function reBindBuffer(){
-        if(!!gl){
-          gl.bindBuffer(gl.ARRAY_BUFFER, feedLocList.colorBuffer);
-
-          gl.bufferData(gl.ARRAY_BUFFER, feedLocList.color, gl.STATIC_DRAW);
-        }
-      }
-
-      function changeEnabled(feedNumArray, value){
-        for(var i = 0, len = feedNumArray.length; i < len; i++){
-            var listIndex = searchArray(feedNumArray[i], feedLocList.index);
-            feedLocList.color[listIndex * 6 + 4] = value;
-        }
-        reBindBuffer();
-      }
-
-      function changeCircled(feedNum, value){
-        var listIndex = searchArray(feedNum, feedLocList.index);
-        feedLocList.color[listIndex * 6 + 5] = value;
-        reBindBuffer(); 
-      }
-
-      function changeColor(r, g, b, feedNum){
-        var listIndex = searchArray(feedNum, feedLocList.index);
-        feedLocList.color[listIndex * 6 + 0] = r/255; 
-        feedLocList.color[listIndex * 6 + 1] = g/255; 
-        feedLocList.color[listIndex * 6 + 2] = b/255; 
-
-      }
-
-      function changeOpacity(feedNumArray, value){
-        for(var i = 0, len = feedNumArray.length; i < len; i++){
-            var listIndex = searchArray(feedNumArray[i], feedLocList.index);
-            feedLocList.color[listIndex * 6 + 3] = value;
-        }
-      }
-
-      function initializeMap() {
-            var myStyle = [
-                            {
-                              "featureType": "poi",
-                              "elementType": "labels.text",
-                              "stylers": [
-                                { "visibility": "off" }
-                              ]
-                            },
-                            {
-                              "featureType": "road",
-                              "elementType": "labels.icon",
-                              "stylers": [
-                                { "visibility": "off" }
-                              ]
-                            },{
-                                "featureType": "road",
-                                "elementType": "geometry.stroke",
-                                "stylers": [
-                                  { "visibility": "off" }
-                                ]
-                              },{
-                                "featureType": "road.highway",
-                                "elementType": "geometry.fill",
-                                "stylers": [
-                                  { "color": "#bbbbbb" }
-                                ]
-                              },{
-                                "featureType": "road"  },{
-                                "featureType": "road",
-                                "elementType": "labels.text.fill",
-                                "stylers": [
-                                  { "color": "#888888" }
-                                ]
-                              },{
-                                "featureType": "administrative",
-                                "elementType": "labels.text.fill",
-                                "stylers": [
-                                  { "color": "#606060" }
-                                ]
-                              },
-                              {
-                                "featureType": "administrative.locality",
-                                "elementType": "labels.icon",
-                                "stylers": [
-                                  { "visibility": "off" }
-                                ]
-                              },
-                              {
-                                "featureType": "road",
-                                "elementType": "geometry",
-                                "stylers": [
-                                    {
-                                        "lightness": 100
-                                    },
-                                    {
-                                        "visibility": "simplified"
-                                    }
-                                ]
-                              },
-                              {
-                                "featureType": "water",
-                                "elementType": "geometry",
-                                "stylers": [
-                                    {
-                                        "visibility": "on"
-                                    },
-                                    {
-                                        "color": "#C6E2FF"
-                                    }
-                                ]
-                              },
-                              {
-                                "featureType": "poi",
-                                "elementType": "geometry.fill",
-                                "stylers": [
-                                    {
-                                        "color": "#C5E3BF"
-                                    }
-                                ]
-                              },
-                              {
-                                "featureType": "road",
-                                "elementType": "geometry.fill",
-                                "stylers": [
-                                    {
-                                        "color": "#D1D1B8"
-                                    }
-                                ]
-                              }
-                          ]
-
-           var mapOptions = {
-            //start at middle of US
-            zoom: 4,
-            center: new google.maps.LatLng(39.3, -95.8),
-            styles: myStyle, 
-
-            // start in Pittsburgh 
-            // zoom: 13,
-            // center: new google.maps.LatLng(40.442493, -79.942553),
-            // styles: myStyle, 
-
-         };
-         
-         map = new google.maps.Map(document.getElementById('map-div'),
-            mapOptions);
-
-         geocoder = new google.maps.Geocoder();
-
-      }
-
-      google.maps.event.addDomListener(window, 'load', initializeMap); 
-
-      function drawFrame() {
-        gl.enable(gl.BLEND);
-        gl.blendEquationSeparate( gl.FUNC_ADD, gl.FUNC_ADD );
-        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
-        // Compute WebGL transform from world xy coords to screen
-        // copy pixel->webgl matrix
-        mapMatrix.set(pixelsToWebGLMatrix);
-
-        var scale = canvasLayer.getMapScale();
-        scaleMatrix(mapMatrix, scale, scale);
-
-        var translation = canvasLayer.getMapTranslation();
-        translateMatrix(mapMatrix, translation.x, translation.y);
-
-        // Erase frame
-        gl.clear(gl.COLOR_BUFFER_BIT);
-
-        if(timelineReady){
-          countryPointSizePixels = (countryPointSizePixels >= 13) ? 13 : countryPointSizePixels += .5;
-        }else{
-          countryPointSizePixels = (countryPointSizePixels <= 7) ? 7 : countryPointSizePixels -= .5;
-        }
-
-        var pointSize = .75 * countryPointSizePixels * Math.pow(blockPointSizePixels / countryPointSizePixels, (map.zoom - 4) / (18 - 4));
-
-        currentPointSize = pointSize; 
-
-        var hardFraction = .90;  
-
-        var count = feedLocList.index.length;
-
-        drawPoints(gl, mapMatrix, feedLocList, 0, count, 
-                   {pointSize: pointSize, hardFraction: hardFraction}); 
-      }
-
-      //for implementation of WebGL
-      function initWebGL() {
-        // initialize the canvasLayer
-        var canvasLayerOptions = {
-          map: map,
-          resizeHandler: resize,
-          animate: true,
-          updateHandler: drawFrame
-        };
-        canvasLayer = new CanvasLayer(canvasLayerOptions);
-
-        window.addEventListener('resize', function(){ 
-          google.maps.event.trigger(map, 'resize'); 
-
-          if ($('#channels').width() == 225){
-            $("#clear-button").css('left', 50);
-            $('#legend').css('left', 225);
-            $('.main-content').css({'left' : 225,
-                                    'width' : "calc(100% - 225px)"});  
-          }else{
-            $("#clear-button").css('left', '5%');
-            $('#legend').css('left', null);
-            $('.main-content').css({'left' : "20%",
-                                    'width' : "80%"}); 
-          }
-
-          var winWidth = $(window).width(); 
-          if(winWidth <= 444){
-            $('#map-bar').css('height', 225);
-            $('#legend').css({'bottom' : "calc(45% + 225px)"});
-            $('#map-filters').css({'width' : 130,
-                                   'margin' : '0px 10px 20px'}); 
-            $('#timeline').css({'width': 130,
-                                'clear' : 'left',
-                                'margin' : '70px 10px'}); 
-            $('.play-pause').css({'margin' : '-25px 50px 0px',
-                                  'float' : 'none'});
-          }else if(winWidth <= 600){
-            $('#map-bar').css('height', 170);
-            $('#map-filters').css({'width' : 130,
-                                   'margin' : '0px 10px 35px'}); 
-            $('#timeline').css({'width': 130,
-                                'clear' : 'left',
-                                'margin' : '0px 10px'});
-            $('#legend').css({'left' : 'auto', 
-                              'bottom' : "calc(45% + 170px)"}); 
-            $('.play-pause').css({'margin' : '-25px 10px 0px',
-                                  'float' : 'left'});
-          }else if(winWidth <= 900){
-            $('#map-bar').css('height', 100); 
-            $('#map-filters').css({'width' : 280,
-                                   'margin' : '0px 10px'}); 
-            $('#timeline').css({'width' : 280,
-                                'clear' : 'left',
-                                'margin' : '0px 10px'});
-            $('#legend').css({'left' : 'auto',   
-                              'bottom' : "calc(45% + 100px)"});
-            $('.play-pause').css({'margin' : '-25px 10px 0px',
-                                  'float' : 'left'});
-          }else{
-            $('#map-bar').css('height', 55); 
-            $('#map-filters').css('width', 280);
-            $('#timeline').css({'width' : 280,
-                                'clear' : 'right',
-                                'margin' : '0px 10px'});
-            $('#legend').css({'left' : 'auto',  
-                              'bottom' : "calc(45% + 60px)"});
-            $('.play-pause').css({'margin' : '-25px 10px 0px',
-                                  'float' : 'left'});
-          }
-
-
-        }, false);
-
-        // initialize WebGL
-        gl = canvasLayer.canvas.getContext('experimental-webgl');
-        return !!gl;
-      }
-
-      function resize() {
-        var w = canvasLayer.canvas.width;
-        var h = canvasLayer.canvas.height;
-
-        // Extend viewport to entire canvas
-        gl.viewport(0, 0, w, h);
-
-        // Map canvas pixel coordinates to WebGL coordinates
-        pixelsToWebGLMatrix.set([2/w, 0,   0, 0,
-                                 0,  -2/h, 0, 0,
-                                 0,   0,   1, 0,
-                                -1,   1,   0, 1]);
-      }
-
-      //When ready to draw points 
-      function initializeWebGL(){
-
-         if (!initWebGL()) {
-             $('#map-div').append('<div align="center" style="position: absolute; z-index:1000000; margin:50px; padding:10px; border-color:black; border-style:solid; border-width:1px;ground-color:white; font-size:20px"><b>WebGL required</b><br>Please try using a browser that supports WebGL,<br>such as Chrome, Firefox, or Internet Explorer 11.</div>');
-           }
-
-          // Convert from latlng to xy for map, and set up shader programs
-         prepareSeries(gl, feedLocList);
-
-         $('#map-bar').show()
-
-         currentIndex = minIndex = feedLocList.index[0];
-         maxIndex = feedLocList.index[feedLocList.index.length - 1];
-
-         var infoWindow; 
-         google.maps.event.addListener(map, 'click', function(event) {
-                var finalDiv = $('<div id="infowindow"><div id="notFoundMsg" style="display:none;">No channels found based on search criteria.</div></div>'); 
-                var finalInput = $('<div></div>'); 
-                var sectionBreak = $('<hr>');
-                var meanLat = 0; 
-                var meanLng = 0; 
-                var maxDistInPixels = currentPointSize/2;
-          
-                var eltList = findClosestElements(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
-                var inputNodes = null; 
-                var count = 0;
-                var visible = false; 
-                for (var i = 0; i < eltList.length; i++){
-                   var listIndex = eltList[i].i; 
-                   if (feedLocList.color[listIndex * 6 + 3] != 0) {
-                    count++; 
-                    visible = true; 
-                    changeOpacity(clickedNumList, currentAlpha);
-                    changeOpacity(clickedandAlphaList, COLOR_ALPHA);
-                    clickedNumList = [];
-                    clickedandAlphaList = [];
-                    if (hoverAndColored.indexOf(feedLocList.index[listIndex]) > -1){
-                      clickedandAlphaList.push(feedLocList.index[listIndex]);
-                    }else{
-                      clickedNumList.push(feedLocList.index[listIndex]);
-                    }
-                    
-                    var clickedNode = $("#channels div[id $= '#" + feedLocList.index[eltList[i].i] + "']");
-                    inputNodes = $(clickedNode).children().children().filter('input');
-
-                    $(finalInput).append(inputNodes.clone()); 
-
-                    if(i > 0 && i < eltList.length)$(finalDiv).append(sectionBreak.clone());
-                    $(finalDiv).append(clickedNode.clone()); 
+            
+            if (eltList.length != 0 && visible){
+                if (infoWindow){
+                  infoWindow.close();
+                };
+
+               infoWindow = new google.maps.InfoWindow(
+                    {content: printFoundDivs(finalDiv), 
+                    position: new google.maps.LatLng(meanLat, meanLng)});
+                infoWindow.open(map);
+
+                changeOpacity(clickedNumList, 1);
+                changeOpacity(clickedandColoredList, 1);
+                reBindBuffer();
+
+                google.maps.event.addListener(infoWindow, 'domready', function() {
+                  $(finalInput).children().each(function (index, inputs){
                     $('input[name="' + $(this).attr('name') + '"]').prop('checked', $(this).prop('checked'));
-                    
-                    meanLat += eltList[i].lat; 
-                    meanLng += eltList[i].lng; 
-                  }   
-              }
-              if (count != 0){
-                meanLat = meanLat/count; 
-                meanLng = meanLng/count; 
-              }
-              
-              if (eltList.length != 0 && visible){
-                  if (infoWindow){
-                    infoWindow.close();
-                  };
+                  }); 
+                  drawInfoWindowLines();
+                });
 
-                 infoWindow = new google.maps.InfoWindow(
-                      {content: printFoundDivs(finalDiv), 
-                      position: new google.maps.LatLng(meanLat, meanLng)});
-                  infoWindow.open(map);
-
-                  changeOpacity(clickedNumList, 1);
-                  changeOpacity(clickedandAlphaList, 1);
+                google.maps.event.addListener(infoWindow,'closeclick',function(){
+                  changeOpacity(clickedNumList, currentAlpha);
+                  changeOpacity(clickedandColoredList, COLOR_ALPHA);
+                  clickedNumList = []; 
+                  clickedandColoredList = [];
                   reBindBuffer();
+                });
+            };
+       });
 
-                  google.maps.event.addListener(infoWindow, 'domready', function() {
-                    $(finalInput).children().each(function (index, inputs){
-                      $('input[name="' + $(this).attr('name') + '"]').prop('checked', $(this).prop('checked'));
-                    }); 
-                    drawInfoWindowLines();
-                  });
+        google.maps.event.addListener(map, 'mousemove', function(event) {
+          var maxDistInPixels = currentPointSize/2;
+          var eltList = findClosestElements(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
 
-                  google.maps.event.addListener(infoWindow,'closeclick',function(){
-                    changeOpacity(clickedNumList, currentAlpha);
-                    changeOpacity(clickedandAlphaList, COLOR_ALPHA);
-                    clickedNumList = []; 
-                    clickedandAlphaList = [];
-                    reBindBuffer();
-                  });
-              };
-         });
+          changeOpacity(hoverNumList, currentAlpha);
+          changeOpacity(hoverAndColored, COLOR_ALPHA);
+          changeOpacity(clickedNumList, 1);
+          changeOpacity(clickedandColoredList, 1);
+          reBindBuffer();
 
-          google.maps.event.addListener(map, 'mousemove', function(event) {
-            var maxDistInPixels = currentPointSize/2;
-            var eltList = findClosestElements(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
+          hoverNumList = [];
+          hoverAndColored = [];
 
-            changeOpacity(hoverNumList, currentAlpha);
-            changeOpacity(hoverAndColored, COLOR_ALPHA);
-            changeOpacity(clickedNumList, 1);
-            changeOpacity(clickedandAlphaList, 1);
-            reBindBuffer();
+          for (var i = 0; i < eltList.length; i++){
+              var listIndex = eltList[i].i; 
+              if (feedLocList.color[listIndex * 6 + 3] != 0) {
+                map.setOptions({ draggableCursor: 'default' });
+                if (Math.abs(feedLocList.color[listIndex*6+3] - COLOR_ALPHA) <= 1e-7){
+                  hoverAndColored.push(feedLocList.index[listIndex]);
+                }else{
+                  hoverNumList.push(feedLocList.index[listIndex]);
+                }
+                changeOpacity([feedLocList.index[listIndex]], 1);
+                reBindBuffer(); 
+              } 
+          }
 
-            hoverNumList = [];
-            hoverAndColored = [];
-
-            for (var i = 0; i < eltList.length; i++){
-                var listIndex = eltList[i].i; 
-                if (feedLocList.color[listIndex * 6 + 3] != 0) {
-                  map.setOptions({ draggableCursor: 'default' });
-                  if (Math.abs(feedLocList.color[listIndex*6+3] - COLOR_ALPHA) <= 1e-7){
-                    hoverAndColored.push(feedLocList.index[listIndex]);
-                  }else{
-                    hoverNumList.push(feedLocList.index[listIndex]);
-                  }
-                  changeOpacity([feedLocList.index[listIndex]], 1);
-                  reBindBuffer(); 
-                } 
-            }
-
-            if (eltList.length == 0){
-                map.setOptions({ draggableCursor: null });
-            }
-              
-          });
-          
-      }
-
-</script>
-
-</script>
-
-    <script id="pointVertexShader" type="x-shader/x-vertex">
-      attribute vec4 worldCoord;
-      attribute float aPointSize;
-      attribute vec4 aColor; 
-      attribute float aEnabled;
-      attribute float aCircled;
-
-      varying vec4 vColor;
-      varying float vCircled;  
-
-      uniform mat4 mapMatrix;
-
-      void main() {
-        // transform world coordinate by matrix uniform variable
-        gl_Position = mapMatrix * worldCoord;
-
-        // a constant size for points, regardless of zoom level
-        gl_PointSize = aPointSize;
-
-        vColor = aColor;
-        vColor[3] = min(vColor[3], aEnabled);
-
-        vCircled = aCircled;
-      }
-    </script>
-    <script id="pointFragmentShader" type="x-shader/x-fragment">
-      precision mediump float;
-      varying vec4 vColor;
-
-      varying float vCircled; 
-
-      uniform float hardFraction;
-
-      // Circle of diameter 0.5, composed of a "hard" (alpha=1) center of radius 0.5 * hardFraction,
-      // then transitioning to alpha=0 at diameter 0.5
-      void main() {
-        float dist = length(gl_PointCoord.xy - vec2(.5, .5));
-        // TODO(rsargent):  shouldn't we just be adjusting the alpha here?  Maybe we're taking
-        // advantage of the double-multiplication to get something other than linear.
-        // But multiplying all the channels will break if we do something other than an additive blend.
+          if (eltList.length == 0){
+              map.setOptions({ draggableCursor: null });
+          }
+            
+        });
         
+    }
 
-        // gl_FragColor = vColor * clamp((.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
+  </script>
 
-        if (vCircled > .0 && dist >= .35 && dist <= .75){
-          gl_FragColor = vec4(.0, .0, .0, 1.) * clamp((.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
-        }else{
-          gl_FragColor = vColor * clamp((.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
-        }
+  </script>
+
+  <script id="pointVertexShader" type="x-shader/x-vertex">
+    attribute vec4 worldCoord;
+    attribute float aPointSize;
+    attribute vec4 aColor; 
+    attribute float aEnabled;
+    attribute float aCircled;
+
+    varying vec4 vColor;
+    varying float vCircled;  
+
+    uniform mat4 mapMatrix;
+
+    void main() {
+      // transform world coordinate by matrix uniform variable
+      gl_Position = mapMatrix * worldCoord;
+
+      // a constant size for points, regardless of zoom level
+      gl_PointSize = aPointSize;
+
+      vColor = aColor;
+      vColor[3] = min(vColor[3], aEnabled);
+
+      vCircled = aCircled;
+    }
+  </script>
+  <script id="pointFragmentShader" type="x-shader/x-fragment">
+    precision mediump float;
+    varying vec4 vColor;
+
+    varying float vCircled; 
+
+    uniform float hardFraction;
+
+    // Circle of diameter 0.5, composed of a "hard" (alpha=1) center of radius 0.5 * hardFraction,
+    // then transitioning to alpha=0 at diameter 0.5
+    void main() {
+      float dist = length(gl_PointCoord.xy - vec2(.5, .5));
+      // TODO(rsargent):  shouldn't we just be adjusting the alpha here?  Maybe we're taking
+      // advantage of the double-multiplication to get something other than linear.
+      // But multiplying all the channels will break if we do something other than an additive blend.
+      
+
+      // gl_FragColor = vColor * clamp((.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
+
+      if (vCircled > .0 && dist >= .35 && dist <= .75){
+        gl_FragColor = vec4(.0, .0, .0, 1.) * clamp((.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
+      }else{
+        gl_FragColor = vColor * clamp((.5 - dist) / (0.5 - 0.5 * hardFraction), 0., 1.);
       }
+    }
 
-    </script> 
+  </script> 
 </body>
 </html>
 

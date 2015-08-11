@@ -1,16 +1,30 @@
 function drawPoints(gl, transform, series, from, to, settings) {
+  var program = series.program;
   gl.useProgram(series.program);
-  gl.vertexAttrib1f(gl.getAttribLocation(series.program, 'aPointSize'), settings.pointSize);
+
+  if (program.aPointSizeAttribLocation === undefined) {
+    program.aPointSizeAttribLocation = gl.getAttribLocation(series.program, 'aPointSize')
+  }
+
+  if (program.mapMatrixUniformLocation === undefined) {
+    program.mapMatrixUniformLocation = gl.getUniformLocation(series.program, 'mapMatrix')
+  }
+
+  if (program.hardFractionUniformLocation === undefined) {
+    program.hardFractionUniformLocation = gl.getUniformLocation(series.program, 'hardFraction')
+  }
+
+  gl.vertexAttrib1f(program.aPointSizeAttribLocation, settings.pointSize);
 
   // attach matrix value to 'mapMatrix' uniform in shader
-  gl.uniformMatrix4fv(gl.getUniformLocation(series.program, 'mapMatrix'), false, transform);
+  gl.uniformMatrix4fv(program.mapMatrixUniformLocation, false, transform);
 
   // set color for shader
   // gl.uniform4fv(gl.getUniformLocation(series.program, 'color'), settings.color);
 
   // set hardFraction
   // TODO(rsargent): make sure hardFraction is at least 1 pixel less than 100% for antialiasing
-  gl.uniform1f(gl.getUniformLocation(series.program, 'hardFraction'), settings.hardFraction);
+  gl.uniform1f(program.hardFractionUniformLocation, settings.hardFraction);
 
   // draw!
   gl.drawArrays(gl.POINTS, from, to);
