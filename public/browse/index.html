@@ -593,7 +593,6 @@
     //___________________ Grapher variables ____________________________________
 
     var plotManager;           //handle for the PlotManager 
-    var feed = null;
 
     var plotCount = 0;        //records how many plots have come into existance
     var channelLabels = {};   //records all channelLabels
@@ -776,13 +775,6 @@
                               bar2: 'translateX(24px) translateY(18px) rotate(45deg)'};
     var spinnerTransformation = {bar1: 'translateX(21px) translateY(10px) rotate(135deg)',
                                  bar2: 'translateX(21px) translateY(10px) rotate(45deg)'};
-
-    function setRangeFromSecondsAgoToNow(numSecondsAgo) {
-       var now = Date.now() / 1000;
-       var min = now - numSecondsAgo;
-       plotManager.getDateAxis().constrainRangeTo(Math.min(min, feed.minTimeSecs), now);
-       plotManager.getDateAxis().setRange(min, now);
-    }
 
     function createDatasource(source) {
        var split = source.split('.');
