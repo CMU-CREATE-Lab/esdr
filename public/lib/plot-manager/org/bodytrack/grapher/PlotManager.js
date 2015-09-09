@@ -82,6 +82,24 @@ if (!window['$']) {
    };
 
    /**
+    * The function which the datasource function will call upon success, giving it the tile JSON.  Some implementations
+    * can handle either an object or a string, some require one or the other.
+    *
+    * @callback datasourceSuccessCallbackFunction
+    * @param {object|string} json - the tile JSON, as either an object or a string
+    */
+
+   /**
+    * Datasource function with signature <code>function(level, offset, successCallback)</code> resposible for
+    * returning tile JSON for the given <code>level</code> and <code>offset</code>.
+    *
+    * @callback datasourceFunction
+    * @param {number} level - the tile's level
+    * @param {number} offset - the tile's offset
+    * @param {datasourceSuccessCallbackFunction} successCallback - success callback function which expects to be given the tile JSON
+    */
+
+   /**
     * The min and max values for an axis's range.
     *
     * @typedef {Object} AxisRange
@@ -104,7 +122,7 @@ if (!window['$']) {
     * <code>null</code>.
     *
     * @callback axisChangeListenerFunction
-    * @param {AxisChangeEvent|null} axisChangeEvent - the <code>{@link AxisChangeEvent}</code>
+    * @param {AxisChangeEvent|null} axisChangeEvent - the <code>{@link AxisChangeEvent}</code>, may be <code>null</code>
     */
 
    /**
@@ -784,7 +802,7 @@ if (!window['$']) {
          }
 
          if (typeof datasource !== 'function') {
-            throw new Error("The datasource must be a function.")
+            throw new Error("The datasource must be a function.");
          }
 
          if (!isNumberOrString(yAxisElementId)) {
@@ -1055,16 +1073,6 @@ if (!window['$']) {
             });
          }
       };
-
-      /**
-       * Datasource function with signature <code>function(level, offset, successCallback)</code> resposible for
-       * returning tile JSON for the given <code>level</code> and <code>offset</code>.
-       *
-       * @callback datasourceFunction
-       * @param {number} level - the tile's level
-       * @param {number} offset - the tile's offset
-       * @param {function} successCallback - success callback function which expects to be given a stringified JSON of the tile
-       */
 
       /**
        * Helper method for adding a plot, shorthand for
