@@ -129,7 +129,7 @@ Database.create(function(err, db) {
             app.use(requestLogger(':method :url :status :response-time ms :res[content-length] :uid'));      // simple request logging when in non-production mode
          }
          app.use(bodyParser.urlencoded({ extended : true }));     // form parsing
-         app.use(bodyParser.json({ limit : '5mb' }));             // json body parsing (5 MB limit)
+         app.use(bodyParser.json({ limit : '25mb' }));            // json body parsing (25 MB limit)
          app.use(function(err, req, res, next) { // function MUST have arity 4 here!
             // catch body parser error (beefed up version of http://stackoverflow.com/a/15819808/703200)
             if (err) {
