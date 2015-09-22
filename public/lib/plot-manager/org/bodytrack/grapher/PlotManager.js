@@ -129,7 +129,7 @@ if (!window['$']) {
     * The statistics about plot data within a specific time range.
     *
     * @typedef {Object} PlotStatistics
-    * @property {number} count - number of data points in the range
+    * @property {number|null} count - number of data points in the range, may be <code>null</code> if unknown
     * @property {boolean} hasData - whether there are any data points in the range
     * @property {number|null} minValue - the minimum Y value in the range, or <code>null</code> (or not present in the object) if there is no data within the range.
     * @property {number|null} maxValue - the maximum Y value in the range, or <code>null</code> (or not present in the object) if there is no data within the range.
@@ -595,7 +595,8 @@ if (!window['$']) {
       };
 
       /**
-       * Gets statistcs about the data within the specified time range.
+       * Gets statistcs about the data within the specified time range.  Note that some implementations may limit the
+       * time range for the statistics to the current visible date range.
        *
        * @param {AxisRange|number} rangeOrMinTimeSecs - an {@link AxisRange} or a double representing the time in Unix
        * time seconds of the start of the visible time range. If <code>null</code>, undefined, non-numeric, or not an
@@ -607,7 +608,19 @@ if (!window['$']) {
        */
       this.getStatisticsWithinRange = function(rangeOrMinTimeSecs, maxTimeSecs) {
          var validRange = validateAxisRange(rangeOrMinTimeSecs, maxTimeSecs);
-         var rawStatistics = wrappedPlot.getSimpleStatistics(validRange.min, validRange.max);
+
+         var rawStatistics;
+         if (typeof wrappedPlot.getSimpleStatistics === 'function') {
+            rawStatistics = wrappedPlot.getSimpleStatistics(validRange.min, validRange.max);
+         } else if (typeof wrappedPlot.getMinMaxValuesWithinTimeRange === 'function') {
+            var result = wrappedPlot.getMinMaxValuesWithinTimeRange(validRange.min, validRange.max);
+            rawStatistics = {
+               count : null,
+               y_min : result ? result.min : null,
+               y_max : result ? result.max : null,
+               has_data : !!(result && result.min != null && result.max != null)
+            }
+         }
 
          return {
             count : rawStatistics['count'],
