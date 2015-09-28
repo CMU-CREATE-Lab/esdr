@@ -20,19 +20,6 @@
     </annotationProcessing>
   </component>
   <component name="CopyrightManager" default="" />
-  <component name="DataSourceManagerImpl" format="xml" hash="1018867931">
-    <data-source source="LOCAL" name="MySQL - esdr@localhost" uuid="a1a93e08-2069-498b-befe-f2b24560c574">
-      <driver-ref>mysql</driver-ref>
-      <synchronize>true</synchronize>
-      <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
-      <jdbc-url>jdbc:mysql://localhost:3306/esdr</jdbc-url>
-      <driver-properties>
-        <property name="zeroDateTimeBehavior" value="convertToNull" />
-        <property name="tinyInt1isBit" value="false" />
-      </driver-properties>
-      <libraries />
-    </data-source>
-  </component>
   <component name="DependencyValidationManager">
     <option name="SKIP_IMPORT_STATEMENTS" value="false" />
   </component>
@@ -473,14 +460,6 @@
   </component>
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
-  </component>
-  <component name="dataSourceStorageLocal">
-    <data-source name="MySQL - esdr@localhost" uuid="a1a93e08-2069-498b-befe-f2b24560c574">
-      <user-name>root</user-name>
-      <user-password>dfdadfcbdfd9dfd9dfdddfc5dfd8dfce</user-password>
-      <schema-pattern>esdr.* esdr_test.*</schema-pattern>
-      <default-schemas>esdr.* esdr_test.*</default-schemas>
-    </data-source>
   </component>
   <component name="libraryTable">
     <library name="EnvironmentalSensorDataRepository node_modules" type="javaScript">
