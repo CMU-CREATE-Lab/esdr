@@ -150,30 +150,33 @@
         margin-top: 5px;
       }
 
-      #clear-button{
+      .button{
         cursor: pointer;
         border-radius: 5px;
+        text-align: center;
+        transition: background-color .1s ease-in-out;
+      }
+
+       .button:hover{
+        background-color: rgba(90,90,90, .75)
+      }
+
+      .button:active{
+        transition: background-color 0s;
+        background-color: rgba(190,190,190, .75)
+      }
+
+      #clear-button{
         top: 260px;
         left: 5%;
         min-width: 120px;
         width: 10%;
-        text-align: center;
-        transition: background-color .1s ease-in-out;
       }
 
       #clear-button p{
         font-size: 11px;
         padding: 0px;
         line-height: 15px;
-      }
-
-      #clear-button:hover{
-        background-color: rgba(90,90,90, .75)
-      }
-
-      #clear-button:active{
-        transition: background-color 0s;
-        background-color: rgba(190,190,190, .75)
       }
 
       #results-title{
@@ -360,6 +363,87 @@
         transform: translateX(24px) translateY(18px) rotate(45deg);
       }
 
+      #export-button{
+        position: relative;
+        float: right;
+        width: 150px;
+        top: 50%;
+        transform: translateY(-50%);
+        margin-right: 15px;
+        margin-left: 5px;
+      }
+
+      #dark-background{
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        background-color: rgba(30, 30, 30, .85);
+        z-index: 999;
+      }
+
+      #export-menu{
+        position: relative;
+        height: 50%;
+        width: 60%;
+        min-width: 300px;
+        min-height: 250px;
+        margin: auto;
+        top: 50%;
+        transform: translateY(-50%);
+        background-color: rgb(180, 180, 180);
+      }
+
+      #export-title{
+        position: absolute;
+        width: 100%;
+        min-width: 250px;
+        height: 50px;
+        font-size: 20px;
+        background-color: rgb(50,50,50); 
+        margin: 0px;
+        padding: 0px;
+        line-height: 47px; 
+        text-align: center;
+      }
+
+      #export-title p{
+        color: white;
+        margin: 0px;
+        padding: 0px;
+      }
+
+      #export-title .x-button{
+        position: absolute;
+        height: 50px;
+        width: 50px;
+        top: 0px;
+        right: 0px;
+        background-color: rgb(60,60,60);
+        border: none;
+      }
+
+      .x-button:hover{
+          cursor: pointer;
+      }
+
+      .x-button{
+        position: absolute;
+        top: 0px;
+        right: 0px;
+        height: 50px;
+        width: 50px;
+        background-color: rgb(60,60,60);
+        font-size: 30px
+      }
+
+      #export-content{
+        position: relative;
+        top: 50px;
+        height: calc(100%-50px);
+        width: 100%;
+        background-color: rgb(180, 180, 180);
+      }
+
       #charts{
         height: 45%; 
         bottom: 0px;
@@ -493,7 +577,7 @@
     </form>
   </div>
 
-  <div class="title-bar tool-bar" id="clear-button" onclick="clearFilters()">
+  <div class="title-bar tool-bar button" id="clear-button" onclick="clearFilters()">
     <p>Clear Search Filters</p>
   </div>
 
@@ -558,6 +642,10 @@
         <label><span style="color: white">Loop Duration:</span><input type="number" min="1" max="99" id="duration" value="15"></label>
       </fieldset>
     </form>
+
+    <div class="button title-bar" id="export-button">
+      <p>Export Data (.csv)</p>
+    </div>
   </div>
 
   <div class="main-content" id="charts">
@@ -1084,6 +1172,78 @@
 
       console.log(JSON.stringify(pm25JSON));
     }
+
+    function resizeToWindow(){
+
+        if ($('#channels').width() == 225){
+          $("#clear-button").css('left', 50);
+          $('#legend').css('left', 225);
+          $('.main-content').css({'left' : 225,
+                                  'width' : "calc(100% - 225px)"});  
+        }else{
+          $("#clear-button").css('left', '5%');
+          $('#legend').css('left', null);
+          $('.main-content').css({'left' : "20%",
+                                  'width' : "80%"}); 
+        }
+
+        var winWidth = $(window).width(); 
+        if(winWidth <= 630){
+          $('#map-bar').css('height', 270);
+          $('#legend').css({'bottom' : "calc(45% + 270px)"});
+          $('#map-filters').css({'width' : 130,
+                                 'margin' : '0px 10px 20px'}); 
+          $('#timeline').css({'width': 130,
+                              'clear' : 'left',
+                              'margin' : '70px 10px'}); 
+          $('.play-pause').css({'margin' : '-45px 50px 0px',
+                                'float' : 'none'});
+          $('#export-button').css({'top' : '-5%',
+                                    'float' : 'left',
+                                    'clear' : 'left'});
+        }else if(winWidth <= 800){
+          $('#map-bar').css('height', 170);
+          $('#map-filters').css({'width' : 130,
+                                 'margin' : '0px 10px 35px'}); 
+          $('#timeline').css({'width': 130,
+                              'clear' : 'left',
+                              'margin' : '0px 10px'});
+          $('#legend').css({'left' : 'auto', 
+                            'bottom' : "calc(45% + 170px)"}); 
+          $('.play-pause').css({'margin' : '-25px 10px 0px',
+                                'float' : 'left'});
+          $('#export-button').css({'top' : '0%',
+                                    'float' : 'right',
+                                    'clear' : 'none'});
+        }else if(winWidth <= 1080){
+          $('#map-bar').css('height', 100); 
+          $('#map-filters').css({'width' : 280,
+                                 'margin' : '0px 10px'}); 
+          $('#timeline').css({'width' : 280,
+                              'clear' : 'left',
+                              'margin' : '0px 10px'});
+          $('#legend').css({'left' : 'auto',   
+                            'bottom' : "calc(45% + 100px)"});
+          $('.play-pause').css({'margin' : '-25px 10px 0px',
+                                'float' : 'left'});
+          $('#export-button').css({'top' : '0%',
+                                    'float' : 'right',
+                                    'clear' : 'none'});
+        }else{
+          $('#map-bar').css('height', 55); 
+          $('#map-filters').css('width', 280);
+          $('#timeline').css({'width' : 280,
+                              'clear' : 'right',
+                              'margin' : '0px 10px'});
+          $('#legend').css({'left' : 'auto',  
+                            'bottom' : "calc(45% + 60px)"});
+          $('.play-pause').css({'margin' : '-25px 10px 0px',
+                                'float' : 'left'});
+          $('#export-button').css({'top' : '50%',
+                                  'float' : 'right',
+                                  'clear' : 'none'});
+        }
+    }
     
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ init() function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  
@@ -1096,6 +1256,8 @@
              $('#search-bar').blur(); 
           }
        }); 
+
+       $('#export-button').on('click', exportData); 
 
        var timer = null; 
        $('#search-bar').keyup(function(){
@@ -1127,11 +1289,12 @@
        $(document).keydown(function(e) {
           switch(e.which) {
               case 32: //space
-                if (playButtonEnabled){
+                if (playButtonEnabled && !$("#search-bar").is(":focus")){
                   togglePlayPause();
                 }
               break
               case 37: //left arrow
+              if (!$("#search-bar").is(":focus")){
                 cursorInBound();
                 if(!pause){
                   playTransform();
@@ -1146,8 +1309,10 @@
                 }
                 plotManager.getDateAxis().setCursorPosition(dateProperties.cursorPosition - timeIncrement);
                 cursorInBound();
+              }
               break
               case 39: //right arrow
+              if (!$("#search-bar").is(":focus")){
                 cursorInBound();
                 if(!pause){
                   playTransform();
@@ -1162,71 +1327,18 @@
                 }
                 plotManager.getDateAxis().setCursorPosition(dateProperties.cursorPosition + timeIncrement);
                 cursorInBound();
+              }
               break
               default: return; 
           }
       });
 
-      $('#map-filters ').keydown(function(e){
+      $('#map-filters').keydown(function(e){
         e.preventDefault();
       })
 
-      if ($('#channels').width() == 225){
-        $("#clear-button").css('left', 50);
-        $('#legend').css('left', 225);
-        $('.main-content').css({'left' : 225,
-                                'width' : "calc(100% - 225px)"});  
-      }else{
-        $("#clear-button").css('left', '5%');
-        $('#legend').css('left', null);
-        $('.main-content').css({'left' : "20%",
-                                'width' : "80%"}); 
-      }
+      resizeToWindow();
 
-      var winWidth = $(window).width(); 
-      if(winWidth <= 444){
-        $('#map-bar').css('height', 225);
-        $('#legend').css({'bottom' : "calc(45% + 225px)"});
-        $('#map-filters').css({'width' : 130,
-                               'margin' : '0px 10px 20px'}); 
-        $('#timeline').css({'width': 130,
-                            'clear' : 'left',
-                            'margin' : '70px 10px'}); 
-        $('.play-pause').css({'margin' : '-25px 50px 0px',
-                              'float' : 'none'});
-      }else if(winWidth <= 600){
-        $('#map-bar').css('height', 170);
-        $('#map-filters').css({'width' : 130,
-                               'margin' : '0px 10px 35px'}); 
-        $('#timeline').css({'width': 130,
-                            'clear' : 'left',
-                            'margin' : '0px 10px'});
-        $('#legend').css({'left' : 'auto', 
-                          'bottom' : "calc(45% + 170px)"}); 
-        $('.play-pause').css({'margin' : '-25px 10px 0px',
-                              'float' : 'left'});
-      }else if(winWidth <= 900){
-        $('#map-bar').css('height', 100); 
-        $('#map-filters').css({'width' : 280,
-                               'margin' : '0px 10px'}); 
-        $('#timeline').css({'width' : 280,
-                            'clear' : 'left',
-                            'margin' : '0px 10px'});
-        $('#legend').css({'left' : 'auto',   
-                          'bottom' : "calc(45% + 100px)"});
-        $('.play-pause').css({'margin' : '-25px 10px 0px',
-                              'float' : 'left'});
-      }else{
-        $('#map-bar').css('height', 55); 
-        $('#map-filters').css('width', 280);
-        $('#timeline').css({'width' : 280,
-                            'clear' : 'right',
-                            'margin' : '0px 10px'});
-        $('#legend').css({'left' : 'auto',  
-                          'bottom' : "calc(45% + 60px)"});
-        $('.play-pause').css({'margin' : '-25px 10px 0px',
-                              'float' : 'left'});
-      }
     }
 
  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ init() function END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1314,6 +1426,63 @@
        if (!(checkIfAnyChecked(feedIndex))) changeCircled(feedIndex, 0);
        updateHash();
     }
+
+    function exportData(){
+      var feedIDs = [];
+      var channelNamesPerID = []; 
+      for (var key in plotIdxToChannel) {
+        if (plotIdxToChannel.hasOwnProperty(key)) {
+          var feedNumAndChannelName = plotIdxToChannel[key].split("."); 
+          var feedIDIndex = feedIDs.indexOf(feedNumAndChannelName[0]); 
+          if (feedIDIndex > -1){
+            channelNamesPerID[feedIDIndex].push(feedNumAndChannelName[1]); 
+          }else{
+            feedIDs.push(feedNumAndChannelName[0]); 
+            channelNamesPerID.push([feedNumAndChannelName[1]]);
+          }
+        }
+      }
+
+      var menuDiv = [];
+      menuDiv.push('<div id="dark-background">');
+        menuDiv.push('<div id="export-menu">');
+          menuDiv.push('<div id="export-title">');
+            menuDiv.push('<p>Export Information</p>');
+            menuDiv.push('<div class="x-button"><span style="color:rgb(200,200,200);">&times</span></div>');
+          menuDiv.push('</div>');
+          menuDiv.push('<div id="export-content">');
+
+          for (var i = 0; i < feedIDs.length; i++){
+            var url = ESDR_API_ROOT_URL + "/feeds/" + feedIDs[i] + "/channels/" + channelNamesPerID[i].join(',') + "/export?from=" + dateProperties.min + "&to=" + dateProperties.max;
+              menuDiv.push('<div class="file-info">');
+                menuDiv.push('<p style="text-decoration: underline;">File ' + (i + 1) + ':</p>');
+                menuDiv.push('<p>Feed ID: ' + feedIDs[i] + '</p>');  
+                menuDiv.push('<p>Channels: ' + channelNamesPerID[i].join(', ') + '</p>');
+                menuDiv.push('<p>Time Range: ' + dateProperties.min + " to " + dateProperties.max + '</p>');
+                menuDiv.push('<a href=' + url + ' download>Download Link</a>');
+              menuDiv.push('</div>');
+              menuDiv.push('<hr>');
+          }
+          menuDiv.push('</div>');
+        menuDiv.push('</div>');
+      menuDiv.push('</div>');
+
+      var exportDiv = $(menuDiv.join(""));
+
+      $('body').append(exportDiv);
+
+      $(exportDiv).children().children().children().filter(".x-button").click(function(){
+        $(exportDiv).remove();
+      })
+
+    }
+
+      // function doExport(willExportAllChannels) {
+      //   var idOrApiKey = selectedFeed.isPublic ? selectedFeed.id : selectedFeed.apiKeyReadOnly;
+      //   var channels = willExportAllChannels ? Object.keys(selectedFeed.channelBounds.channels).sort().join(',') : selectedChannelName;
+      //   var dateAxisRange = plotManager.getDateAxis().getRange();
+      //   window.open(ESDR_API_ROOT_URL + "/feeds/" + idOrApiKey + "/channels/" + channels + "/export?from=" + dateAxisRange.min + "&to=" + dateAxisRange.max, '_blank');
+      // }
     
 
     window.grapherLoad = function() {
@@ -2376,65 +2545,7 @@
 
       window.addEventListener('resize', function(){ 
         google.maps.event.trigger(map, 'resize'); 
-
-        if ($('#channels').width() == 225){
-          $("#clear-button").css('left', 50);
-          $('#legend').css('left', 225);
-          $('.main-content').css({'left' : 225,
-                                  'width' : "calc(100% - 225px)"});  
-        }else{
-          $("#clear-button").css('left', '5%');
-          $('#legend').css('left', null);
-          $('.main-content').css({'left' : "20%",
-                                  'width' : "80%"}); 
-        }
-
-        var winWidth = $(window).width(); 
-        if(winWidth <= 444){
-          $('#map-bar').css('height', 225);
-          $('#legend').css({'bottom' : "calc(45% + 225px)"});
-          $('#map-filters').css({'width' : 130,
-                                 'margin' : '0px 10px 20px'}); 
-          $('#timeline').css({'width': 130,
-                              'clear' : 'left',
-                              'margin' : '70px 10px'}); 
-          $('.play-pause').css({'margin' : '-25px 50px 0px',
-                                'float' : 'none'});
-        }else if(winWidth <= 600){
-          $('#map-bar').css('height', 170);
-          $('#map-filters').css({'width' : 130,
-                                 'margin' : '0px 10px 35px'}); 
-          $('#timeline').css({'width': 130,
-                              'clear' : 'left',
-                              'margin' : '0px 10px'});
-          $('#legend').css({'left' : 'auto', 
-                            'bottom' : "calc(45% + 170px)"}); 
-          $('.play-pause').css({'margin' : '-25px 10px 0px',
-                                'float' : 'left'});
-        }else if(winWidth <= 900){
-          $('#map-bar').css('height', 100); 
-          $('#map-filters').css({'width' : 280,
-                                 'margin' : '0px 10px'}); 
-          $('#timeline').css({'width' : 280,
-                              'clear' : 'left',
-                              'margin' : '0px 10px'});
-          $('#legend').css({'left' : 'auto',   
-                            'bottom' : "calc(45% + 100px)"});
-          $('.play-pause').css({'margin' : '-25px 10px 0px',
-                                'float' : 'left'});
-        }else{
-          $('#map-bar').css('height', 55); 
-          $('#map-filters').css('width', 280);
-          $('#timeline').css({'width' : 280,
-                              'clear' : 'right',
-                              'margin' : '0px 10px'});
-          $('#legend').css({'left' : 'auto',  
-                            'bottom' : "calc(45% + 60px)"});
-          $('.play-pause').css({'margin' : '-25px 10px 0px',
-                                'float' : 'left'});
-        }
-
-
+        resizeToWindow();
       }, false);
 
       // initialize WebGL
