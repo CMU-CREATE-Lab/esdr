@@ -968,7 +968,9 @@ if (!window['$']) {
 
       // the "constructor"
       (function() {
-         wrappedPlotContainer = new PlotContainer(elementId, false, []);
+         // The CREATE Lab grapher expects the date axis to be passed in as the 4th element.  The BodyTrack grapher only
+         // expects 3 args, so passing the date axis won't hurt anything
+         wrappedPlotContainer = new PlotContainer(elementId, false, [], dateAxis.getWrappedAxis());
 
          // set the width to be the same width as its DateAxis
          self.setWidth(dateAxis.getWidth());
