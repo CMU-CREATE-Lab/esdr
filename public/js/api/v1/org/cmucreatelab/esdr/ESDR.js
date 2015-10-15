@@ -353,6 +353,32 @@ if (!window['superagent']) {
          }
       };
 
+      this.multifeeds = {
+
+         /**
+          * Returns the feeds included in the specified multifeed set. Returned feed fields can (and should!) be
+          * filtered with the "fields" query string param. The various where clause query string params are ignored, but
+          * results can be sorted with orderBy and/or windowed with limit and offset.
+          *
+          * Required callbacks:
+          * - success(feeds)
+          * - error(responseBody, httpStatusCode)
+          * - failure(err, httpStatusCode)
+          *
+          * Optional callbacks:
+          * - complete() [optional]
+          *
+          * @param {string|int} nameOrId - multifeed name or id
+          * @param {string} queryString
+          * @param {obj} callbacks
+          */
+         getFeeds : function(nameOrId, queryString, callbacks) {
+            superagent
+                  .get(ESDR_API_ROOT_URL + "/multifeeds/" + nameOrId + "/feeds" + sanitizeQueryString(queryString))
+                  .end(createResponseHandler(callbacks));
+         }
+      };
+
       this.tiles = {
          /**
           * Gets a tile for the feed specified by the given <code>feedId</code> and optional <code>apiKey</code>.
