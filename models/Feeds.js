@@ -473,6 +473,12 @@ module.exports = function(databaseHelper) {
                                                        value : rawChannelInfo.most_recent_data_sample.value
                                                     };
                                                  }
+                                                 if (rawChannelInfo.most_recent_string_sample) {
+                                                    channelInfo.channels[channelName].mostRecentStringSample = {
+                                                       timeSecs : rawChannelInfo.most_recent_string_sample.time,
+                                                       value : rawChannelInfo.most_recent_string_sample.value
+                                                    };
+                                                 }
                                               });
 
                                               return callback(null, channelInfo);

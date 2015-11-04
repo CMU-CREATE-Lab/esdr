@@ -260,6 +260,20 @@ describe("ESDR", function() {
       ]
    };
 
+   var testFeed1aData5 = {
+      "channel_names" : ["annotation"],
+      "data" : [
+         [1446654988, "This is a comment in the annotation channel at time 1446654988."]
+      ]
+   };
+
+   var testFeed1aData6 = {
+      "channel_names" : ["conductivity"],
+      "data" : [
+         [1380752359, "This is a comment in the conductivity channel at time 1380752359.  There is also a value at this time."]
+      ]
+   };
+
    var testFeed2aData = {
       "channel_names" : ["humidity", "particle_concentration", "annotation"],
       "data" : [
@@ -4638,8 +4652,61 @@ describe("ESDR", function() {
                         should(res.body.data.channels).eql(expectedInfo); // deep equal
                      };
 
+                     // insert some records with comments
+                     before(function(initDone) {
+                        flow.series([
+                                       function(done) {
+                                          agent(url)
+                                                .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                                                .set({
+                                                        Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                                     })
+                                                .send(testFeed1aData5)
+                                                .end(function(err, res) {
+                                                        if (err) {
+                                                           return done(err);
+                                                        }
+
+                                                        res.should.have.property('status', httpStatus.OK);
+                                                        res.body.should.have.property('code', httpStatus.OK);
+                                                        res.body.should.have.property('status', 'success');
+                                                        done();
+                                                     });
+                                       },
+                                       function(done) {
+                                          agent(url)
+                                                .put("/api/v1/feeds/" + feeds.testFeed1a.id)
+                                                .set({
+                                                        Authorization : "Bearer " + accessTokens.testUser1.access_token
+                                                     })
+                                                .send(testFeed1aData6)
+                                                .end(function(err, res) {
+                                                        if (err) {
+                                                           return done(err);
+                                                        }
+
+                                                        res.should.have.property('status', httpStatus.OK);
+                                                        res.body.should.have.property('code', httpStatus.OK);
+                                                        res.body.should.have.property('status', 'success');
+                                                        done();
+                                                     });
+                                       }
+                                    ],
+                                    initDone);
+                     });
+
                      describe("For All Channels In A Feed", function() {
                         var channelInfoFeed1a = {
+                           "annotation" : {
+                              "channelBounds" : {
+                                 "minTimeSecs" : 1446654988,
+                                 "maxTimeSecs" : 1446654988
+                              },
+                              "mostRecentStringSample" : {
+                                 "timeSecs" : 1446654988,
+                                 "value" : "This is a comment in the annotation channel at time 1446654988."
+                              }
+                           },
                            "battery_voltage" : {
                               "channelBounds" : {
                                  "minTimeSecs" : 1380276279.1,
@@ -4662,6 +4729,10 @@ describe("ESDR", function() {
                               "mostRecentDataSample" : {
                                  "timeSecs" : 1382054188,
                                  "value" : 517
+                              },
+                              "mostRecentStringSample" : {
+                                 "timeSecs" : 1380752359,
+                                 "value" : "This is a comment in the conductivity channel at time 1380752359.  There is also a value at this time."
                               }
                            },
                            "temperature" : {
@@ -5106,6 +5177,10 @@ describe("ESDR", function() {
                               "mostRecentDataSample" : {
                                  "timeSecs" : 1382054188,
                                  "value" : 517
+                              },
+                              "mostRecentStringSample" : {
+                                 "timeSecs" : 1380752359,
+                                 "value" : "This is a comment in the conductivity channel at time 1380752359.  There is also a value at this time."
                               }
                            }
                         };
