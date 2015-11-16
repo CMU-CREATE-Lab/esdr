@@ -91,17 +91,32 @@ For this example, just leave the `defaultChannelSpecs` field as is.
    "vendor" : "Acme, Inc.",
    "description" : "A sensor that senses stuff.",
    "defaultChannelSpecs" : {
-      "temperature" : {
-         "prettyName" : "Temperature",
-         "units" : "C"
-      },
-      "conductivity" : {
-         "prettyName" : "Conductivity",
-         "units" : "&mu;S/cm"
-      },
-      "battery_voltage" : {
-         "prettyName" : "Battery Voltage",
-         "units" : "V"
+      "version" : 1,
+      "channels" : {
+         "temperature" : {
+            "prettyName" : "Temperature",
+            "units" : "C",
+            "range" : {
+               "min" : -273.15,
+               "max" : null
+            }
+         },
+         "conductivity" : {
+            "prettyName" : "Conductivity",
+            "units" : "uS/cm",
+            "range" : {
+               "min" : 0,
+               "max" : null
+            }
+         },
+         "battery_voltage" : {
+            "prettyName" : "Battery Voltage",
+            "units" : "V",
+            "range" : {
+               "min" : 0,
+               "max" : 5
+            }
+         }
       }
    }
 }
