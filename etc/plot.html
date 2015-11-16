@@ -80,7 +80,8 @@
    </style>
    <script src="https://esdr.cmucreatelab.org/lib/jquery/jquery-1.11.1.min.js" type="text/javascript"></script>
    <script src="https://esdr.cmucreatelab.org/lib/superagent/superagent.js" type="text/javascript"></script>
-   <script src="https://esdr.cmucreatelab.org/lib/bodytrack-grapher/org/bodytrack/grapher/grapher2.nocache.js" type="text/javascript"></script>
+   <script src="https://esdr.cmucreatelab.org/lib/jquery-mousewheel/jquery.mousewheel.min.js" type="text/javascript"></script>
+   <script src="https://esdr.cmucreatelab.org/lib/createlab-grapher/grapher.min.js" type="text/javascript"></script>
    <script src="https://esdr.cmucreatelab.org/lib/plot-manager/org/bodytrack/grapher/PlotManager.js" type="text/javascript"></script>
 </head>
 <body>
@@ -112,7 +113,7 @@
       </tr>
       <tr>
          <td colspan="2" align="right" style="font-size: smaller">
-            <input id="autoScaleLockCheckbox" name="autoScaleLockCheckbox" type="checkbox" onchange="autoScaleLockChange()" value="true"><label for="autoScaleLockCheckbox">Auto Scale Y Axis</label>
+            <input id="autoScaleLockCheckbox" name="autoScaleLockCheckbox" type="checkbox" onchange="toggleYAxisAutoScaling();" value="true" checked="checked"><label for="autoScaleLockCheckbox">Auto Scale Y Axis</label>
          </td>
       </tr>
    </table>
@@ -134,7 +135,6 @@
    var plotManager;
    var feed = null;
    var availableChannels = [];
-   var isAutoScaleOn = false;
 
    function setRangeFromSecondsAgoToNow(numSecondsAgo) {
       var now = Date.now() / 1000;
@@ -153,25 +153,25 @@
       {
          "label" : "past 30 days",
          "handler" : function() {
-            setRangeFromSecondsAgoToNow(3600*24*30);
+            setRangeFromSecondsAgoToNow(3600 * 24 * 30);
          }
       },
       {
          "label" : "past 7 days",
          "handler" : function() {
-            setRangeFromSecondsAgoToNow(3600*24*7);
+            setRangeFromSecondsAgoToNow(3600 * 24 * 7);
          }
       },
       {
          "label" : "past 24 hours",
          "handler" : function() {
-            setRangeFromSecondsAgoToNow(3600*24);
+            setRangeFromSecondsAgoToNow(3600 * 24);
          }
       },
       {
          "label" : "past 12 hours",
          "handler" : function() {
-            setRangeFromSecondsAgoToNow(3600*12);
+            setRangeFromSecondsAgoToNow(3600 * 12);
          }
       },
       {
@@ -221,36 +221,36 @@
          superagent
                .get(ESDR_API_ROOT_URL + '/feeds/' + selectedFeedIdOrApiKey)
                .end(function(err, res) {
-                       if (err) {
-                          $("#error_message").text("Sorry, an unexpected error occurred: " + err).show();
-                       }
+                  if (err) {
+                     $("#error_message").text("Sorry, an unexpected error occurred: " + err).show();
+                  }
 
-                       if (res) {
-                          if (res.status == 200) {
-                             if (res.body) {
-                                if (res.body.data) {
-                                   feed = res.body.data;
-                                   return renderPlot();
-                                }
-                                else {
-                                   $("#error_message").text("Sorry, an unexpected error occurred: Missing response data from ESDR.").show();
-                                }
-                             }
-                             else {
-                                $("#error_message").text("Sorry, an unexpected error occurred: Missing response body from ESDR.").show();
-                             }
-                          }
-                          else if (res.status == 404) {
-                             $("#error_message").text("Unknown feed.").show();
-                          }
-                          else {
-                             $("#error_message").text("Sorry, an unexpected error occurred: Unexpected response status [" + res.status + "]").show();
-                          }
-                       }
-                       else {
-                          $("#error_message").text("Sorry, an unexpected error occurred: No response from ESDR").show();
-                       }
-                    });
+                  if (res) {
+                     if (res.status == 200) {
+                        if (res.body) {
+                           if (res.body.data) {
+                              feed = res.body.data;
+                              return renderPlot();
+                           }
+                           else {
+                              $("#error_message").text("Sorry, an unexpected error occurred: Missing response data from ESDR.").show();
+                           }
+                        }
+                        else {
+                           $("#error_message").text("Sorry, an unexpected error occurred: Missing response body from ESDR.").show();
+                        }
+                     }
+                     else if (res.status == 404) {
+                        $("#error_message").text("Unknown feed.").show();
+                     }
+                     else {
+                        $("#error_message").text("Sorry, an unexpected error occurred: Unexpected response status [" + res.status + "]").show();
+                     }
+                  }
+                  else {
+                     $("#error_message").text("Sorry, an unexpected error occurred: No response from ESDR").show();
+                  }
+               });
       }
    };
 
@@ -372,12 +372,9 @@
          });
 
          plotManager.getDateAxis().constrainRangeTo(channelMinTimeSecs, channelMaxTimeSecs);
-         plotManager.getDateAxis().addAxisChangeListener(function(axisChangeEvent) {
-            // auto-scale the y-axes
-            if (isAutoScaleOn) {
-               autoScaleYAxes();
-            }
-         });
+
+         // create the plot container so that we can turn autoscaling on by default (but don't pad)
+         plotManager.addPlotContainer("plot_container").setAutoScaleEnabled(true, false);
 
          var plotId = feed.id;
 
@@ -386,21 +383,21 @@
                                           superagent
                                                 .get(ESDR_API_ROOT_URL + "/feeds/" + feed.apiKeyReadOnly + "/channels/" + selectedChannelName + "/tiles/" + level + "." + offset)
                                                 .end(function(err, res) {
-                                                        if (err) {
-                                                           return console.log("Error: " + res.body);
-                                                        }
+                                                   if (err) {
+                                                      return console.log("Error: " + res.body);
+                                                   }
 
-                                                        switch (res.status) {
-                                                           case 200:
-                                                              return successCallback(JSON.stringify(res.body.data));
-                                                           case 401:
-                                                              return console.log("Unauthorized");
-                                                           case 403:
-                                                              return console.log("Forbidden");
-                                                           default:
-                                                              return console.log("Error: " + res.body);
-                                                        }
-                                                     });
+                                                   switch (res.status) {
+                                                      case 200:
+                                                         return successCallback(res.body.data);
+                                                      case 401:
+                                                         return console.log("Unauthorized");
+                                                      case 403:
+                                                         return console.log("Forbidden");
+                                                      default:
+                                                         return console.log("Error: " + res.body);
+                                                   }
+                                                });
                                        },
                                        "plot_container",
                                        "y_axis",
@@ -417,46 +414,47 @@
             }
          });
 
-         plotManager.getPlot(plotId).setStyle({
-            "styles" : [
-               {
-                  "type" : "line",
-                  "lineWidth" : 1,
-                  "show" : true,
-                  "color" : "black"
-               },
-               {
-                  "type" : "circle",
-                  radius : 1,
-                  "lineWidth" : 1,
-                  "show" : true,
-                  "color" : "black",
-                  fill : true
-               }
-            ],
-            "highlight" : {
-               "lineWidth" : 1,
-               "styles" : [
-                  {
-                     "type" : "circle",
-                     radius : 3,
-                     "lineWidth" : 0.5,
-                     "show" : true,
-                     "color" : "red",
-                     fill : false
-                  },
-                  {
-                     "show" : true,
-                     "type" : "value",
-                     "fillColor" : "black",
-                     "marginWidth" : 10,
-                     "font" : "7pt Helvetica,Arial,Verdana,sans-serif",
-                     "verticalOffset" : 7,
-                     "numberFormat" : "###,##0.##"
-                  }
-               ]
-            }
-         });
+         // TODO: add this back once the CREATE Lab grapher supports styles
+         //         plotManager.getPlot(plotId).setStyle({
+         //            "styles" : [
+         //               {
+         //                  "type" : "line",
+         //                  "lineWidth" : 1,
+         //                  "show" : true,
+         //                  "color" : "black"
+         //               },
+         //               {
+         //                  "type" : "circle",
+         //                  radius : 1,
+         //                  "lineWidth" : 1,
+         //                  "show" : true,
+         //                  "color" : "black",
+         //                  fill : true
+         //               }
+         //            ],
+         //            "highlight" : {
+         //               "lineWidth" : 1,
+         //               "styles" : [
+         //                  {
+         //                     "type" : "circle",
+         //                     radius : 3,
+         //                     "lineWidth" : 0.5,
+         //                     "show" : true,
+         //                     "color" : "red",
+         //                     fill : false
+         //                  },
+         //                  {
+         //                     "show" : true,
+         //                     "type" : "value",
+         //                     "fillColor" : "black",
+         //                     "marginWidth" : 10,
+         //                     "font" : "7pt Helvetica,Arial,Verdana,sans-serif",
+         //                     "verticalOffset" : 7,
+         //                     "numberFormat" : "###,##0.##"
+         //                  }
+         //               ]
+         //            }
+         //         });
 
          // set the sizes of the various plot elements
          setSizes();
@@ -469,25 +467,9 @@
       }
    }
 
-   function autoScaleLockChange() {
-      isAutoScaleOn = $("#autoScaleLockCheckbox").is(":checked");
-      if (isAutoScaleOn) {
-         autoScaleYAxes();
-         $("#autoScaleYAxesButton").attr("disabled", "disabled");
-      }
-      else {
-         $("#autoScaleYAxesButton").removeAttr("disabled");
-      }
-   }
-
-   function autoScaleYAxes() {
-      var plot = plotManager.getPlot();
-      if (plot) {
-         var stats = plot.getStatisticsWithinRange(plotManager.getDateAxis().getRange());
-         if (typeof stats['minValue'] !== 'undefined' && typeof stats['maxValue'] !== 'undefined') {
-            plotManager.getYAxis().setRange(stats['minValue'], stats['maxValue']);
-         }
-      }
+   function toggleYAxisAutoScaling() {
+      var isAutoScaleOn = $("#autoScaleLockCheckbox").is(":checked");
+      plotManager.getPlotContainer().setAutoScaleEnabled(isAutoScaleOn, false);  // toggle autoscaling, but don't pad
    }
 
    function setSizes() {
