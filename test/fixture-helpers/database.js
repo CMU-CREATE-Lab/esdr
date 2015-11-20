@@ -6,6 +6,7 @@ if (!require('run-mode').isTest()) {
 
 var mysql = require('mysql');
 var flow = require('nimble');
+var bcrypt = require('bcrypt');
 var DatabaseHelper = require("../../models/DatabaseHelper");
 var config = require('../../config');
 
@@ -48,8 +49,32 @@ function wipeAllTables(callback) {
 
 module.exports.wipeAllTables = wipeAllTables;
 
+module.exports.insertClient = function(client, callback) {
+   // remember the plain-text clientSecret so we can set it back
+   var plainTextClientSecret = client.clientSecret;
+
+   // encrypt the clientSecret for storage in the DB
+   client.clientSecret = bcrypt.hashSync(plainTextClientSecret, 8);
+
+   // insert the client, then reset the clientSecret back to the plain-text one
+   databaseHelper.execute("INSERT INTO Clients SET ?", client, function(err, result) {
+      client.clientSecret = plainTextClientSecret;
+      callback(err, result);
+   });
+};
+
 module.exports.insertUser = function(user, callback) {
-   databaseHelper.execute("INSERT INTO Users SET ?", user, callback);
+   // remember the plain-text password so we can set it back
+   var plainTextPassword = user.password;
+
+   // encrypt the password for storage in the DB
+   user.password = bcrypt.hashSync(plainTextPassword, 8);
+
+   // insert the user, then reset the password back to the plain-text one
+   databaseHelper.execute("INSERT INTO Users SET ?", user, function(err, result) {
+      user.password = plainTextPassword;
+      callback(err, result);
+   });
 };
 
 module.exports.insertProduct = function(product, callback) {
