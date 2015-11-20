@@ -614,13 +614,13 @@ module.exports = function(databaseHelper) {
          }
 
          var sql = queryParts.selectClause + " FROM Feeds WHERE id=?";
-         databaseHelper.findOne(sql, [id], function(err, product) {
+         databaseHelper.findOne(sql, [id], function(err, feed) {
             if (err) {
-               log.error("Error trying to find product with id [" + id + "]: " + err);
+               log.error("Error trying to find feed with id [" + id + "]: " + err);
                return callback(err);
             }
 
-            return callback(null, product);
+            return callback(null, feed);
          });
       });
    };
