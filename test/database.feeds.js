@@ -142,5 +142,53 @@ describe("Database", function() {
 
       });   // End Create
 
+      describe("Find", function() {
+         var verifyResult = function(err, feed) {
+            should.not.exist(err);
+            should.exist(feed);
+
+            feed.should.have.properties(feed3);
+            feed.should.have.properties({
+                                           deviceId : device5.id,
+                                           productId : product4.id,
+                                           userId : user1.id,
+                                           channelSpecs : product4.defaultChannelSpecs,
+                                           channelBounds : null
+                                        });
+            feed.should.have.properties('id', 'apiKey', 'apiKeyReadOnly', 'created', 'modified', 'lastUpload', 'minTimeSecs', 'maxTimeSecs');
+         };
+
+         it("Should be able to find a feed by ID", function(done) {
+            global.db.feeds.findById(feed3.id, null, function(err, feed) {
+               verifyResult(err, feed);
+
+               // remember the API keys for the next tests
+               feed3.apiKey = feed.apiKey;
+               feed3.apiKeyReadOnly = feed.apiKeyReadOnly;
+
+               done();
+
+            });
+         });
+
+         it("Should be able to find a feed by apiKey", function(done) {
+            global.db.feeds.findByApiKey(feed3.apiKey, null, function(err, feed) {
+               verifyResult(err, feed);
+
+               done();
+
+            });
+         });
+
+         it("Should be able to find a feed by apiKeyReadOnly", function(done) {
+            global.db.feeds.findByApiKey(feed3.apiKeyReadOnly, null, function(err, feed) {
+               verifyResult(err, feed);
+
+               done();
+
+            });
+         });
+
+      });   // End Find
    });   // End Feeds
 });   // End Database

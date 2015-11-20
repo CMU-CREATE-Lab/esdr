@@ -53,6 +53,9 @@ module.exports.insertUser = function(user, callback) {
 };
 
 module.exports.insertProduct = function(product, callback) {
+   if (typeof product.defaultChannelSpecs === 'object') {
+      product.defaultChannelSpecs = JSON.stringify(product.defaultChannelSpecs);
+   }
    databaseHelper.execute("INSERT INTO Products SET ?", product, callback);
 };
 
