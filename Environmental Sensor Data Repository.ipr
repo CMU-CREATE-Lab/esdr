@@ -64,7 +64,8 @@
   </component>
   <component name="JavaScriptLibraryMappings">
     <file url="file://$PROJECT_DIR$" libraries="{EnvironmentalSensorDataRepository node_modules}" />
-    <file url="PROJECT" libraries="{EnvironmentalSensorDataRepository node_modules, Superagent, jQuery 1.11.1, mocha-DefinitelyTyped, nconf-DefinitelyTyped, should-DefinitelyTyped}" />
+    <file url="PROJECT" libraries="{EnvironmentalSensorDataRepository node_modules, Generated files, handlebars-DefinitelyTyped, jQuery 1.11.1, mocha-DefinitelyTyped, nconf-DefinitelyTyped, should-DefinitelyTyped, superagent-DefinitelyTyped}" />
+    <includedPredefinedLibrary name="ECMAScript 6" />
     <includedPredefinedLibrary name="Node.js Core" />
   </component>
   <component name="ProjectCodeStyleSettingsManager">
@@ -485,6 +486,20 @@
       <JAVADOC />
       <SOURCES />
     </library>
+    <library name="handlebars-DefinitelyTyped" type="javaScript">
+      <properties>
+        <sourceFilesUrls>
+          <item url="file://$APPLICATION_CONFIG_DIR$/javascript/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_handlebars_handlebars.d.ts" />
+          <item url="file://$APPLICATION_CONFIG_DIR$/javascript/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_handlebars_handlebars-1.0.0.d.ts" />
+        </sourceFilesUrls>
+      </properties>
+      <CLASSES>
+        <root url="file://$APPLICATION_CONFIG_DIR$/javascript/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_handlebars_handlebars.d.ts" />
+        <root url="file://$APPLICATION_CONFIG_DIR$/javascript/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_handlebars_handlebars-1.0.0.d.ts" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
     <library name="jQuery 1.11.1" type="javaScript">
       <properties>
         <sourceFilesUrls>
@@ -498,14 +513,50 @@
       <JAVADOC />
       <SOURCES />
     </library>
-    <library name="Superagent" type="javaScript">
+    <library name="mocha-DefinitelyTyped" type="javaScript">
       <properties>
         <sourceFilesUrls>
-          <item url="file://$PROJECT_DIR$/public/lib/superagent/superagent.js" />
+          <item url="file://$USER_HOME$/Library/Caches/IntelliJIdea13/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_mocha_mocha.d.ts" />
         </sourceFilesUrls>
       </properties>
       <CLASSES>
-        <root url="file://$PROJECT_DIR$/public/lib/superagent/superagent.js" />
+        <root url="file://$USER_HOME$/Library/Caches/IntelliJIdea13/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_mocha_mocha.d.ts" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
+    <library name="nconf-DefinitelyTyped" type="javaScript">
+      <properties>
+        <sourceFilesUrls>
+          <item url="file://$USER_HOME$/Library/Caches/IntelliJIdea13/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_nconf_nconf.d.ts" />
+        </sourceFilesUrls>
+      </properties>
+      <CLASSES>
+        <root url="file://$USER_HOME$/Library/Caches/IntelliJIdea13/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_nconf_nconf.d.ts" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
+    <library name="should-DefinitelyTyped" type="javaScript">
+      <properties>
+        <sourceFilesUrls>
+          <item url="file://$USER_HOME$/Library/Caches/IntelliJIdea13/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_should_should.d.ts" />
+        </sourceFilesUrls>
+      </properties>
+      <CLASSES>
+        <root url="file://$USER_HOME$/Library/Caches/IntelliJIdea13/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_should_should.d.ts" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
+    <library name="superagent-DefinitelyTyped" type="javaScript">
+      <properties>
+        <sourceFilesUrls>
+          <item url="file://$APPLICATION_CONFIG_DIR$/javascript/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_superagent_superagent.d.ts" />
+        </sourceFilesUrls>
+      </properties>
+      <CLASSES>
+        <root url="file://$APPLICATION_CONFIG_DIR$/javascript/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_superagent_superagent.d.ts" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />
