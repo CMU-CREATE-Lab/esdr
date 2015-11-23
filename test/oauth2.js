@@ -1,7 +1,7 @@
 var should = require('should');
 var flow = require('nimble');
 var httpStatus = require('http-status');
-var agent = require('supertest');
+var superagent = require('superagent');
 var wipe = require('./fixture-helpers/wipe');
 var database = require('./fixture-helpers/database');
 var config = require('../config');
@@ -47,8 +47,8 @@ describe("OAuth2", function() {
    describe("Request Access Token", function() {
 
       it("Should fail to request access and refresh tokens for an unverified user", function(done) {
-         agent(ESDR_OAUTH_ROOT_URL)
-               .post("")
+         superagent
+               .post(ESDR_OAUTH_ROOT_URL)
                .send({
                         grant_type : "password",
                         client_id : client1.clientName,
@@ -56,12 +56,11 @@ describe("OAuth2", function() {
                         username : user1.email,
                         password : user1.password
                      })
-               .expect('Content-Type', /json/)
-               .expect(httpStatus.FORBIDDEN)
                .end(function(err, res) {
                   should.not.exist(err);
                   should.exist(res);
 
+                  res.should.have.property('status', httpStatus.FORBIDDEN);
                   res.body.should.have.property('error', 'invalid_grant');
 
                   done();
