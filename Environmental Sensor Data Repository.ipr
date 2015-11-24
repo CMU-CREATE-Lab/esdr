@@ -64,7 +64,7 @@
   </component>
   <component name="JavaScriptLibraryMappings">
     <file url="file://$PROJECT_DIR$" libraries="{EnvironmentalSensorDataRepository node_modules}" />
-    <file url="PROJECT" libraries="{EnvironmentalSensorDataRepository node_modules, Generated files, handlebars-DefinitelyTyped, jQuery 1.11.1, mocha-DefinitelyTyped, nconf-DefinitelyTyped, should-DefinitelyTyped, superagent-DefinitelyTyped}" />
+    <file url="PROJECT" libraries="{EnvironmentalSensorDataRepository node_modules, Generated files, handlebars-DefinitelyTyped, jQuery 1.11.1, mocha-DefinitelyTyped, nconf-DefinitelyTyped, should-DefinitelyTyped}" />
     <includedPredefinedLibrary name="ECMAScript 6" />
     <includedPredefinedLibrary name="Node.js Core" />
   </component>
@@ -437,7 +437,7 @@
       <option name="workingDir" value="$FileDir$" />
       <envs />
     </TaskOptions>
-    <TaskOptions isEnabled="true">
+    <TaskOptions isEnabled="false">
       <option name="arguments" value="$ProjectFileDir$/public-templates -m -e hbs" />
       <option name="checkSyntaxErrors" value="true" />
       <option name="description" value="Compiles Handlebars templates" />

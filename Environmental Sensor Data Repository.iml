@@ -14,6 +14,5 @@
     <orderEntry type="library" name="nconf-DefinitelyTyped" level="project" />
     <orderEntry type="library" name="handlebars-DefinitelyTyped" level="project" />
     <orderEntry type="library" name="mocha-DefinitelyTyped" level="project" />
-    <orderEntry type="library" name="superagent-DefinitelyTyped" level="project" />
   </component>
 </module>
