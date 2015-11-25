@@ -1,0 +1,6 @@
+{
+   "displayName" : "Test Client Client Name Too Long",
+   "clientName" : "thisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstringthisisareallylongstring",
+   "email" : "test_client_client_name_too_long@test.com",
+   "clientSecret" : "I am a test client"
+}

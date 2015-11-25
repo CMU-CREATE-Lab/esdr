@@ -1,0 +1,6 @@
+{
+   "displayName" : "Test Client Client Name First Char Not Alphanumeric",
+   "clientName" : ".cannot_start_with_non_alphanumeric",
+   "email" : "test_client_client_name_invalid@test.com",
+   "clientSecret" : "I am a test client"
+}
