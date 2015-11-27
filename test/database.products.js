@@ -1,5 +1,6 @@
 var should = require('should');
 var flow = require('nimble');
+var requireNew = require('require-new');
 var wipe = require('./fixture-helpers/wipe');
 var database = require('./fixture-helpers/database');
 var shallowClone = require('./fixture-helpers/test-utils').shallowClone;
@@ -7,7 +8,7 @@ var DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
 var ValidationError = require('../lib/errors').ValidationError;
 
 describe("Database", function() {
-   var user1 = require('./fixtures/user1.json');
+   var user1 = requireNew('./fixtures/user1.json');
 
    before(function(initDone) {
       flow.series(
@@ -31,8 +32,8 @@ describe("Database", function() {
 
    describe("Products", function() {
 
-      var product4 = require('./fixtures/product4.json');
-      var product5 = require('./fixtures/product5.json');
+      var product4 = requireNew('./fixtures/product4.json');
+      var product5 = requireNew('./fixtures/product5.json');
 
       describe("Create", function() {
 

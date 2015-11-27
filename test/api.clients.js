@@ -2,6 +2,7 @@ var should = require('should');
 var flow = require('nimble');
 var httpStatus = require('http-status');
 var superagent = require('superagent');
+var requireNew = require('require-new');
 var wipe = require('./fixture-helpers/wipe');
 var database = require('./fixture-helpers/database');
 
@@ -10,48 +11,49 @@ var config = require('../config');
 var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
 var ESDR_OAUTH_ROOT_URL = config.get("esdr:oauthRootUrl");
 
-describe.only("REST API", function() {
-   var verifiedUser1 = require('./fixtures/user1.json');
-   var verifiedUser2 = require('./fixtures/user2.json');
-   var client1 = require('./fixtures/client1.json');
-   var client2 = require('./fixtures/client2.json');
-   var clientNeedsTrimming = require('./fixtures/client4-needs-trimming.json');
-   var clientDisplayNameTooShort = require('./fixtures/client5-displayName-too-short.json');
-   var clientDisplayNameTooLong = require('./fixtures/client6-displayName-too-long.json');
-   var clientClientNameTooShort = require('./fixtures/client7-clientName-too-short.json');
-   var clientClientNameTooLong = require('./fixtures/client8-clientName-too-long.json');
-   var clientClientNameFirstCharNotAlphanumeric = require('./fixtures/client9-clientName-first-char-not-alphanumeric.json');
-   var clientClientNameIllegalChars = require('./fixtures/client10-clientName-illegal-chars.json');
-   var clientClientSecretTooShort = require('./fixtures/client11-clientSecret-too-short.json');
-   var clientClientSecretTooLong = require('./fixtures/client12-clientSecret-too-long.json');
-   var clientResetPasswordUrlTooShort = require('./fixtures/client13-reset-password-url-too-short.json');
-   var clientVerificationUrlTooShort = require('./fixtures/client14-verification-url-too-short.json');
+describe("REST API", function() {
+   var verifiedUser1 = requireNew('./fixtures/user1.json');
+   var verifiedUser2 = requireNew('./fixtures/user2.json');
+   var client1 = requireNew('./fixtures/client1.json');
+   var client2 = requireNew('./fixtures/client2.json');
+   var client3 = requireNew('./fixtures/client3.json');
+   var clientNeedsTrimming = requireNew('./fixtures/client4-needs-trimming.json');
+   var clientDisplayNameTooShort = requireNew('./fixtures/client5-displayName-too-short.json');
+   var clientDisplayNameTooLong = requireNew('./fixtures/client6-displayName-too-long.json');
+   var clientClientNameTooShort = requireNew('./fixtures/client7-clientName-too-short.json');
+   var clientClientNameTooLong = requireNew('./fixtures/client8-clientName-too-long.json');
+   var clientClientNameFirstCharNotAlphanumeric = requireNew('./fixtures/client9-clientName-first-char-not-alphanumeric.json');
+   var clientClientNameIllegalChars = requireNew('./fixtures/client10-clientName-illegal-chars.json');
+   var clientClientSecretTooShort = requireNew('./fixtures/client11-clientSecret-too-short.json');
+   var clientClientSecretTooLong = requireNew('./fixtures/client12-clientSecret-too-long.json');
+   var clientResetPasswordUrlTooShort = requireNew('./fixtures/client13-reset-password-url-too-short.json');
+   var clientVerificationUrlTooShort = requireNew('./fixtures/client14-verification-url-too-short.json');
 
    before(function(initDone) {
       // To create a client, we have a bit of a chicken-and-egg scenario.  We need to have an OAuth2 access token to
       // create a client, but you can't get one without auth'ing against a client.  So, here, we'll insert a user, verifiy
       // it, and then get an access token for that user (using the ESDR client) so that we can create new clients.
 
-      var insertUser = function(user, done) {
+      var insertUser = function(user, callback) {
          // insert the user and remember the id
          database.insertUser(user, function(err, result) {
             if (err) {
-               return done(err);
+               return callback(err);
             }
             user.id = result.insertId;
-            done();
+            callback(null, user.id);
          });
       };
 
-      var verifyUser = function(user, done) {
+      var verifyUser = function(user, callback) {
          // mark user as verified
          superagent
                .put(ESDR_API_ROOT_URL + "/user-verification")
                .send({ token : user.verificationToken })
-               .end(done);
+               .end(callback);
       };
 
-      var authentcateUser = function(user, done) {
+      var authentcateUser = function(user, callback) {
          // get an OAuth2 access token for this user
          superagent
                .post(ESDR_OAUTH_ROOT_URL)
@@ -78,7 +80,7 @@ describe.only("REST API", function() {
                   // remember the access token
                   user.accessToken = res.body.access_token;
 
-                  done();
+                  callback(null, user.accessToken);
                });
       };
 
@@ -174,6 +176,16 @@ describe.only("REST API", function() {
                expectedResponseData : {
                   clientName : client1.clientName
                }
+            },
+            {
+               description : "Should fail to create a client with an invalid OAuth2 token",
+               client : client1,
+               getAccessToken : function() {
+                  return "bogus"
+               },
+               expectedHttpStatus : httpStatus.UNAUTHORIZED,
+               expectedStatusText : 'error',
+               hasEmptyBody : true
             }
          ];
 
@@ -188,15 +200,63 @@ describe.only("REST API", function() {
                         should.exist(res);
 
                         res.should.have.property('status', test.expectedHttpStatus);
-                        res.body.should.have.properties({
-                                                           code : test.expectedHttpStatus,
-                                                           status : test.expectedStatusText,
-                                                           data : test.expectedResponseData
-                                                        });
+                        if (!test.hasEmptyBody) {
+                           res.body.should.have.properties({
+                                                              code : test.expectedHttpStatus,
+                                                              status : test.expectedStatusText,
+                                                              data : test.expectedResponseData
+                                                           });
+                        }
 
                         done();
                      });
             });
+         });
+
+         it("Creating a client without specifying the email, verificationUrl, or resetPasswordUrl should result in the client getting the defaults", function(done) {
+            superagent
+                  .post(ESDR_API_ROOT_URL + "/clients")
+                  .set({ Authorization : "Bearer " + verifiedUser2.accessToken })
+                  .send(client3)
+                  .end(function(err, res) {
+                     should.not.exist(err);
+                     should.exist(res);
+
+                     res.should.have.property('status', httpStatus.CREATED);
+                     res.body.should.have.properties({
+                                                        code : httpStatus.CREATED,
+                                                        status : 'success',
+                                                        data : {
+                                                           displayName : client3.displayName,
+                                                           clientName : client3.clientName
+                                                        }
+                                                     });
+
+                     // now fetch the created client to verify that it got the defaults for unspecified values
+                     superagent
+                           .get(ESDR_API_ROOT_URL + "/clients?where=clientName=" + client3.clientName)
+                           .set({ Authorization : "Bearer " + verifiedUser2.accessToken })
+                           .end(function(err, res) {
+                              should.not.exist(err);
+                              should.exist(res);
+
+                              res.should.have.property('status', httpStatus.OK);
+                              res.body.should.have.properties({
+                                                                 code : httpStatus.OK,
+                                                                 status : 'success',
+                                                              });
+                              res.body.should.have.property('data');
+                              res.body.data.should.have.property('rows');
+                              res.body.data.rows.should.have.length(1);
+                              res.body.data.rows[0].should.have.properties({
+                                                                              email : config.get("esdrClient:email"),
+                                                                              verificationUrl : config.get("esdrClient:verificationUrl"),
+                                                                              resetPasswordUrl : config.get("esdrClient:resetPasswordUrl")
+                                                                           });
+
+                              done();
+                           });
+                  });
          });
 
          it("Should fail to create a new client with missing required values", function(done) {

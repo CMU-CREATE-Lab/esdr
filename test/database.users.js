@@ -1,6 +1,6 @@
 var should = require('should');
+var requireNew = require('require-new');
 var wipe = require('./fixture-helpers/wipe');
-var database = require('./fixture-helpers/database');
 var DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
 
 describe("Database", function() {
@@ -8,8 +8,8 @@ describe("Database", function() {
    before(wipe.wipeAllData);
 
    describe("Users", function() {
-      var user1 = require('./fixtures/user1.json');
-      var user2 = require('./fixtures/user2.json');
+      var user1 = requireNew('./fixtures/user1.json');
+      var user2 = requireNew('./fixtures/user2.json');
 
       describe("Create", function() {
 

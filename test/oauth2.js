@@ -2,6 +2,7 @@ var should = require('should');
 var flow = require('nimble');
 var httpStatus = require('http-status');
 var superagent = require('superagent');
+var requireNew = require('require-new');
 var wipe = require('./fixture-helpers/wipe');
 var database = require('./fixture-helpers/database');
 var config = require('../config');
@@ -10,9 +11,9 @@ var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
 var ESDR_OAUTH_ROOT_URL = config.get("esdr:oauthRootUrl");
 
 describe("OAuth2", function() {
-   var unverifiedUser = require('./fixtures/user1.json');
-   var verifiedUser = require('./fixtures/user2.json');
-   var client1 = require('./fixtures/client1.json');
+   var unverifiedUser = requireNew('./fixtures/user1.json');
+   var verifiedUser = requireNew('./fixtures/user2.json');
+   var client1 = requireNew('./fixtures/client1.json');
    var tokens = null;
    var newTokens = null;
 

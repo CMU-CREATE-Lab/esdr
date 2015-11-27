@@ -1,5 +1,6 @@
 var should = require('should');
 var flow = require('nimble');
+var requireNew = require('require-new');
 var wipe = require('./fixture-helpers/wipe');
 var database = require('./fixture-helpers/database');
 var shallowClone = require('./fixture-helpers/test-utils').shallowClone;
@@ -7,9 +8,9 @@ var DatabaseError = require('../lib/errors').DatabaseError;
 var ValidationError = require('../lib/errors').ValidationError;
 
 describe("Database", function() {
-   var user1 = require('./fixtures/user1.json');
-   var product4 = require('./fixtures/product4.json');
-   var device5 = require('./fixtures/device5.json');
+   var user1 = requireNew('./fixtures/user1.json');
+   var product4 = requireNew('./fixtures/product4.json');
+   var device5 = requireNew('./fixtures/device5.json');
 
    before(function(initDone) {
       flow.series(
@@ -57,7 +58,7 @@ describe("Database", function() {
    });
 
    describe("Feeds", function() {
-      var feed3 = require('./fixtures/feed3.json');
+      var feed3 = requireNew('./fixtures/feed3.json');
 
       describe("Create", function() {
 
