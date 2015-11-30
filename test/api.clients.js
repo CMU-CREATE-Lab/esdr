@@ -8,8 +8,9 @@ var database = require('./fixture-helpers/database');
 
 var config = require('../config');
 
-var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
 var ESDR_OAUTH_ROOT_URL = config.get("esdr:oauthRootUrl");
+var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
+var ESDR_CLIENT_API_URL = ESDR_API_ROOT_URL + "/clients";
 
 describe("REST API", function() {
    var verifiedUser1 = requireNew('./fixtures/user1.json');
@@ -192,7 +193,7 @@ describe("REST API", function() {
          creationTests.forEach(function(test) {
             it(test.description, function(done) {
                superagent
-                     .post(ESDR_API_ROOT_URL + "/clients")
+                     .post(ESDR_CLIENT_API_URL)
                      .set({ Authorization : "Bearer " + test.getAccessToken() })
                      .send(test.client)
                      .end(function(err, res) {
@@ -203,9 +204,18 @@ describe("REST API", function() {
                         if (!test.hasEmptyBody) {
                            res.body.should.have.properties({
                                                               code : test.expectedHttpStatus,
-                                                              status : test.expectedStatusText,
-                                                              data : test.expectedResponseData
+                                                              status : test.expectedStatusText
                                                            });
+
+                           res.body.should.have.property('data');
+                           res.body.data.should.have.properties(test.expectedResponseData);
+
+                           if (test.expectedHttpStatus == httpStatus.CREATED) {
+                              res.body.data.should.have.property('id');
+
+                              // remember the database ID
+                              test.client.id = res.body.data.id;
+                           }
                         }
 
                         done();
@@ -215,7 +225,7 @@ describe("REST API", function() {
 
          it("Creating a client without specifying the email, verificationUrl, or resetPasswordUrl should result in the client getting the defaults", function(done) {
             superagent
-                  .post(ESDR_API_ROOT_URL + "/clients")
+                  .post(ESDR_CLIENT_API_URL)
                   .set({ Authorization : "Bearer " + verifiedUser2.accessToken })
                   .send(client3)
                   .end(function(err, res) {
@@ -225,12 +235,14 @@ describe("REST API", function() {
                      res.should.have.property('status', httpStatus.CREATED);
                      res.body.should.have.properties({
                                                         code : httpStatus.CREATED,
-                                                        status : 'success',
-                                                        data : {
-                                                           displayName : client3.displayName,
-                                                           clientName : client3.clientName
-                                                        }
+                                                        status : 'success'
                                                      });
+                     res.body.should.have.property('data');
+                     res.body.data.should.have.property('id');
+                     res.body.data.should.have.properties({
+                                                             displayName : client3.displayName,
+                                                             clientName : client3.clientName
+                                                          });
 
                      // now fetch the created client to verify that it got the defaults for unspecified values
                      superagent
@@ -261,7 +273,7 @@ describe("REST API", function() {
 
          it("Should fail to create a new client with missing required values", function(done) {
             superagent
-                  .post(ESDR_API_ROOT_URL + "/clients")
+                  .post(ESDR_CLIENT_API_URL)
                   .set({ Authorization : "Bearer " + verifiedUser1.accessToken })
                   .send({})
                   .end(function(err, res) {
@@ -406,7 +418,7 @@ describe("REST API", function() {
          validationFailureTests.forEach(function(test) {
             it(test.description, function(done) {
                superagent
-                     .post(ESDR_API_ROOT_URL + "/clients")
+                     .post(ESDR_CLIENT_API_URL)
                      .set({ Authorization : "Bearer " + verifiedUser1.accessToken })
                      .send(test.client)
                      .end(function(err, res) {
@@ -432,8 +444,158 @@ describe("REST API", function() {
 
       describe("Find", function() {
 
-         it("Should have find tests...");
+         // define the expected values for each client's isPublic field
+         var expectedIsPublic = {
+            ESDR : 1,
+            test_client_1 : 0,
+            test_client_2 : 0,
+            test_client_3 : 0,
+            test_client_trimming : 0
+         };
 
+         it("Should be able to find clients (without authentication) and only see all fields for public clients", function(done) {
+
+            superagent
+                  .get(ESDR_CLIENT_API_URL)
+                  .end(function(err, res) {
+                     should.not.exist(err);
+                     should.exist(res);
+
+                     res.should.have.property('status', httpStatus.OK);
+                     res.body.should.have.properties({
+                                                        code : httpStatus.OK,
+                                                        status : 'success'
+                                                     });
+
+                     res.body.should.have.property('data');
+                     res.body.data.should.have.properties({
+                                                             totalCount : Object.keys(expectedIsPublic).length,
+                                                             offset : 0,
+                                                             limit : 100
+                                                          });
+
+                     res.body.data.should.have.property('rows');
+                     res.body.data.rows.should.have.length(Object.keys(expectedIsPublic).length);
+                     res.body.data.rows.forEach(function(row) {
+                        row.should.have.properties('id', 'displayName', 'clientName', 'creatorUserId', 'isPublic', 'created', 'modified');
+
+                        row.should.have.property('isPublic', expectedIsPublic[row.clientName]);
+                        if (row['isPublic']) {
+                           row.should.have.properties('email', 'verificationUrl', 'resetPasswordUrl');
+                        }
+                        else {
+                           row.should.not.have.properties('email', 'verificationUrl', 'resetPasswordUrl');
+                        }
+                     });
+
+                     done();
+                  });
+         });
+
+         var findWithAuthenticationTests = [
+            {
+               description : "Should be able to find clients (with authentication) and see all fields for public clients and clients owned by verifiedUser1",
+               user : verifiedUser1
+            },
+            {
+               description : "Should be able to find clients (with authentication) and see all fields for public clients and clients owned by verifiedUser2",
+               user : verifiedUser2
+            }
+         ];
+
+         findWithAuthenticationTests.forEach(function(test) {
+            it(test.description, function(done) {
+               superagent
+                     .get(ESDR_CLIENT_API_URL)
+                     .set({
+                             Authorization : "Bearer " + test.user.accessToken
+                          })
+                     .end(function(err, res) {
+                        should.not.exist(err);
+                        should.exist(res);
+
+                        res.should.have.property('status', httpStatus.OK);
+                        res.body.should.have.properties({
+                                                           code : httpStatus.OK,
+                                                           status : 'success'
+                                                        });
+
+                        res.body.should.have.property('data');
+                        res.body.data.should.have.properties({
+                                                                totalCount : Object.keys(expectedIsPublic).length,
+                                                                offset : 0,
+                                                                limit : 100
+                                                             });
+
+                        res.body.data.should.have.property('rows');
+                        res.body.data.rows.should.have.length(Object.keys(expectedIsPublic).length);
+
+                        res.body.data.rows.forEach(function(row) {
+                           row.should.have.properties('id', 'displayName', 'clientName', 'creatorUserId', 'isPublic', 'created', 'modified');
+
+                           row.should.have.property('isPublic', expectedIsPublic[row.clientName]);
+
+                           // this user should be able to see the details of public clients and clients created by the user
+                           if (row['isPublic'] || test.user.id == row.creatorUserId) {
+                              row.should.have.properties('email', 'verificationUrl', 'resetPasswordUrl');
+                           }
+                           else {
+                              row.should.not.have.properties('email', 'verificationUrl', 'resetPasswordUrl');
+                           }
+                        });
+
+                        done();
+                     });
+            });
+         });
+
+         it("Should select only the clients matching the where clause", function(done) {
+            superagent
+                  .get(ESDR_CLIENT_API_URL + "?whereOr=id=" + client2.id + ",clientName=" + client3.clientName + "&fields=id,clientName,email,creatorUserId&orderBy=-id")
+                  .set({
+                          Authorization : "Bearer " + verifiedUser2.accessToken
+                       })
+                  .end(function(err, res) {
+                     should.not.exist(err);
+                     should.exist(res);
+
+                     res.should.have.property('status', httpStatus.OK);
+                     res.body.should.have.properties({
+                                                        code : httpStatus.OK,
+                                                        status : 'success'
+                                                     });
+
+                     res.body.should.have.property('data');
+                     res.body.data.should.have.properties({
+                                                             totalCount : 2,
+                                                             offset : 0,
+                                                             limit : 100
+                                                          });
+
+                     res.body.data.should.have.property('rows');
+                     res.body.data.rows.should.have.length(2);
+                     res.body.data.rows.forEach(function(client) {
+                        client.should.have.properties('id', 'clientName', 'creatorUserId');
+
+                        // make sure this user can see the email field for the client it created, but not for the client
+                        // it didn't create.
+                        if (client.creatorUserId == verifiedUser2.id) {
+                           client.should.have.property('email');
+                        }
+                        else {
+                           client.should.not.have.property('email');
+                        }
+
+                        // make sure the client doesn't have properties we didn't ask for
+                        client.should.not.have.properties('displayName', 'creatorUserId', 'isPublic', 'created', 'modified');
+                     });
+
+                     // make sure order by clause worked (should sort in descending order)
+                     res.body.data.rows[0].id.should.be.greaterThan(res.body.data.rows[1].id);
+
+                     done();
+                  });
+         });
       });   // End Find
 
    });   // End Clients
