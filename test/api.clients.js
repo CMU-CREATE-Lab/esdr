@@ -10,7 +10,7 @@ var config = require('../config');
 
 var ESDR_OAUTH_ROOT_URL = config.get("esdr:oauthRootUrl");
 var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
-var ESDR_CLIENT_API_URL = ESDR_API_ROOT_URL + "/clients";
+var ESDR_CLIENTS_API_URL = ESDR_API_ROOT_URL + "/clients";
 
 describe("REST API", function() {
    var verifiedUser1 = requireNew('./fixtures/user1.json');
@@ -193,7 +193,7 @@ describe("REST API", function() {
          creationTests.forEach(function(test) {
             it(test.description, function(done) {
                superagent
-                     .post(ESDR_CLIENT_API_URL)
+                     .post(ESDR_CLIENTS_API_URL)
                      .set({ Authorization : "Bearer " + test.getAccessToken() })
                      .send(test.client)
                      .end(function(err, res) {
@@ -225,7 +225,7 @@ describe("REST API", function() {
 
          it("Creating a client without specifying the email, verificationUrl, or resetPasswordUrl should result in the client getting the defaults", function(done) {
             superagent
-                  .post(ESDR_CLIENT_API_URL)
+                  .post(ESDR_CLIENTS_API_URL)
                   .set({ Authorization : "Bearer " + verifiedUser2.accessToken })
                   .send(client3)
                   .end(function(err, res) {
@@ -273,7 +273,7 @@ describe("REST API", function() {
 
          it("Should fail to create a new client with missing required values", function(done) {
             superagent
-                  .post(ESDR_CLIENT_API_URL)
+                  .post(ESDR_CLIENTS_API_URL)
                   .set({ Authorization : "Bearer " + verifiedUser1.accessToken })
                   .send({})
                   .end(function(err, res) {
@@ -418,7 +418,7 @@ describe("REST API", function() {
          validationFailureTests.forEach(function(test) {
             it(test.description, function(done) {
                superagent
-                     .post(ESDR_CLIENT_API_URL)
+                     .post(ESDR_CLIENTS_API_URL)
                      .set({ Authorization : "Bearer " + verifiedUser1.accessToken })
                      .send(test.client)
                      .end(function(err, res) {
@@ -456,7 +456,7 @@ describe("REST API", function() {
          it("Should be able to find clients (without authentication) and only see all fields for public clients", function(done) {
 
             superagent
-                  .get(ESDR_CLIENT_API_URL)
+                  .get(ESDR_CLIENTS_API_URL)
                   .end(function(err, res) {
                      should.not.exist(err);
                      should.exist(res);
@@ -506,7 +506,7 @@ describe("REST API", function() {
          findWithAuthenticationTests.forEach(function(test) {
             it(test.description, function(done) {
                superagent
-                     .get(ESDR_CLIENT_API_URL)
+                     .get(ESDR_CLIENTS_API_URL)
                      .set({
                              Authorization : "Bearer " + test.user.accessToken
                           })
@@ -551,7 +551,7 @@ describe("REST API", function() {
 
          it("Should select only the clients matching the where clause", function(done) {
             superagent
-                  .get(ESDR_CLIENT_API_URL + "?whereOr=id=" + client2.id + ",clientName=" + client3.clientName + "&fields=id,clientName,email,creatorUserId&orderBy=-id")
+                  .get(ESDR_CLIENTS_API_URL + "?whereOr=id=" + client2.id + ",clientName=" + client3.clientName + "&fields=id,clientName,email,creatorUserId&orderBy=-id")
                   .set({
                           Authorization : "Bearer " + verifiedUser2.accessToken
                        })
