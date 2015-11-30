@@ -1,6 +1,6 @@
 var config = require('../config');
 var httpStatus = require('http-status');
-var superagent = require('superagent');
+var superagent = require('superagent-ls');
 var log = require('log4js').getLogger('esdr:middleware:accesstoken');
 
 module.exports.refreshAccessToken = function() {
