@@ -3,7 +3,7 @@ var flow = require('nimble');
 var httpStatus = require('http-status');
 var requireNew = require('require-new');
 var wipe = require('./fixture-helpers/wipe');
-var database = require('./fixture-helpers/database');
+var setup = require('./fixture-helpers/setup');
 var DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
 var JSendError = require('jsend-utils').JSendError;
 var JSendClientError = require('jsend-utils').JSendClientError;
@@ -18,37 +18,13 @@ describe("Database", function() {
             [
                wipe.wipeAllData,
                function(done) {
-                  // insert the user and remember the id
-                  database.insertUser(user1, function(err, result) {
-                     if (err) {
-                        return done(err);
-                     }
-
-                     user1.id = result.insertId;
-                     done();
-                  });
+                  setup.createUser(user1, done);
                },
                function(done) {
-                  // insert the user and remember the id
-                  database.insertUser(user2, function(err, result) {
-                     if (err) {
-                        return done(err);
-                     }
-
-                     user2.id = result.insertId;
-                     done();
-                  });
+                  setup.createUser(user2, done);
                },
                function(done) {
-                  // insert the product and remember the id
-                  database.insertProduct(product4, function(err, result) {
-                     if (err) {
-                        return done(err);
-                     }
-
-                     product4.id = result.insertId;
-                     done();
-                  });
+                  setup.createProduct(product4, done);
                }
             ],
             initDone

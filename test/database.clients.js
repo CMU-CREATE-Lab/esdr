@@ -2,7 +2,7 @@ var should = require('should');
 var flow = require('nimble');
 var requireNew = require('require-new');
 var wipe = require('./fixture-helpers/wipe');
-var database = require('./fixture-helpers/database');
+var setup = require('./fixture-helpers/setup');
 var DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
 
 describe("Database", function() {
@@ -13,15 +13,7 @@ describe("Database", function() {
             [
                wipe.wipeAllData,
                function(done) {
-                  // insert the user and remember the id
-                  database.insertUser(user1, function(err, result) {
-                     if (err) {
-                        return done(err);
-                     }
-
-                     user1.id = result.insertId;
-                     done();
-                  });
+                  setup.createUser(user1, done);
                }
             ],
             initDone

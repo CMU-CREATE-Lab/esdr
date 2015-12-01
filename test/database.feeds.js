@@ -2,7 +2,7 @@ var should = require('should');
 var flow = require('nimble');
 var requireNew = require('require-new');
 var wipe = require('./fixture-helpers/wipe');
-var database = require('./fixture-helpers/database');
+var setup = require('./fixture-helpers/setup');
 var shallowClone = require('./fixture-helpers/test-utils').shallowClone;
 var DatabaseError = require('../lib/errors').DatabaseError;
 var ValidationError = require('../lib/errors').ValidationError;
@@ -17,40 +17,16 @@ describe("Database", function() {
             [
                wipe.wipeAllData,
                function(done) {
-                  // insert the user and remember the id
-                  database.insertUser(user1, function(err, result) {
-                     if (err) {
-                        return done(err);
-                     }
-
-                     user1.id = result.insertId;
-                     done();
-                  });
+                  setup.createUser(user1, done);
                },
                function(done) {
-                  // insert the product and remember the id
-                  database.insertProduct(product4, function(err, result) {
-                     if (err) {
-                        return done(err);
-                     }
-
-                     product4.id = result.insertId;
-                     done();
-                  });
+                  setup.createProduct(product4, done);
                },
                function(done) {
                   device5.userId = user1.id;
                   device5.productId = product4.id;
 
-                  // insert the device and remember the id
-                  database.insertDevice(device5, function(err, result) {
-                     if (err) {
-                        return done(err);
-                     }
-
-                     device5.id = result.insertId;
-                     done();
-                  });
+                  setup.createDevice(device5, done);
                }
             ],
             initDone

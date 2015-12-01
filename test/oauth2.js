@@ -4,10 +4,9 @@ var httpStatus = require('http-status');
 var superagent = require('superagent-ls');
 var requireNew = require('require-new');
 var wipe = require('./fixture-helpers/wipe');
-var database = require('./fixture-helpers/database');
+var setup = require('./fixture-helpers/setup');
 var config = require('../config');
 
-var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
 var ESDR_OAUTH_ROOT_URL = config.get("esdr:oauthRootUrl");
 
 describe("OAuth2", function() {
@@ -22,43 +21,17 @@ describe("OAuth2", function() {
             [
                wipe.wipeAllData,
                function(done) {
-                  // insert the user and remember the id
-                  database.insertUser(unverifiedUser, function(err, result) {
-                     if (err) {
-                        return done(err);
-                     }
-                     unverifiedUser.id = result.insertId;
-                     done();
-                  });
+                  setup.createUser(unverifiedUser, done);
                },
                function(done) {
-                  // insert the user and remember the id
-                  database.insertUser(verifiedUser, function(err, result) {
-                     if (err) {
-                        return done(err);
-                     }
-                     verifiedUser.id = result.insertId;
-                     done();
-                  });
+                  setup.createUser(verifiedUser, done);
                },
                function(done) {
-                  // mark verifiedUser as verified
-                  superagent
-                        .put(ESDR_API_ROOT_URL + "/user-verification")
-                        .send({ token : verifiedUser.verificationToken })
-                        .end(done);
+                  setup.verifyUser(verifiedUser, done);
                },
                function(done) {
-                  // insert the client and remember the id
                   client1.creatorUserId = unverifiedUser.id;
-                  database.insertClient(client1, function(err, result) {
-                     if (err) {
-                        return done(err);
-                     }
-
-                     client1.id = result.insertId;
-                     done();
-                  });
+                  setup.createClient(client1, done);
                }
             ],
             initDone

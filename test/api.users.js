@@ -4,7 +4,7 @@ var httpStatus = require('http-status');
 var superagent = require('superagent-ls');
 var requireNew = require('require-new');
 var wipe = require('./fixture-helpers/wipe');
-var database = require('./fixture-helpers/database');
+var setup = require('./fixture-helpers/setup');
 
 var config = require('../config');
 
@@ -30,15 +30,7 @@ describe("REST API", function() {
             [
                wipe.wipeAllData,
                function(done) {
-                  // insert the client and remember the id
-                  database.insertClient(client1, function(err, result) {
-                     if (err) {
-                        return done(err);
-                     }
-
-                     client1.id = result.insertId;
-                     done();
-                  });
+                  setup.createClient(client1, done);
                }
             ],
             initDone

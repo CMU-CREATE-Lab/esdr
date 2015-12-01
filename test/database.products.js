@@ -2,7 +2,7 @@ var should = require('should');
 var flow = require('nimble');
 var requireNew = require('require-new');
 var wipe = require('./fixture-helpers/wipe');
-var database = require('./fixture-helpers/database');
+var setup = require('./fixture-helpers/setup');
 var shallowClone = require('./fixture-helpers/test-utils').shallowClone;
 var DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
 var ValidationError = require('../lib/errors').ValidationError;
@@ -15,15 +15,7 @@ describe("Database", function() {
             [
                wipe.wipeAllData,
                function(done) {
-                  // insert the user and remember the id
-                  database.insertUser(user1, function(err, result) {
-                     if (err) {
-                        return done(err);
-                     }
-
-                     user1.id = result.insertId;
-                     done();
-                  });
+                  setup.createUser(user1, done);
                }
             ],
             initDone
@@ -111,13 +103,13 @@ describe("Database", function() {
                should.exist(product);
 
                product.should.have.properties({
-                                               id : product4.id,
-                                               name : product4.name,
-                                               prettyName : product4.prettyName,
-                                               vendor : product4.vendor,
-                                               description : product4.description,
-                                               creatorUserId : null
-                                            });
+                                                 id : product4.id,
+                                                 name : product4.name,
+                                                 prettyName : product4.prettyName,
+                                                 vendor : product4.vendor,
+                                                 description : product4.description,
+                                                 creatorUserId : null
+                                              });
                product.should.have.properties('created', 'modified');
 
                // do a deep equal
@@ -133,13 +125,13 @@ describe("Database", function() {
                should.exist(product);
 
                product.should.have.properties({
-                                               id : product5.id,
-                                               name : product5.name,
-                                               prettyName : product5.prettyName,
-                                               vendor : product5.vendor,
-                                               description : product5.description,
-                                               creatorUserId : user1.id
-                                            });
+                                                 id : product5.id,
+                                                 name : product5.name,
+                                                 prettyName : product5.prettyName,
+                                                 vendor : product5.vendor,
+                                                 description : product5.description,
+                                                 creatorUserId : user1.id
+                                              });
                product.should.have.properties('created', 'modified');
 
                // do a deep equal
@@ -166,7 +158,6 @@ describe("Database", function() {
                done();
             });
          });
-
 
       });   // End Find
 

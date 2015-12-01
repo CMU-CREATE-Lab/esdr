@@ -4,11 +4,10 @@ var httpStatus = require('http-status');
 var superagent = require('superagent-ls');
 var requireNew = require('require-new');
 var wipe = require('./fixture-helpers/wipe');
-var database = require('./fixture-helpers/database');
+var setup = require('./fixture-helpers/setup');
 
 var config = require('../config');
 
-var ESDR_OAUTH_ROOT_URL = config.get("esdr:oauthRootUrl");
 var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
 var ESDR_CLIENTS_API_URL = ESDR_API_ROOT_URL + "/clients";
 
@@ -34,77 +33,26 @@ describe("REST API", function() {
       // To create a client, we have a bit of a chicken-and-egg scenario.  We need to have an OAuth2 access token to
       // create a client, but you can't get one without auth'ing against a client.  So, here, we'll insert a user, verifiy
       // it, and then get an access token for that user (using the ESDR client) so that we can create new clients.
-
-      var insertUser = function(user, callback) {
-         // insert the user and remember the id
-         database.insertUser(user, function(err, result) {
-            if (err) {
-               return callback(err);
-            }
-            user.id = result.insertId;
-            callback(null, user.id);
-         });
-      };
-
-      var verifyUser = function(user, callback) {
-         // mark user as verified
-         superagent
-               .put(ESDR_API_ROOT_URL + "/user-verification")
-               .send({ token : user.verificationToken })
-               .end(callback);
-      };
-
-      var authentcateUser = function(user, callback) {
-         // get an OAuth2 access token for this user
-         superagent
-               .post(ESDR_OAUTH_ROOT_URL)
-               .send({
-                        grant_type : "password",
-                        client_id : config.get("esdrClient:clientName"),
-                        client_secret : config.get("esdrClient:clientSecret"),
-                        username : user.email,
-                        password : user.password
-                     })
-               .end(function(err, res) {
-                  should.not.exist(err);
-                  should.exist(res);
-
-                  res.should.have.property('status', httpStatus.OK);
-                  res.should.have.property('body');
-                  res.body.should.have.properties('access_token', 'refresh_token');
-                  res.body.should.have.properties({
-                                                     userId : user.id,
-                                                     expires_in : config.get("security:tokenLifeSecs"),
-                                                     token_type : 'Bearer'
-                                                  });
-
-                  // remember the access token
-                  user.accessToken = res.body.access_token;
-
-                  callback(null, user.accessToken);
-               });
-      };
-
       flow.series(
             [
                wipe.wipeAllData,
                function(done) {
-                  insertUser(verifiedUser1, done);
+                  setup.createUser(verifiedUser1, done);
                },
                function(done) {
-                  insertUser(verifiedUser2, done);
+                  setup.createUser(verifiedUser2, done);
                },
                function(done) {
-                  verifyUser(verifiedUser1, done);
+                  setup.verifyUser(verifiedUser1, done);
                },
                function(done) {
-                  verifyUser(verifiedUser2, done);
+                  setup.verifyUser(verifiedUser2, done);
                },
                function(done) {
-                  authentcateUser(verifiedUser1, done);
+                  setup.authentcateUser(verifiedUser1, done);
                },
                function(done) {
-                  authentcateUser(verifiedUser2, done);
+                  setup.authentcateUser(verifiedUser2, done);
                }
             ],
             initDone
