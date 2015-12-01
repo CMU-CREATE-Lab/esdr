@@ -236,11 +236,6 @@ describe("REST API", function() {
                         should.not.exist(err);
                         should.exist(res);
 
-                        if (test.willDebug) {
-                           console.log(JSON.stringify(expectedValidationItems, null, 3));
-                           console.log(JSON.stringify(res.body, null, 3));
-                        }
-
                         res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
                         res.body.should.have.properties({
                                                            code : httpStatus.UNPROCESSABLE_ENTITY,
