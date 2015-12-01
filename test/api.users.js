@@ -8,7 +8,6 @@ var database = require('./fixture-helpers/database');
 
 var config = require('../config');
 
-var ESDR_OAUTH_ROOT_URL = config.get("esdr:oauthRootUrl");
 var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
 var ESDR_USERS_API_URL = ESDR_API_ROOT_URL + "/users";
 
@@ -312,14 +311,5 @@ describe("REST API", function() {
          });
 
       });   // End Create
-
-      describe("Verify", function() {
-
-      });   // End Verify
-
-      describe("Find", function() {
-
-      });   // End Find
-
    });   // End Users
 });   // End REST API
