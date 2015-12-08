@@ -47,7 +47,7 @@ describe("REST API", function() {
       );
    });
 
-   describe.only("Products", function() {
+   describe("Products", function() {
 
       describe("Create", function() {
          var creationTests = [
