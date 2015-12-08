@@ -106,22 +106,20 @@ describe("REST API", function() {
                         should.exist(res);
 
                         res.should.have.property('status', test.expectedHttpStatus);
-                        if (!test.hasEmptyBody) {
-                           res.body.should.have.properties({
-                                                              code : test.expectedHttpStatus,
-                                                              status : test.expectedStatusText
-                                                           });
+                        res.body.should.have.properties({
+                                                           code : test.expectedHttpStatus,
+                                                           status : test.expectedStatusText
+                                                        });
 
-                           res.body.should.have.property('data');
-                           res.body.data.should.have.properties(test.expectedResponseData);
+                        res.body.should.have.property('data');
+                        res.body.data.should.have.properties(test.expectedResponseData);
 
-                           if (test.expectedHttpStatus == httpStatus.CREATED) {
-                              res.body.data.should.have.properties('id', 'verificationToken');
+                        if (test.expectedHttpStatus == httpStatus.CREATED) {
+                           res.body.data.should.have.properties('id', 'verificationToken');
 
-                              // remember the database ID and verificationToken
-                              test.user.id = res.body.data.id;
-                              test.user.verificationToken = res.body.data.verificationToken;
-                           }
+                           // remember the database ID and verificationToken
+                           test.user.id = res.body.data.id;
+                           test.user.verificationToken = res.body.data.verificationToken;
                         }
 
                         done();
