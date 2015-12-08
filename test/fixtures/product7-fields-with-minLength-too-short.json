@@ -1,0 +1,7 @@
+{
+   "name" : "yo",
+   "prettyName" : "Yo",
+   "vendor" : "CMU CREATE Lab",
+   "description" : "The CATTfish v1 water temperature and conductivity sensor.",
+   "defaultChannelSpecs" : 1
+}
