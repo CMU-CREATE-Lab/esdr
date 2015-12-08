@@ -205,7 +205,7 @@ describe("REST API", function() {
                      }
                   ];
                }
-            },
+            }
          ];
 
          creationValidationTests.forEach(function(test) {
@@ -352,11 +352,11 @@ describe("REST API", function() {
                      rows : [
                         {
                            id : product2.id,
-                           name : product2.name,
+                           name : product2.name
                         },
                         {
                            id : product1.id,
-                           name : product1.name,
+                           name : product1.name
                         }
                      ]
                   }
