@@ -607,5 +607,5 @@ describe("REST API", function() {
             ].forEach(executeFindTest);
          });   // End Using URL /devices/:deviceId
       });   // End Find
-   });   // End Products
+   });   // End Devices
 });   // End REST API
