@@ -1,0 +1,14 @@
+{
+   "name" : "Newell Simon 5th Floor Kitchen",
+   "exposure" : "indoor",
+   "isPublic" : 0,
+   "isMobile" : 0,
+   "latitude" : 40.443493,
+   "longitude" : -79.945721,
+   "channelSpecs" : {
+      "particle_count" : {
+         "prettyName" : "Particle Count",
+         "units" : "particles"
+      }
+   }
+}

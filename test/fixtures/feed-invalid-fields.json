@@ -1,0 +1,14 @@
+{
+   "name" : "This is an absurdly long feed name and only a crazy person would create one this long because, seriously, what good does it do to have a name that's over 255 characters long? None, as far as I can tell, other than testing the max length of feed names, of course.",
+   "exposure" : "outer space",
+   "isPublic" : 0,
+   "isMobile" : 0,
+   "latitude" : "a",
+   "longitude" : 4242,
+   "channelSpecs" : {
+      "particle_count" : {
+         "prettyName" : "Particle Count",
+         "units" : "particles"
+      }
+   }
+}

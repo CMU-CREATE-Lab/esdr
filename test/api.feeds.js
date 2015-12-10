@@ -14,10 +14,15 @@ var ESDR_FEEDS_API_URL = ESDR_API_ROOT_URL + "/feeds";
 
 describe("REST API", function() {
    var user1 = requireNew('./fixtures/user1.json');
+   var user2 = requireNew('./fixtures/user2.json');
    var product1 = requireNew('./fixtures/product1.json');
    var device1User1 = requireNew('./fixtures/device1.json');
    var feed1a = requireNew('./fixtures/feed1a.json');
    var feed1b = requireNew('./fixtures/feed1b.json');
+   var feed1c = requireNew('./fixtures/feed1c.json');
+   var feedNullChannelSpecs = requireNew('./fixtures/feed-null-channelSpecs.json');
+   var feedMissingRequiredFields = requireNew('./fixtures/feed-missing-required-fields.json');
+   var feedInvalidFields = requireNew('./fixtures/feed-invalid-fields.json');
 
    before(function(initDone) {
       flow.series(
@@ -31,6 +36,15 @@ describe("REST API", function() {
                },
                function(done) {
                   setup.authentcateUser(user1, done);
+               },
+               function(done) {
+                  setup.createUser(user2, done);
+               },
+               function(done) {
+                  setup.verifyUser(user2, done);
+               },
+               function(done) {
+                  setup.authentcateUser(user2, done);
                },
                function(done) {
                   product1.creatorUserId = user1.id;
@@ -62,7 +76,6 @@ describe("REST API", function() {
       describe("Create", function() {
          var creationTests = [
             {
-               willDebug : true,
                description : "Should be able to create a new feed",
                accessToken : function() {
                   return user1.accessToken
@@ -74,7 +87,6 @@ describe("REST API", function() {
                expectedStatusText : 'success'
             },
             {
-               willDebug : true,
                description : "Should be able to create an additional feed for a device",
                accessToken : function() {
                   return user1.accessToken
@@ -85,6 +97,64 @@ describe("REST API", function() {
                expectedHttpStatus : httpStatus.CREATED,
                expectedStatusText : 'success'
             },
+            {
+               description : "Should be able to create a new feed with a null channelSpecs (will use Product's defaultChannelSpecs)",
+               accessToken : function() {
+                  return user1.accessToken
+               },
+               device : device1User1,
+               feed : feedNullChannelSpecs,
+               user : user1,
+               expectedHttpStatus : httpStatus.CREATED,
+               expectedStatusText : 'success'
+            },
+            {
+               description : "Should be able to create a new feed with a custom channelSpecs (different from the Product's defaultChannelSpecs)",
+               accessToken : function() {
+                  return user1.accessToken
+               },
+               device : device1User1,
+               feed : feed1c,
+               user : user1,
+               expectedHttpStatus : httpStatus.CREATED,
+               expectedStatusText : 'success'
+            },
+            {
+               description : "Should fail to create a new feed for a bogus device",
+               accessToken : function() {
+                  return user1.accessToken
+               },
+               device : { id : -1 },
+               feed : feed1a,
+               user : user1,
+               expectedHttpStatus : httpStatus.NOT_FOUND,
+               expectedStatusText : 'error',
+               expectedResponseData : null
+            },
+            {
+               description : "Should fail to create a new feed for a device owned by a different user",
+               accessToken : function() {
+                  return user2.accessToken
+               },
+               device : device1User1,
+               feed : feed1b,
+               user : user2,
+               expectedHttpStatus : httpStatus.FORBIDDEN,
+               expectedStatusText : 'error',
+               expectedResponseData : null
+            },
+            {
+               description : "Should fail to create a new feed if the OAuth2 token is invalid",
+               accessToken : function() {
+                  return "bogus"
+               },
+               device : device1User1,
+               feed : feed1b,
+               user : user1,
+               expectedHttpStatus : httpStatus.UNAUTHORIZED,
+               expectedStatusText : 'error',
+               hasEmptyBody : true
+            }
          ];
 
          creationTests.forEach(function(test) {
@@ -97,10 +167,6 @@ describe("REST API", function() {
                         should.not.exist(err);
                         should.exist(res);
 
-                        if (test.willDebug) {
-                           console.log(JSON.stringify(res.body, null, 3));
-                        }
-
                         res.should.have.property('status', test.expectedHttpStatus);
                         if (!test.hasEmptyBody) {
                            res.body.should.have.properties({
@@ -108,9 +174,14 @@ describe("REST API", function() {
                                                               status : test.expectedStatusText
                                                            });
 
-                           res.body.should.have.property('data');
-                           if (test.expectedResponseData) {
-                              res.body.data.should.have.properties(test.expectedResponseData);
+                           if (typeof test.expectedResponseData !== 'undefined') {
+                              if (test.expectedResponseData == null) {
+                                 res.body.should.have.property('data', null);
+                              }
+                              else {
+                                 res.body.should.have.property('data');
+                                 res.body.data.should.have.properties(test.expectedResponseData);
+                              }
                            }
 
                            if (test.expectedHttpStatus == httpStatus.CREATED) {
@@ -125,10 +196,109 @@ describe("REST API", function() {
                               test.feed.userId = test.user.id;
                               test.feed.apiKey = res.body.data.apiKey;
                               test.feed.apiKeyReadOnly = res.body.data.apiKeyReadOnly;
-
-                              console.log(JSON.stringify(test.feed, null, 3));
                            }
                         }
+
+                        done();
+                     });
+            });
+         });
+
+         var creationValidationTests = [
+            {
+               description : "Should fail to create a feed if required fields are missing",
+               accessToken : function() {
+                  return user1.accessToken
+               },
+               device : device1User1,
+               feed : feedMissingRequiredFields,
+               getExpectedValidationItems : function() {
+                  return [
+                     {
+                        instanceContext : '#',
+                        constraintName : 'required',
+                        constraintValue : global.db.feeds.jsonSchema.required,
+                        kind : 'ObjectValidationError'
+                     }
+                  ];
+               }
+            },
+            {
+               description : "Should fail to create a new feed if the feed is null",
+               accessToken : function() {
+                  return user1.accessToken
+               },
+               device : device1User1,
+               feed : null,
+               getExpectedValidationItems : function() {
+                  return [
+                     {
+                        instanceContext : '#',
+                        constraintName : 'required',
+                        constraintValue : global.db.feeds.jsonSchema.required,
+                        kind : 'ObjectValidationError'
+                     }
+                  ];
+               }
+            },
+            {
+               description : "Should fail to create a feed if fields are invalid",
+               accessToken : function() {
+                  return user1.accessToken
+               },
+               device : device1User1,
+               feed : feedInvalidFields,
+               getExpectedValidationItems : function() {
+                  return [
+                     {
+                        instanceContext : '#/name',
+                        constraintName : 'maxLength',
+                        constraintValue : global.db.feeds.jsonSchema.properties.name.maxLength,
+                        kind : 'StringValidationError'
+                     },
+                     {
+                        instanceContext : '#/exposure',
+                        constraintName : 'enum',
+                        constraintValue : global.db.feeds.jsonSchema.properties.exposure.enum
+                     },
+                     {
+                        instanceContext : '#/latitude',
+                        constraintName : 'type',
+                        constraintValue : global.db.feeds.jsonSchema.properties.latitude.type
+                     },
+                     {
+                        instanceContext : '#/longitude',
+                        constraintName : 'maximum',
+                        constraintValue : global.db.feeds.jsonSchema.properties.longitude.maximum,
+                        kind : 'NumericValidationError'
+                     }
+                  ];
+               }
+            }
+         ];
+
+         creationValidationTests.forEach(function(test) {
+            it(test.description, function(done) {
+               superagent
+                     .post(ESDR_DEVICES_API_URL + "/" + test.device.id + "/feeds")
+                     .set(createAuthorizationHeader(test.accessToken))
+                     .send(test.feed)
+                     .end(function(err, res) {
+                        should.not.exist(err);
+                        should.exist(res);
+
+                        res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
+                        res.body.should.have.properties({
+                                                           code : httpStatus.UNPROCESSABLE_ENTITY,
+                                                           status : 'error'
+                                                        });
+
+                        var expectedValidationItems = test.getExpectedValidationItems();
+                        res.body.should.have.property('data');
+                        res.body.data.should.have.length(expectedValidationItems.length);
+                        res.body.data.forEach(function(validationItem, index) {
+                           validationItem.should.have.properties(expectedValidationItems[index]);
+                        });
 
                         done();
                      });
@@ -138,6 +308,9 @@ describe("REST API", function() {
       });   // End Create
 
       describe("Find", function() {
+         // TODO: verify that feed with undefined channel specs got the Products channel specs
+         // TODO: verify that feed with null channel specs got the Products channel specs
+         // TODO: verify that feed with custom channel specs DIDN'T get the Products channel specs
 
       });   // End Find
    });   // End Feeds
