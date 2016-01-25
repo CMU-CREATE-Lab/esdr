@@ -5,6 +5,7 @@ var superagent = require('superagent-ls');
 var requireNew = require('require-new');
 var wipe = require('./fixture-helpers/wipe');
 var setup = require('./fixture-helpers/setup');
+var createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
 
 var config = require('../config');
 
@@ -62,17 +63,6 @@ describe("REST API", function() {
    });
 
    describe("Devices", function() {
-      var createAuthorizationHeader = function(accessToken) {
-         var token = typeof accessToken === 'function' ? accessToken() : accessToken;
-         var authorization;
-         if (typeof token !== 'undefined' && token != null) {
-            authorization = {
-               Authorization : "Bearer " + token
-            };
-         }
-
-         return authorization;
-      };
 
       describe("Create", function() {
          var creationTests = [
@@ -214,6 +204,7 @@ describe("REST API", function() {
 
                         res.should.have.property('status', test.expectedHttpStatus);
                         if (!test.hasEmptyBody) {
+                           res.should.have.property('body');
                            res.body.should.have.properties({
                                                               code : test.expectedHttpStatus,
                                                               status : test.expectedStatusText
@@ -288,6 +279,7 @@ describe("REST API", function() {
                         should.exist(res);
 
                         res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
+                        res.should.have.property('body');
                         res.body.should.have.properties({
                                                            code : httpStatus.UNPROCESSABLE_ENTITY,
                                                            status : 'error'
@@ -319,6 +311,7 @@ describe("REST API", function() {
 
                         res.should.have.property('status', test.expectedHttpStatus || httpStatus.OK);
                         if (!test.hasEmptyBody) {
+                           res.should.have.property('body');
                            res.body.should.have.properties({
                                                               code : test.expectedHttpStatus || httpStatus.OK,
                                                               status : test.expectedStatusText || 'success'
@@ -329,15 +322,15 @@ describe("REST API", function() {
                               var expectedResponseData = test.getExpectedResponseData();
                               if ('rows' in expectedResponseData && 'totalCount' in expectedResponseData) {
                                  res.body.data.should.have.property('totalCount', expectedResponseData.totalCount);
-                                 res.body.data.rows.forEach(function(product, index) {
-                                    product.should.have.properties(expectedResponseData.rows[index]);
+                                 res.body.data.rows.forEach(function(item, index) {
+                                    item.should.have.properties(expectedResponseData.rows[index]);
 
                                     if (test.additionalExpectedDataProperties) {
-                                       product.should.have.properties(test.additionalExpectedDataProperties);
+                                       item.should.have.properties(test.additionalExpectedDataProperties);
                                     }
                                     if (test.expectedMissingProperties) {
                                        test.expectedMissingProperties.forEach(function(prop) {
-                                          product.should.not.have.property(prop);
+                                          item.should.not.have.property(prop);
                                        });
                                     }
                                  });

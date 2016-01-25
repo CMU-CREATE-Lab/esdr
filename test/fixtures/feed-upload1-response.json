@@ -1,0 +1,54 @@
+{
+   "code" : 200,
+   "status" : "success",
+   "data" : {
+      "channelBounds" : {
+         "channels" : {
+            "battery_voltage" : {
+               "minTimeSecs" : 1380276279.1,
+               "maxTimeSecs" : 1381154132.009,
+               "minValue" : 3.84,
+               "maxValue" : 3.85
+            },
+            "conductivity" : {
+               "minTimeSecs" : 1380276279.1,
+               "maxTimeSecs" : 1381154132.009,
+               "minValue" : 464,
+               "maxValue" : 612
+            },
+            "temperature" : {
+               "minTimeSecs" : 1380276279.1,
+               "maxTimeSecs" : 1381154132.009,
+               "minValue" : 18.3,
+               "maxValue" : 22.2
+            }
+         },
+         "minTimeSecs" : 1380276279.1,
+         "maxTimeSecs" : 1381154132.009
+      },
+      "importedBounds" : {
+         "channels" : {
+            "battery_voltage" : {
+               "minTimeSecs" : 1380276279.1,
+               "maxTimeSecs" : 1381154132.009,
+               "minValue" : 3.84,
+               "maxValue" : 3.85
+            },
+            "conductivity" : {
+               "minTimeSecs" : 1380276279.1,
+               "maxTimeSecs" : 1381154132.009,
+               "minValue" : 464,
+               "maxValue" : 612
+            },
+            "temperature" : {
+               "minTimeSecs" : 1380276279.1,
+               "maxTimeSecs" : 1381154132.009,
+               "minValue" : 18.3,
+               "maxValue" : 22.2
+            }
+         },
+         "minTimeSecs" : 1380276279.1,
+         "maxTimeSecs" : 1381154132.009
+      }
+   }
+}

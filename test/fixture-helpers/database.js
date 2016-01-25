@@ -87,3 +87,7 @@ module.exports.insertProduct = function(product, callback) {
 module.exports.insertDevice = function(device, callback) {
    databaseHelper.execute("INSERT INTO Devices SET ?", device, callback);
 };
+
+module.exports.insertFeed = function(feed, callback) {
+   databaseHelper.execute("INSERT INTO Feeds SET ?", feed, callback);
+};

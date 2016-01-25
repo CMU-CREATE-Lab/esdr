@@ -5,6 +5,7 @@ var superagent = require('superagent-ls');
 var requireNew = require('require-new');
 var wipe = require('./fixture-helpers/wipe');
 var setup = require('./fixture-helpers/setup');
+var createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
 
 var config = require('../config');
 
@@ -99,17 +100,6 @@ describe("REST API", function() {
             }
          ];
 
-         var createAuthorizationHeader = function(accessToken) {
-            var token = typeof accessToken === 'function' ? accessToken() : accessToken;
-            var authorization;
-            if (typeof token !== 'undefined' && token != null) {
-               authorization = {
-                  Authorization : "Bearer " + token
-               };
-            }
-
-            return authorization;
-         };
          creationTests.forEach(function(test) {
             it(test.description, function(done) {
                superagent
@@ -122,6 +112,7 @@ describe("REST API", function() {
 
                         res.should.have.property('status', test.expectedHttpStatus);
                         if (!test.hasEmptyBody) {
+                           res.should.have.property('body');
                            res.body.should.have.properties({
                                                               code : test.expectedHttpStatus,
                                                               status : test.expectedStatusText
@@ -219,6 +210,7 @@ describe("REST API", function() {
                         should.exist(res);
 
                         res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
+                        res.should.have.property('body');
                         res.body.should.have.properties({
                                                            code : httpStatus.UNPROCESSABLE_ENTITY,
                                                            status : 'error'
@@ -376,6 +368,7 @@ describe("REST API", function() {
 
                         res.should.have.property('status', test.expectedHttpStatus || httpStatus.OK);
                         if (!test.hasEmptyBody) {
+                           res.should.have.property('body');
                            res.body.should.have.properties({
                                                               code : test.expectedHttpStatus || httpStatus.OK,
                                                               status : test.expectedStatusText || 'success'

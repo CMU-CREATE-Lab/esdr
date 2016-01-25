@@ -106,6 +106,7 @@ describe("REST API", function() {
                         should.exist(res);
 
                         res.should.have.property('status', test.expectedHttpStatus);
+                        res.should.have.property('body');
                         res.body.should.have.properties({
                                                            code : test.expectedHttpStatus,
                                                            status : test.expectedStatusText
@@ -227,6 +228,7 @@ describe("REST API", function() {
                         should.exist(res);
 
                         res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
+                        res.should.have.property('body');
                         res.body.should.have.properties({
                                                            code : httpStatus.UNPROCESSABLE_ENTITY,
                                                            status : 'error'
@@ -252,6 +254,7 @@ describe("REST API", function() {
                      should.exist(res);
 
                      res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
+                     res.should.have.property('body');
                      res.body.should.have.properties({
                                                         code : httpStatus.UNPROCESSABLE_ENTITY,
                                                         status : 'error'
@@ -283,6 +286,7 @@ describe("REST API", function() {
                      should.exist(res);
 
                      res.should.have.property('status', httpStatus.CREATED);
+                     res.should.have.property('body');
                      res.body.should.have.properties({
                                                         code : httpStatus.CREATED,
                                                         status : 'success'

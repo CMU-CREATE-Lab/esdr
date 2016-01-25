@@ -8,6 +8,7 @@ var should = require('should');
 var superagent = require('superagent-ls');
 var httpStatus = require('http-status');
 var database = require('./database');
+var createRandomHexToken = require('../../lib/token').createRandomHexToken;
 
 var config = require('../../config');
 
@@ -94,5 +95,29 @@ module.exports.createDevice = function(device, callback) {
       }
       device.id = result.insertId;
       callback(null, device.id);
+   });
+};
+
+// create the feed and save the database id to the given device object
+module.exports.createFeed = function(feed, callback) {
+   if (typeof feed.apiKey === 'undefined') {
+      feed.apiKey = createRandomHexToken(32);
+   }
+
+   if (typeof feed.apiKeyReadOnly === 'undefined') {
+      feed.apiKeyReadOnly = createRandomHexToken(32);
+   }
+
+   if (typeof feed.channelSpecs === 'undefined') {
+      console.log("ERROR: setup.createFeed(): Cannot insert feed because the channelSpecs field is undefined! Aborting.");
+      process.exit(1);
+   }
+
+   database.insertFeed(feed, function(err, result) {
+      if (err) {
+         return callback(err);
+      }
+      feed.id = result.insertId;
+      callback(null, feed.id);
    });
 };

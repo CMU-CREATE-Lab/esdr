@@ -1,0 +1,48 @@
+{
+   "name": "Newell Simon 3rd Floor Bathroom (feed1.json)",
+   "exposure": "indoor",
+   "isPublic": 1,
+   "isMobile": 0,
+   "latitude": 40.443403,
+   "longitude": -79.94564,
+   "channelSpecs": {
+      "temperature": {
+         "prettyName": "Temperature",
+         "units": "C"
+      },
+      "conductivity": {
+         "prettyName": "Conductivity",
+         "units": "uS/cm"
+      },
+      "battery_voltage": {
+         "prettyName": "Battery Voltage",
+         "units": "V"
+      }
+   },
+   "channelBounds": {
+      "channels": {
+         "battery_voltage": {
+            "minTimeSecs": 1380276279.1,
+            "maxTimeSecs": 1382054188,
+            "minValue": 3.84,
+            "maxValue": 3.85
+         },
+         "conductivity": {
+            "minTimeSecs": 1380276279.1,
+            "maxTimeSecs": 1382054188,
+            "minValue": 464,
+            "maxValue": 624
+         },
+         "temperature": {
+            "minTimeSecs": 1380270001,
+            "maxTimeSecs": 1382055042,
+            "minValue": 14.2,
+            "maxValue": 33.9
+         }
+      },
+      "minTimeSecs": 1380270001,
+      "maxTimeSecs": 1382055042
+   },
+   "minTimeSecs": 1380270001,
+   "maxTimeSecs": 1382055042
+}
