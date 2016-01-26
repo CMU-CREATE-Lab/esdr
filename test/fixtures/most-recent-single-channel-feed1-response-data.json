@@ -1,0 +1,20 @@
+{
+   "channels" : {
+      "conductivity" : {
+         "channelBounds" : {
+            "minTimeSecs" : 1380276279.1,
+            "maxTimeSecs" : 1382054188,
+            "minValue" : 464,
+            "maxValue" : 624
+         },
+         "mostRecentDataSample" : {
+            "timeSecs" : 1382054188,
+            "value" : 517
+         },
+         "mostRecentStringSample" : {
+            "timeSecs" : 1380752359,
+            "value" : "This is a comment in the conductivity channel at time 1380752359.  There is also a value at this time."
+         }
+      }
+   }
+}

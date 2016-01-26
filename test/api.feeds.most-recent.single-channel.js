@@ -71,8 +71,8 @@ describe("REST API", function() {
       response : requireNew('./fixtures/feed-upload10-response.json')
    };
 
-   var feed1MostRecentData = requireNew('./fixtures/most-recent-all-channels-feed1-response-data.json');
-   var feed2MostRecentData = requireNew('./fixtures/most-recent-all-channels-feed2-response-data.json');
+   var feed1MostRecentData = requireNew('./fixtures/most-recent-single-channel-feed1-response-data.json');
+   var feed2MostRecentData = requireNew('./fixtures/most-recent-single-channel-feed2-response-data.json');
 
    before(function(initDone) {
       var doUpload = function(feed, feedUplaod, done) {
@@ -177,7 +177,7 @@ describe("REST API", function() {
 
    describe("Feeds", function() {
       describe("Get Most Recent Data Sample", function() {
-         describe("All Channels", function() {
+         describe("Single Channel", function() {
             var executeTest = function(test) {
                it(test.description, function(done) {
                   superagent
@@ -221,18 +221,18 @@ describe("REST API", function() {
 
                [
                   {
-                     description : "Should be able to get most recent data samples for a public feed without authentication",
+                     description : "Should be able to get most recent data samples for a channel in a public feed without authentication",
                      url : function() {
-                        return ESDR_FEEDS_API_URL + "/" + feed1.id + "/most-recent";
+                        return ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/conductivity/most-recent";
                      },
                      expectedHttpStatus : httpStatus.OK,
                      expectedStatusText : 'success',
                      expectedResponseData : feed1MostRecentData
                   },
                   {
-                     description : "Should fail to get most recent data samples for a private feed without authentication",
+                     description : "Should fail to get most recent data samples for a channel in a private feed without authentication",
                      url : function() {
-                        return ESDR_FEEDS_API_URL + "/" + feed2.id + "/most-recent";
+                        return ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/conductivity/most-recent";
                      },
                      expectedHttpStatus : httpStatus.UNAUTHORIZED,
                      expectedStatusText : 'error',
@@ -241,7 +241,7 @@ describe("REST API", function() {
                   {
                      description : "Should fail to get most recent data samples for a feed with an invalid ID (valid ID plus extra non-numeric characters appended)",
                      url : function() {
-                        return ESDR_FEEDS_API_URL + "/" + feed1.id + "abc" + "/most-recent";
+                        return ESDR_FEEDS_API_URL + "/" + feed1.id + "abc" + "/channels/conductivity/most-recent";
                      },
                      expectedHttpStatus : httpStatus.NOT_FOUND,
                      expectedStatusText : 'error',
@@ -255,9 +255,9 @@ describe("REST API", function() {
 
                [
                   {
-                     description : "Should be able to get most recent data samples for a public feed with valid authentication",
+                     description : "Should be able to get most recent data samples for a channel in a public feed with valid authentication",
                      url : function() {
-                        return ESDR_FEEDS_API_URL + "/" + feed1.id + "/most-recent";
+                        return ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/conductivity/most-recent";
                      },
                      headers : function() {
                         return createAuthorizationHeader(user1.accessToken);
@@ -267,9 +267,9 @@ describe("REST API", function() {
                      expectedResponseData : feed1MostRecentData
                   },
                   {
-                     description : "Should be able to get most recent data samples for a public feed with valid authentication, but for the wrong user",
+                     description : "Should be able to get most recent data samples for a channel in a public feed with valid authentication, but for the wrong user",
                      url : function() {
-                        return ESDR_FEEDS_API_URL + "/" + feed1.id + "/most-recent";
+                        return ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/conductivity/most-recent";
                      },
                      headers : function() {
                         return createAuthorizationHeader(user2.accessToken);
@@ -279,9 +279,9 @@ describe("REST API", function() {
                      expectedResponseData : feed1MostRecentData
                   },
                   {
-                     description : "Should be able to get most recent data samples for a public feed with invalid authentication",
+                     description : "Should be able to get most recent data samples for a channel in a public feed with invalid authentication",
                      url : function() {
-                        return ESDR_FEEDS_API_URL + "/" + feed1.id + "/most-recent";
+                        return ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/conductivity/most-recent";
                      },
                      headers : function() {
                         return createAuthorizationHeader("bogus");
@@ -291,9 +291,9 @@ describe("REST API", function() {
                      expectedResponseData : feed1MostRecentData
                   },
                   {
-                     description : "Should be able to get most recent data samples for a private feed with valid authentication",
+                     description : "Should be able to get most recent data samples for a channel in a private feed with valid authentication",
                      url : function() {
-                        return ESDR_FEEDS_API_URL + "/" + feed2.id + "/most-recent";
+                        return ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/conductivity/most-recent";
                      },
                      headers : function() {
                         return createAuthorizationHeader(user1.accessToken);
@@ -303,9 +303,9 @@ describe("REST API", function() {
                      expectedResponseData : feed2MostRecentData
                   },
                   {
-                     description : "Should fail to get most recent data samples for a private feed with valid authentication, but for the wrong user",
+                     description : "Should fail to get most recent data samples for a channel in a private feed with valid authentication, but for the wrong user",
                      url : function() {
-                        return ESDR_FEEDS_API_URL + "/" + feed2.id + "/most-recent";
+                        return ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/conductivity/most-recent";
                      },
                      headers : function() {
                         return createAuthorizationHeader(user2.accessToken);
@@ -315,9 +315,9 @@ describe("REST API", function() {
                      expectedResponseData : null
                   },
                   {
-                     description : "Should fail to get most recent data samples for a private feed with invalid authentication",
+                     description : "Should fail to get most recent data samples for a channel in a private feed with invalid authentication",
                      url : function() {
-                        return ESDR_FEEDS_API_URL + "/" + feed2.id + "/most-recent";
+                        return ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/conductivity/most-recent";
                      },
                      headers : function() {
                         return createAuthorizationHeader("bogus");
@@ -336,9 +336,9 @@ describe("REST API", function() {
 
                   [
                      {
-                        description : "Should be able to get most recent data samples for a public feed with valid read-write authentication",
+                        description : "Should be able to get most recent data samples for a channel in a public feed with valid read-write authentication",
                         url : function() {
-                           return ESDR_FEEDS_API_URL + "/" + feed1.id + "/most-recent";
+                           return ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/conductivity/most-recent";
                         },
                         headers : function() {
                            return { FeedApiKey : feed1.apiKey };
@@ -348,9 +348,9 @@ describe("REST API", function() {
                         expectedResponseData : feed1MostRecentData
                      },
                      {
-                        description : "Should be able to get most recent data samples for a public feed with valid read-only authentication",
+                        description : "Should be able to get most recent data samples for a channel in a public feed with valid read-only authentication",
                         url : function() {
-                           return ESDR_FEEDS_API_URL + "/" + feed1.id + "/most-recent";
+                           return ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/conductivity/most-recent";
                         },
                         headers : function() {
                            return { FeedApiKey : feed1.apiKeyReadOnly };
@@ -360,9 +360,9 @@ describe("REST API", function() {
                         expectedResponseData : feed1MostRecentData
                      },
                      {
-                        description : "Should be able to get most recent data samples for a public feed with valid read-write authentication, but for the wrong feed",
+                        description : "Should be able to get most recent data samples for a channel in a public feed with valid read-write authentication, but for the wrong feed",
                         url : function() {
-                           return ESDR_FEEDS_API_URL + "/" + feed1.id + "/most-recent";
+                           return ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/conductivity/most-recent";
                         },
                         headers : function() {
                            return { FeedApiKey : feed2.apiKey };
@@ -372,9 +372,9 @@ describe("REST API", function() {
                         expectedResponseData : feed1MostRecentData
                      },
                      {
-                        description : "Should be able to get most recent data samples for a public feed with valid read-only authentication, but for the wrong feed",
+                        description : "Should be able to get most recent data samples for a channel in a public feed with valid read-only authentication, but for the wrong feed",
                         url : function() {
-                           return ESDR_FEEDS_API_URL + "/" + feed1.id + "/most-recent";
+                           return ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/conductivity/most-recent";
                         },
                         headers : function() {
                            return { FeedApiKey : feed2.apiKeyReadOnly };
@@ -384,9 +384,9 @@ describe("REST API", function() {
                         expectedResponseData : feed1MostRecentData
                      },
                      {
-                        description : "Should be able to get most recent data samples for a private feed with valid read-write authentication",
+                        description : "Should be able to get most recent data samples for a channel in a private feed with valid read-write authentication",
                         url : function() {
-                           return ESDR_FEEDS_API_URL + "/" + feed2.id + "/most-recent";
+                           return ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/conductivity/most-recent";
                         },
                         headers : function() {
                            return { FeedApiKey : feed2.apiKey };
@@ -396,9 +396,9 @@ describe("REST API", function() {
                         expectedResponseData : feed2MostRecentData
                      },
                      {
-                        description : "Should be able to get most recent data samples for a private feed with valid read-only authentication",
+                        description : "Should be able to get most recent data samples for a channel in a private feed with valid read-only authentication",
                         url : function() {
-                           return ESDR_FEEDS_API_URL + "/" + feed2.id + "/most-recent";
+                           return ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/conductivity/most-recent";
                         },
                         headers : function() {
                            return { FeedApiKey : feed2.apiKeyReadOnly };
@@ -408,9 +408,9 @@ describe("REST API", function() {
                         expectedResponseData : feed2MostRecentData
                      },
                      {
-                        description : "Should fail to get most recent data samples for a private feed with invalid authentication",
+                        description : "Should fail to get most recent data samples for a channel in a private feed with invalid authentication",
                         url : function() {
-                           return ESDR_FEEDS_API_URL + "/" + feed2.id + "/most-recent";
+                           return ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/conductivity/most-recent";
                         },
                         headers : function() {
                            return { FeedApiKey : "bogus" };
@@ -420,9 +420,9 @@ describe("REST API", function() {
                         expectedResponseData : null
                      },
                      {
-                        description : "Should fail to get most recent data samples for a private feed with valid read-write authentication, but for the wrong feed",
+                        description : "Should fail to get most recent data samples for a channel in a private feed with valid read-write authentication, but for the wrong feed",
                         url : function() {
-                           return ESDR_FEEDS_API_URL + "/" + feed2.id + "/most-recent";
+                           return ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/conductivity/most-recent";
                         },
                         headers : function() {
                            return { FeedApiKey : feed1.apiKey };
@@ -432,9 +432,9 @@ describe("REST API", function() {
                         expectedResponseData : null
                      },
                      {
-                        description : "Should fail to get most recent data samples for a private feed with valid read-only authentication, but for the wrong feed",
+                        description : "Should fail to get most recent data samples for a channel in a private feed with valid read-only authentication, but for the wrong feed",
                         url : function() {
-                           return ESDR_FEEDS_API_URL + "/" + feed2.id + "/most-recent";
+                           return ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/conductivity/most-recent";
                         },
                         headers : function() {
                            return { FeedApiKey : feed1.apiKeyReadOnly };
@@ -451,45 +451,45 @@ describe("REST API", function() {
 
                   [
                      {
-                        description : "Should be able to get most recent data samples for a public feed with valid read-write authentication",
+                        description : "Should be able to get most recent data samples for a channel in a public feed with valid read-write authentication",
                         url : function() {
-                           return ESDR_FEEDS_API_URL + "/" + feed1.apiKey + "/most-recent";
+                           return ESDR_FEEDS_API_URL + "/" + feed1.apiKey + "/channels/conductivity/most-recent";
                         },
                         expectedHttpStatus : httpStatus.OK,
                         expectedStatusText : 'success',
                         expectedResponseData : feed1MostRecentData
                      },
                      {
-                        description : "Should be able to get most recent data samples for a public feed with valid read-only authentication",
+                        description : "Should be able to get most recent data samples for a channel in a public feed with valid read-only authentication",
                         url : function() {
-                           return ESDR_FEEDS_API_URL + "/" + feed1.apiKeyReadOnly + "/most-recent";
+                           return ESDR_FEEDS_API_URL + "/" + feed1.apiKeyReadOnly + "/channels/conductivity/most-recent";
                         },
                         expectedHttpStatus : httpStatus.OK,
                         expectedStatusText : 'success',
                         expectedResponseData : feed1MostRecentData
                      },
                      {
-                        description : "Should be able to get most recent data samples for a private feed with valid read-write authentication",
+                        description : "Should be able to get most recent data samples for a channel in a private feed with valid read-write authentication",
                         url : function() {
-                           return ESDR_FEEDS_API_URL + "/" + feed2.apiKey + "/most-recent";
+                           return ESDR_FEEDS_API_URL + "/" + feed2.apiKey + "/channels/conductivity/most-recent";
                         },
                         expectedHttpStatus : httpStatus.OK,
                         expectedStatusText : 'success',
                         expectedResponseData : feed2MostRecentData
                      },
                      {
-                        description : "Should be able to get most recent data samples for a private feed with valid read-only authentication",
+                        description : "Should be able to get most recent data samples for a channel in a private feed with valid read-only authentication",
                         url : function() {
-                           return ESDR_FEEDS_API_URL + "/" + feed2.apiKeyReadOnly + "/most-recent";
+                           return ESDR_FEEDS_API_URL + "/" + feed2.apiKeyReadOnly + "/channels/conductivity/most-recent";
                         },
                         expectedHttpStatus : httpStatus.OK,
                         expectedStatusText : 'success',
                         expectedResponseData : feed2MostRecentData
                      },
                      {
-                        description : "Should fail to get most recent data samples for a private feed with invalid authentication",
+                        description : "Should fail to get most recent data samples for a channel in a private feed with invalid authentication",
                         url : function() {
-                           return ESDR_FEEDS_API_URL + "/" + UNKNOWN_FEED_API_KEY + "/most-recent";
+                           return ESDR_FEEDS_API_URL + "/" + UNKNOWN_FEED_API_KEY + "/channels/conductivity/most-recent";
                         },
                         expectedHttpStatus : httpStatus.NOT_FOUND,
                         expectedStatusText : 'error',
@@ -499,7 +499,7 @@ describe("REST API", function() {
 
                });   // End Feed API Key in the URL
             });   // End API Key Authentication
-         });   // End All Channels
+         });   // End Single Channel
       });   // End Get Most Recent Data Sample
    });   // End Feeds
 });   // End REST API

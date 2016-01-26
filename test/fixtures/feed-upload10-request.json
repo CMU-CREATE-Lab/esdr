@@ -1,0 +1,9 @@
+{
+   "channel_names" : ["conductivity"],
+   "data" : [
+      [
+         1380752359,
+         "This is a comment in the conductivity channel at time 1380752359.  There is also a value at this time."
+      ]
+   ]
+}
