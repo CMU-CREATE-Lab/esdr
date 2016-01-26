@@ -33,11 +33,11 @@
       "importedBounds": {
          "channels": {
             "conductivity": {
-               "minTimeSecs": 1380752359,
+               "minTimeSecs": 1380600249,
                "maxTimeSecs": 1380752359
             }
          },
-         "minTimeSecs": 1380752359,
+         "minTimeSecs": 1380600249,
          "maxTimeSecs": 1380752359
       }
    }

@@ -1,0 +1,35 @@
+{
+   "data" : [
+      [1380472357, 485, 0, 1, null],
+      [1380556690, 501, 0, 1, null],
+      [1380578469.5, -1e+308, 0, 0, null],
+      [
+         1380600249,
+         0,
+         0,
+         1,
+         "This is a comment in the conductivity channel at time 1380600249.  There is not also a value at this time."
+      ],
+      [1380622028.5, -1e+308, 0, 0, null],
+      [1380643808, 583, 0, 1, null],
+      [1380725507, 551, 0, 1, null],
+      [1380752155, 511, 0, 1, null],
+      [1380752248, 500, 0, 1, null],
+      [
+         1380752359,
+         501,
+         0,
+         1,
+         "This is a comment in the conductivity channel at time 1380752359.  There is also a value at this time."
+      ],
+      [1380836116, 491, 0, 1, null],
+      [1380883999, 612, 0, 1, null],
+      [1380909922, 587, 0, 1, null],
+      [1380922452, 571, 0, 1, null],
+      [1380969641, 495, 0, 1, null]
+   ],
+   "fields" : ["time", "mean", "stddev", "count", "comment"],
+   "level" : 10,
+   "offset" : 2633,
+   "type" : "value"
+}
