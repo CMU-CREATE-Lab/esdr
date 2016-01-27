@@ -482,7 +482,128 @@ describe("REST API", function() {
                },
                additionalExpectedDataProperties : ['created', 'modified'],
                expectedMissingProperties : ['apiKey']          // API key should NOT be present when not auth'd
+            },
+            {
+               description : "Should fail to find a private feed by ID, without authorization",
+               url : function() {
+                  return ESDR_FEEDS_API_URL + "/" + feed2.id
+               },
+               expectedHttpStatus : httpStatus.UNAUTHORIZED,
+               expectedStatusText : 'error',
+               getExpectedResponseData : function() {
+                  return null
+               },
+            },
+            {
+               description : "Should be able to apply limit and offset to found feeds",
+               url : ESDR_FEEDS_API_URL + "?offset=2&limit=2&orderBy=id",
+               getExpectedResponseData : function() {
+                  return {
+                     totalCount : 3,
+                     offset : 2,
+                     limit : 2,
+                     rows : [
+                        {
+                           id : feed5.id,
+                           name : feed5.name,
+                           deviceId : feed5.deviceId,
+                           productId : feed5.productId,
+                           userId : feed5.userId,
+                           apiKeyReadOnly : feed5.apiKeyReadOnly,   // read-only API key should be present, even when not auth'd
+                           exposure : feed5.exposure,
+                           isPublic : 1,
+                           isMobile : feed5.isMobile,
+                           latitude : feed5.latitude,
+                           longitude : feed5.longitude,
+                           channelSpecs : JSON.parse(product1.defaultChannelSpecs),
+                           lastUpload : '0000-00-00 00:00:00',
+                           channelBounds : null,
+                           minTimeSecs : null,
+                           maxTimeSecs : null
+                        }
+                     ]
+                  }
+               },
+               additionalExpectedDataProperties : ['created', 'modified'],
+               expectedMissingProperties : ['apiKey']          // API key should NOT be present when not auth'd
+            },
+            {
+               description : "Should be able to order feeds based on multiple criteria",
+               url : ESDR_FEEDS_API_URL + "?fields=id,productId&orderBy=productId,-id",
+               accessToken : function() {
+                  return user1.accessToken
+               },
+               getExpectedResponseData : function() {
+                  return {
+                     totalCount : 7,
+                     offset : 0,
+                     limit : 1000,
+                     rows : [
+                        {
+                           id : feed8.id,
+                           productId : feed8.productId,
+                        },
+                        {
+                           id : feed7.id,
+                           productId : feed7.productId,
+                        },
+                        {
+                           id : feed5.id,
+                           productId : feed5.productId,
+                        },
+                        {
+                           id : feed2.id,
+                           productId : feed2.productId,
+                        },
+                        {
+                           id : feed1.id,
+                           productId : feed1.productId,
+                        },
+                        {
+                           id : feed4.id,
+                           productId : feed4.productId,
+                        },
+                        {
+                           id : feed3.id,
+                           productId : feed3.productId,
+                        }
+                     ]
+                  }
+               },
+               expectedMissingProperties : ['apiKey', 'apiKeyReadOnly', 'name', 'deviceId', 'userId', 'exposure', 'isPublic', 'isMobile', 'latitude', 'longitude', 'channelSpecs', 'lastUpload', 'channelBounds', 'minTimeSecs', 'maxTimeSecs'],
+            },
+            {
+               description : "Querying for private feeds should only return feeds owned by the authenticated user",
+               url : ESDR_FEEDS_API_URL + "?fields=id&orderBy=id&where=isPublic=false",
+               accessToken : function() {
+                  return user2.accessToken
+               },
+               getExpectedResponseData : function() {
+                  return {
+                     totalCount : 1,
+                     offset : 0,
+                     limit : 1000,
+                     rows : [
+                        {
+                           id : feed6.id
+                        }
+                     ]
+                  }
+               }
+            },
+            {
+               description : "Querying for private feeds should return nothing if unauthenticated",
+               url : ESDR_FEEDS_API_URL + "?fields=id&orderBy=id&where=isPublic=false",
+               getExpectedResponseData : function() {
+                  return {
+                     totalCount : 0,
+                     offset : 0,
+                     limit : 1000,
+                     rows : []
+                  }
+               }
             }
+
          ].forEach(function(test) {
             it(test.description, function(done) {
                var processFindTestResult = function(err, res) {
@@ -504,40 +625,45 @@ describe("REST API", function() {
                      if (!test.hasEmptyData) {
                         res.body.should.have.property('data');
                         var expectedResponseData = test.getExpectedResponseData();
-                        if ('rows' in expectedResponseData && 'totalCount' in expectedResponseData) {
-                           res.body.data.should.have.property('totalCount', expectedResponseData.totalCount);
-                           res.body.data.rows.forEach(function(item, index) {
-                              item.should.have.properties(expectedResponseData.rows[index]);
+                        if (expectedResponseData == null) {
+                           res.body.should.have.property('data', null);
+                        }
+                        else {
+                           if ('rows' in expectedResponseData && 'totalCount' in expectedResponseData) {
+                              res.body.data.should.have.property('totalCount', expectedResponseData.totalCount);
+                              res.body.data.rows.forEach(function(item, index) {
+                                 item.should.have.properties(expectedResponseData.rows[index]);
 
-                              if (test.additionalExpectedDataProperties) {
-                                 item.should.have.properties(test.additionalExpectedDataProperties);
-                              }
-                              if (test.expectedMissingProperties) {
-                                 test.expectedMissingProperties.forEach(function(prop) {
-                                    item.should.not.have.property(prop);
-                                 });
-                              }
-                              if (test.expectedMissingPropertiesByIndex) {
-                                 // see whether there are any expected missing properties for this particular index
-                                 var expectedMissingProperties = test.expectedMissingPropertiesByIndex[index];
-                                 if (expectedMissingProperties) {
-                                    expectedMissingProperties.forEach(function(prop) {
+                                 if (test.additionalExpectedDataProperties) {
+                                    item.should.have.properties(test.additionalExpectedDataProperties);
+                                 }
+                                 if (test.expectedMissingProperties) {
+                                    test.expectedMissingProperties.forEach(function(prop) {
                                        item.should.not.have.property(prop);
                                     });
                                  }
-                              }
-                           });
-                        }
-                        else {
-                           res.body.data.should.have.properties(expectedResponseData);
-
-                           if (test.additionalExpectedDataProperties) {
-                              res.body.data.should.have.properties(test.additionalExpectedDataProperties);
-                           }
-                           if (test.expectedMissingProperties) {
-                              test.expectedMissingProperties.forEach(function(prop) {
-                                 res.body.data.should.not.have.property(prop);
+                                 if (test.expectedMissingPropertiesByIndex) {
+                                    // see whether there are any expected missing properties for this particular index
+                                    var expectedMissingProperties = test.expectedMissingPropertiesByIndex[index];
+                                    if (expectedMissingProperties) {
+                                       expectedMissingProperties.forEach(function(prop) {
+                                          item.should.not.have.property(prop);
+                                       });
+                                    }
+                                 }
                               });
+                           }
+                           else {
+                              res.body.data.should.have.properties(expectedResponseData);
+
+                              if (test.additionalExpectedDataProperties) {
+                                 res.body.data.should.have.properties(test.additionalExpectedDataProperties);
+                              }
+                              if (test.expectedMissingProperties) {
+                                 test.expectedMissingProperties.forEach(function(prop) {
+                                    res.body.data.should.not.have.property(prop);
+                                 });
+                              }
                            }
                         }
                      }
