@@ -32,8 +32,8 @@ router.get('/utc-seconds', function(req, res) {
 
    // determine response format
    if (req.query && req.query.format == "text") {
-      res.set('Content-Type', 'text/plain')
-      res.send("utcSecs=" + time.utcSecs + ",checksum=" + time.checksum + "\r\n");
+      res.set('Content-Type', 'text/plain');
+      res.send("utcSecs=" + time.utcSecs + ",checksum=" + time.checksum);
    }
    else {
       return res.jsendSuccess(time, httpStatus.OK); // HTTP 200 OK
