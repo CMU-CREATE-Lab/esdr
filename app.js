@@ -240,6 +240,7 @@ Database.create(function(err, db) {
          app.use('/api/v1/*', noSessionSupport, corsSupport);
 
          app.use('/oauth', require('./routes/oauth')(oauthServer));
+         app.use('/api/v1/time', require('./routes/api/time'));
          app.use('/api/v1/clients', require('./routes/api/clients')(db.clients));
          app.use('/api/v1/users', require('./routes/api/users')(db.users));
          app.use('/api/v1/products', require('./routes/api/products')(db.products, db.devices));
