@@ -8,7 +8,7 @@ var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
 var ESDR_TIME_API_URL = ESDR_API_ROOT_URL + "/time";
 
 describe("REST API", function() {
-   describe.only("Time", function() {
+   describe("Time", function() {
       describe("UNIX Time Seconds", function() {
 
          var computeChecksum = function(time) {
