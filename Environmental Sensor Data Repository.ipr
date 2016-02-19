@@ -64,7 +64,8 @@
   </component>
   <component name="JavaScriptLibraryMappings">
     <file url="file://$PROJECT_DIR$" libraries="{EnvironmentalSensorDataRepository node_modules}" />
-    <file url="PROJECT" libraries="{EnvironmentalSensorDataRepository node_modules, Superagent, jQuery 1.11.1, mocha-DefinitelyTyped, nconf-DefinitelyTyped, should-DefinitelyTyped}" />
+    <file url="PROJECT" libraries="{EnvironmentalSensorDataRepository node_modules, Generated files, Superagent, jQuery 1.11.1, mocha-DefinitelyTyped, nconf-DefinitelyTyped, should-DefinitelyTyped}" />
+    <includedPredefinedLibrary name="ECMAScript 6" />
     <includedPredefinedLibrary name="Node.js Core" />
   </component>
   <component name="ProjectCodeStyleSettingsManager">
