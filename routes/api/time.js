@@ -17,12 +17,12 @@ var computeChecksum = function(number) {
    return sum & 0xff;
 };
 
-router.get('/utc-seconds', function(req, res) {
-   var utcSecs = Math.round(Date.now() / 1000);
+router.get('/unix-time-seconds', function(req, res) {
+   var unixTimeSecs = Math.round(Date.now() / 1000);
 
    var time = {
-      utcSecs : utcSecs,
-      checksum : computeChecksum(utcSecs)
+      unixTimeSecs : unixTimeSecs,
+      checksum : computeChecksum(unixTimeSecs)
    };
 
    // make sure this response isn't cached
@@ -33,7 +33,7 @@ router.get('/utc-seconds', function(req, res) {
    // determine response format
    if (req.query && req.query.format == "text") {
       res.set('Content-Type', 'text/plain');
-      res.send("utcSecs=" + time.utcSecs + ",checksum=" + time.checksum);
+      res.send("unixTimeSecs=" + time.unixTimeSecs + ",checksum=" + time.checksum);
    }
    else {
       return res.jsendSuccess(time, httpStatus.OK); // HTTP 200 OK

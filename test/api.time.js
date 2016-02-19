@@ -8,8 +8,8 @@ var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
 var ESDR_TIME_API_URL = ESDR_API_ROOT_URL + "/time";
 
 describe("REST API", function() {
-   describe("Time", function() {
-      describe("UTC Seconds", function() {
+   describe.only("Time", function() {
+      describe("UNIX Time Seconds", function() {
 
          var computeChecksum = function(time) {
             var b = new Buffer(4);
@@ -22,7 +22,7 @@ describe("REST API", function() {
 
          it("Should be able to get the current time as JSON", function(done) {
             superagent
-                  .get(ESDR_TIME_API_URL + "/utc-seconds")
+                  .get(ESDR_TIME_API_URL + "/unix-time-seconds")
                   .end(function(err, res) {
                      should.not.exist(err);
                      should.exist(res);
@@ -35,13 +35,13 @@ describe("REST API", function() {
                                                      });
 
                      res.body.should.have.property('data');
-                     res.body.data.should.have.property('utcSecs');
-                     res.body.data.should.have.property('checksum',computeChecksum(res.body.data.utcSecs));
+                     res.body.data.should.have.property('unixTimeSecs');
+                     res.body.data.should.have.property('checksum',computeChecksum(res.body.data.unixTimeSecs));
 
-                     // make sure the utcSecs is within 1 second of the current time (just so the test doesn't fail
+                     // make sure the unixTimeSecs is within 1 second of the current time (just so the test doesn't fail
                      // if the server and test client compute current times that round to be different UTC seconds)
                      var currentTimeSecs = Math.round(Date.now() / 1000);
-                     var isWithinOneSecond = Math.abs(currentTimeSecs - res.body.data.utcSecs) <= 1;
+                     var isWithinOneSecond = Math.abs(currentTimeSecs - res.body.data.unixTimeSecs) <= 1;
                      isWithinOneSecond.should.be.true();
 
                      done();
@@ -50,7 +50,7 @@ describe("REST API", function() {
 
          it("Should be able to get the current time as text", function(done) {
             superagent
-                  .get(ESDR_TIME_API_URL + "/utc-seconds?format=text")
+                  .get(ESDR_TIME_API_URL + "/unix-time-seconds?format=text")
                   .end(function(err, res) {
                      should.not.exist(err);
                      should.exist(res);
@@ -63,7 +63,7 @@ describe("REST API", function() {
                      var checksum = parseInt(parts[1].split('=')[1]);
                      checksum.should.equal(computeChecksum(time));
 
-                     // make sure the utcSecs is within 1 second of the current time (just so the test doesn't fail
+                     // make sure the unixTimeSecs is within 1 second of the current time (just so the test doesn't fail
                      // if the server and test client compute current times that round to be different UTC seconds)
                      var currentTimeSecs = Math.round(Date.now() / 1000);
                      var isWithinOneSecond = Math.abs(currentTimeSecs - time) <= 1;
