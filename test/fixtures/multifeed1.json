@@ -1,0 +1,8 @@
+{
+   "spec" : [
+      {
+         "feeds" : "whereOr=exposure=outdoor,name=bogus",
+         "channels" : ["conductivity", "battery_voltage"]
+      }
+   ]
+}

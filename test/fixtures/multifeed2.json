@@ -1,0 +1,13 @@
+{
+   "name" : " My_Awesome_Multifeed   ",
+   "spec" : [
+      {
+         "feeds" : "whereOr=exposure=outdoor,name=Newell Simon 3rd Floor Bathroom (feed1.json)",
+         "channels" : ["conductivity", "battery_voltage"]
+      },
+      {
+         "feeds" : "where=latitude=40.443493",
+         "channels" : ["temperature"]
+      }
+   ]
+}
