@@ -1,0 +1,6 @@
+{
+   "displayName" : "Test Client Client Name Illegal Chars",
+   "clientName" : "cannot/have/slashes or spaces",
+   "email" : "test_client_client_name_invalid@test.com",
+   "clientSecret" : "I am a test client"
+}

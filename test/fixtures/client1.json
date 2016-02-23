@@ -1,0 +1,8 @@
+{
+   "displayName" : "Test Client 1",
+   "clientName" : "test_client_1",
+   "email" : "test1@test.com",
+   "clientSecret" : "I am test client 1",
+   "resetPasswordUrl" : "http://test-client-1.com:3333/password-reset/:resetPasswordToken",
+   "verificationUrl" : "http://test-client-1.com:3333/user-verification/:verificationToken"
+}

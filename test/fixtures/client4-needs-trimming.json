@@ -1,0 +1,7 @@
+{
+   "displayName" : "   Test Client Trimming  ",
+   "clientName" : "  test_client_trimming             ",
+   "clientSecret" : "I've got a secret / I've been hiding / Under my skin",
+   "resetPasswordUrl" : "http://localhost:3333/password-reset/:resetPasswordToken",
+   "verificationUrl" : "http://localhost:3333/user-verification/:verificationToken"
+}

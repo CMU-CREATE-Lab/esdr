@@ -1,0 +1,6 @@
+{
+   "displayName" : "Test Client Client Name Too Short",
+   "clientName" : "t",
+   "email" : "test_client_client_name_too_short@test.com",
+   "clientSecret" : "I am a test client"
+}

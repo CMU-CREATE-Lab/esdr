@@ -1,0 +1,16 @@
+{
+   "channels" : {
+      "conductivity" : {
+         "channelBounds" : {
+            "minTimeSecs" : 1280276279.1,
+            "maxTimeSecs" : 1282054188,
+            "minValue" : 1464,
+            "maxValue" : 1624
+         },
+         "mostRecentDataSample" : {
+            "timeSecs" : 1282054188,
+            "value" : 1517
+         }
+      }
+   }
+}

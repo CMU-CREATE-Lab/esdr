@@ -35,6 +35,7 @@ module.exports = function(ClientModel) {
                                         log.debug("Created new client [" + result.clientName + "] with id [" + result.insertId + "] ");
 
                                         res.jsendSuccess({
+                                                            id : result.insertId,
                                                             displayName : result.displayName,
                                                             clientName : result.clientName
                                                          }, httpStatus.CREATED); // HTTP 201 Created

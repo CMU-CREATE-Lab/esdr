@@ -1,0 +1,28 @@
+{
+   "name" : "cattfish_v4",
+   "prettyName" : "CATTfish v4",
+   "vendor" : "CMU CREATE Lab",
+   "description" : "The CATTfish v4 water temperature and conductivity sensor.",
+   "defaultChannelSpecs" : {
+      "temperature" : {
+         "prettyName" : "Temperature",
+         "units" : "C"
+      },
+      "conductivity" : {
+         "prettyName" : "Conductivity",
+         "units" : "uS/cm"
+      },
+      "error_codes" : {
+         "prettyName" : "Error Codes",
+         "units" : null
+      },
+      "battery_voltage" : {
+         "prettyName" : "Battery Voltage",
+         "units" : "V"
+      },
+      "humidity" : {
+         "prettyName" : "Humidity",
+         "units" : "%"
+      }
+   }
+}

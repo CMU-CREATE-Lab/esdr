@@ -6,7 +6,7 @@ var BearerStrategy = require('passport-http-bearer').Strategy;
 var LocalAPIKeyStrategy = require('passport-localapikey-update').Strategy;
 var config = require('../config');
 var httpStatus = require('http-status');
-var superagent = require('superagent');
+var superagent = require('superagent-ls');
 var log = require('log4js').getLogger('esdr:middleware:auth');
 
 module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {

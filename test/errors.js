@@ -1,4 +1,3 @@
-var assert = require('assert');
 var should = require('should');
 var ValidationError = require('../lib/errors').ValidationError;
 var DatabaseError = require('../lib/errors').DatabaseError;

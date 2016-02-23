@@ -1,0 +1,40 @@
+{
+   "channels" : {
+      "battery_voltage" : {
+         "channelBounds" : {
+            "minTimeSecs" : 1280276279.1,
+            "maxTimeSecs" : 1282054188,
+            "minValue" : 2.84,
+            "maxValue" : 2.85
+         },
+         "mostRecentDataSample" : {
+            "timeSecs" : 1282054188,
+            "value" : 2.84
+         }
+      },
+      "conductivity" : {
+         "channelBounds" : {
+            "minTimeSecs" : 1280276279.1,
+            "maxTimeSecs" : 1282054188,
+            "minValue" : 1464,
+            "maxValue" : 1624
+         },
+         "mostRecentDataSample" : {
+            "timeSecs" : 1282054188,
+            "value" : 1517
+         }
+      },
+      "temperature" : {
+         "channelBounds" : {
+            "minTimeSecs" : 1280270001,
+            "maxTimeSecs" : 1282055042,
+            "minValue" : 14.2,
+            "maxValue" : 33.9
+         },
+         "mostRecentDataSample" : {
+            "timeSecs" : 1282055042,
+            "value" : 33.9
+         }
+      }
+   }
+}
