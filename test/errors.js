@@ -3,7 +3,7 @@ var ValidationError = require('../lib/errors').ValidationError;
 var DatabaseError = require('../lib/errors').DatabaseError;
 var DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
 
-describe.only("Custom Error Classes", function() {
+describe("Custom Error Classes", function() {
    describe("ValidationError", function() {
       var errorMessage = "oops, validation failed";
       var errorData = {foo : "bar", baz : {bat : "bif"}};
