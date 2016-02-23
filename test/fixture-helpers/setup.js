@@ -9,6 +9,10 @@ var superagent = require('superagent-ls');
 var httpStatus = require('http-status');
 var database = require('./database');
 var createRandomHexToken = require('../../lib/token').createRandomHexToken;
+var trimAndCopyPropertyIfNonEmpty = require('../../lib/objectUtils').trimAndCopyPropertyIfNonEmpty;
+var Query2Query = require('query2query');
+var feedsQuery2query = require('../../Models/feeds-query2query');
+var qs = require('qs');
 
 var config = require('../../config');
 
@@ -119,5 +123,58 @@ module.exports.createFeed = function(feed, callback) {
       }
       feed.id = result.insertId;
       callback(null, feed.id);
+   });
+};
+
+// create the multifeed and save the database id to the given device object
+module.exports.createMultifeed = function(multifeed, callback) {
+
+   var mf = {
+      userId : multifeed.userId,
+      spec : multifeed.spec,
+      querySpec : "" // created below...
+   };
+   trimAndCopyPropertyIfNonEmpty(multifeed, mf, "name");
+   if (typeof multifeed.name === 'undefined' || multifeed.name == null) {
+      mf.name = createRandomHexToken(32);
+   }
+
+   // convert the spec to a more usable form for SQL queries, so we don't have to rebuild this for every request
+   var querySpecParts = [];
+   for (var i = 0; i < multifeed.spec.length; i++) {
+      var specItem = multifeed.spec[i];
+      var miniQueryString = qs.parse(specItem.feeds);
+      try {
+         var result = feedsQuery2query.parseSync(miniQueryString);
+         if (result.where != null && result.where.length > 0) {
+            querySpecParts.push({
+                                      feeds : {
+                                         where : result.where,
+                                         values : result.whereValues
+                                      },
+                                      channels : specItem.channels
+                                   });
+         }
+         else {
+            return callback(new ValidationError(miniQueryString, "No where clause found"));
+         }
+      }
+      catch (e) {
+         return callback(e);
+      }
+   }
+
+   // need to stringify the spec and querySpec objects for storage in the DB
+   mf.spec = JSON.stringify(multifeed.spec);
+   mf.querySpec = JSON.stringify(querySpecParts);
+
+   database.insertMultifeed(mf, function(err, result) {
+      if (err) {
+         console.log(JSON.stringify(err, null, 3));
+         return callback(err);
+      }
+      multifeed.id = result.insertId;
+      multifeed.name = mf.name;
+      callback(null, multifeed.id);
    });
 };

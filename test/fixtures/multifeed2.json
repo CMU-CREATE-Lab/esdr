@@ -6,7 +6,7 @@
          "channels" : ["conductivity", "battery_voltage"]
       },
       {
-         "feeds" : "where=latitude=40.443493",
+         "feeds" : "where=latitude=40.443411",
          "channels" : ["temperature"]
       }
    ]

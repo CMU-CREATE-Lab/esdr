@@ -91,3 +91,7 @@ module.exports.insertDevice = function(device, callback) {
 module.exports.insertFeed = function(feed, callback) {
    databaseHelper.execute("INSERT INTO Feeds SET ?", feed, callback);
 };
+
+module.exports.insertMultifeed = function(feed, callback) {
+   databaseHelper.execute("INSERT INTO Multifeeds SET ?", feed, callback);
+};
