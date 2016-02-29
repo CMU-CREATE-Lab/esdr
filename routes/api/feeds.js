@@ -155,7 +155,6 @@ module.exports = function(FeedModel, feedRouteHelper) {
                  passport.authenticate('bearer', { session : false }),
                  function(req, res, next) {
                     var feedId = req.params.feedId;
-                    log.debug("DELETE feed [" + feedId + "] for user [" + req.user.id + "]");
                     if (isInt(feedId)) {
                        // make it an int
                        feedId = parseInt(feedId);
