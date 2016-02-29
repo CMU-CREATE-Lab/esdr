@@ -2,10 +2,11 @@ var express = require('express');
 var router = express.Router();
 var passport = require('passport');
 var httpStatus = require('http-status');
-var S = require('string');
 var log = require('log4js').getLogger('esdr:routes:api:feeds');
 var nr = require('newrelic');
 var JSendError = require('jsend-utils').JSendError;
+var isInt = require('../../lib/typeUtils').isInt;
+var isString = require('../../lib/typeUtils').isString;
 
 module.exports = function(FeedModel, feedRouteHelper) {
 
@@ -544,20 +545,6 @@ module.exports = function(FeedModel, feedRouteHelper) {
    // If the given value is a string and matches the FEED_API_KEY_REGEX regex, then consider it a Feed API Key
    var isFeedApiKey = function(str) {
       return (isString(str) && FEED_API_KEY_REGEX.test(str));
-   };
-
-   // found this at http://stackoverflow.com/a/14794066
-   var isInt = function(value) {
-     return !isNaN(value) && (function(x) { return (x | 0) === x; })(parseFloat(value))
-   };
-
-   /**
-    * Returns <code>true</code> if the given value is a string; returns <code>false</code> otherwise.
-    *
-    * Got this from http://stackoverflow.com/a/9436948/703200
-    */
-   var isString = function(o) {
-      return (typeof o == 'string' || o instanceof String)
    };
 
    /**

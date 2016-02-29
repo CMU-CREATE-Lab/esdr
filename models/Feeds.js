@@ -12,6 +12,7 @@ var flow = require('nimble');
 var nr = require('newrelic');
 var JSendClientError = require('jsend-utils').JSendClientError;
 var JSendServerError = require('jsend-utils').JSendServerError;
+var isString = require('../lib/typeUtils').isString;
 
 // instantiate the datastore
 var datastore = new BodyTrackDatastore({
@@ -888,14 +889,5 @@ module.exports = function(databaseHelper) {
 
          callback(null, filteredFeed);
       });
-   };
-
-   /**
-    * Returns <code>true</code> if the given value is a string; returns <code>false</code> otherwise.
-    *
-    * Got this from http://stackoverflow.com/a/9436948/703200
-    */
-   var isString = function(o) {
-      return (typeof o == 'string' || o instanceof String)
    };
 };
