@@ -194,6 +194,7 @@ describe("REST API", function() {
                   feed7.userId = user1.id;
                   feed7.deviceId = device1.id;
                   feed7.productId = product1.id;
+                  feed7.channelSpecs = JSON.stringify(feed7.channelSpecs);
                   setup.createFeed(feed7, done);
                },
                function(done) {
