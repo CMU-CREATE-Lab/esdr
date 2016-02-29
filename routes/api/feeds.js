@@ -158,19 +158,21 @@ module.exports = function(FeedModel, feedRouteHelper) {
                     if (isInt(feedId)) {
                        // make it an int
                        feedId = parseInt(feedId);
-                       FeedModel.delete(feedId,
-                                        req.user.id,
-                                        function(err, result) {
-                                           if (err) {
-                                              if (err instanceof JSendError) {
-                                                 return res.jsendPassThrough(err.data);
-                                              } else {
-                                                 return res.jsendServerError("Failed to delete feed", { id : feedId });
-                                              }
-                                           } else {
-                                              return res.jsendSuccess({id: feedId});
-                                           }
-                                        });
+                       FeedModel.deleteFeed(feedId,
+                                            req.user.id,
+                                            function(err, result) {
+                                               if (err) {
+                                                  if (err instanceof JSendError) {
+                                                     return res.jsendPassThrough(err.data);
+                                                  }
+                                                  else {
+                                                     return res.jsendServerError("Failed to delete feed", { id : feedId });
+                                                  }
+                                               }
+                                               else {
+                                                  return res.jsendSuccess({ id : feedId });
+                                               }
+                                            });
                     }
                     else {
                        return res.jsendClientError("Unknown or invalid feed", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found

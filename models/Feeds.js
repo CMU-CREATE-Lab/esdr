@@ -199,7 +199,7 @@ module.exports = function(databaseHelper) {
       );
    };
 
-   this.delete = function(feedId, userId, callback) {
+   this.deleteFeed = function(feedId, userId, callback) {
       // We want to be able to return proper HTTP status codes for if the feed doesn't exist (404), the feed isn't owned
       // by the user (403), or successful delete (200), etc.  So, we'll create a transaction, try to find the feed,
       // manually check whether the feed is owned by the user, and proceed with the delete accordingly.
