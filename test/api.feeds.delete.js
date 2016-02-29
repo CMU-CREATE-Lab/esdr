@@ -186,7 +186,7 @@ describe("REST API", function() {
       );
    });
 
-   describe.only("Feeds.Delete", function() {
+   describe("Feeds", function() {
       describe("Delete", function() {
 
          var executeDelete = function(test, done) {
