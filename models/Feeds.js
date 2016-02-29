@@ -10,12 +10,14 @@ var query2query = require('./feeds-query2query');
 var config = require('../config');
 var flow = require('nimble');
 var nr = require('newrelic');
+var JSendClientError = require('jsend-utils').JSendClientError;
+var JSendServerError = require('jsend-utils').JSendServerError;
 
 // instantiate the datastore
 var datastore = new BodyTrackDatastore({
-                                          binDir : config.get("datastore:binDirectory"),
-                                          dataDir : config.get("datastore:dataDirectory")
-                                       });
+   binDir : config.get("datastore:binDirectory"),
+   dataDir : config.get("datastore:dataDirectory")
+});
 
 var log = require('log4js').getLogger('esdr:models:feeds');
 
@@ -104,6 +106,8 @@ var JSON_SCHEMA = {
 
 module.exports = function(databaseHelper) {
 
+   var self = this;
+
    this.jsonSchema = JSON_SCHEMA;
 
    this.initialize = function(callback) {
@@ -190,6 +194,164 @@ module.exports = function(databaseHelper) {
                   });
 
                });
+            }
+      );
+   };
+
+   this.delete = function(feedId, userId, callback) {
+      // We want to be able to return proper HTTP status codes for if the feed doesn't exist (404), the feed isn't owned
+      // by the user (403), or successful delete (200), etc.  So, we'll create a transaction, try to find the feed,
+      // manually check whether the feed is owned by the user, and proceed with the delete accordingly.
+
+      var connection = null;
+      var error = null;
+      var hasError = function() {
+         return error != null;
+      };
+      var isExistingFeed = false;
+      var isFeedOwnedByUser = false;
+      var deleteResult = null;
+
+      flow.series(
+            [
+               // get the connection
+               function(done) {
+                  log.debug("delete feed [user " + userId + ", feed " + feedId + "]: 1) Getting the connection");
+                  databaseHelper.getConnection(function(err, newConnection) {
+                     if (err) {
+                        error = err;
+                     }
+                     else {
+                        connection = newConnection;
+                     }
+                     done();
+                  });
+               },
+
+               // begin the transaction
+               function(done) {
+                  if (!hasError()) {
+                     log.debug("delete feed [user " + userId + ", feed " + feedId + "]: 2) Beginning the transaction");
+                     connection.beginTransaction(function(err) {
+                        if (err) {
+                           error = err;
+                        }
+                        done();
+                     });
+                  }
+                  else {
+                     done();
+                  }
+               },
+
+               // find the feed
+               function(done) {
+                  if (!hasError()) {
+                     log.debug("delete feed [user " + userId + ", feed " + feedId + "]: 3) Find the feed");
+                     connection.query("SELECT userId FROM Feeds WHERE id=?",
+                                      [feedId],
+                                      function(err, rows) {
+                                         if (err) {
+                                            error = err;
+                                         }
+                                         else {
+                                            // set flags for whether the feed exists and is owned by the requesting user
+                                            isExistingFeed = (rows && rows.length == 1);
+                                            if (isExistingFeed) {
+                                               isFeedOwnedByUser = rows[0].userId === userId;
+                                            }
+                                         }
+                                         done();
+                                      });
+                  }
+                  else {
+                     done();
+                  }
+               },
+
+               // delete ONLY if there were no errors, the feed exists, and is owned by the user
+               function(done) {
+                  if (!hasError() && isExistingFeed && isFeedOwnedByUser) {
+                     log.debug("delete feed [user " + userId + ", feed " + feedId + "]: 4) Delete the feed");
+                     connection.query("DELETE FROM Feeds where id = ? AND userId = ?",
+                                      [feedId, userId],
+                                      function(err, result) {
+                                         if (err) {
+                                            error = err;
+                                         }
+                                         else {
+                                            deleteResult = result;
+                                         }
+                                         done();
+                                      });
+                  }
+                  else {
+                     log.debug("delete feed [user " + userId + ", feed " + feedId + "]: 4) Delete skipped because feed doesn't exist or not owned by user");
+                     done();
+                  }
+               }
+            ],
+
+            // handle outcome
+            function() {
+               log.debug("delete feed [user " + userId + ", feed " + feedId + "]: 5) All done, now checking status and performing commit/rollback as necessary!");
+               if (hasError()) {
+                  connection.rollback(function() {
+                     connection.release();
+                     log.error("delete feed [user " + userId + ", feed " + feedId + "]: 6) An error occurred while deleting the feed, rolled back the transaction. Error:" + error);
+                     callback(error);
+                  });
+               }
+               else if (deleteResult == null) {
+                  connection.rollback(function() {
+                     connection.release();
+                     log.info("delete feed [user " + userId + ", feed " + feedId + "]: 6) Feed not deleted (doesn't exist or not owned by user), rolled back the transaction.");
+                     if (isExistingFeed) {
+                        if (isFeedOwnedByUser) {
+                           log.error("delete feed [user " + userId + ", feed " + feedId + "]: 7) The deleteResult is null, but the feed [" + feedId + "] exists AND is owned by the user [" + userId + "]--this should NEVER happen!");
+                           return callback(new JSendServerError("Internal Server Error"));
+                        }
+                        else {
+                           return callback(new JSendClientError("Forbidden", { id : feedId }, httpStatus.FORBIDDEN));
+                        }
+                     }
+                     else {
+                        return callback(new JSendClientError("Feed not found", { id : feedId }, httpStatus.NOT_FOUND));
+                     }
+                  });
+               }
+               else {
+                  log.debug("delete feed [user " + userId + ", feed " + feedId + "]: 6) Delete successful, attempting to commit the transaction...");
+                  connection.commit(function(err) {
+                     if (err) {
+                        log.error("delete feed [user " + userId + ", feed " + feedId + "]: 7) Failed to commit the transaction after deleting the feed");
+
+                        // rollback and then release the connection
+                        connection.rollback(function() {
+                           connection.release();
+                           callback(err);
+                        });
+                     }
+                     else {
+                        connection.release();
+                        log.debug("delete feed [user " + userId + ", feed " + feedId + "]: 7) Commit successful!");
+
+                        // delete datastore files from disk
+                        datastore.deleteDevice(userId, getDatastoreDeviceNameForFeed(feedId), function(err) {
+                           // Just log the error--we're more concerned about the database record being deleted, so we'll
+                           // still return a success to the callback. We can have a cron job clean up orphaned datastore
+                           // files later.
+                           if (err) {
+                              log.warn("delete feed [user " + userId + ", feed " + feedId + "]: 8) Failed to delete datastore files");
+                           } else {
+                              log.debug("delete feed [user " + userId + ", feed " + feedId + "]: 8) Datastore files deleted!");
+                           }
+
+                           callback(null, deleteResult);
+                        });
+                     }
+                  });
+               }
             }
       );
    };

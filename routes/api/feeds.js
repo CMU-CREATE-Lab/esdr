@@ -5,6 +5,7 @@ var httpStatus = require('http-status');
 var S = require('string');
 var log = require('log4js').getLogger('esdr:routes:api:feeds');
 var nr = require('newrelic');
+var JSendError = require('jsend-utils').JSendError;
 
 module.exports = function(FeedModel, feedRouteHelper) {
 
@@ -147,6 +148,34 @@ module.exports = function(FeedModel, feedRouteHelper) {
                                                },
                                                req, res, next);
               });
+
+   // delete a feed (MUST be authenticated with OAuth2 access token)
+   router.delete('/:feedId',
+                 passport.authenticate('bearer', { session : false }),
+                 function(req, res, next) {
+                    var feedId = req.params.feedId;
+                    log.debug("DELETE feed [" + feedId + "] for user [" + req.user.id + "]");
+                    if (isInt(feedId)) {
+                       // make it an int
+                       feedId = parseInt(feedId);
+                       FeedModel.delete(feedId,
+                                        req.user.id,
+                                        function(err, result) {
+                                           if (err) {
+                                              if (err instanceof JSendError) {
+                                                 return res.jsendPassThrough(err.data);
+                                              } else {
+                                                 return res.jsendServerError("Failed to delete feed", { id : feedId });
+                                              }
+                                           } else {
+                                              return res.jsendSuccess({id: feedId});
+                                           }
+                                        });
+                    }
+                    else {
+                       return res.jsendClientError("Unknown or invalid feed", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
+                    }
+                 });
 
    // Get the most recent data for all channels, optionally authenticated using the user's OAuth2 access token or the
    // feed's read-write or read-only API key in the URL or request header.
@@ -365,8 +394,8 @@ module.exports = function(FeedModel, feedRouteHelper) {
       }
       else {
          var feedId = feedIdOrApiKey;
-         // Not a Feed API key, but now make sure the ID is completely numeric (e.g. reject things like '4240abc')
-         if (S(feedId).isNumeric()) {
+         // Not a Feed API key, but now make sure the ID is an int or a string that parses as an int (e.g. reject things like '4240abc')
+         if (isInt(feedId)) {
             FeedModel.findById(feedId,
                                fieldsToSelect,
                                nr.createTracer("FeedModel:findById",
@@ -446,8 +475,8 @@ module.exports = function(FeedModel, feedRouteHelper) {
       }
       else {
          var feedId = feedIdOrApiKey;
-         // Not a Feed API key, but now make sure the ID is completely numeric (e.g. reject things like '4240abc')
-         if (S(feedId).isNumeric()) {
+         // Not a Feed API key, but now make sure the ID is an int or a string that parses as an int (e.g. reject things like '4240abc')
+         if (isInt(feedId)) {
             FeedModel.findById(feedId,
                                fieldsToSelect,
                                nr.createTracer("FeedModel:findById",
@@ -515,6 +544,11 @@ module.exports = function(FeedModel, feedRouteHelper) {
    // If the given value is a string and matches the FEED_API_KEY_REGEX regex, then consider it a Feed API Key
    var isFeedApiKey = function(str) {
       return (isString(str) && FEED_API_KEY_REGEX.test(str));
+   };
+
+   // found this at http://stackoverflow.com/a/14794066
+   var isInt = function(value) {
+     return !isNaN(value) && (function(x) { return (x | 0) === x; })(parseFloat(value))
    };
 
    /**
