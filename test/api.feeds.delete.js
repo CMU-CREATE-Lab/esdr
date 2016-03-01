@@ -50,8 +50,6 @@ describe("REST API", function() {
                   should.not.exist(err);
                   should.exist(res);
 
-                  console.log("Uploading data to feed [" + upload.feed.id + "] for user [" + upload.user.id + "]");
-
                   res.should.have.property('status', httpStatus.OK);
                   res.should.have.property('body');
 
@@ -408,6 +406,26 @@ describe("REST API", function() {
                                 expectedHttpStatus : httpStatus.UNAUTHORIZED,
                                 expectedStatusText : 'error',
                                 hasEmptyBody : true
+                             }, done);
+            });
+
+            it("Shouldn't be able to delete a feed with an invalid ID (int)", function(done) {
+               executeDelete({
+                                url : ESDR_FEEDS_API_URL + "/" + 0,
+                                headers : createAuthorizationHeader(user1.accessToken),
+                                expectedHttpStatus : httpStatus.NOT_FOUND,
+                                expectedStatusText : 'error',
+                                expectedResponseData : { id : 0 }
+                             }, done);
+            });
+
+            it("Shouldn't be able to delete a feed with an invalid ID (string)", function(done) {
+               executeDelete({
+                                url : ESDR_FEEDS_API_URL + "/" + "bogus",
+                                headers : createAuthorizationHeader(user1.accessToken),
+                                expectedHttpStatus : httpStatus.NOT_FOUND,
+                                expectedStatusText : 'error',
+                                expectedResponseData : null
                              }, done);
             });
 
