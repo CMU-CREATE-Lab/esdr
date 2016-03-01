@@ -5,6 +5,7 @@ var ValidationError = require('../../lib/errors').ValidationError;
 var httpStatus = require('http-status');
 var JSendError = require('jsend-utils').JSendError;
 var log = require('log4js').getLogger('esdr:routes:api:devices');
+var isInt = require('../../lib/typeUtils').isInt;
 
 module.exports = function(DeviceModel, FeedModel) {
 
@@ -41,6 +42,36 @@ module.exports = function(DeviceModel, FeedModel) {
                     return res.jsendSuccess(device); // HTTP 200 OK
                  });
               });
+
+   // delete a device (MUST be authenticated with OAuth2 access token)
+   router.delete('/:deviceId',
+                 passport.authenticate('bearer', { session : false }),
+                 function(req, res, next) {
+                    var deviceId = req.params.deviceId;
+                    log.debug("DELETE device [" + deviceId + "] for user [" + req.user.id + "]");
+                    if (isInt(deviceId)) {
+                       // make it an int
+                       deviceId = parseInt(deviceId);
+                       DeviceModel.deleteDevice(deviceId,
+                                                req.user.id,
+                                                function(err, result) {
+                                                   if (err) {
+                                                      if (err instanceof JSendError) {
+                                                         return res.jsendPassThrough(err.data);
+                                                      }
+                                                      else {
+                                                         return res.jsendServerError("Failed to delete device", { id : deviceId });
+                                                      }
+                                                   }
+                                                   else {
+                                                      return res.jsendSuccess({ id : deviceId });
+                                                   }
+                                                });
+                    }
+                    else {
+                       return res.jsendClientError("Unknown or invalid device", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
+                    }
+                 });
 
    // create a feed for the specified device (specified by device ID)
    router.post('/:deviceId/feeds',

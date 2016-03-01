@@ -126,6 +126,10 @@ module.exports.createFeed = function(feed, callback) {
    });
 };
 
+module.exports.deleteFeed = function(feedId, callback) {
+   database.deleteFeed(feedId, callback);
+};
+
 // create the multifeed and save the database id to the given device object
 module.exports.createMultifeed = function(multifeed, callback) {
 
@@ -148,12 +152,12 @@ module.exports.createMultifeed = function(multifeed, callback) {
          var result = feedsQuery2query.parseSync(miniQueryString);
          if (result.where != null && result.where.length > 0) {
             querySpecParts.push({
-                                      feeds : {
-                                         where : result.where,
-                                         values : result.whereValues
-                                      },
-                                      channels : specItem.channels
-                                   });
+                                   feeds : {
+                                      where : result.where,
+                                      values : result.whereValues
+                                   },
+                                   channels : specItem.channels
+                                });
          }
          else {
             return callback(new ValidationError(miniQueryString, "No where clause found"));

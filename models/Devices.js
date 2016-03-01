@@ -6,6 +6,7 @@ var Query2Query = require('query2query');
 var util = require('util');
 var JSendClientError = require('jsend-utils').JSendClientError;
 var httpStatus = require('http-status');
+var flow = require('nimble');
 var log = require('log4js').getLogger('esdr:models:devices');
 
 var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Devices` ( " +
@@ -106,6 +107,193 @@ module.exports = function(databaseHelper) {
       });
    };
 
+   this.deleteDevice = function(deviceId, userId, callback) {
+      // We want to be able to return proper HTTP status codes for if the device doesn't exist (404), the device isn't owned
+      // by the user (403), the device has existing feeds (409), or successful delete (200), etc.  So, we'll create a
+      // transaction, try to find the device, manually check whether the device is owned by the user, and proceed with
+      // the delete accordingly.
+
+      var connection = null;
+      var error = null;
+      var hasError = function() {
+         return error != null;
+      };
+      var isExistingDevice = false;
+      var isDeviceOwnedByUser = false;
+      var associatedFeeds = null;
+      var deleteResult = null;
+      var hasAssociatedFeeds = function() {
+         return associatedFeeds != null && associatedFeeds.length > 0;
+      };
+
+      flow.series(
+            [
+               // get the connection
+               function(done) {
+                  log.debug("delete device [user " + userId + ", device " + deviceId + "]: 1) Getting the connection");
+                  databaseHelper.getConnection(function(err, newConnection) {
+                     if (err) {
+                        error = err;
+                     }
+                     else {
+                        connection = newConnection;
+                     }
+                     done();
+                  });
+               },
+
+               // begin the transaction
+               function(done) {
+                  if (!hasError()) {
+                     log.debug("delete device [user " + userId + ", device " + deviceId + "]: 2) Beginning the transaction");
+                     connection.beginTransaction(function(err) {
+                        if (err) {
+                           error = err;
+                        }
+                        done();
+                     });
+                  }
+                  else {
+                     done();
+                  }
+               },
+
+               // find the device
+               function(done) {
+                  if (!hasError()) {
+                     log.debug("delete device [user " + userId + ", device " + deviceId + "]: 3) Find the device");
+                     connection.query("SELECT userId FROM Devices WHERE id=?",
+                                      [deviceId],
+                                      function(err, rows) {
+                                         if (err) {
+                                            error = err;
+                                         }
+                                         else {
+                                            // set flags for whether the device exists and is owned by the requesting user
+                                            isExistingDevice = (rows && rows.length == 1);
+                                            if (isExistingDevice) {
+                                               isDeviceOwnedByUser = rows[0].userId === userId;
+                                            }
+                                         }
+                                         done();
+                                      });
+                  }
+                  else {
+                     done();
+                  }
+               },
+
+               // see whether the device has existing feeds
+               function(done) {
+                  if (!hasError() && isExistingDevice && isDeviceOwnedByUser) {
+                     log.debug("delete device [user " + userId + ", device " + deviceId + "]: 4) See whether the device has associated feeds");
+                     connection.query("SELECT id FROM Feeds WHERE deviceId=? ORDER BY id",
+                                      [deviceId],
+                                      function(err, rows) {
+                                         if (err) {
+                                            error = err;
+                                         }
+                                         else {
+                                            // set flag for whether the device has associated feeds
+                                            if (rows && rows.length > 0) {
+                                               associatedFeeds = [];
+                                               rows.forEach(function(row) {
+                                                  associatedFeeds.push(row.id)
+                                               });
+                                            }
+                                         }
+                                         done();
+                                      });
+                  }
+                  else {
+                     log.debug("delete device [user " + userId + ", device " + deviceId + "]: 4) Delete skipped because device doesn't exist or not owned by user");
+                     done();
+                  }
+               },
+
+               // delete ONLY if there were no errors, the device exists, is owned by the user, and has no associated feeds
+               function(done) {
+                  if (!hasError() && isExistingDevice && isDeviceOwnedByUser && !hasAssociatedFeeds()) {
+                     log.debug("delete device [user " + userId + ", device " + deviceId + "]: 5) Delete the device");
+                     connection.query("DELETE FROM Devices where id = ? AND userId = ?",
+                                      [deviceId, userId],
+                                      function(err, result) {
+                                         if (err) {
+                                            error = err;
+                                         }
+                                         else {
+                                            deleteResult = result;
+                                         }
+                                         done();
+                                      });
+                  }
+                  else {
+                     log.debug("delete device [user " + userId + ", device " + deviceId + "]: 5) Delete skipped because device doesn't exist, is not owned by user, or it has existing feeds");
+                     done();
+                  }
+               }
+            ],
+
+            // handle outcome
+            function() {
+               log.debug("delete device [user " + userId + ", device " + deviceId + "]: 6) All done, now checking status and performing commit/rollback as necessary!");
+               if (hasError()) {
+                  connection.rollback(function() {
+                     connection.release();
+                     log.error("delete device [user " + userId + ", device " + deviceId + "]: 7) An error occurred while deleting the device, rolled back the transaction. Error:" + error);
+                     callback(error);
+                  });
+               }
+               else if (deleteResult == null) {
+                  connection.rollback(function() {
+                     connection.release();
+                     log.info("delete device [user " + userId + ", device " + deviceId + "]: 7) Device not deleted (exists=" + isExistingDevice + ", owned by user=" + isDeviceOwnedByUser + ", has feeds=" + hasAssociatedFeeds() + "), rolled back the transaction.");
+                     if (isExistingDevice) {
+                        if (isDeviceOwnedByUser) {
+                           if (hasAssociatedFeeds()) {
+                              return callback(new JSendClientError("Device cannot be deleted because it has dependent feeds", {
+                                 id : deviceId,
+                                 feedIds : associatedFeeds
+                              }, httpStatus.CONFLICT));
+                           }
+                           else {
+                              log.error("delete device [user " + userId + ", device " + deviceId + "]: 8) The deleteResult is null, but the device [" + deviceId + "] exists AND is owned by the user [" + userId + "]--this should NEVER happen!");
+                              return callback(new JSendServerError("Internal Server Error"));
+                           }
+                        }
+                        else {
+                           return callback(new JSendClientError("Forbidden", { id : deviceId }, httpStatus.FORBIDDEN));
+                        }
+                     }
+                     else {
+                        return callback(new JSendClientError("Device not found", { id : deviceId }, httpStatus.NOT_FOUND));
+                     }
+                  });
+               }
+               else {
+                  log.debug("delete device [user " + userId + ", device " + deviceId + "]: 7) Delete successful, attempting to commit the transaction...");
+                  connection.commit(function(err) {
+                     if (err) {
+                        log.error("delete device [user " + userId + ", device " + deviceId + "]: 8) Failed to commit the transaction after deleting the device");
+
+                        // rollback and then release the connection
+                        connection.rollback(function() {
+                           connection.release();
+                           callback(err);
+                        });
+                     }
+                     else {
+                        connection.release();
+                        log.debug("delete device [user " + userId + ", device " + deviceId + "]: 8) Commit successful!");
+
+                        callback(null, deleteResult);
+                     }
+                  });
+               }
+            }
+      );
+   };
+
    /**
     * Tries to find the device with the given <code>deviceId</code> for the given authenticated user and returns it to
     * the given <code>callback</code>. If successful, the device is returned as the 2nd argument to the
@@ -117,7 +305,7 @@ module.exports = function(databaseHelper) {
     * @param {function} callback function with signature <code>callback(err, device)</code>
     */
    this.findByIdForUser = function(deviceId, authUserId, fieldsToSelect, callback) {
-      query2query.parse({fields : fieldsToSelect}, function(err, queryParts) {
+      query2query.parse({ fields : fieldsToSelect }, function(err, queryParts) {
          if (err) {
             return callback(err);
          }
@@ -159,7 +347,7 @@ module.exports = function(databaseHelper) {
     * @param {function} callback function with signature <code>callback(err, device)</code>
     */
    this.findByProductIdAndSerialNumberForUser = function(productId, serialNumber, userId, fieldsToSelect, callback) {
-      query2query.parse({fields : fieldsToSelect}, function(err, queryParts) {
+      query2query.parse({ fields : fieldsToSelect }, function(err, queryParts) {
          if (err) {
             return callback(err);
          }
