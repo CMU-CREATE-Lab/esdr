@@ -99,7 +99,12 @@ if (!window['superagent']) {
                case 404:
                   return callbacks.notFound();
                case 409:
-                  return callbacks.duplicate();
+                  if (typeof callbacks.conflict === 'function') {
+                     return callbacks.conflict(res.body.data);
+                  }
+                  else {
+                     return callbacks.duplicate();
+                  }
                case 413:
                   return callbacks.entityTooLarge();
                case 422:
@@ -221,6 +226,31 @@ if (!window['superagent']) {
          },
 
          /**
+          * Deletes the device with the given deviceId.
+          *
+          * Required callbacks:
+          * - success(data)
+          * - conflict(data)
+          * - unauthorized()
+          * - forbidden()
+          * - notFound()
+          * - error(responseBody, httpStatusCode)
+          * - failure(err, httpStatusCode)
+          *
+          * Optional callbacks:
+          * - complete() [optional]
+          *
+          * @param {int} deviceId ID of the device to delete
+          * @param {obj} callbacks
+          */
+         deleteDevice : function(deviceId, callbacks) {
+            superagent
+                  .del(ESDR_API_ROOT_URL + "/devices/" + deviceId)
+                  .set(authorizationHeader)
+                  .end(createResponseHandler(callbacks));
+         },
+
+         /**
           * Find devices owned by the user according to the parameters specified in the given query string.
           *
           * Required callbacks:
@@ -299,6 +329,31 @@ if (!window['superagent']) {
                   .send(feed)
                   .end(createResponseHandler(callbacks));
          },
+
+         /**
+          * Deletes the feed with the given feedId.
+          *
+          * Required callbacks:
+          * - success(data)
+          * - unauthorized()
+          * - forbidden()
+          * - notFound()
+          * - error(responseBody, httpStatusCode)
+          * - failure(err, httpStatusCode)
+          *
+          * Optional callbacks:
+          * - complete() [optional]
+          *
+          * @param {int} feedId ID of the feed to delete
+          * @param {obj} callbacks
+          */
+         deleteFeed : function(feedId, callbacks) {
+            superagent
+                  .del(ESDR_API_ROOT_URL + "/feeds/" + feedId)
+                  .set(authorizationHeader)
+                  .end(createResponseHandler(callbacks));
+         },
+
 
          /**
           * Find feeds according to the parameters specified in the given query string.
