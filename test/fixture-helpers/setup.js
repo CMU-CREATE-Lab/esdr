@@ -11,7 +11,7 @@ var database = require('./database');
 var createRandomHexToken = require('../../lib/token').createRandomHexToken;
 var trimAndCopyPropertyIfNonEmpty = require('../../lib/objectUtils').trimAndCopyPropertyIfNonEmpty;
 var Query2Query = require('query2query');
-var feedsQuery2query = require('../../Models/feeds-query2query');
+var feedsQuery2query = require('../../models/feeds-query2query');
 var qs = require('qs');
 
 var config = require('../../config');
