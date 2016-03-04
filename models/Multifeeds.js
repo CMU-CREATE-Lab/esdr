@@ -8,6 +8,7 @@ var S = require('string');
 var qs = require('qs');
 var feedsQuery2query = require('./feeds-query2query');
 var log = require('log4js').getLogger('esdr:models:multifeeds');
+var isPositiveIntString = require('../lib/typeUtils').isPositiveIntString;
 
 var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Multifeeds` ( " +
                          "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
@@ -191,7 +192,7 @@ module.exports = function(databaseHelper) {
     * @param {function} callback function with signature <code>callback(err, feed)</code>
     */
    this.findByNameOrId = function(nameOrId, fieldsToSelect, callback) {
-      var methodName = S(nameOrId).isNumeric() ? "findById" : "findByName";
+      var methodName = isPositiveIntString(nameOrId) ? "findById" : "findByName";
 
       this[methodName](nameOrId, fieldsToSelect, callback);
    };
@@ -219,7 +220,7 @@ module.exports = function(databaseHelper) {
     * @param {function} callback function with signature <code>callback(err, feed)</code>
     */
    this.findById = function(id, fieldsToSelect, callback) {
-      findMultifeed(fieldsToSelect, 'id', id, callback);
+      findMultifeed(fieldsToSelect, 'id', parseInt(id), callback);
    };
 
    var findMultifeed = function(fieldsToSelect, whereField, whereValue, callback) {
