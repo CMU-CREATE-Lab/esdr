@@ -4,7 +4,6 @@ var passport = require('passport');
 var ValidationError = require('../../lib/errors').ValidationError;
 var DuplicateRecordError = require('../../lib/errors').DuplicateRecordError;
 var httpStatus = require('http-status');
-var S = require('string');
 var log = require('log4js').getLogger('esdr:routes:api:products');
 var isPositiveIntString = require('../../lib/typeUtils').isPositiveIntString;
 
