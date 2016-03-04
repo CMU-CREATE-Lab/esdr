@@ -6,6 +6,7 @@ var DuplicateRecordError = require('../../lib/errors').DuplicateRecordError;
 var httpStatus = require('http-status');
 var S = require('string');
 var log = require('log4js').getLogger('esdr:routes:api:products');
+var isPositiveIntString = require('../../lib/typeUtils').isPositiveIntString;
 
 module.exports = function(ProductModel, DeviceModel) {
 
@@ -150,7 +151,10 @@ module.exports = function(ProductModel, DeviceModel) {
               });
 
    var findProductByNameOrId = function(res, productNameOrId, fieldsToSelect, successCallback) {
-      var isId = S(productNameOrId).isNumeric();
+      var isId = isPositiveIntString(productNameOrId);
+      if (isId) {
+         productNameOrId = parseInt(productNameOrId);    // make it an int
+      }
       var methodName = isId ? "findById" : "findByName";
       var fieldName = isId ? "ID" : "name";
 
