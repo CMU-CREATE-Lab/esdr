@@ -5,7 +5,7 @@ var ValidationError = require('../../lib/errors').ValidationError;
 var httpStatus = require('http-status');
 var JSendError = require('jsend-utils').JSendError;
 var log = require('log4js').getLogger('esdr:routes:api:devices');
-var isInt = require('../../lib/typeUtils').isInt;
+var isPositiveIntString = require('../../lib/typeUtils').isPositiveIntString;
 
 module.exports = function(DeviceModel, FeedModel) {
 
@@ -49,9 +49,8 @@ module.exports = function(DeviceModel, FeedModel) {
                  function(req, res, next) {
                     var deviceId = req.params.deviceId;
                     log.debug("DELETE device [" + deviceId + "] for user [" + req.user.id + "]");
-                    if (isInt(deviceId)) {
-                       // make it an int
-                       deviceId = parseInt(deviceId);
+                    if (isPositiveIntString(deviceId)) {
+                       deviceId = parseInt(deviceId); // make it an int
                        DeviceModel.deleteDevice(deviceId,
                                                 req.user.id,
                                                 function(err, result) {
@@ -107,23 +106,28 @@ module.exports = function(DeviceModel, FeedModel) {
                });
 
    var findDeviceByIdForUser = function(res, deviceId, authUserId, fieldsToSelect, successCallback) {
-      DeviceModel.findByIdForUser(deviceId, authUserId, fieldsToSelect, function(err, device) {
-         if (err) {
-            if (err instanceof JSendError) {
-               return res.jsendPassThrough(err.data);
+      if (isPositiveIntString(deviceId)) {
+         deviceId = parseInt(deviceId); // make it an int
+         DeviceModel.findByIdForUser(deviceId, authUserId, fieldsToSelect, function(err, device) {
+            if (err) {
+               if (err instanceof JSendError) {
+                  return res.jsendPassThrough(err.data);
+               }
+               var message = "Error while trying to find device with ID [" + deviceId + "]";
+               log.error(message + ": " + err);
+               return res.jsendServerError(message);
             }
-            var message = "Error while trying to find device with ID [" + deviceId + "]";
-            log.error(message + ": " + err);
-            return res.jsendServerError(message);
-         }
 
-         if (device) {
-            return successCallback(device);
-         }
-         else {
-            return res.jsendClientError("Unknown or invalid device ID", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
-         }
-      });
+            if (device) {
+               return successCallback(device);
+            }
+            else {
+               return res.jsendClientError("Unknown or invalid device ID", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
+            }
+         });
+      } else {
+         return res.jsendClientError("Unknown or invalid device ID", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
+      }
    };
 
    return router;

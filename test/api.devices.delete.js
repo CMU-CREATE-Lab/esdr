@@ -152,13 +152,23 @@ describe("REST API", function() {
 
          describe("OAuth2 authentication", function() {
 
-            it("Shouldn't be able to delete a device with an invalid ID", function(done) {
+            it("Shouldn't be able to delete a device with an invalid ID (0)", function(done) {
                executeDelete({
                                 url : ESDR_DEVICES_API_URL + "/" + 0,
                                 headers : createAuthorizationHeader(user1.accessToken),
                                 expectedHttpStatus : httpStatus.NOT_FOUND,
                                 expectedStatusText : 'error',
-                                expectedResponseData : { id : 0 }
+                                expectedResponseData : null
+                             }, done);
+            });
+
+            it("Shouldn't be able to delete a device with an invalid ID (negative int)", function(done) {
+               executeDelete({
+                                url : ESDR_DEVICES_API_URL + "/" + (-30),
+                                headers : createAuthorizationHeader(user1.accessToken),
+                                expectedHttpStatus : httpStatus.NOT_FOUND,
+                                expectedStatusText : 'error',
+                                expectedResponseData : null
                              }, done);
             });
 
