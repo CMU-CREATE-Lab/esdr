@@ -415,7 +415,17 @@ describe("REST API", function() {
                                 headers : createAuthorizationHeader(user1.accessToken),
                                 expectedHttpStatus : httpStatus.NOT_FOUND,
                                 expectedStatusText : 'error',
-                                expectedResponseData : { id : 0 }
+                                expectedResponseData : null
+                             }, done);
+            });
+
+            it("Shouldn't be able to delete a feed with an invalid ID (negative int)", function(done) {
+               executeDelete({
+                                url : ESDR_FEEDS_API_URL + "/" + -30,
+                                headers : createAuthorizationHeader(user1.accessToken),
+                                expectedHttpStatus : httpStatus.NOT_FOUND,
+                                expectedStatusText : 'error',
+                                expectedResponseData : null
                              }, done);
             });
 

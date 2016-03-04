@@ -766,7 +766,7 @@ module.exports = function(databaseHelper) {
     * successful, the feed is returned as the 2nd argument to the <code>callback</code> function.  If unsuccessful,
     * <code>null</code> is returned to the callback.
     *
-    * @param {string} id ID of the feed to find.
+    * @param {string|int} id ID of the feed to find.
     * @param {string|array} fieldsToSelect comma-delimited string or array of strings of field names to select.
     * @param {function} callback function with signature <code>callback(err, feed)</code>
     */

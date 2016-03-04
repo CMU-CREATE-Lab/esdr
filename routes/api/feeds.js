@@ -5,8 +5,9 @@ var httpStatus = require('http-status');
 var log = require('log4js').getLogger('esdr:routes:api:feeds');
 var nr = require('newrelic');
 var JSendError = require('jsend-utils').JSendError;
-var isInt = require('../../lib/typeUtils').isInt;
+var isPositiveIntString = require('../../lib/typeUtils').isPositiveIntString;
 var isString = require('../../lib/typeUtils').isString;
+var isFeedApiKey = require('../../lib/typeUtils').isFeedApiKey;
 
 module.exports = function(FeedModel, feedRouteHelper) {
 
@@ -155,9 +156,8 @@ module.exports = function(FeedModel, feedRouteHelper) {
                  passport.authenticate('bearer', { session : false }),
                  function(req, res, next) {
                     var feedId = req.params.feedId;
-                    if (isInt(feedId)) {
-                       // make it an int
-                       feedId = parseInt(feedId);
+                    if (isPositiveIntString(feedId)) {
+                       feedId = parseInt(feedId);    // make it an int
                        FeedModel.deleteFeed(feedId,
                                             req.user.id,
                                             function(err, result) {
@@ -396,8 +396,9 @@ module.exports = function(FeedModel, feedRouteHelper) {
       }
       else {
          var feedId = feedIdOrApiKey;
-         // Not a Feed API key, but now make sure the ID is an int or a string that parses as an int (e.g. reject things like '4240abc')
-         if (isInt(feedId)) {
+         // Not a Feed API key, but now make sure the ID is an int or a string that parses as a positive int (e.g. reject things like '4240abc')
+         if (isPositiveIntString(feedId)) {
+            feedId = parseInt(feedId);    // make it an int
             FeedModel.findById(feedId,
                                fieldsToSelect,
                                nr.createTracer("FeedModel:findById",
@@ -477,8 +478,9 @@ module.exports = function(FeedModel, feedRouteHelper) {
       }
       else {
          var feedId = feedIdOrApiKey;
-         // Not a Feed API key, but now make sure the ID is an int or a string that parses as an int (e.g. reject things like '4240abc')
-         if (isInt(feedId)) {
+         // Not a Feed API key, but now make sure the ID is an int or a string that parses as a positive int (e.g. reject things like '4240abc')
+         if (isPositiveIntString(feedId)) {
+            feedId = parseInt(feedId);    // make it an int
             FeedModel.findById(feedId,
                                fieldsToSelect,
                                nr.createTracer("FeedModel:findById",
@@ -540,12 +542,6 @@ module.exports = function(FeedModel, feedRouteHelper) {
             return res.jsendClientError("Unknown or invalid feed", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
          }
       }
-   };
-
-   var FEED_API_KEY_REGEX = /^[a-f0-9]{64}$/i;
-   // If the given value is a string and matches the FEED_API_KEY_REGEX regex, then consider it a Feed API Key
-   var isFeedApiKey = function(str) {
-      return (isString(str) && FEED_API_KEY_REGEX.test(str));
    };
 
    /**
