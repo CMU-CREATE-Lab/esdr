@@ -2,9 +2,26 @@ var express = require('express');
 var router = express.Router();
 var passport = require('passport');
 var httpStatus = require('http-status');
+var config = require('../../config');
+
 var log = require('log4js').getLogger('esdr:routes:api:feed');
 
 module.exports = function(FeedModel, feedRouteHelper, authHelper) {
+
+   const FEED_UPLOAD_RESPONSE_DELAY_MILLIS = config.get("esdr:feedUploadResponseDelayMillis") || 0;
+
+   var pause = function(delay) {
+      if (delay > 0) {
+         return function(req, res, next) {
+            setTimeout(next, delay);
+         };
+      }
+      else {
+         return function(req, res, next) {
+            next();
+         };
+      }
+   };
 
    /**
     * For uploads authenticated using the feed's API Key in the header
@@ -12,6 +29,7 @@ module.exports = function(FeedModel, feedRouteHelper, authHelper) {
     */
    router.put('/',
               passport.authenticate('feed-apikey', { session : false }),
+              pause(FEED_UPLOAD_RESPONSE_DELAY_MILLIS),
               function(req, res, next) {
                  var feed = req.authInfo.feed;
                  var isReadOnly = req.authInfo.isReadOnly;
