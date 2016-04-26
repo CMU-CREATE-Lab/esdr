@@ -139,7 +139,7 @@ module.exports = function(databaseHelper) {
          multifeed.spec = JSON.stringify(multifeedDetails.spec);
          multifeed.querySpec = JSON.stringify(querySpecParts);
 
-         // now that we have the hashed secret, try to insert
+         // now try to insert
          databaseHelper.execute("INSERT INTO Multifeeds SET ?", multifeed, function(err, result) {
             if (err) {
                return callback(err);
