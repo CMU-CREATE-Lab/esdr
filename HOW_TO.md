@@ -365,7 +365,19 @@ ESDR also has a "multi-get-tile" API method which will let you get tiles for any
 
 Details about how to compute `level` and `offset` are provided in [Fluxtream/BodyTrack's API docs](https://fluxtream.atlassian.net/wiki/display/FLX/BodyTrack+server+APIs#BodyTrackserverAPIs-Formattingoftime).
 
-See the next section for an example which makes tile fetches.
+See the Viewing Data section below for an example which makes tile fetches.
+
+
+##Most Recent
+
+Sometimes, all you care about is the most recent value(s).  For example, if you're polling the feed every few minutes, then it probably makes sense to use the most-recent method instead of export or tile fetching, e.g.:
+
+    https://esdr.cmucreatelab.org/api/v1/feeds/FEED_ID_OR_API_KEY/most-recent
+
+Or, for a single channel:
+
+	 https://esdr.cmucreatelab.org/api/v1/feeds/FEED_ID_OR_API_KEY/channels/CHANNEL_NAME/most-recent
+
 
 ##Viewing Data
 
