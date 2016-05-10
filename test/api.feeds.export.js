@@ -172,92 +172,198 @@ describe("REST API", function() {
       );
    });
 
-   var feed1Export = function(feed) {
-      var userId = feed.userId;
-      var feedId = feed.id;
-      return 'EpochTime,' + userId + '.feed_' + feedId + '.battery_voltage,' + userId + '.feed_' + feedId + '.conductivity,' + userId + '.feed_' + feedId + '.temperature,' + userId + '.feed_' + feedId + '.annotation\n' +
-             '1380270001,,,14.2,\n' +
-             '1380276279.1,3.85,516,19,\n' +
-             '1380449602,3.84,485,19.2,\n' +
-             '1380472357,3.84,485,18.6,\n' +
-             '1380556690,3.84,501,18.3,\n' +
-             '1380600249,,583,,\n' +
-             '1380643808,3.84,583,19.5,\n' +
-             '1380725507,3.84,551,19.6,\n' +
-             '1380752155,3.84,511,20,\n' +
-             '1380752248,,500,,\n' +
-             '1380752359,,501,,\n' +
-             '1380836116,3.84,491,20.7,\n' +
-             '1380883999,3.84,612,21.1,\n' +
-             '1380909922,3.84,587,20.3,\n' +
-             '1380922452,3.84,571,19.5,\n' +
-             '1380969641,3.84,495,21.8,\n' +
-             '1381002132,3.84,503,21.6,\n' +
-             '1381062285,3.84,464,22.2,\n' +
-             '1381154132.009,3.84,565,18.5,\n' +
-             '1381238902.42,3.84,536,18.2,\n' +
-             '1381242668,3.84,541,17.7,\n' +
-             '1381353442,3.84,611,19.5,\n' +
-             '1381403282,3.84,607,20.8,\n' +
-             '1381485424,3.84,585,20.6,\n' +
-             '1381490906,3.84,587,20.3,\n' +
-             '1381516627,3.84,570,20.2,\n' +
-             '1381572510,3.84,526,20.3,\n' +
-             '1381636650,3.84,493,19.9,\n' +
-             '1381667243,3.84,483,20.4,\n' +
-             '1381671206,3.84,478,19.9,\n' +
-             '1381801851,3.84,486,20.6,\n' +
-             '1381802188,3.84,508,20.6,\n' +
-             '1381840404,3.84,506,20.8,\n' +
-             '1381856528,3.84,605,18.9,\n' +
-             '1381917431,3.84,624,20.5,\n' +
-             '1382006980,3.84,543,20.6,\n' +
-             '1382054188,3.84,517,19.6,\n' +
-             '1382055042,,,33.9,\n' +
-             '1446654988,,,,"This is a comment in the annotation channel at time 1446654988."\n';
+   var getHeaderCsv = function(channels) {
+      return ['EpochTime'].concat(channels).join(',');
    };
 
-   var feed2Export = function(feed) {
+   var getHeaderJson = function(channels) {
+      return '{"channel_names":[' + channels.map(function(item) {
+               return '"' + item + '"'
+            }).join(',') + '],"data":[';
+   };
+
+   var feed1Export = function(feed, isJsonFormat) {
       var userId = feed.userId;
       var feedId = feed.id;
-      return 'EpochTime,' + userId + '.feed_' + feedId + '.battery_voltage,' + userId + '.feed_' + feedId + '.conductivity,' + userId + '.feed_' + feedId + '.temperature,' + userId + '.feed_' + feedId + '.annotation\n' +
-             '1280270001,,,14.2,\n' +
-             '1280276279.1,2.85,1516,19,\n' +
-             '1280449602,2.84,1485,19.2,\n' +
-             '1280472357,2.84,1485,18.6,\n' +
-             '1280556690,2.84,1501,18.3,\n' +
-             '1280643808,2.84,1583,19.5,\n' +
-             '1280725507,2.84,1551,19.6,\n' +
-             '1280752155,2.84,1511,20,\n' +
-             '1280752248,,1500,,\n' +
-             '1280752359,,1501,,\n' +
-             '1280836116,2.84,1491,20.7,\n' +
-             '1280883999,2.84,1612,21.1,\n' +
-             '1280909922,2.84,1587,20.3,\n' +
-             '1280922452,2.84,1571,19.5,\n' +
-             '1280969641,2.84,1495,21.8,\n' +
-             '1281002132,2.84,1503,21.6,\n' +
-             '1281062285,2.84,1464,22.2,\n' +
-             '1281154132.009,2.84,1565,18.5,\n' +
-             '1281238902.42,2.84,1536,18.2,\n' +
-             '1281242668,2.84,1541,17.7,\n' +
-             '1281353442,2.84,1611,19.5,\n' +
-             '1281403282,2.84,1607,20.8,\n' +
-             '1281485424,2.84,1585,20.6,\n' +
-             '1281490906,2.84,1587,20.3,\n' +
-             '1281516627,2.84,1570,20.2,\n' +
-             '1281572510,2.84,1526,20.3,\n' +
-             '1281636650,2.84,1493,19.9,\n' +
-             '1281667243,2.84,1483,20.4,\n' +
-             '1281671206,2.84,1478,19.9,\n' +
-             '1281801851,2.84,1486,20.6,\n' +
-             '1281802188,2.84,1508,20.6,\n' +
-             '1281840404,2.84,1506,20.8,\n' +
-             '1281856528,2.84,1605,18.9,\n' +
-             '1281917431,2.84,1624,20.5,\n' +
-             '1282006980,2.84,1543,20.6,\n' +
-             '1282054188,2.84,1517,19.6,\n' +
-             '1282055042,,,33.9,\n';
+      var channels = ['battery_voltage', 'conductivity', 'temperature', 'annotation'].map(function(channel) {
+         return userId + '.feed_' + feedId + '.' + channel
+      });
+
+      if (isJsonFormat) {
+         return getHeaderJson(channels) + '\n' +
+                '[1380270001,null,null,14.2,null],\n' +
+                '[1380276279.1,3.85,516,19,null],\n' +
+                '[1380449602,3.84,485,19.2,null],\n' +
+                '[1380472357,3.84,485,18.6,null],\n' +
+                '[1380556690,3.84,501,18.3,null],\n' +
+                '[1380600249,null,583,null,null],\n' +
+                '[1380643808,3.84,583,19.5,null],\n' +
+                '[1380725507,3.84,551,19.6,null],\n' +
+                '[1380752155,3.84,511,20,null],\n' +
+                '[1380752248,null,500,null,null],\n' +
+                '[1380752359,null,501,null,null],\n' +
+                '[1380836116,3.84,491,20.7,null],\n' +
+                '[1380883999,3.84,612,21.1,null],\n' +
+                '[1380909922,3.84,587,20.3,null],\n' +
+                '[1380922452,3.84,571,19.5,null],\n' +
+                '[1380969641,3.84,495,21.8,null],\n' +
+                '[1381002132,3.84,503,21.6,null],\n' +
+                '[1381062285,3.84,464,22.2,null],\n' +
+                '[1381154132.009,3.84,565,18.5,null],\n' +
+                '[1381238902.42,3.84,536,18.2,null],\n' +
+                '[1381242668,3.84,541,17.7,null],\n' +
+                '[1381353442,3.84,611,19.5,null],\n' +
+                '[1381403282,3.84,607,20.8,null],\n' +
+                '[1381485424,3.84,585,20.6,null],\n' +
+                '[1381490906,3.84,587,20.3,null],\n' +
+                '[1381516627,3.84,570,20.2,null],\n' +
+                '[1381572510,3.84,526,20.3,null],\n' +
+                '[1381636650,3.84,493,19.9,null],\n' +
+                '[1381667243,3.84,483,20.4,null],\n' +
+                '[1381671206,3.84,478,19.9,null],\n' +
+                '[1381801851,3.84,486,20.6,null],\n' +
+                '[1381802188,3.84,508,20.6,null],\n' +
+                '[1381840404,3.84,506,20.8,null],\n' +
+                '[1381856528,3.84,605,18.9,null],\n' +
+                '[1381917431,3.84,624,20.5,null],\n' +
+                '[1382006980,3.84,543,20.6,null],\n' +
+                '[1382054188,3.84,517,19.6,null],\n' +
+                '[1382055042,null,null,33.9,null],\n' +
+                '[1446654988,null,null,null,"This is a comment in the annotation channel at time 1446654988."]\n' +
+                ']}\n';
+      }
+      else {
+         return getHeaderCsv(channels) + '\n' +
+                '1380270001,,,14.2,\n' +
+                '1380276279.1,3.85,516,19,\n' +
+                '1380449602,3.84,485,19.2,\n' +
+                '1380472357,3.84,485,18.6,\n' +
+                '1380556690,3.84,501,18.3,\n' +
+                '1380600249,,583,,\n' +
+                '1380643808,3.84,583,19.5,\n' +
+                '1380725507,3.84,551,19.6,\n' +
+                '1380752155,3.84,511,20,\n' +
+                '1380752248,,500,,\n' +
+                '1380752359,,501,,\n' +
+                '1380836116,3.84,491,20.7,\n' +
+                '1380883999,3.84,612,21.1,\n' +
+                '1380909922,3.84,587,20.3,\n' +
+                '1380922452,3.84,571,19.5,\n' +
+                '1380969641,3.84,495,21.8,\n' +
+                '1381002132,3.84,503,21.6,\n' +
+                '1381062285,3.84,464,22.2,\n' +
+                '1381154132.009,3.84,565,18.5,\n' +
+                '1381238902.42,3.84,536,18.2,\n' +
+                '1381242668,3.84,541,17.7,\n' +
+                '1381353442,3.84,611,19.5,\n' +
+                '1381403282,3.84,607,20.8,\n' +
+                '1381485424,3.84,585,20.6,\n' +
+                '1381490906,3.84,587,20.3,\n' +
+                '1381516627,3.84,570,20.2,\n' +
+                '1381572510,3.84,526,20.3,\n' +
+                '1381636650,3.84,493,19.9,\n' +
+                '1381667243,3.84,483,20.4,\n' +
+                '1381671206,3.84,478,19.9,\n' +
+                '1381801851,3.84,486,20.6,\n' +
+                '1381802188,3.84,508,20.6,\n' +
+                '1381840404,3.84,506,20.8,\n' +
+                '1381856528,3.84,605,18.9,\n' +
+                '1381917431,3.84,624,20.5,\n' +
+                '1382006980,3.84,543,20.6,\n' +
+                '1382054188,3.84,517,19.6,\n' +
+                '1382055042,,,33.9,\n' +
+                '1446654988,,,,"This is a comment in the annotation channel at time 1446654988."\n';
+      }
+   };
+
+   var feed2Export = function(feed, isJsonFormat) {
+      var userId = feed.userId;
+      var feedId = feed.id;
+      var channels = ['battery_voltage', 'conductivity', 'temperature', 'annotation'].map(function(channel) {
+         return userId + '.feed_' + feedId + '.' + channel
+      });
+
+      if (isJsonFormat) {
+         return getHeaderJson(channels) + '\n' +
+                '[1280270001,null,null,14.2,null],\n' +
+                '[1280276279.1,2.85,1516,19,null],\n' +
+                '[1280449602,2.84,1485,19.2,null],\n' +
+                '[1280472357,2.84,1485,18.6,null],\n' +
+                '[1280556690,2.84,1501,18.3,null],\n' +
+                '[1280643808,2.84,1583,19.5,null],\n' +
+                '[1280725507,2.84,1551,19.6,null],\n' +
+                '[1280752155,2.84,1511,20,null],\n' +
+                '[1280752248,null,1500,null,null],\n' +
+                '[1280752359,null,1501,null,null],\n' +
+                '[1280836116,2.84,1491,20.7,null],\n' +
+                '[1280883999,2.84,1612,21.1,null],\n' +
+                '[1280909922,2.84,1587,20.3,null],\n' +
+                '[1280922452,2.84,1571,19.5,null],\n' +
+                '[1280969641,2.84,1495,21.8,null],\n' +
+                '[1281002132,2.84,1503,21.6,null],\n' +
+                '[1281062285,2.84,1464,22.2,null],\n' +
+                '[1281154132.009,2.84,1565,18.5,null],\n' +
+                '[1281238902.42,2.84,1536,18.2,null],\n' +
+                '[1281242668,2.84,1541,17.7,null],\n' +
+                '[1281353442,2.84,1611,19.5,null],\n' +
+                '[1281403282,2.84,1607,20.8,null],\n' +
+                '[1281485424,2.84,1585,20.6,null],\n' +
+                '[1281490906,2.84,1587,20.3,null],\n' +
+                '[1281516627,2.84,1570,20.2,null],\n' +
+                '[1281572510,2.84,1526,20.3,null],\n' +
+                '[1281636650,2.84,1493,19.9,null],\n' +
+                '[1281667243,2.84,1483,20.4,null],\n' +
+                '[1281671206,2.84,1478,19.9,null],\n' +
+                '[1281801851,2.84,1486,20.6,null],\n' +
+                '[1281802188,2.84,1508,20.6,null],\n' +
+                '[1281840404,2.84,1506,20.8,null],\n' +
+                '[1281856528,2.84,1605,18.9,null],\n' +
+                '[1281917431,2.84,1624,20.5,null],\n' +
+                '[1282006980,2.84,1543,20.6,null],\n' +
+                '[1282054188,2.84,1517,19.6,null],\n' +
+                '[1282055042,null,null,33.9,null]\n' +
+                ']}\n';
+      }
+      else {
+         return getHeaderCsv(channels) + '\n' +
+                '1280270001,,,14.2,\n' +
+                '1280276279.1,2.85,1516,19,\n' +
+                '1280449602,2.84,1485,19.2,\n' +
+                '1280472357,2.84,1485,18.6,\n' +
+                '1280556690,2.84,1501,18.3,\n' +
+                '1280643808,2.84,1583,19.5,\n' +
+                '1280725507,2.84,1551,19.6,\n' +
+                '1280752155,2.84,1511,20,\n' +
+                '1280752248,,1500,,\n' +
+                '1280752359,,1501,,\n' +
+                '1280836116,2.84,1491,20.7,\n' +
+                '1280883999,2.84,1612,21.1,\n' +
+                '1280909922,2.84,1587,20.3,\n' +
+                '1280922452,2.84,1571,19.5,\n' +
+                '1280969641,2.84,1495,21.8,\n' +
+                '1281002132,2.84,1503,21.6,\n' +
+                '1281062285,2.84,1464,22.2,\n' +
+                '1281154132.009,2.84,1565,18.5,\n' +
+                '1281238902.42,2.84,1536,18.2,\n' +
+                '1281242668,2.84,1541,17.7,\n' +
+                '1281353442,2.84,1611,19.5,\n' +
+                '1281403282,2.84,1607,20.8,\n' +
+                '1281485424,2.84,1585,20.6,\n' +
+                '1281490906,2.84,1587,20.3,\n' +
+                '1281516627,2.84,1570,20.2,\n' +
+                '1281572510,2.84,1526,20.3,\n' +
+                '1281636650,2.84,1493,19.9,\n' +
+                '1281667243,2.84,1483,20.4,\n' +
+                '1281671206,2.84,1478,19.9,\n' +
+                '1281801851,2.84,1486,20.6,\n' +
+                '1281802188,2.84,1508,20.6,\n' +
+                '1281840404,2.84,1506,20.8,\n' +
+                '1281856528,2.84,1605,18.9,\n' +
+                '1281917431,2.84,1624,20.5,\n' +
+                '1282006980,2.84,1543,20.6,\n' +
+                '1282054188,2.84,1517,19.6,\n' +
+                '1282055042,,,33.9,\n';
+      }
    };
 
    describe("Feeds", function() {
@@ -316,7 +422,7 @@ describe("REST API", function() {
 
          describe("No authentication", function() {
 
-            it("Should be able to export a public feed without authentication", function(done) {
+            it("Should be able to export a public feed without authentication (CSV)", function(done) {
                doExport({
                            url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage,conductivity,temperature,annotation/export",
                            expectedFileName : 'export_of_feed_' + feed1.id + '.csv',
@@ -327,7 +433,40 @@ describe("REST API", function() {
                         }, done);
             });
 
-            it("Should ignore redundant channels", function(done) {
+            it("Should be able to export a public feed without authentication (JSON)", function(done) {
+               doExport({
+                           url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage,conductivity,temperature,annotation/export?format=json",
+                           expectedFileName : 'export_of_feed_' + feed1.id + '.json',
+                           expectedHttpStatus : httpStatus.OK,
+                           expectedStatusText : 'success',
+                           hasEmptyBody : true,
+                           expectedResponseText : feed1Export(feed1, true)
+                        }, done);
+            });
+
+            it("Data format specifier is case-insensitive (CSV)", function(done) {
+               doExport({
+                           url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage,conductivity,temperature,annotation/export?format=CsV",
+                           expectedFileName : 'export_of_feed_' + feed1.id + '.csv',
+                           expectedHttpStatus : httpStatus.OK,
+                           expectedStatusText : 'success',
+                           hasEmptyBody : true,
+                           expectedResponseText : feed1Export(feed1)
+                        }, done);
+            });
+
+            it("Data format specifier is case-insensitive (JSON)", function(done) {
+               doExport({
+                           url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage,conductivity,temperature,annotation/export?format=jSoN",
+                           expectedFileName : 'export_of_feed_' + feed1.id + '.json',
+                           expectedHttpStatus : httpStatus.OK,
+                           expectedStatusText : 'success',
+                           hasEmptyBody : true,
+                           expectedResponseText : feed1Export(feed1, true)
+                        }, done);
+            });
+
+            it("Should ignore redundant channels (CSV)", function(done) {
                doExport({
                            url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage,battery_voltage,conductivity,battery_voltage,temperature,annotation,conductivity/export",
                            expectedFileName : 'export_of_feed_' + feed1.id + '.csv',
@@ -338,7 +477,18 @@ describe("REST API", function() {
                         }, done);
             });
 
-            it("Should ignore invalid min and max times", function(done) {
+            it("Should ignore redundant channels (JSON)", function(done) {
+               doExport({
+                           url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage,battery_voltage,conductivity,battery_voltage,temperature,annotation,conductivity/export?format=json",
+                           expectedFileName : 'export_of_feed_' + feed1.id + '.json',
+                           expectedHttpStatus : httpStatus.OK,
+                           expectedStatusText : 'success',
+                           hasEmptyBody : true,
+                           expectedResponseText : feed1Export(feed1, true)
+                        }, done);
+            });
+
+            it("Should ignore invalid min and max times (CSV)", function(done) {
                doExport({
                            url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage,conductivity,temperature,annotation/export?from=foo&to=bar",
                            expectedFileName : 'export_of_feed_' + feed1.id + '.csv',
@@ -349,7 +499,18 @@ describe("REST API", function() {
                         }, done);
             });
 
-            it("Should fail to export a non-existent feed", function(done) {
+            it("Should ignore invalid min and max times (JSON)", function(done) {
+               doExport({
+                           url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage,conductivity,temperature,annotation/export?from=foo&to=bar&format=json",
+                           expectedFileName : 'export_of_feed_' + feed1.id + '.json',
+                           expectedHttpStatus : httpStatus.OK,
+                           expectedStatusText : 'success',
+                           hasEmptyBody : true,
+                           expectedResponseText : feed1Export(feed1, true)
+                        }, done);
+            });
+
+            it("Should fail to export a non-existent feed (CSV)", function(done) {
                doExport({
                            url : ESDR_FEEDS_API_URL + "/-1/channels/battery_voltage,conductivity,temperature,annotation/export",
                            expectedHttpStatus : httpStatus.NOT_FOUND,
@@ -359,7 +520,17 @@ describe("REST API", function() {
                         }, done);
             });
 
-            it("Should be able to export and limit returned records by max time", function(done) {
+            it("Should fail to export a non-existent feed (JSON)", function(done) {
+               doExport({
+                           url : ESDR_FEEDS_API_URL + "/-1/channels/battery_voltage,conductivity,temperature,annotation/export?format=json",
+                           expectedHttpStatus : httpStatus.NOT_FOUND,
+                           expectedStatusText : 'error',
+                           expectedResponseData : null,
+                           willIgnoreText : true
+                        }, done);
+            });
+
+            it("Should be able to export and limit returned records by max time (CSV)", function(done) {
                var maxTime = 1380556691;
                doExport({
                            url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage/export?to=" + maxTime,
@@ -372,11 +543,27 @@ describe("REST API", function() {
                                                   '1380449602,3.84\n' +
                                                   '1380472357,3.84\n' +
                                                   '1380556690,3.84\n'
-
                         }, done);
             });
 
-            it("Should be able to export and limit returned records by min time", function(done) {
+            it("Should be able to export and limit returned records by max time (JSON)", function(done) {
+               var maxTime = 1380556691;
+               doExport({
+                           url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage/export?format=json&to=" + maxTime,
+                           expectedFileName : 'export_of_feed_' + feed1.id + '_to_time_' + maxTime + '.json',
+                           expectedHttpStatus : httpStatus.OK,
+                           expectedStatusText : 'success',
+                           hasEmptyBody : true,
+                           expectedResponseText : '{"channel_names":["' + feed1.userId + '.feed_' + feed1.id + '.battery_voltage"],"data":[\n' +
+                                                  '[1380276279.1,3.85],\n' +
+                                                  '[1380449602,3.84],\n' +
+                                                  '[1380472357,3.84],\n' +
+                                                  '[1380556690,3.84]\n' +
+                                                  ']}\n'
+                        }, done);
+            });
+
+            it("Should be able to export and limit returned records by min time (CSV)", function(done) {
                var minTime = 1381856528;
                doExport({
                            url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage/export?from=" + minTime,
@@ -389,11 +576,27 @@ describe("REST API", function() {
                                                   '1381917431,3.84\n' +
                                                   '1382006980,3.84\n' +
                                                   '1382054188,3.84\n'
-
                         }, done);
             });
 
-            it("Should be able to export and limit returned records by min and max time", function(done) {
+            it("Should be able to export and limit returned records by min time (JSON)", function(done) {
+               var minTime = 1381856528;
+               doExport({
+                           url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage/export?format=json&from=" + minTime,
+                           expectedFileName : 'export_of_feed_' + feed1.id + '_from_time_' + minTime + '.json',
+                           expectedHttpStatus : httpStatus.OK,
+                           expectedStatusText : 'success',
+                           hasEmptyBody : true,
+                           expectedResponseText : '{"channel_names":["' + feed1.userId + '.feed_' + feed1.id + '.battery_voltage"],"data":[\n' +
+                                                  '[1381856528,3.84],\n' +
+                                                  '[1381917431,3.84],\n' +
+                                                  '[1382006980,3.84],\n' +
+                                                  '[1382054188,3.84]\n' +
+                                                  ']}\n'
+                        }, done);
+            });
+
+            it("Should be able to export and limit returned records by min and max time (CSV)", function(done) {
                var minTime = 1381002132;
                var maxTime = 1381485424;
                doExport({
@@ -411,11 +614,32 @@ describe("REST API", function() {
                                                   '1381353442,3.84\n' +
                                                   '1381403282,3.84\n' +
                                                   '1381485424,3.84\n'
-
                         }, done);
             });
 
-            it("Should be able to export and limit returned records by min and max time, even if min and max time values are swapped", function(done) {
+            it("Should be able to export and limit returned records by min and max time (JSON)", function(done) {
+               var minTime = 1381002132;
+               var maxTime = 1381485424;
+               doExport({
+                           url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage/export?format=json&from=" + minTime + "&to=" + maxTime,
+                           expectedFileName : 'export_of_feed_' + feed1.id + '_from_time_' + minTime + '_to_' + maxTime + '.json',
+                           expectedHttpStatus : httpStatus.OK,
+                           expectedStatusText : 'success',
+                           hasEmptyBody : true,
+                           expectedResponseText : '{"channel_names":["' + feed1.userId + '.feed_' + feed1.id + '.battery_voltage"],"data":[\n' +
+                                                  '[1381002132,3.84],\n' +
+                                                  '[1381062285,3.84],\n' +
+                                                  '[1381154132.009,3.84],\n' +
+                                                  '[1381238902.42,3.84],\n' +
+                                                  '[1381242668,3.84],\n' +
+                                                  '[1381353442,3.84],\n' +
+                                                  '[1381403282,3.84],\n' +
+                                                  '[1381485424,3.84]\n' +
+                                                  ']}\n'
+                        }, done);
+            });
+
+            it("Should be able to export and limit returned records by min and max time, even if min and max time values are swapped (CSV)", function(done) {
                var minTime = 1381002132;
                var maxTime = 1381485424;
                doExport({
@@ -433,11 +657,32 @@ describe("REST API", function() {
                                                   '1381353442,3.84\n' +
                                                   '1381403282,3.84\n' +
                                                   '1381485424,3.84\n'
-
                         }, done);
             });
 
-            it("Should fail to export a private feed without authentication", function(done) {
+            it("Should be able to export and limit returned records by min and max time, even if min and max time values are swapped (JSON)", function(done) {
+               var minTime = 1381002132;
+               var maxTime = 1381485424;
+               doExport({
+                           url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage/export?format=json&from=" + maxTime + "&to=" + minTime,
+                           expectedFileName : 'export_of_feed_' + feed1.id + '_from_time_' + minTime + '_to_' + maxTime + '.json',
+                           expectedHttpStatus : httpStatus.OK,
+                           expectedStatusText : 'success',
+                           hasEmptyBody : true,
+                           expectedResponseText : '{"channel_names":["' + feed1.userId + '.feed_' + feed1.id + '.battery_voltage"],"data":[\n' +
+                                                  '[1381002132,3.84],\n' +
+                                                  '[1381062285,3.84],\n' +
+                                                  '[1381154132.009,3.84],\n' +
+                                                  '[1381238902.42,3.84],\n' +
+                                                  '[1381242668,3.84],\n' +
+                                                  '[1381353442,3.84],\n' +
+                                                  '[1381403282,3.84],\n' +
+                                                  '[1381485424,3.84]\n' +
+                                                  ']}\n'
+                        }, done);
+            });
+
+            it("Should fail to export a private feed without authentication (CSV)", function(done) {
                doExport({
                            url : ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/battery_voltage,conductivity,temperature,annotation/export",
                            expectedHttpStatus : httpStatus.UNAUTHORIZED,
@@ -447,11 +692,41 @@ describe("REST API", function() {
                         }, done);
             });
 
+            it("Should fail to export a private feed without authentication (JSON)", function(done) {
+               doExport({
+                           url : ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/battery_voltage,conductivity,temperature,annotation/export?format=json",
+                           expectedHttpStatus : httpStatus.UNAUTHORIZED,
+                           expectedStatusText : 'error',
+                           expectedResponseData : null,
+                           willIgnoreText : true
+                        }, done);
+            });
+
+            it("Should fail to export a feed if the data format specifier is invalid (integer)", function(done) {
+               doExport({
+                           url : ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/battery_voltage,conductivity,temperature,annotation/export?format=42",
+                           expectedHttpStatus : httpStatus.UNPROCESSABLE_ENTITY,
+                           expectedStatusText : 'error',
+                           expectedResponseData : { format : "42" },
+                           willIgnoreText : true
+                        }, done);
+            });
+
+            it("Should fail to export a feed if the data format specifier is invalid (string)", function(done) {
+               doExport({
+                           url : ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/battery_voltage,conductivity,temperature,annotation/export?format=foobar",
+                           expectedHttpStatus : httpStatus.UNPROCESSABLE_ENTITY,
+                           expectedStatusText : 'error',
+                           expectedResponseData : { format : "foobar" },
+                           willIgnoreText : true
+                        }, done);
+            });
+
          });   // End No authentication
 
          describe("OAuth2 authentication", function() {
 
-            it("Should be able to export a private feed with valid authentication", function(done) {
+            it("Should be able to export a private feed with valid authentication (CSV)", function(done) {
                doExport({
                            url : ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/battery_voltage,conductivity,temperature,annotation/export",
                            headers : createAuthorizationHeader(user1.accessToken),
@@ -463,7 +738,19 @@ describe("REST API", function() {
                         }, done);
             });
 
-            it("Should fail to export a private feed without authentication", function(done) {
+            it("Should be able to export a private feed with valid authentication (JSON)", function(done) {
+               doExport({
+                           url : ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/battery_voltage,conductivity,temperature,annotation/export?format=json",
+                           headers : createAuthorizationHeader(user1.accessToken),
+                           expectedFileName : 'export_of_feed_' + feed2.id + '.json',
+                           expectedHttpStatus : httpStatus.OK,
+                           expectedStatusText : 'success',
+                           hasEmptyBody : true,
+                           expectedResponseText : feed2Export(feed2, true)
+                        }, done);
+            });
+
+            it("Should fail to export a private feed without authentication (CSV)", function(done) {
                doExport({
                            url : ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/battery_voltage,conductivity,temperature,annotation/export",
                            headers : createAuthorizationHeader(user2.accessToken),
@@ -474,9 +761,31 @@ describe("REST API", function() {
                         }, done);
             });
 
-            it("Should fail to export a private feed with invalid authentication", function(done) {
+            it("Should fail to export a private feed without authentication (JSON)", function(done) {
+               doExport({
+                           url : ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/battery_voltage,conductivity,temperature,annotation/export?format=json",
+                           headers : createAuthorizationHeader(user2.accessToken),
+                           expectedHttpStatus : httpStatus.FORBIDDEN,
+                           expectedStatusText : 'error',
+                           expectedResponseData : null,
+                           willIgnoreText : true
+                        }, done);
+            });
+
+            it("Should fail to export a private feed with invalid authentication (CSV)", function(done) {
                doExport({
                            url : ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/battery_voltage,conductivity,temperature,annotation/export",
+                           headers : createAuthorizationHeader("bogus"),
+                           expectedHttpStatus : httpStatus.FORBIDDEN,
+                           expectedStatusText : 'error',
+                           expectedResponseData : null,
+                           willIgnoreText : true
+                        }, done);
+            });
+
+            it("Should fail to export a private feed with invalid authentication (JSON)", function(done) {
+               doExport({
+                           url : ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/battery_voltage,conductivity,temperature,annotation/export?format=json",
                            headers : createAuthorizationHeader("bogus"),
                            expectedHttpStatus : httpStatus.FORBIDDEN,
                            expectedStatusText : 'error',
@@ -491,7 +800,7 @@ describe("REST API", function() {
 
             describe("Feed API Key in the request header", function() {
 
-               it("Should be able to export a private feed with valid read-write authentication", function(done) {
+               it("Should be able to export a private feed with valid read-write authentication (CSV)", function(done) {
                   doExport({
                               url : ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/battery_voltage,conductivity,temperature,annotation/export",
                               headers : {
@@ -505,7 +814,21 @@ describe("REST API", function() {
                            }, done);
                });
 
-               it("Should be able to export a private feed with valid read-only authentication", function(done) {
+               it("Should be able to export a private feed with valid read-write authentication (JSON)", function(done) {
+                  doExport({
+                              url : ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/battery_voltage,conductivity,temperature,annotation/export?format=json",
+                              headers : {
+                                 FeedApiKey : feed2.apiKey
+                              },
+                              expectedFileName : 'export_of_feed_' + feed2.id + '.json',
+                              expectedHttpStatus : httpStatus.OK,
+                              expectedStatusText : 'success',
+                              hasEmptyBody : true,
+                              expectedResponseText : feed2Export(feed2, true)
+                           }, done);
+               });
+
+               it("Should be able to export a private feed with valid read-only authentication (CSV)", function(done) {
                   doExport({
                               url : ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/battery_voltage,conductivity,temperature,annotation/export",
                               headers : {
@@ -519,7 +842,21 @@ describe("REST API", function() {
                            }, done);
                });
 
-               it("Should fail to export a private feed with valid authentication, but for the wrong feed", function(done) {
+               it("Should be able to export a private feed with valid read-only authentication (JSON)", function(done) {
+                  doExport({
+                              url : ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/battery_voltage,conductivity,temperature,annotation/export?format=json",
+                              headers : {
+                                 FeedApiKey : feed2.apiKeyReadOnly
+                              },
+                              expectedFileName : 'export_of_feed_' + feed2.id + '.json',
+                              expectedHttpStatus : httpStatus.OK,
+                              expectedStatusText : 'success',
+                              hasEmptyBody : true,
+                              expectedResponseText : feed2Export(feed2, true)
+                           }, done);
+               });
+
+               it("Should fail to export a private feed with valid authentication, but for the wrong feed (CSV)", function(done) {
                   doExport({
                               url : ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/battery_voltage,conductivity,temperature,annotation/export",
                               headers : {
@@ -532,9 +869,35 @@ describe("REST API", function() {
                            }, done);
                });
 
-               it("Should fail to export a private feed with invalid authentication", function(done) {
+               it("Should fail to export a private feed with valid authentication, but for the wrong feed (JSON)", function(done) {
+                  doExport({
+                              url : ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/battery_voltage,conductivity,temperature,annotation/export?format=json",
+                              headers : {
+                                 FeedApiKey : feed1.apiKeyReadOnly
+                              },
+                              expectedHttpStatus : httpStatus.FORBIDDEN,
+                              expectedStatusText : 'error',
+                              expectedResponseData : null,
+                              willIgnoreText : true
+                           }, done);
+               });
+
+               it("Should fail to export a private feed with invalid authentication (CSV)", function(done) {
                   doExport({
                               url : ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/battery_voltage,conductivity,temperature,annotation/export",
+                              headers : {
+                                 FeedApiKey : "bogus"
+                              },
+                              expectedHttpStatus : httpStatus.FORBIDDEN,
+                              expectedStatusText : 'error',
+                              expectedResponseData : null,
+                              willIgnoreText : true
+                           }, done);
+               });
+
+               it("Should fail to export a private feed with invalid authentication (JSON)", function(done) {
+                  doExport({
+                              url : ESDR_FEEDS_API_URL + "/" + feed2.id + "/channels/battery_voltage,conductivity,temperature,annotation/export?format=json",
                               headers : {
                                  FeedApiKey : "bogus"
                               },
@@ -549,7 +912,7 @@ describe("REST API", function() {
 
             describe("Feed API Key in the URL", function() {
 
-               it("Should be able to export a private feed with valid read-write authentication", function(done) {
+               it("Should be able to export a private feed with valid read-write authentication (CSV)", function(done) {
                   doExport({
                               url : ESDR_FEEDS_API_URL + "/" + feed2.apiKey + "/channels/battery_voltage,conductivity,temperature,annotation/export",
                               expectedFileName : 'export_of_feed_' + feed2.id + '.csv',
@@ -560,7 +923,18 @@ describe("REST API", function() {
                            }, done);
                });
 
-               it("Should be able to export a private feed with valid read-only authentication", function(done) {
+               it("Should be able to export a private feed with valid read-write authentication (JSON)", function(done) {
+                  doExport({
+                              url : ESDR_FEEDS_API_URL + "/" + feed2.apiKey + "/channels/battery_voltage,conductivity,temperature,annotation/export?format=json",
+                              expectedFileName : 'export_of_feed_' + feed2.id + '.json',
+                              expectedHttpStatus : httpStatus.OK,
+                              expectedStatusText : 'success',
+                              hasEmptyBody : true,
+                              expectedResponseText : feed2Export(feed2, true)
+                           }, done);
+               });
+
+               it("Should be able to export a private feed with valid read-only authentication (CSV)", function(done) {
                   doExport({
                               url : ESDR_FEEDS_API_URL + "/" + feed2.apiKeyReadOnly + "/channels/battery_voltage,conductivity,temperature,annotation/export",
                               expectedFileName : 'export_of_feed_' + feed2.id + '.csv',
@@ -571,9 +945,30 @@ describe("REST API", function() {
                            }, done);
                });
 
-               it("Should fail to export a private feed with invalid authentication", function(done) {
+               it("Should be able to export a private feed with valid read-only authentication (JSON)", function(done) {
+                  doExport({
+                              url : ESDR_FEEDS_API_URL + "/" + feed2.apiKeyReadOnly + "/channels/battery_voltage,conductivity,temperature,annotation/export?format=json",
+                              expectedFileName : 'export_of_feed_' + feed2.id + '.json',
+                              expectedHttpStatus : httpStatus.OK,
+                              expectedStatusText : 'success',
+                              hasEmptyBody : true,
+                              expectedResponseText : feed2Export(feed2, true)
+                           }, done);
+               });
+
+               it("Should fail to export a private feed with invalid authentication (CSV)", function(done) {
                   doExport({
                               url : ESDR_FEEDS_API_URL + "/" + UNKNOWN_FEED_API_KEY + "/channels/battery_voltage,conductivity,temperature,annotation/export",
+                              expectedHttpStatus : httpStatus.NOT_FOUND,
+                              expectedStatusText : 'error',
+                              expectedResponseData : null,
+                              willIgnoreText : true
+                           }, done);
+               });
+
+               it("Should fail to export a private feed with invalid authentication (JSON)", function(done) {
+                  doExport({
+                              url : ESDR_FEEDS_API_URL + "/" + UNKNOWN_FEED_API_KEY + "/channels/battery_voltage,conductivity,temperature,annotation/export?format=json",
                               expectedHttpStatus : httpStatus.NOT_FOUND,
                               expectedStatusText : 'error',
                               expectedResponseData : null,

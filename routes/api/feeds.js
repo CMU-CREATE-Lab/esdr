@@ -201,7 +201,7 @@ module.exports = function(FeedModel, feedRouteHelper) {
                  getMostRecentDataSamples(req, res, next, req.params.feedIdOrApiKey, req.params.channelName)
               });
 
-   var getMostRecentDataSamples = function(req, res, next, feedIdOrApiKey, channelName){
+   var getMostRecentDataSamples = function(req, res, next, feedIdOrApiKey, channelName) {
       getFeedForReadingByIdOrApiKey(feedIdOrApiKey,
                                     'id,userId,isPublic,apiKey,apiKeyReadOnly',
                                     function(feed) {
@@ -217,7 +217,6 @@ module.exports = function(FeedModel, feedRouteHelper) {
                                        });
                                     }, req, res, next);
    };
-
 
    // For tile requests, optionally authenticated using the user's OAuth2 access token or the feed's read-write or
    // read-only API key in the URL or request header.
@@ -283,29 +282,24 @@ module.exports = function(FeedModel, feedRouteHelper) {
                     maxTime = temp;
                  }
 
-                 // make sure the format is valid (TODO: uncomment and fix this up once the datastore can export JSON)
-                 //var format = (req.query.format || 'csv');
-                 //var contentType;
-                 //if (isString(format)) {
-                 //   format = format.toLowerCase().trim();
-                 //   if (format == 'json') {
-                 //      contentType = 'application/json';
-                 //   }
-                 //   else if (format == 'csv') {
-                 //      contentType = 'text/plain';
-                 //   }
-                 //   else {
-                 //      // TODO: throw error instead
-                 //      contentType = 'text/plain';
-                 //      format = 'csv';
-                 //   }
-                 //}
-                 //else {
-                 //   // TODO: throw error instead
-                 //   contentType = 'text/plain';
-                 //   format = 'csv';
-                 //}
-                 var format = 'csv';
+                 // make sure the format is valid
+                 var format = (req.query.format || 'csv');
+                 var contentType;
+                 if (isString(format)) {
+                    format = format.toLowerCase().trim();
+                    if (format == 'json') {
+                       contentType = 'application/json';
+                    }
+                    else if (format == 'csv') {
+                       contentType = 'text/plain';
+                    }
+                    else {
+                       return res.jsendClientError("Invalid format, must be one of 'csv' or 'json'.", {format: format}, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 UNPROCESSABLE_ENTITY
+                    }
+                 }
+                 else {
+                    return res.jsendClientError("Invalid format, must be one of 'csv' or 'json'.", {format: format}, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 UNPROCESSABLE_ENTITY
+                 }
 
                  getFeedForReadingByIdOrApiKey(req.params['feedIdOrApiKey'],
                                                'id,userId,isPublic,apiKey,apiKeyReadOnly',
@@ -322,46 +316,48 @@ module.exports = function(FeedModel, feedRouteHelper) {
 
                                                   // export the data
                                                   FeedModel.exportData([{
-                                                           feed : feed,
-                                                           channels : channels
-                                                        }],
-                                                        {
-                                                           minTime : minTime,
-                                                           maxTime : maxTime
-                                                        },
-                                                        function(err, eventEmitter) {
-                                                           if (err) {
-                                                              if (err.data && err.data.code == httpStatus.UNPROCESSABLE_ENTITY) {
-                                                                 return res.jsendPassThrough(err.data)
-                                                              }
+                                                                          feed : feed,
+                                                                          channels : channels
+                                                                       }],
+                                                                       {
+                                                                          minTime : minTime,
+                                                                          maxTime : maxTime,
+                                                                          format : format
+                                                                       },
+                                                                       function(err, eventEmitter) {
+                                                                          if (err) {
+                                                                             if (err.data && err.data.code == httpStatus.UNPROCESSABLE_ENTITY) {
+                                                                                return res.jsendPassThrough(err.data)
+                                                                             }
 
-                                                              log.error("Failed to export feed: " + JSON.stringify(err, null, 3));
-                                                              return res.jsendServerError("Failed to export feed", null);
-                                                           }
+                                                                             log.error("Failed to export feed: " + JSON.stringify(err, null, 3));
+                                                                             return res.jsendServerError("Failed to export feed", null);
+                                                                          }
 
-                                                           // set the status code, the connection to close, and specify the Content-disposition filename
-                                                           res
-                                                                 .status(httpStatus.OK)
-                                                                 .set("Connection", "close")
-                                                                 .attachment(filename);
+                                                                          // set the status code, the connection to close, content type, and specify the Content-disposition filename
+                                                                          res
+                                                                                .status(httpStatus.OK)
+                                                                                .set("Connection", "close")
+                                                                                .set("Content-Type", contentType)
+                                                                                .attachment(filename);
 
-                                                           // I don't really understand why, but we must have a
-                                                           // function (even an empty one!) listening on stderr,
-                                                           // or else sometimes I get no data on stdout.  As of
-                                                           // 2015-01-13, I've only seen this on multifeed
-                                                           // getTiles and not with export, but I guess it can't
-                                                           // hurt here.
-                                                           eventEmitter.stderr.on('data', function(data) {
-                                                              // log.error(data);
-                                                           });
+                                                                          // I don't really understand why, but we must have a
+                                                                          // function (even an empty one!) listening on stderr,
+                                                                          // or else sometimes I get no data on stdout.  As of
+                                                                          // 2015-01-13, I've only seen this on multifeed
+                                                                          // getTiles and not with export, but I guess it can't
+                                                                          // hurt here.
+                                                                          eventEmitter.stderr.on('data', function(data) {
+                                                                             // log.error(data);
+                                                                          });
 
-                                                           eventEmitter.on('error', function(e) {
-                                                              log.error("Error event from EventEmitter while exporting: " + JSON.stringify(e, null, 3));
-                                                           });
+                                                                          eventEmitter.on('error', function(e) {
+                                                                             log.error("Error event from EventEmitter while exporting: " + JSON.stringify(e, null, 3));
+                                                                          });
 
-                                                           // pipe the eventEmitter to the response
-                                                           return eventEmitter.stdout.pipe(res);
-                                                        });
+                                                                          // pipe the eventEmitter to the response
+                                                                          return eventEmitter.stdout.pipe(res);
+                                                                       });
                                                },
                                                req, res, next)
               });

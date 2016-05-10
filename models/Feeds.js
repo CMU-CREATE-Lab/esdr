@@ -674,7 +674,8 @@ module.exports = function(databaseHelper) {
       datastore.exportData(userIdDeviceChannelObjects,
                            {
                               minTime : filter.minTime,
-                              maxTime : filter.maxTime
+                              maxTime : filter.maxTime,
+                              format : filter.format
                            },
                            nr.createTracer("datastore:exportData", callback));
    };
