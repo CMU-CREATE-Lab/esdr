@@ -375,15 +375,21 @@ A fancier version will eventually be rolled into ESDR, but this at least provide
 
 ##Export
 
-You can currently export one or more channels from a single feed to CSV.  We'll add JSON support soon.
+You can currently export one or more channels from a single feed to CSV (the default) or JSON.
 
-Here's how the current single-feed export works:
+Here's the format:
 
-    https://esdr.cmucreatelab.org/api/v1/feeds/FEED_ID_OR_API_KEY/channels/ONE_OR_MORE_CHANNELS_COMMA_DELIMITED/export?from=UNIX_TIME_SECS&to=UNIX_TIME_SECS
+    https://esdr.cmucreatelab.org/api/v1/feeds/FEED_ID_OR_API_KEY/channels/ONE_OR_MORE_CHANNELS_COMMA_DELIMITED/export?from=UNIX_TIME_SECS&to=UNIX_TIME_SECS&format=[csv|json]
 
-The "from" and "to" filters are optional.
+The "from", "to", and "format" filters are all optional.
 
-Multi-feed export is coming soon, too.
+Examples:
+
+    https://esdr.cmucreatelab.org/api/v1/feeds/4231/channels/PM2_5_daily_mean,PM2_5_daily_max,PM2_5_daily_median/export
+   
+    https://esdr.cmucreatelab.org/api/v1/feeds/1/channels/PM25B_UG_M3_daily_mean/export?from=1420088400&to=1451624399&format=json
+    
+Multi-feed export is coming soon.
 
 
 ##Queries
