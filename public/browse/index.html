@@ -19,7 +19,7 @@
          padding: 0px;
          min-width: 100%; 
          min-height: 100%;
-         background-color: rgb(225, 225, 225)
+         background-color: rgb(240, 240, 240)
       }
 
       label,input{
@@ -53,7 +53,7 @@
         padding-left: 10px; 
         font-size: 14.5px; 
         line-height: 5px; 
-        color: rgba(255,255,255,.9)
+        color: rgba(255,255,255,.9);
       }
 
       .title-bar legend{
@@ -65,7 +65,33 @@
       }
 
       #channels-title{
+        display: inline-block;
         top: 0px;
+      }
+
+      #channels-title > p{
+        float: left;
+      }
+
+      #help-icon{
+        position: absolute;
+        margin-right: 10px;
+        height: 23px;
+        width: 40px;
+        right: 0px;
+        border-radius: 5px;
+        border: 2px solid white;
+        color: white;
+        top: 50%;
+        transform: translateY(-50%);
+        text-align: center;
+        line-height: 23px;
+        font-weight: lighter;
+        font-size: 12px;
+      }
+
+      #help-icon:hover{
+          background-color: rgba(150,150,150, .75);
       }
 
       #search-box{
@@ -91,7 +117,7 @@
       }
 
       #search-bar:focus{
-        background-color: rgba(100,100,100, .75);
+        background-color: rgba(130,130,130, .75);
         color: white;
       }
 
@@ -373,6 +399,10 @@
         margin-left: 5px;
       }
 
+      #export-button > p{
+        padding-left: 0px;
+      }
+
       #dark-background{
         position: absolute;
         height: 100%;
@@ -463,8 +493,9 @@
         top:0px; 
         bottom:0px; 
         left:0px; 
-        right:40px
-
+        right:40px;
+        background-color: white;
+        cursor: col-resize;
       }
 
       #plots{
@@ -551,6 +582,9 @@
 <body>
 <div class="title-bar tool-bar" id="channels-title">
       <p>Channels</p>
+      <a target="_blank" href="https://docs.google.com/document/d/18IFx6Tyv0EGenEpOrexnB1ajQEBYHsWWpN5wi7PPXC0/pub">
+        <div id="help-icon">help</div>
+      </a>
   </div>
 
   <form class="tool-bar title-bar" id="search-box">
@@ -1260,6 +1294,11 @@
        $('#export-button').on('click', exportData); 
 
        var timer = null; 
+
+       document.getElementById('search-box').addEventListener('submit', function(e) {
+            e.preventDefault();
+        }, false);
+
        $('#search-bar').keyup(function(){
           if ($('#search-bar').val() == ""){
              clearInterval(timer); 
