@@ -130,6 +130,10 @@
          margin-right: 10px
       }
 
+      #search-bar:disabled{
+          background-color: rgba(50,50,50, .75);
+      }
+
       #filter-title{
         top: 76px;
       }
@@ -176,6 +180,10 @@
         margin-top: 5px;
       }
 
+      #air-quality label{
+        color: gray;
+      }
+
       .button{
         cursor: pointer;
         border-radius: 5px;
@@ -215,6 +223,10 @@
         margin-bottom: 0px;
         font-size:10px; 
         overflow-y:auto;
+      }
+
+      .sensors{
+        display: block;
       }
 
       .main-content{
@@ -485,6 +497,8 @@
         width:100%; 
         border-bottom: 1px solid black;
         overflow-x: hidden;
+        background-color: white;
+
       }
 
       #date_axis{
@@ -494,7 +508,6 @@
         bottom:0px; 
         left:0px; 
         right:40px;
-        background-color: white;
         cursor: col-resize;
       }
 
@@ -577,7 +590,18 @@
          line-height: 11px;
       }
 
+       #loading {
+          background: url(../loading.gif) no-repeat center;
+          pointer-events: none;
+          position: absolute;
+          height: 50px;
+          width: 50px;
+          z-index: 100;
+          top: 25%;
+          right: 40%;
+        }
    </style>
+
 </head>
 <body>
 <div class="title-bar tool-bar" id="channels-title">
@@ -588,7 +612,7 @@
   </div>
 
   <form class="tool-bar title-bar" id="search-box">
-    <input id="search-bar" type="search" autocomplete="off"placeholder=" search for channel name:" results="0">
+    <input id="search-bar" type="search" autocomplete="off" placeholder=" (loading)" results="0" disabled>
   </form>
 
   <div class="tool-bar title-bar" id="filter-title">
@@ -599,13 +623,13 @@
     <form id="air-quality">
       <fieldset>
        <section>
-          <label><input type="checkbox" name="pm25" onclick="searchAttributes()">PM2.5<br></label>
-          <label><input type="checkbox" name="pm10" onclick="searchAttributes()">PM10<br></label>
-          <label><input type="checkbox" name="ozone" onclick="searchAttributes()">Ozone (O<sub>3</sub>)<br></label>
-          <label><input type="checkbox" name="no" onclick="searchAttributes()">Nitric Oxide (NO)<br></label>
-          <label><input type="checkbox" name="no2" onclick="searchAttributes()">Nitrogen Dioxide (NO<sub>2</sub>)<br></label>
-          <label><input type="checkbox" name="so2" onclick="searchAttributes()">Sulfur Dioxide (SO<sub>2</sub>)<br></label>
-          <label><input type="checkbox" name="co" onclick="searchAttributes()">Carbon Monoxide (CO)<br></label>
+          <label><input type="checkbox" name="pm25" onclick="searchAttributes()" disabled>PM2.5<br></label>
+          <label><input type="checkbox" name="pm10" onclick="searchAttributes()" disabled>PM10<br></label>
+          <label><input type="checkbox" name="ozone" onclick="searchAttributes()" disabled>Ozone (O<sub>3</sub>)<br></label>
+          <label><input type="checkbox" name="no" onclick="searchAttributes()" disabled>Nitric Oxide (NO)<br></label>
+          <label><input type="checkbox" name="no2" onclick="searchAttributes()" disabled>Nitrogen Dioxide (NO<sub>2</sub>)<br></label>
+          <label><input type="checkbox" name="so2" onclick="searchAttributes()" disabled>Sulfur Dioxide (SO<sub>2</sub>)<br></label>
+          <label><input type="checkbox" name="co" onclick="searchAttributes()" disabled>Carbon Monoxide (CO)<br></label>
         </section>
       </fieldset>
     </form>
@@ -689,17 +713,21 @@
     <div id="plots"></div> 
   </div>
 
+  <div id="loading"></div>
+
    <script src="https://esdr.cmucreatelab.org/lib/jquery/jquery-1.11.1.min.js" type="text/javascript"></script>
    <script src="https://esdr.cmucreatelab.org/lib/superagent/superagent.js" type="text/javascript"></script>
    <script src="https://esdr.cmucreatelab.org/lib/bodytrack-grapher/org/bodytrack/grapher/grapher2.nocache.js" type="text/javascript"></script>
    <script src="https://esdr.cmucreatelab.org/lib/plot-manager/org/bodytrack/grapher/PlotManager.js" type="text/javascript"></script>
 
 
-   <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+   <script src="http://maps.googleapis.com/maps/api/js?key=AIzaSyCjVZHnH5L8ty50awHChDGdtJ5ZHqCFc-Y"></script>
    <script src="./utils.js"></script>
    <script src="./rAF.js"></script>
    <script src="./series2.js"></script>
    <script src="./CanvasLayer.js"></script>
+   <script src="./fastdom.js"></script>
+
 
    <script language="JavaScript" type="text/javascript">
 
@@ -711,7 +739,7 @@
 
     var ESDR_API_ROOT_URL = 'https://esdr.cmucreatelab.org/api/v1';
     var DEFAULT_CHANNEL = 'particle_concentration';
-
+    var initParams = getHashParams();
     //___________________ Grapher variables ____________________________________
 
     var plotManager;           //handle for the PlotManager 
@@ -820,7 +848,7 @@
     var currentPointSize = 0;  //size of nodes for hover radius
 
     var map;
-    var geocoder;
+    // var geocoder;
     var canvasLayer;
     var gl;
     var pixelsToWebGLMatrix = new Float32Array(16);
@@ -1000,10 +1028,11 @@
     }
 
     function loadFeeds(response) {
+       document.getElementById("loading").style['display'] = 'block';
        var data = response.data;
        var max = data.limit + data.offset;
        console.log('Received feeds in range ' + data.offset + ' - ' + max);
-       if (data.totalCount > max) { 
+       if (data.totalCount > max) {
          $.ajax({url: ESDR_API_ROOT_URL + '/feeds?offset=' + max, success: loadFeeds});
        }
        // TODO(rsargent): get all the feeds not just the first 1K
@@ -1033,13 +1062,15 @@
              }
           }
        }
-       $('#channels').append(html.join(''));
+       $('#channels').append(html.join(''));  
+       $('#results-title p').replaceWith('<p>Results (<span style="font-size:12px">Showing ' 
+                    + $(".sensors").length + " of " + $(".sensors").length + '</span>):</p>');
        if (data.totalCount <= max) {
           // That was the last data.  Ready to process
-          loadHash();
+          document.getElementById("loading").style['display'] = 'none';
           // TODO(rsargent): let's update this only when panning or zooming the time axis
           // window.setInterval(updateHash, 100);
-          window.onhashchange = loadHash; 
+          //window.onhashchange = loadHash; 
 
           feedLocList.latlng = new Float32Array(feedLocList.latlng); 
           // feedLocList.index = new Float32Array(feedLocList.index); 
@@ -1054,12 +1085,12 @@
                   allFeedNums.push(parseInt(currentNum));
               }
           });  
-          
+
           initializeWebGL();  
+          document.getElementById("loading").style['display'] = 'none';
+          loadHash();
 
        }
-
-       searchAttributes(); 
 
     }
 
@@ -1165,7 +1196,22 @@
       //   console.log("Rodeo Found");
       // }else if(feedName.indexOf("fenceline_org") > -1){
       //   console.log("fenceline_org Found");
-      else{
+      else if(productId == 36){
+        //console.log("Fenceline Found")
+        if(channel == "PM_2_5"){
+          if (sortedFeedIDs.co[sortedFeedIDs.pm25.length - 1] != feedID) sortedFeedIDs.pm25.push(feedID), sortedChannelNames.pm25.push(channel);
+          return "pm25"; 
+        }else if(channel.indexOf("Ozone") > -1){
+          if (sortedFeedIDs.co[sortedFeedIDs.ozone.length - 1] != feedID) sortedFeedIDs.ozone.push(feedID), sortedChannelNames.ozone.push(channel);
+          return "ozone"; 
+        }else if(channel.indexOf("Sulfur_Dioxide") > -1){
+          if (sortedFeedIDs.so2[sortedFeedIDs.so2.length - 1] != feedID) sortedFeedIDs.so2.push(feedID), sortedChannelNames.so2.push(channel);
+          return "so2"; 
+        }else if(channel.indexOf("Carbon_Monoxide") > -1){
+          if (sortedFeedIDs.co[sortedFeedIDs.co.length - 1] != feedID) sortedFeedIDs.co.push(feedID), sortedChannelNames.co.push(channel);
+          return "co";
+        }
+      }else{
         //console.log("Other Found");
         return "other"; 
       }
@@ -1278,11 +1324,18 @@
                                   'clear' : 'none'});
         }
     }
+
+    function enableSearch(){
+        $("#search-bar").prop('disabled', false);
+        $("#air-quality input").prop('disabled', false);
+        $("#air-quality label").css('color', 'black');
+        $("#search-bar").attr('placeholder', ' search for channel name:')
+    }
     
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ init() function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  
     function init() {
-
+       resizeToWindow();
        $.ajax({url: ESDR_API_ROOT_URL + '/feeds', success: loadFeeds});
 
        $(document).on('click', function(event) {
@@ -1374,10 +1427,7 @@
 
       $('#map-filters').keydown(function(e){
         e.preventDefault();
-      })
-
-      resizeToWindow();
-
+      });
     }
 
  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ init() function END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1388,6 +1438,8 @@
           clampNumberAxisToDataRange(plotScalers[key]);
         }
       }
+      updateHash();
+
     }
 
     function getChannels() {
@@ -1408,8 +1460,38 @@
        if (channels.length > 0) {
           params.push('channels=' + channels.join('|'));
        }
+
        var timeRange = plotManager.getDateAxis().getRange();
        params.push('time=' + timeRange.min + ',' + timeRange.max);
+       if(map){
+          params.push("zoom=" + map.getZoom());
+          params.push("center=" + map.getCenter().lat() + "," + map.getCenter().lng());
+       }
+       var color = "";
+       $('#map-filters [type = radio]').each(function(index, input) {
+          if (input.checked && $(input).data("filter")){
+            color = $(input).data("filter");
+          }
+       });
+       if(color){
+          params.push("color=" + color);
+       }
+       if(dateProperties.cursorPosition){
+          params.push("cursor=" + dateProperties.cursorPosition);
+       }
+       var checked = [];
+       $('#filters [type = checkbox]').each(function(index, input) {
+          if (input.checked){
+            checked.push(input.name);
+          }
+       });
+       if(checked.length > 0){
+          params.push('checked=' + checked.join("|"));
+       }
+       var search = $('#search-bar').val().toLowerCase(); 
+       if(search){
+          params.push('search=' + encodeURI(search));
+       }
        var newHash = '#' + params.join('&');
        if (window.location.hash != newHash) {
           window.location.hash = newHash;
@@ -1433,9 +1515,24 @@
     function loadHash() {
        var params = getHashParams();
 
-       if (params.time) {
+       if (params.time && params.time == initParams.time) {
           var split = params.time.split(',');
           plotManager.getDateAxis().setRange(parseFloat(split[0]), parseFloat(split[1]));
+       }
+
+       if(params.checked && params.checked == initParams.checked){
+          var checked = params.checked.split('|');
+          for(name in checked){
+            $("#air-quality input[name = " + checked[name] + "]").prop('checked', true);
+          }
+       }
+
+       if(params.search && params.search == initParams.search){
+          $('#search-bar').val(decodeURI(params.search));
+       }
+
+       if(params.color && params.color == initParams.color){
+          $('#map-filters [type = radio][data-filter="' + params.color + '"]').trigger('click');
        }
 
        var oldChannels = getChannels(); 
@@ -1451,6 +1548,16 @@
              addPlot(newChannels[i]);
           }
        }
+
+       if(params.cursor && plotManager && params.cursor == initParams.cursor){
+          plotManager.getDateAxis().setCursorPosition(parseFloat(params.cursor));
+       }
+
+       enableSearch();
+       map.addListener('dragend', updateHash);
+       map.addListener('zoom_changed', updateHash);
+       searchAttributes();
+
     }
 
     function removePlot(channel) {
@@ -1581,13 +1688,14 @@
 
           dateProperties = dateAxisProperties;
       });
-      
+      init();
     }
 
     function searchAttributes() {
+       updateHash();
        var str = $('#search-bar').val().toLowerCase();     
        var wordList = str.split(" ") || [];
-       showNumList = [];
+       showNumList = [];$(".sensors").length;
        var filterNumList = [];
 
 
@@ -1642,8 +1750,6 @@
             }
           }
       });
-      
-      
 
       if (noneChecked){
         filterNumList = filterNumList.concat(allFeedNums);
@@ -1652,68 +1758,35 @@
         finalSearchConditions = finalSearchConditions.substring(0,finalSearchConditions.length - 1); 
       };
 
-      
-      //console.log($(finalSearchConditions));
-
       $(finalSearchConditions).each(function(){
 
         var currentNum = $(this).attr('id').substr($(this).attr('id').lastIndexOf('#') + 1); 
-
         if (filterNumList.indexOf(parseInt(currentNum)) > -1 && (showNumList.length == 0 || currentNum != showNumList[showNumList.length - 1])) {
             showNumList.push(parseInt(currentNum)); 
           }
-        });
+      });
 
 
         var $allSelect = $("div[class = sensors]");
         if($allSelect){
-          $allSelect.hide(); 
-          console.log("Hide All");
           changeEnabled(allFeedNums, 0); 
-
           if (showNumList.length != 0){
-            console.log("ShowNumList > 0 and show finalSearchConditions");
-            $(finalSearchConditions).show();
             changeEnabled(showNumList, 1);
+          }
 
-            }//else{
-
-            //   geocoder.geocode( { 'address': str}, function(results, status) {
-            //     if (status == google.maps.GeocoderStatus.OK) { 
-            //       var latlng = {latlng: []}
-            //       console.log(results[0].geometry.viewport.northeast()); 
-            //       // latlng.latlng.push(results[0].geometry.viewport);
-            //       // latlng.xy = latlng.latlng;
-
-            //       // for (var i = 0; i < latlng.latlng.length; i += 2) {
-            //       //     var lat = latlng.latlng[i];
-            //       //     var lon = latlng.latlng[i + 1];
-            //       //     var pixel = LatLongToPixelXY(lat, lon);
-            //       //     latlng.xy[i] = pixel.x;
-            //       //     latlng.xy[i + 1] = pixel.y;
-            //       // }
-            //       // delete latlng.latlng;
-
-            //       // var foundIndexes = []; 
-            //       // for (var k = 0; k < feedLocList.index.length ; k++){
-            //       //   if (Math.pow(feedLocList.xy[k*2] - latlng.xy[0],2) + Math.pow(feedLocList.xy[k*2 + 1] - latlng.xy[1],2) <= .05){
-            //       //     foundIndexes.push(feedLocList.index[k]);
-            //       //   }
-            //       // } 
-
-            //       // console.log(foundIndexes); 
-            //       // changeEnabled(foundIndexes, currentAlpha); 
-
-            //     } else {
-            //       console.log("Geocode was not successful for the following reason: " + status);
-            //     }
-
-            //   });
-
-            // };
+          fastdom.mutate(function(){
+            $allSelect.css({'display':'none'}); 
+            console.log("Hide All");
+            if (showNumList.length != 0){
+              fastdom.mutate(function(){
+                console.log("ShowNumList > 0 and show finalSearchConditions");
+                $(finalSearchConditions).css({'display':''});
+              });
+            }
+          });
        }; 
 
-       $('#results-title p').replaceWith('<p>Results (<span style="font-size:12px">Showing ' + $(finalSearchConditions).length + " of " + $allSelect.length + '</span>):</p>')
+       $('#results-title p').replaceWith('<p>Results (<span style="font-size:12px">Showing ' + $(finalSearchConditions).length + " of " + $allSelect.length + '</span>):</p>');
        drawInfoWindowLines(); 
        console.log("-------------------")
     }
@@ -1860,6 +1933,7 @@
     }
 
     function resetTimeline(r,g,b,a){
+        updateHash();
         $('#map-filters').children().children().filter(':reset').attr('disabled','disabled');
         $('#map-filters')
         $('#legend').hide();
@@ -2333,10 +2407,6 @@
                       '-webkit-transform'  : spinnerTransformation.bar2});
     }
 
-    google.maps.event.addDomListener(window, 'load', initializeMap);
-
-    $(init);
-
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   WebGL START   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     function searchArray(searchElement, array){
        'use strict';
@@ -2502,11 +2572,16 @@
                               ]
                             }
                         ]
-
+         var center = null;
+         if(getHashParams().center){
+            center = getHashParams().center.split(",").map(parseFloat);
+            center = new google.maps.LatLng(center[0], center[1]);
+         }
+                 
          var mapOptions = {
           //start at middle of US
-          zoom: 4,
-          center: new google.maps.LatLng(39.3, -95.8),
+          zoom: parseInt(getHashParams().zoom) || 3,
+          center: center || new google.maps.LatLng(49.35720091782239,-92.91969375610346),
           styles: myStyle, 
 
           // start in Pittsburgh 
@@ -2519,7 +2594,7 @@
        map = new google.maps.Map(document.getElementById('map-div'),
           mapOptions);
 
-       geocoder = new google.maps.Geocoder();
+       // geocoder = new google.maps.Geocoder();
 
     } 
 
@@ -2730,11 +2805,9 @@
           }
             
         });
-        
     }
 
-  </script>
-
+  initializeMap();
   </script>
 
   <script id="pointVertexShader" type="x-shader/x-vertex">
