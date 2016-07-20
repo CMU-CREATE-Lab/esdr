@@ -481,9 +481,15 @@
       #export-content{
         position: relative;
         top: 50px;
-        height: calc(100%-50px);
+        height: 100%;
         width: 100%;
         background-color: rgb(180, 180, 180);
+        overflow: auto;
+
+      }
+
+      .file-info{
+        margin-left: 15px;
       }
 
       #charts{
@@ -623,13 +629,13 @@
     <form id="air-quality">
       <fieldset>
        <section>
-          <label><input type="checkbox" name="pm25" onclick="searchAttributes()" disabled>PM2.5<br></label>
-          <label><input type="checkbox" name="pm10" onclick="searchAttributes()" disabled>PM10<br></label>
-          <label><input type="checkbox" name="ozone" onclick="searchAttributes()" disabled>Ozone (O<sub>3</sub>)<br></label>
-          <label><input type="checkbox" name="no" onclick="searchAttributes()" disabled>Nitric Oxide (NO)<br></label>
-          <label><input type="checkbox" name="no2" onclick="searchAttributes()" disabled>Nitrogen Dioxide (NO<sub>2</sub>)<br></label>
-          <label><input type="checkbox" name="so2" onclick="searchAttributes()" disabled>Sulfur Dioxide (SO<sub>2</sub>)<br></label>
-          <label><input type="checkbox" name="co" onclick="searchAttributes()" disabled>Carbon Monoxide (CO)<br></label>
+          <label><input type="checkbox" name="pm25" onclick="updateHash()" disabled>PM2.5<br></label>
+          <label><input type="checkbox" name="pm10" onclick="updateHash()" disabled>PM10<br></label>
+          <label><input type="checkbox" name="ozone" onclick="updateHash()" disabled>Ozone (O<sub>3</sub>)<br></label>
+          <label><input type="checkbox" name="no" onclick="updateHash()" disabled>Nitric Oxide (NO)<br></label>
+          <label><input type="checkbox" name="no2" onclick="updateHash()" disabled>Nitrogen Dioxide (NO<sub>2</sub>)<br></label>
+          <label><input type="checkbox" name="so2" onclick="updateHash()" disabled>Sulfur Dioxide (SO<sub>2</sub>)<br></label>
+          <label><input type="checkbox" name="co" onclick="updateHash()" disabled>Carbon Monoxide (CO)<br></label>
         </section>
       </fieldset>
     </form>
@@ -702,7 +708,7 @@
     </form>
 
     <div class="button title-bar" id="export-button">
-      <p>Export Data (.csv)</p>
+      <p>Export Data</p>
     </div>
   </div>
 
@@ -727,6 +733,7 @@
    <script src="./series2.js"></script>
    <script src="./CanvasLayer.js"></script>
    <script src="./fastdom.js"></script>
+   <script src="./dateFormat.js"></script>
 
 
    <script language="JavaScript" type="text/javascript">
@@ -739,7 +746,14 @@
 
     var ESDR_API_ROOT_URL = 'https://esdr.cmucreatelab.org/api/v1';
     var DEFAULT_CHANNEL = 'particle_concentration';
-    var initParams = getHashParams();
+    var oldParams = {
+      channels: null,
+      time: null,
+      checked: null,
+      search: null,
+      cursor: null,
+      export: null,
+    };
     //___________________ Grapher variables ____________________________________
 
     var plotManager;           //handle for the PlotManager 
@@ -926,6 +940,11 @@
     var spinnerTransformation = {bar1: 'translateX(21px) translateY(10px) rotate(135deg)',
                                  bar2: 'translateX(21px) translateY(10px) rotate(45deg)'};
 
+    //_______________________ Other Variables: ______________________________
+
+    var exportMenuOpen = false;
+    var exportMenuTimer = null;
+
     function createDatasource(source) {
        var split = source.split('.');
        if (split.length != 2) {
@@ -1020,7 +1039,6 @@
         if ($(this).get(0).checked){
           result = true;
         } 
-        console.log($(this).get(0).checked);
       });
 
       return result; 
@@ -1070,7 +1088,7 @@
           document.getElementById("loading").style['display'] = 'none';
           // TODO(rsargent): let's update this only when panning or zooming the time axis
           // window.setInterval(updateHash, 100);
-          //window.onhashchange = loadHash; 
+          window.onhashchange = loadHash; 
 
           feedLocList.latlng = new Float32Array(feedLocList.latlng); 
           // feedLocList.index = new Float32Array(feedLocList.index); 
@@ -1089,7 +1107,7 @@
           initializeWebGL();  
           document.getElementById("loading").style['display'] = 'none';
           loadHash();
-
+          enableSearch();
        }
 
     }
@@ -1335,6 +1353,8 @@
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ init() function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  
     function init() {
+       map.addListener('dragend', updateHash);
+       map.addListener('zoom_changed', updateHash);
        resizeToWindow();
        $.ajax({url: ESDR_API_ROOT_URL + '/feeds', success: loadFeeds});
 
@@ -1356,10 +1376,10 @@
           if ($('#search-bar').val() == ""){
              clearInterval(timer); 
              timer = null; 
-             searchAttributes(); 
+             updateHash();
           }else if (timer == null) {
              timer = setTimeout(function(){
-             searchAttributes()}, 100)}
+             updateHash()}, 100)}
        }).keydown(function(){
           if (timer) {
              clearInterval(timer);
@@ -1369,7 +1389,7 @@
           $(this).focus(); 
 
        }).on("search", function(){
-          searchAttributes(); 
+          updateHash(); 
        }); 
 
        $('#duration').change(function(){
@@ -1492,6 +1512,11 @@
        if(search){
           params.push('search=' + encodeURI(search));
        }
+
+       if(exportMenuOpen){
+          params.push('export=open');
+       }
+
        var newHash = '#' + params.join('&');
        if (window.location.hash != newHash) {
           window.location.hash = newHash;
@@ -1514,24 +1539,40 @@
 
     function loadHash() {
        var params = getHashParams();
-
-       if (params.time && params.time == initParams.time) {
+       if (params.time && params.time != oldParams.time) {
           var split = params.time.split(',');
           plotManager.getDateAxis().setRange(parseFloat(split[0]), parseFloat(split[1]));
        }
 
-       if(params.checked && params.checked == initParams.checked){
-          var checked = params.checked.split('|');
-          for(name in checked){
-            $("#air-quality input[name = " + checked[name] + "]").prop('checked', true);
+       if(params.checked != oldParams.checked){
+          if(params.checked){
+            var checked = params.checked.split('|');
+            $("#air-quality input").prop('checked', false);
+            for(name in checked){
+              $("#air-quality input[name = " + checked[name] + "]").prop('checked', true);
+            }
+            searchAttributes();
+          }else{
+            $("#air-quality input").prop('checked', false);
+            searchAttributes();
           }
        }
 
-       if(params.search && params.search == initParams.search){
-          $('#search-bar').val(decodeURI(params.search));
+       if(params.search != oldParams.search){
+          if(params.search){
+            $('#search-bar').val(decodeURI(params.search));
+            searchAttributes();
+          }else{
+            $('#search-bar').val("");
+            searchAttributes();
+          }
        }
 
-       if(params.color && params.color == initParams.color){
+       if(params.cursor && params.cursor != oldParams.cursor){
+          plotManager.getDateAxis().setCursorPosition(parseFloat(params.cursor));
+       }
+
+       if(params.color && params.color != oldParams.color){
           $('#map-filters [type = radio][data-filter="' + params.color + '"]').trigger('click');
        }
 
@@ -1549,15 +1590,16 @@
           }
        }
 
-       if(params.cursor && plotManager && params.cursor == initParams.cursor){
-          plotManager.getDateAxis().setCursorPosition(parseFloat(params.cursor));
+       if(params.export != oldParams.export){
+          if(params.export && !$("#dark-background").length){
+            exportData();
+          }else if(!params.export){
+            exportMenuOpen = false;
+            $("#dark-background").remove();
+          }
        }
 
-       enableSearch();
-       map.addListener('dragend', updateHash);
-       map.addListener('zoom_changed', updateHash);
-       searchAttributes();
-
+       oldParams = params;
     }
 
     function removePlot(channel) {
@@ -1571,9 +1613,12 @@
        var feedIndex = parseInt(channel.substr(0, channel.indexOf('.'))); 
        if (!(checkIfAnyChecked(feedIndex))) changeCircled(feedIndex, 0);
        updateHash();
+       delete plotIdxToChannel[plotIdx];
+       delete channelToPlotIdx[channel];
     }
 
-    function exportData(){
+    function exportData() {
+      exportMenuOpen = true;
       var feedIDs = [];
       var channelNamesPerID = []; 
       for (var key in plotIdxToChannel) {
@@ -1601,13 +1646,19 @@
           for (var i = 0; i < feedIDs.length; i++){
             var url = ESDR_API_ROOT_URL + "/feeds/" + feedIDs[i] + "/channels/" + channelNamesPerID[i].join(',') + "/export?from=" + dateProperties.min + "&to=" + dateProperties.max;
               menuDiv.push('<div class="file-info">');
-                menuDiv.push('<p style="text-decoration: underline;">File ' + (i + 1) + ':</p>');
-                menuDiv.push('<p>Feed ID: ' + feedIDs[i] + '</p>');  
-                menuDiv.push('<p>Channels: ' + channelNamesPerID[i].join(', ') + '</p>');
-                menuDiv.push('<p>Time Range: ' + dateProperties.min + " to " + dateProperties.max + '</p>');
-                menuDiv.push('<a href=' + url + ' download>Download Link</a>');
+              menuDiv.push('<p style="text-decoration: underline;">File ' + (i + 1) + ':</p>');
+              menuDiv.push('<p>Feed ID: ' + feedIDs[i] + '</p>');  
+              menuDiv.push('<p>Channels: ' + channelNamesPerID[i].join(', ') + '</p>');
+              menuDiv.push('<p>Time Range: ' + new Date(dateProperties.min*1000).format("dddd, mmmm d, yyyy hh:MM:ss TT") + " to " + new Date(dateProperties.max*1000).format("mmmm d, yyyy hh:MM:ss TT")  + '</p>');
+              menuDiv.push('<a href=' + url + '&format=csv'+ ' download>Download Link (.csv)</a>');
+              menuDiv.push('&emsp;&emsp;&emsp;&emsp;&emsp;')
+              menuDiv.push('<a href=' + url + '&format=json'+ ' download>Download Link (.json)</a>');
+
               menuDiv.push('</div>');
               menuDiv.push('<hr>');
+          }
+          if(!feedIDs.length){
+            menuDiv.push('<div class="file-info"><p><span style="color:red;">&#9888;&emsp;&emsp;</span>No channel data to export.<br><br>Open up a channel by checkboxing in the sidebar or by clicking a node on the map.</p></div>');
           }
           menuDiv.push('</div>');
         menuDiv.push('</div>');
@@ -1618,9 +1669,12 @@
       $('body').append(exportDiv);
 
       $(exportDiv).children().children().children().filter(".x-button").click(function(){
+        exportMenuOpen = false;
         $(exportDiv).remove();
+        updateHash();
       })
 
+      updateHash();
     }
 
       // function doExport(willExportAllChannels) {
@@ -1692,7 +1746,6 @@
     }
 
     function searchAttributes() {
-       updateHash();
        var str = $('#search-bar').val().toLowerCase();     
        var wordList = str.split(" ") || [];
        showNumList = [];$(".sensors").length;
@@ -1828,7 +1881,7 @@
           $(input).prop('checked', false); 
         }); 
         $('#search-bar').val('');
-        searchAttributes(); 
+        updateHash(); 
     }
 
     function printFoundDivs($divList){
