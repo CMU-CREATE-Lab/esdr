@@ -4,11 +4,12 @@
    <title>Browse ESDR</title>
    <meta http-equiv="content-type" content="text/html;charset=utf-8" />
    <style type="text/css">
-      html{
+      html, body{
          height: 100%;
          width: 100%;
-         overflow: scroll;
          /*background-color: blue;*/
+         margin: 0;
+         padding: 0;
       }
 
       body {
@@ -242,13 +243,13 @@
 
       #legend{
         position: absolute;
-        left: 0px;
         width: 190px; 
         height: 140px;  
         right: 5px; 
-        bottom: calc(45% + 60px); 
+        bottom : calc(45% + 55px);
         background-color: rgba(200, 200, 200, .4); 
         display: none;
+        left: auto;
       }
 
       .legend-container{
@@ -339,7 +340,6 @@
         font-size: 12px; 
         position: relative; 
         height: 50px; 
-        width: 280px; 
         text-align: center; 
         float: left; 
         margin: 0px 10px;
@@ -347,7 +347,7 @@
 
       #map-bar form label{
         display: inline-block; 
-        margin: 0px 5px;
+        margin: 0px 2px;
         text-align: left;
       }
 
@@ -367,6 +367,10 @@
         font-size: 11px;
       }
 
+      #map-filter{
+        width : 200px;
+      }
+
       #duration{
         margin-left: 15px;
         width: 30px;
@@ -382,7 +386,6 @@
         border-radius: 50%; 
         background-color: rgba(200, 200, 200, 1); 
         opacity: .30; 
-        float: left;
       }
 
       .bar{
@@ -401,14 +404,21 @@
         transform: translateX(24px) translateY(18px) rotate(45deg);
       }
 
+      #timeline{
+        width: 250px;
+        clear : right;
+        margin : 0px 10px;
+      }
+
       #export-button{
         position: relative;
         float: right;
+        clear: none;
         width: 150px;
         top: 50%;
         transform: translateY(-50%);
         margin-right: 15px;
-        margin-left: 5px;
+        margin-left: 13px;
       }
 
       #export-button > p{
@@ -497,6 +507,14 @@
         bottom: 0px;
       }
 
+      #date-axis-toolbar{
+        position: relative;
+        height: 50px;
+        width: 100%;
+        background-color: rgba(50,50,50,.75); 
+
+      }
+
       #axis-container{
         position:relative; 
         height: 50px; 
@@ -507,6 +525,27 @@
 
       }
 
+      #button-container{
+        color: white;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        margin-left: 5px;
+        font-size: 15px;
+      }
+
+      #button-container > p{
+        margin: 0px;
+        float: left;
+      }
+
+      .timeline-button{
+        position: relative;  
+        float: left;      
+        font-size: 13px;
+        cursor: pointer;
+      }
+
       #date_axis{
         overflow: hidden;
         position:absolute; 
@@ -514,17 +553,31 @@
         bottom:0px; 
         left:0px; 
         right:40px;
-        cursor: col-resize;
       }
+
+      .grabbable {
+          cursor: move; /* fallback if grab cursor is unsupported */
+          cursor: grab;
+          cursor: -moz-grab;
+          cursor: -webkit-grab;
+          cursor: url(../openhand.cur), move;
+      }
+
+       /* (Optional) Apply a "closed-hand" cursor during drag operation. */
+      .grabbable:active { 
+          cursor: grabbing;
+          cursor: -moz-grabbing;
+          cursor: -webkit-grabbing;
+          cursor: url(../closedhand.cur), move;
+      }
+
 
       #plots{
         position:relative; 
         overflow-y: auto;
         overflow-x: hidden; 
         width: 100%;
-        top:0px; 
-        height: calc(100% - 50px);
-        margin-bottom: -5px;
+        height: calc(100% - 101px);
       }
 
       .plot_container {
@@ -606,13 +659,105 @@
           top: 25%;
           right: 40%;
         }
+
+      @media (max-width: 500px){
+          #map-bar{
+            height: 150px;
+          }
+          #legend{
+            bottom : calc(45% + 150px);
+          }
+          #map-filters{
+            margin : 0px 10px 20px;
+          }
+          #timeline{
+            clear : left;
+            margin : 70px 10px;
+          }
+          .play-pause{
+            position: absolute;
+            top: 125px;
+            left: 180px;
+          }
+          #export-button{
+            top : 17%;
+            float : left;
+            clear : left;
+          }
+      }
+      @media (min-width: 500px) and (max-width: 800px){
+          #map-bar{
+            height: 150px;
+          }
+          #legend{
+            bottom : calc(45% + 150px);
+          }
+          #map-filters{
+            margin : 0px 10px 20px;
+          }
+          #timeline{
+            clear : left;
+            margin : 70px 10px;
+          }
+          .play-pause{
+            position: absolute;
+            top: 125px;
+            left: 180px;
+          }
+          #export-button{
+            top : 17%;
+            float : left;
+            clear : left;
+          }
+          #day-button{
+            clear: left;
+            margin-left: 109px;
+          }
+      }
+      @media (min-width: 801px) and (max-width: 1080px){
+          #map-bar{
+            height: 100px;
+          }
+          #legend{
+            bottom : calc(45% + 100px);
+          }
+          #map-filters{
+            margin : 0px 10px;
+          }
+          #timeline{
+            clear : left;
+            margin : 0px 10px;
+          }
+          .play-pause{
+            margin : -25px 50px 0px;
+            float : left;
+          }
+          #export-button{
+            top : 0%;
+            float : right;
+            clear : none;
+          }
+      }
+
+      @media (max-width: 1125px){
+        #clear-button{
+          left: 50px;
+        }
+        #legend {
+          left: 225px;
+        }
+        .main-content {
+          left : 225px;
+          width: calc(100% - 225px);
+        }; 
+      }
    </style>
 
 </head>
 <body>
 <div class="title-bar tool-bar" id="channels-title">
       <p>Channels</p>
-      <a target="_blank" href="https://docs.google.com/document/d/18IFx6Tyv0EGenEpOrexnB1ajQEBYHsWWpN5wi7PPXC0/pub">
+      <a target="_blank" href="https://docs.google.com/document/d/18IFx6Tyv0EGenEpOrexnB1ajQEBYHsWWpN5wi7PPXC0/pub" title="opens up help screen">
         <div id="help-icon">help</div>
       </a>
   </div>
@@ -629,19 +774,19 @@
     <form id="air-quality">
       <fieldset>
        <section>
-          <label><input type="checkbox" name="pm25" onclick="updateHash()" disabled>PM2.5<br></label>
-          <label><input type="checkbox" name="pm10" onclick="updateHash()" disabled>PM10<br></label>
-          <label><input type="checkbox" name="ozone" onclick="updateHash()" disabled>Ozone (O<sub>3</sub>)<br></label>
-          <label><input type="checkbox" name="no" onclick="updateHash()" disabled>Nitric Oxide (NO)<br></label>
-          <label><input type="checkbox" name="no2" onclick="updateHash()" disabled>Nitrogen Dioxide (NO<sub>2</sub>)<br></label>
-          <label><input type="checkbox" name="so2" onclick="updateHash()" disabled>Sulfur Dioxide (SO<sub>2</sub>)<br></label>
-          <label><input type="checkbox" name="co" onclick="updateHash()" disabled>Carbon Monoxide (CO)<br></label>
+          <label title="show PM2.5 channels"><input type="checkbox" name="pm25" onclick="updateHash()" disabled>PM2.5<br></label>
+          <label title="show PM10 channels"><input type="checkbox" name="pm10" onclick="updateHash()" disabled>PM10<br></label>
+          <label title="show ozone channels"><input type="checkbox" name="ozone" onclick="updateHash()" disabled>Ozone (O<sub>3</sub>)<br></label>
+          <label title="show nitric oxide Channels"><input type="checkbox" name="no" onclick="updateHash()" disabled>Nitric Oxide (NO)<br></label>
+          <label title="show nitrogen dioxide channels"><input type="checkbox" name="no2" onclick="updateHash()" disabled>Nitrogen Dioxide (NO<sub>2</sub>)<br></label>
+          <label title="show sulfur dioxide channels" ><input type="checkbox" name="so2" onclick="updateHash()" disabled>Sulfur Dioxide (SO<sub>2</sub>)<br></label>
+          <label title="show carbon monoxide channels"><input type="checkbox" name="co" onclick="updateHash()" disabled>Carbon Monoxide (CO)<br></label>
         </section>
       </fieldset>
     </form>
   </div>
 
-  <div class="title-bar tool-bar button" id="clear-button" onclick="clearFilters()">
+  <div class="title-bar tool-bar button" id="clear-button" onclick="clearFilters()" title="resets map to show all channels">
     <p>Clear Search Filters</p>
   </div>
 
@@ -688,13 +833,13 @@
     <form id="map-filters" autocomplete="off">
       <fieldset>
         <legend>Color Map:</legend>
-        <label><input type="radio" name="map-filter" data-filter = "pm25" onclick="reColor(this)"><span style="color: white">PM2.5</span><br></label>
-        <label><input type="radio" name="map-filter" data-filter = "pm10" onclick="reColor(this)"><span style="color: white"> PM10</span><br></label>
-        <label><input type="radio" name="map-filter" checked="checked" onclick="resetTimeline(0, 0, 255, ALPHA)"><span style="color: white"> None</span><br></label>
+        <label title="color map by PM2.5"><input type="radio" name="map-filter" data-filter = "pm25" onclick="reColor(this)"><span style="color: white">PM2.5</span><br></label>
+        <label title="color map by PM10"><input type="radio" name="map-filter" data-filter = "pm10" onclick="reColor(this)"><span style="color: white"> PM10</span><br></label>
+        <label title="reset map"><input type="radio" name="map-filter" data-filter = "none" checked="checked" onclick="resetTimeline(0, 0, 255, ALPHA)"><span style="color: white"> None</span><br></label>
       </fieldset>
     </form>
 
-    <div class="play-pause">
+    <div class="play-pause" title="play timeline">
       <div class="bar" id="bar1"></div>
       <div class="bar" id="bar2"></div>
     </div>
@@ -702,8 +847,8 @@
     <form id="timeline" autocomplete="off">
       <fieldset>
         <legend>Playback Options:</legend>
-        <input type="button" id="loop" onclick="toggleLoop()" value="Loop: Off">
-        <label><span style="color: white">Loop Duration:</span><input type="number" min="1" max="99" id="duration" value="15"></label>
+        <input type="button" id="loop" onclick="toggleLoop()" value="Loop: Off" title="loop timeline">
+        <label title="set duration of loop"><span style="color: white">Loop Duration:</span><input type="number" min="1" max="99" id="duration" value="15"></label>
       </fieldset>
     </form>
 
@@ -713,8 +858,38 @@
   </div>
 
   <div class="main-content" id="charts">
+    <div id="date-axis-toolbar">
+      <div id='button-container'>
+        <p>Timeline Tools: 
+        &emsp;</p>
+        <button id="go-left-button" class="timeline-button" title="go left in time">
+          <
+        </button>
+        <button id="go-right-button" class="timeline-button" title="go right in time">
+          >
+        </button>
+        <button id="zoom-in" class="timeline-button" title="zoom in">
+          +
+        </button>
+        <button id="zoom-out" class="timeline-button" title="zoom out">
+          -
+        </button>
+        <button id="now-button" class="timeline-button" title="go to now">
+          Now
+        </button>
+        <button id="day-button" class="timeline-button" title="zoom to day view">
+          Day
+        </button>
+        <button id="month-button" class="timeline-button" title="zoom to month view">
+          Month
+        </button>
+        <button id="year-button" class="timeline-button" title="zoom to year view">
+          Year
+        </button>
+      </div>
+    </div>
     <div id="axis-container">
-        <div id="date_axis"></div>
+        <div id="date_axis" class="grabbable"></div>
     </div>
     <div id="plots"></div> 
   </div>
@@ -754,6 +929,7 @@
       cursor: null,
       export: null,
     };
+    var initParams = getHashParams();
     //___________________ Grapher variables ____________________________________
 
     var plotManager;           //handle for the PlotManager 
@@ -939,7 +1115,7 @@
                               bar2: 'translateX(24px) translateY(18px) rotate(45deg)'};
     var spinnerTransformation = {bar1: 'translateX(21px) translateY(10px) rotate(135deg)',
                                  bar2: 'translateX(21px) translateY(10px) rotate(45deg)'};
-
+    var jsonRequest = [];
     //_______________________ Other Variables: ______________________________
 
     var exportMenuOpen = false;
@@ -1008,6 +1184,7 @@
 
        changeCircled(feedIndex, 1); 
        updateHash()
+       var chartsHeight = $("#charts").height();
     }
 
 
@@ -1088,7 +1265,6 @@
           document.getElementById("loading").style['display'] = 'none';
           // TODO(rsargent): let's update this only when panning or zooming the time axis
           // window.setInterval(updateHash, 100);
-          window.onhashchange = loadHash; 
 
           feedLocList.latlng = new Float32Array(feedLocList.latlng); 
           // feedLocList.index = new Float32Array(feedLocList.index); 
@@ -1106,7 +1282,8 @@
 
           initializeWebGL();  
           document.getElementById("loading").style['display'] = 'none';
-          loadHash();
+          loadHashInit();
+          window.onhashchange = loadHash; 
           enableSearch();
        }
 
@@ -1271,78 +1448,6 @@
       console.log(JSON.stringify(pm25JSON));
     }
 
-    function resizeToWindow(){
-
-        if ($('#channels').width() == 225){
-          $("#clear-button").css('left', 50);
-          $('#legend').css('left', 225);
-          $('.main-content').css({'left' : 225,
-                                  'width' : "calc(100% - 225px)"});  
-        }else{
-          $("#clear-button").css('left', '5%');
-          $('#legend').css('left', null);
-          $('.main-content').css({'left' : "20%",
-                                  'width' : "80%"}); 
-        }
-
-        var winWidth = $(window).width(); 
-        if(winWidth <= 630){
-          $('#map-bar').css('height', 270);
-          $('#legend').css({'bottom' : "calc(45% + 270px)"});
-          $('#map-filters').css({'width' : 130,
-                                 'margin' : '0px 10px 20px'}); 
-          $('#timeline').css({'width': 130,
-                              'clear' : 'left',
-                              'margin' : '70px 10px'}); 
-          $('.play-pause').css({'margin' : '-45px 50px 0px',
-                                'float' : 'none'});
-          $('#export-button').css({'top' : '-5%',
-                                    'float' : 'left',
-                                    'clear' : 'left'});
-        }else if(winWidth <= 800){
-          $('#map-bar').css('height', 170);
-          $('#map-filters').css({'width' : 130,
-                                 'margin' : '0px 10px 35px'}); 
-          $('#timeline').css({'width': 130,
-                              'clear' : 'left',
-                              'margin' : '0px 10px'});
-          $('#legend').css({'left' : 'auto', 
-                            'bottom' : "calc(45% + 170px)"}); 
-          $('.play-pause').css({'margin' : '-25px 10px 0px',
-                                'float' : 'left'});
-          $('#export-button').css({'top' : '0%',
-                                    'float' : 'right',
-                                    'clear' : 'none'});
-        }else if(winWidth <= 1080){
-          $('#map-bar').css('height', 100); 
-          $('#map-filters').css({'width' : 280,
-                                 'margin' : '0px 10px'}); 
-          $('#timeline').css({'width' : 280,
-                              'clear' : 'left',
-                              'margin' : '0px 10px'});
-          $('#legend').css({'left' : 'auto',   
-                            'bottom' : "calc(45% + 100px)"});
-          $('.play-pause').css({'margin' : '-25px 10px 0px',
-                                'float' : 'left'});
-          $('#export-button').css({'top' : '0%',
-                                    'float' : 'right',
-                                    'clear' : 'none'});
-        }else{
-          $('#map-bar').css('height', 55); 
-          $('#map-filters').css('width', 280);
-          $('#timeline').css({'width' : 280,
-                              'clear' : 'right',
-                              'margin' : '0px 10px'});
-          $('#legend').css({'left' : 'auto',  
-                            'bottom' : "calc(45% + 60px)"});
-          $('.play-pause').css({'margin' : '-25px 10px 0px',
-                                'float' : 'left'});
-          $('#export-button').css({'top' : '50%',
-                                  'float' : 'right',
-                                  'clear' : 'none'});
-        }
-    }
-
     function enableSearch(){
         $("#search-bar").prop('disabled', false);
         $("#air-quality input").prop('disabled', false);
@@ -1350,12 +1455,11 @@
         $("#search-bar").attr('placeholder', ' search for channel name:')
     }
     
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ init() function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    //~~~~~~~~~~~~~~~~~~~~ init() function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  
     function init() {
        map.addListener('dragend', updateHash);
        map.addListener('zoom_changed', updateHash);
-       resizeToWindow();
        $.ajax({url: ESDR_API_ROOT_URL + '/feeds', success: loadFeeds});
 
        $(document).on('click', function(event) {
@@ -1448,7 +1552,76 @@
       $('#map-filters').keydown(function(e){
         e.preventDefault();
       });
+
+      $("#go-left-button").on('click', function(){
+        var diff = dateProperties.max - dateProperties.min;
+        plotManager.getDateAxis().setRange(dateProperties.min - (diff/4), dateProperties.max - (diff/4));
+      });
+
+      $("#go-right-button").on('click', function(){
+        var diff = dateProperties.max - dateProperties.min;
+        plotManager.getDateAxis().setRange(dateProperties.min + (diff/4), dateProperties.max + (diff/4));
+
+      });
+
+      $("#zoom-in").on('click', function(){
+        zoomGrapher(0.7);
+      });
+
+      $("#zoom-out").on('click', function(){
+        zoomGrapher(1.3);
+      });
+
+      $("#now-button").on('click', function(){
+        var diff = dateProperties.max - dateProperties.min;
+        var now = Date.now()/1000;
+        plotManager.getDateAxis().setRange(now-diff/2, now+diff/2);
+        plotManager.getDateAxis().setCursorPosition(now);
+      });
+   
+      $("#day-button").on('click', function(){
+        var secondsInDay = 60*60*24;
+        var dayInMiddle = (isCursorInBound()) ? new Date(new Date(dateProperties.cursorPosition*1000).toDateString()).getTime() / 1000 : new Date(new Date(((dateProperties.max + dateProperties.min) / 2)*1000).toDateString()).getTime() / 1000;
+        plotManager.getDateAxis().setRange(dayInMiddle, dayInMiddle+secondsInDay);
+      });
+
+      $("#month-button").on('click', function(){
+        var dayInMiddle = (isCursorInBound()) ? new Date(new Date(dateProperties.cursorPosition*1000).toDateString()) : new Date(new Date(((dateProperties.max + dateProperties.min) / 2)*1000).toDateString());
+        var startOfMonth = new Date(dayInMiddle.getFullYear(), dayInMiddle.getMonth(),1,0);
+        var secondsInMonth = new Date(dayInMiddle.getFullYear(), dayInMiddle.getMonth(),0); 
+        secondsInMonth = 60*60*24*secondsInMonth.getDate();
+        startOfMonth = startOfMonth.getTime() / 1000;
+        plotManager.getDateAxis().setRange(startOfMonth, startOfMonth+secondsInMonth);
+      });
+
+      $("#year-button").on('click', function(){
+        var dayInMiddle = (isCursorInBound()) ? new Date(new Date(dateProperties.cursorPosition*1000).toDateString()) : new Date(new Date(((dateProperties.max + dateProperties.min) / 2)*1000).toDateString());
+        var startOfYear = new Date(dayInMiddle.getFullYear(),0).getTime() / 1000;
+        var secondsInYear = (dayInMiddle.isLeapYear()) ? 60*60*24*364 : 60*60*24*365;
+        plotManager.getDateAxis().setRange(startOfYear, startOfYear+secondsInYear);
+      });
     }
+
+    Date.prototype.isLeapYear = function(utc) {
+        var y = utc ? this.getUTCFullYear() : this.getFullYear();
+        return !(y % 4) && (y % 100) || !(y % 400);
+    };
+
+    function zoomGrapher(scale) {
+        if(isCursorInBound()){
+          var cursorPosition = dateProperties.cursorPosition;
+          var leftRange = scale*(dateProperties.cursorPosition - dateProperties.min);
+          var rightRange = scale*(dateProperties.max - dateProperties.cursorPosition);
+          plotManager.getDateAxis().setRange(cursorPosition-leftRange,cursorPosition+rightRange);
+        }else{
+          var min_time = dateProperties.min;
+          var max_time = dateProperties.max;
+          var mean_time = (max_time+min_time)/2;
+          var range_half_scaled = scale*(max_time-min_time)/2;
+          plotManager.getDateAxis().setRange(mean_time-range_half_scaled,mean_time+range_half_scaled);
+        }
+    }
+
 
  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ init() function END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1478,7 +1651,7 @@
        var channels = getChannels();
        var params = [];
        if (channels.length > 0) {
-          params.push('channels=' + channels.join('|'));
+          params.push('channels=' + channels.join(','));
        }
 
        var timeRange = plotManager.getDateAxis().getRange();
@@ -1489,7 +1662,7 @@
        }
        var color = "";
        $('#map-filters [type = radio]').each(function(index, input) {
-          if (input.checked && $(input).data("filter")){
+          if (input.checked && !$(input).is("[data-filter='none']")){
             color = $(input).data("filter");
           }
        });
@@ -1506,7 +1679,7 @@
           }
        });
        if(checked.length > 0){
-          params.push('checked=' + checked.join("|"));
+          params.push('checked=' + checked.join(','));
        }
        var search = $('#search-bar').val().toLowerCase(); 
        if(search){
@@ -1544,28 +1717,32 @@
           plotManager.getDateAxis().setRange(parseFloat(split[0]), parseFloat(split[1]));
        }
 
+       var reSearchNeeded = false;
+
        if(params.checked != oldParams.checked){
           if(params.checked){
-            var checked = params.checked.split('|');
+            var checked = params.checked.split(',');
             $("#air-quality input").prop('checked', false);
             for(name in checked){
               $("#air-quality input[name = " + checked[name] + "]").prop('checked', true);
             }
-            searchAttributes();
           }else{
             $("#air-quality input").prop('checked', false);
-            searchAttributes();
           }
+          reSearchNeeded = true;
        }
 
        if(params.search != oldParams.search){
           if(params.search){
             $('#search-bar').val(decodeURI(params.search));
-            searchAttributes();
           }else{
             $('#search-bar').val("");
-            searchAttributes();
           }
+          reSearchNeeded = true;
+       }
+
+       if(reSearchNeeded){
+          searchAttributes();
        }
 
        if(params.cursor && params.cursor != oldParams.cursor){
@@ -1578,16 +1755,33 @@
 
        var oldChannels = getChannels(); 
        var newChannels = [];
+       var oldPipeURL = false;
+
+
        if (params.channels) {
-          newChannels = params.channels.split('|');
+          oldPipURL = (params.channels.split('|').length > 1);
+          newChannels = (!oldPipURL) ? params.channels.split(',') : params.channels.split('|');
        }
-       if (oldChannels.join('|') != newChannels.join('|')) {
-          for (var i = 0; i < oldChannels.length; i++) {
-             removePlot(oldChannels[i]);
-          }
-          for (i = 0; i < newChannels.length; i++) {
-             addPlot(newChannels[i]);
-          }
+
+       if(!oldPipeURL){
+          console.log("")
+          if (oldChannels.join(',') != newChannels.join(',')) {
+            for (var i = 0; i < oldChannels.length; i++) {
+               removePlot(oldChannels[i]);
+            }
+            for (i = 0; i < newChannels.length; i++) {
+               addPlot(newChannels[i]);
+            }
+         }
+       }else{
+          if (oldChannels.join('|') != newChannels.join('|')) {
+            for (var i = 0; i < oldChannels.length; i++) {
+               removePlot(oldChannels[i]);
+            }
+            for (i = 0; i < newChannels.length; i++) {
+               addPlot(newChannels[i]);
+            }
+         }
        }
 
        if(params.export != oldParams.export){
@@ -1600,6 +1794,77 @@
        }
 
        oldParams = params;
+    }
+
+    function loadHashInit(){
+      if (initParams.time) {
+          var split = initParams.time.split(',');
+          plotManager.getDateAxis().setRange(parseFloat(split[0]), parseFloat(split[1]));
+       }
+
+       var reSearchNeeded = false;
+
+       if(initParams.checked){
+            var checked = initParams.checked.split(',');
+            $("#air-quality input").prop('checked', false);
+            for(name in checked){
+              $("#air-quality input[name = " + checked[name] + "]").prop('checked', true);
+            }
+            reSearchNeeded = true;
+       }
+
+       if(initParams.search){
+          $('#search-bar').val(decodeURI(initParams.search));
+          reSearchNeeded = true;
+       }
+
+       if(reSearchNeeded){
+          searchAttributes();
+       }
+
+       if(initParams.cursor){
+          plotManager.getDateAxis().setCursorPosition(parseFloat(initParams.cursor));
+       }
+
+       if(initParams.color){
+          $('#map-filters [type = radio][data-filter="' + initParams.color + '"]').trigger('click');
+       }
+
+       var oldChannels = getChannels(); 
+       var newChannels = [];
+       var oldPipeURL = false;
+
+       if (initParams.channels) {
+          oldPipURL = (initParams.channels.split('|').length > 1);
+          newChannels = (!oldPipURL) ? initParams.channels.split(',') : initParams.channels.split('|');
+       }
+
+       if(!oldPipeURL){
+          console.log("")
+          if (oldChannels.join(',') != newChannels.join(',')) {
+            for (var i = 0; i < oldChannels.length; i++) {
+               removePlot(oldChannels[i]);
+            }
+            for (i = 0; i < newChannels.length; i++) {
+               addPlot(newChannels[i]);
+            }
+         }
+       }else{
+          if (oldChannels.join('|') != newChannels.join('|')) {
+            for (var i = 0; i < oldChannels.length; i++) {
+               removePlot(oldChannels[i]);
+            }
+            for (i = 0; i < newChannels.length; i++) {
+               addPlot(newChannels[i]);
+            }
+         }
+       }
+
+       if(initParams.export){
+          exportData();
+       }
+
+       oldParams = initParams;
     }
 
     function removePlot(channel) {
@@ -1742,6 +2007,7 @@
 
           dateProperties = dateAxisProperties;
       });
+      plotManager.getDateAxis().setCursorPosition(new Date().getTime() / 1000);
       init();
     }
 
@@ -1986,6 +2252,11 @@
     }
 
     function resetTimeline(r,g,b,a){
+        var i = jsonRequest.length;
+        while(i--){
+          jsonRequest[i].abort();
+          jsonRequest.splice(i,1);
+        }
         updateHash();
         $('#map-filters').children().children().filter(':reset').attr('disabled','disabled');
         $('#map-filters')
@@ -2047,7 +2318,7 @@
     function getData(url, multifeedName){
       var dataList = [];
       var feedNums = []; 
-      jQuery.getJSON(url, function(data){
+      jsonRequest.push($.getJSON(url, function(data){
         var dataSet = data.data; 
 
         for (var i = 0, len = dataSet.length; i < len; i++){
@@ -2066,7 +2337,7 @@
         // if (dataList.length == 0) return; 
         dataProcessQueue.push(wrapFunction(processData, this, [dataList, feedNums, multifeedName]));
         dataWorkHorse();
-      }); 
+      }));
     }
 
     function dataWorkHorse(){
@@ -2075,21 +2346,23 @@
           dataProcessQueue[0](); 
           dataProcessQueue.shift();
         }
-        $('#map-filters').children().children().filter(':reset').removeAttr('disabled');
-        cursorInBound();
-        timelineReady = true;
-        cursorInBound();
-        if (dateProperties.cursorPosition < Date.now()/1000){
-          enablePlayButton();
-        }
-        if (playing) {
-          playTimeline();
-          pauseTranform();
-        }else{
-          playTransform();
-        }
+        if(!$('#map-filters [type = radio][data-filter="none"]')[0].checked){
+          $('#map-filters').children().children().filter(':reset').removeAttr('disabled');
+          cursorInBound();
+          timelineReady = true;
+          cursorInBound();
+          if (dateProperties.cursorPosition < Date.now()/1000){
+            enablePlayButton();
+          }
+          if (playing) {
+            playTimeline();
+            pauseTranform();
+          }else{
+            playTransform();
+          }
 
-        showColorAtIndex(findIndexAtTime(timelineQueue, dateProperties.cursorPosition));
+          showColorAtIndex(findIndexAtTime(timelineQueue, dateProperties.cursorPosition));
+          }
       }
     }
 
@@ -2297,6 +2570,10 @@
       }else if(dateProperties.cursorPosition > dateProperties.max){
           plotManager.getDateAxis().setCursorPosition(dateProperties.max);
       }
+    }
+
+    function isCursorInBound(){
+      return (dateProperties.cursorPosition && dateProperties.cursorPosition >= dateProperties.min && dateProperties.cursorPosition <= dateProperties.max);
     }
 
     function setSpeed(){
@@ -2641,7 +2918,19 @@
           // zoom: 13,
           // center: new google.maps.LatLng(40.442493, -79.942553),
           // styles: myStyle, 
-
+          mapTypeControl: true,
+          mapTypeControlOptions: {
+              style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+              position: google.maps.ControlPosition.TOP_LEFT
+          },
+          zoomControl: true,
+          zoomControlOptions: {
+              position: google.maps.ControlPosition.TOP_RIGHT
+          },
+          streetViewControl: true,
+          streetViewControlOptions: {
+              position: google.maps.ControlPosition.TOP_RIGHT
+          },
        };
        
        map = new google.maps.Map(document.getElementById('map-div'),
@@ -2712,7 +3001,6 @@
 
       window.addEventListener('resize', function(){ 
         google.maps.event.trigger(map, 'resize'); 
-        resizeToWindow();
       }, false);
 
       // initialize WebGL
