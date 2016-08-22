@@ -63,9 +63,10 @@
     <version value="1.0" />
   </component>
   <component name="JavaScriptLibraryMappings">
-    <file url="file://$PROJECT_DIR$" libraries="{EnvironmentalSensorDataRepository node_modules}" />
-    <file url="PROJECT" libraries="{EnvironmentalSensorDataRepository node_modules, Generated files, jQuery 1.11.1, mocha-DefinitelyTyped, nconf-DefinitelyTyped, should-DefinitelyTyped, superagent-DefinitelyTyped}" />
+    <file url="file://$PROJECT_DIR$" libraries="{EnvironmentalSensorDataRepository/node_modules}" />
+    <file url="PROJECT" libraries="{Generated files, jQuery 1.11.1, mocha-DefinitelyTyped, nconf-DefinitelyTyped, should-DefinitelyTyped, superagent-DefinitelyTyped}" />
     <includedPredefinedLibrary name="ECMAScript 6" />
+    <includedPredefinedLibrary name="EnvironmentalSensorDataRepository/node_modules" />
     <includedPredefinedLibrary name="Node.js Core" />
   </component>
   <component name="ProjectCodeStyleSettingsManager">
@@ -461,19 +462,6 @@
     <mapping directory="" vcs="Git" />
   </component>
   <component name="libraryTable">
-    <library name="EnvironmentalSensorDataRepository node_modules" type="javaScript">
-      <properties>
-        <option name="frameworkName" value="node_modules" />
-        <sourceFilesUrls>
-          <item url="file://$PROJECT_DIR$/node_modules" />
-        </sourceFilesUrls>
-      </properties>
-      <CLASSES>
-        <root url="file://$PROJECT_DIR$/node_modules" />
-      </CLASSES>
-      <JAVADOC />
-      <SOURCES />
-    </library>
     <library name="Generated files" type="javaScript">
       <properties>
         <sourceFilesUrls>
