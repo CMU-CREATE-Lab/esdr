@@ -290,6 +290,18 @@
       return undefined;
    }
 
+   function parseQueryStringFloatValue(queryStringParamName, defaultTime) {
+      var val = (getQueryVariable(queryStringParamName) || '').trim();
+      if (val.length > 0) {
+         var timeVal = parseFloat(val);
+         if (!isNaN(timeVal) && isFinite(timeVal)) {
+            return timeVal;
+         }
+      }
+
+      return defaultTime;
+   }
+
    function renderPlot() {
       var grapherContainer = $("#grapher_container");
       var noData = $("#no_data");
@@ -322,6 +334,17 @@
                }
                else {
                   var url = window.location.pathname + '?feed=' + selectedFeedIdOrApiKey + '&channel=' + channelName;
+
+                  // see if we should add the from and/or to params
+                  var desiredMinTimeSecs = (getQueryVariable('from') || '').trim();
+                  if (desiredMinTimeSecs.length > 0) {
+                     url += '&from=' + desiredMinTimeSecs;
+                  }
+                  var desiredMaxTimeSecs = (getQueryVariable('to') || '').trim();
+                  if (desiredMaxTimeSecs.length > 0) {
+                     url += '&to=' + desiredMaxTimeSecs;
+                  }
+
                   linkHtml = '<a href="' + encodeURI(url) + '">' + prettyChannelName + '</a>';
                }
                linkHtml = '<div class="channel_link">' + linkHtml + '</div>';
@@ -356,13 +379,24 @@
          var channelMinTimeSecs = feed.channelBounds.channels[selectedChannelName].minTimeSecs;
          var channelMaxTimeSecs = feed.channelBounds.channels[selectedChannelName].maxTimeSecs;
 
+         // see if from and/or to times are specified in the query string (default to channel min/max if unspecified or invalid)
+         var desiredMinTimeSecs = parseQueryStringFloatValue('from', channelMinTimeSecs);
+         var desiredMaxTimeSecs = parseQueryStringFloatValue('to', channelMaxTimeSecs);
+
+         // make sure the from/to times are within channel min/max
+         desiredMinTimeSecs = Math.max(channelMinTimeSecs, desiredMinTimeSecs);
+         desiredMaxTimeSecs = Math.min(channelMaxTimeSecs, desiredMaxTimeSecs);
+
+         console.log("Channel min/max times = [" + channelMinTimeSecs + "," + channelMaxTimeSecs + "]");
+         console.log("Desired min/max times = [" + desiredMinTimeSecs + "," + desiredMaxTimeSecs + "]");
+
          // Grapher is not happy if min time equals max time.  Adjust them if necessary
-         if (channelMinTimeSecs == channelMaxTimeSecs) {
-            channelMinTimeSecs--;
-            channelMaxTimeSecs++;
+         if (desiredMinTimeSecs == desiredMaxTimeSecs) {
+            desiredMinTimeSecs--;
+            desiredMaxTimeSecs++;
          }
 
-         plotManager = new org.bodytrack.grapher.PlotManager("date_axis", channelMinTimeSecs, channelMaxTimeSecs);
+         plotManager = new org.bodytrack.grapher.PlotManager("date_axis", desiredMinTimeSecs, desiredMaxTimeSecs);
          plotManager.setWillAutoResizeWidth(true, function() {
             return $(window).width()         // window width
                    - $(".y_axis").width()             // Y axis width
