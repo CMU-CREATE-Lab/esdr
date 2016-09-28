@@ -294,11 +294,11 @@ module.exports = function(FeedModel, feedRouteHelper) {
                        contentType = 'text/plain';
                     }
                     else {
-                       return res.jsendClientError("Invalid format, must be one of 'csv' or 'json'.", {format: format}, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 UNPROCESSABLE_ENTITY
+                       return res.jsendClientError("Invalid format, must be one of 'csv' or 'json'.", { format : format }, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 UNPROCESSABLE_ENTITY
                     }
                  }
                  else {
-                    return res.jsendClientError("Invalid format, must be one of 'csv' or 'json'.", {format: format}, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 UNPROCESSABLE_ENTITY
+                    return res.jsendClientError("Invalid format, must be one of 'csv' or 'json'.", { format : format }, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 UNPROCESSABLE_ENTITY
                  }
 
                  getFeedForReadingByIdOrApiKey(req.params['feedIdOrApiKey'],
