@@ -3,7 +3,9 @@
 //
 // Dependencies:
 // * jQuery (http://jquery.com/)
-// * The Bodytrack Grapher
+// * One of the following:
+//   * The CREATE Lab Grapher (https://github.com/CMU-CREATE-Lab/grapher)
+//   * The Bodytrack Grapher (https://github.com/BodyTrack/Grapher)
 //
 // Author: Chris Bartley (bartley@cmu.edu)
 //======================================================================================================================
@@ -326,6 +328,28 @@ if (!window['$']) {
       };
 
       /**
+       * Constrains the range of the axis so that the user cannot pan/zoom deeper than the specified range.
+       *
+       * @param {AxisRange|number|null} rangeOrMinTimeSecs - an {@link AxisRange} a double representing the minimum time
+       * in Unix time seconds of the time range. If <code>null</code>, undefined, non-numeric, or not an
+       * <code>AxisRange</code>, then <code>-1*Number.MAX_VALUE</code> is used instead.
+       * @param {number|null} [maxTimeSecs] - a double representing the maximum time in Unix time seconds of the time
+       * range. If <code>null</code>, undefined, or non-numeric, then <code>Number.MAX_VALUE</code> is used instead.
+       */
+      this.constrainMinRangeTo = function(rangeOrMinTimeSecs, maxTimeSecs) {
+         var validRange = validateAxisRange(rangeOrMinTimeSecs, maxTimeSecs);
+         wrappedAxis.setMinRangeConstraints(validRange.min, validRange.max);
+      };
+
+      /**
+       * Clears the min range constraints by setting bounds to [<code>-1 * Number.MAX_VALUE</code>,
+       * <code>Number.MAX_VALUE</code>].
+       */
+      this.clearMinRangeConstraints = function() {
+         self.constrainMinRangeTo(null, null);
+      };
+
+      /**
        * Sets the width of the axis.
        *
        * @param {int} width - the new width
@@ -477,6 +501,36 @@ if (!window['$']) {
       };
 
       /**
+       * Constrains the range of the axis so that the user cannot pan/zoom deeper than the specified range.
+       *
+       * @param {AxisRange|number|null} rangeOrMin - an {@link AxisRange} a double representing the minimum value. If
+       * <code>null</code>, undefined, non-numeric, or not an <code>AxisRange</code>, then
+       * <code>-1*Number.MAX_VALUE</code> is used instead.
+       * @param {number|null} max - the max value. If <code>null</code>, undefined, or non-numeric, then
+       * <code>Number.MAX_VALUE</code> is used instead.  This argument is ignored (but required) if the first argument
+       * is an {@link AxisRange}.
+       * @param {boolean} [willNotPad=false] - whether to pad the range
+       */
+      this.constrainMinRangeTo = function(rangeOrMin, max, willNotPad) {
+         var range = validateAxisRange(rangeOrMin, max);
+
+         // pad, if desired
+         if (!willNotPad) {
+            range = padRange(range);
+         }
+
+         wrappedAxis.setMinRangeConstraints(range.min, range.max);
+      };
+
+      /**
+       * Clears the range constraints by setting bounds to [<code>-1 * Number.MAX_VALUE</code>,
+       * <code>Number.MAX_VALUE</code>].
+       */
+      this.clearMinRangeConstraints = function() {
+         self.constrainMinRangeTo(null, null);
+      };
+
+      /**
        * Sets the height of the axis.
        *
        * @param {int} height - the new height
@@ -548,7 +602,7 @@ if (!window['$']) {
       var DEFAULT_STYLE = {
          "styles" : [
             { "type" : "line", "lineWidth" : 1, "show" : true, "color" : "black" },
-            { "type" : "circle", "radius" : 1, "lineWidth" : 1, "show" : true, "color" : "black", "fill" : true }
+            { "type" : "circle", "radius" : 2, "lineWidth" : 1, "show" : true, "color" : "black", "fill" : true }
          ],
          "highlight" : {
             "lineWidth" : 1,
@@ -1085,6 +1139,25 @@ if (!window['$']) {
          }
 
          return plotContainers[plotContainerElementId];
+      };
+
+      /**
+       * Removes the plotContainer with the given <code>plotContainerId</code> from this PlotManager.
+       *
+       * @param {string|number} plotContainerId - A identifier for the plotContainer to remove, unique within the PlotManager.  Must be a number or a string.
+       */
+      this.removePlotContainer = function(plotContainerElementId) {
+        plotContainers[plotContainerElementId].removeAllPlots();
+        delete plotContainers[plotContainerElementId];
+      };
+
+      /**
+       * Removes all PlotContainers from PlotManger.
+       */
+      this.removeAllPlotContainers = function() {
+        Object.keys(plotContainers).forEach(function(plotContainerElementId) {
+          self.removePlotContainer(plotContainerElementId);
+        });
       };
 
       /**
