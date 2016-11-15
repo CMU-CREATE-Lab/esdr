@@ -44,10 +44,10 @@ describe("REST API", function() {
                   setup.verifyUser(user2, done);
                },
                function(done) {
-                  setup.authentcateUser(user1, done);
+                  setup.authenticateUser(user1, done);
                },
                function(done) {
-                  setup.authentcateUser(user2, done);
+                  setup.authenticateUser(user2, done);
                },
                function(done) {
                   product1.creatorUserId = user1.id;

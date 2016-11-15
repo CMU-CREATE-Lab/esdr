@@ -49,10 +49,10 @@ describe("REST API", function() {
                   setup.verifyUser(verifiedUser2, done);
                },
                function(done) {
-                  setup.authentcateUser(verifiedUser1, done);
+                  setup.authenticateUser(verifiedUser1, done);
                },
                function(done) {
-                  setup.authentcateUser(verifiedUser2, done);
+                  setup.authenticateUser(verifiedUser2, done);
                }
             ],
             initDone

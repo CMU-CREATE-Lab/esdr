@@ -50,7 +50,7 @@ module.exports.verifyUser = function(user, callback) {
 };
 
 // get an OAuth2 access token for this user (auth'd against the ESDR client) and save it to the given user object
-module.exports.authentcateUser = function(user, callback) {
+module.exports.authenticateUser = function(user, callback) {
    module.exports.authenticateUserWithClient(user, config.get("esdrClient"), callback);
 };
 
