@@ -242,7 +242,7 @@ Database.create(function(err, db) {
          app.use('/oauth', require('./routes/oauth')(oauthServer));
          app.use('/api/v1/time', require('./routes/api/time'));
          app.use('/api/v1/clients', require('./routes/api/clients')(db.clients));
-         app.use('/api/v1/users', require('./routes/api/users')(db.users));
+         app.use('/api/v1/users', require('./routes/api/users')(db.users, db.userProperties));
          app.use('/api/v1/products', require('./routes/api/products')(db.products, db.devices));
          app.use('/api/v1/devices', require('./routes/api/devices')(db.devices, db.feeds));
          app.use('/api/v1/feed', require('./routes/api/feed')(db.feeds, feedRouteHelper, authHelper));

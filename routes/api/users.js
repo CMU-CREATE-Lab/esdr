@@ -8,7 +8,7 @@ var DuplicateRecordError = require('../../lib/errors').DuplicateRecordError;
 var httpStatus = require('http-status');
 var log = require('log4js').getLogger('esdr:routes:api:users');
 
-module.exports = function(UserModel) {
+module.exports = function(UserModel, UserPropertiesModel) {
 
    /**
     * Creates the given user, optionally on behalf of the client specified in the Authorization header using Basic auth.
@@ -45,7 +45,7 @@ module.exports = function(UserModel) {
                                                }
                                                if (err instanceof DuplicateRecordError) {
                                                   log.debug("Email [" + user.email + "] already in use!");
-                                                  return res.jsendClientError("Email already in use.", {email : user.email}, httpStatus.CONFLICT);  // HTTP 409 Conflict
+                                                  return res.jsendClientError("Email already in use.", { email : user.email }, httpStatus.CONFLICT);  // HTTP 409 Conflict
                                                }
 
                                                var message = "Error while trying to create user [" + user.email + "]";
@@ -126,6 +126,145 @@ module.exports = function(UserModel) {
                     return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 FORBIDDEN
                  }
               }
+   );
+
+   router.put('/:userId/properties/:key',
+              passport.authenticate('bearer', { session : false }),
+              function(req, res) {
+
+                 if (req.params.userId == req.user.id) {
+
+                    // try setting the property
+                    UserPropertiesModel.setProperty(req.authInfo.token.clientId, req.user.id, req.params['key'], req.body, function(err, property) {
+                       if (err) {
+                          if (err instanceof ValidationError) {
+                             return res.jsendClientValidationError(err.message || "Validation failure", err.data);   // HTTP 422 Unprocessable Entity
+                          }
+                          if (typeof err.data !== 'undefined' &&
+                              typeof err.data.code !== 'undefined' &&
+                              typeof err.data.status !== 'undefined') {
+                             return res.jsendPassThrough(err.data);
+                          }
+
+                          var message = "Error setting property";
+                          log.error(message + ": " + err);
+                          return res.jsendServerError(message);
+                       }
+
+                       return res.jsendSuccess(property); // HTTP 200 OK
+                    });
+                 }
+                 else {
+                    return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 FORBIDDEN
+                 }
+              }
+   );
+
+   router.get('/:userId/properties/:key',
+              passport.authenticate('bearer', { session : false }),
+              function(req, res) {
+
+                 if (req.params.userId == req.user.id) {
+                    UserPropertiesModel.getProperty(req.authInfo.token.clientId, req.user.id, req.params['key'], function(err, property) {
+                       if (err) {
+                          if (err instanceof ValidationError) {
+                             return res.jsendClientValidationError(err.message || "Validation failure", err.data);   // HTTP 422 Unprocessable Entity
+                          }
+                          if (typeof err.data !== 'undefined' &&
+                              typeof err.data.code !== 'undefined' &&
+                              typeof err.data.status !== 'undefined') {
+                             return res.jsendPassThrough(err.data);
+                          }
+
+                          var message = "Error while finding property [" + req.params['key'] + "]";
+                          log.error(message + ": " + err);
+                          return res.jsendServerError(message);
+                       }
+
+                       if (property) {
+                          return res.jsendSuccess(property); // HTTP 200 OK
+                       }
+                       else {
+                          return res.jsendClientError("Unknown or invalid property", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
+                       }
+                    });
+                 }
+                 else {
+                    return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 FORBIDDEN
+                 }
+              }
+   );
+
+   router.get('/:userId/properties',
+              passport.authenticate('bearer', { session : false }),
+              function(req, res) {
+
+                 if (req.params.userId == req.user.id) {
+                    UserPropertiesModel.find(req.authInfo.token.clientId, req.user.id, req.query, function(err, properties) {
+                       if (err) {
+                          var message = "Error while finding the user properties";
+                          log.error(message + ": " + err);
+                          return res.jsendServerError(message);
+                       }
+
+                       return res.jsendSuccess(properties); // HTTP 200 OK
+                    });
+                 }
+                 else {
+                    return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 FORBIDDEN
+                 }
+              }
+   );
+
+   router.delete('/:userId/properties',
+                 passport.authenticate('bearer', { session : false }),
+                 function(req, res) {
+
+                    if (req.params.userId == req.user.id) {
+                       UserPropertiesModel.deleteAll(req.authInfo.token.clientId, req.user.id, function(err, deleteResult) {
+                          if (err) {
+                             var message = "Error while deleting the user properties";
+                             log.error(message + ": " + err);
+                             return res.jsendServerError(message);
+                          }
+
+                          return res.jsendSuccess(deleteResult); // HTTP 200 OK
+                       });
+                    }
+                    else {
+                       return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 FORBIDDEN
+                    }
+                 }
+   );
+
+   router.delete('/:userId/properties/:key',
+                 passport.authenticate('bearer', { session : false }),
+                 function(req, res) {
+
+                    if (req.params.userId == req.user.id) {
+                       UserPropertiesModel.deleteProperty(req.authInfo.token.clientId, req.user.id, req.params['key'], function(err, deleteResult) {
+                          if (err) {
+                             if (err instanceof ValidationError) {
+                                return res.jsendClientValidationError(err.message || "Validation failure", err.data);   // HTTP 422 Unprocessable Entity
+                             }
+                             if (typeof err.data !== 'undefined' &&
+                                 typeof err.data.code !== 'undefined' &&
+                                 typeof err.data.status !== 'undefined') {
+                                return res.jsendPassThrough(err.data);
+                             }
+
+                             var message = "Error while deleting property [" + req.params['key'] + "]";
+                             log.error(message + ": " + err);
+                             return res.jsendServerError(message);
+                          }
+
+                          return res.jsendSuccess(deleteResult); // HTTP 200 OK
+                       });
+                    }
+                    else {
+                       return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 FORBIDDEN
+                    }
+                 }
    );
 
    return router;

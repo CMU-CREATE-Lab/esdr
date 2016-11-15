@@ -51,12 +51,17 @@ module.exports.verifyUser = function(user, callback) {
 
 // get an OAuth2 access token for this user (auth'd against the ESDR client) and save it to the given user object
 module.exports.authentcateUser = function(user, callback) {
+   module.exports.authenticateUserWithClient(user, config.get("esdrClient"), callback);
+};
+
+// get an OAuth2 access token for this user (auth'd against the given client) and save it to the given user object
+module.exports.authenticateUserWithClient = function(user, client, callback) {
    superagent
          .post(ESDR_OAUTH_ROOT_URL)
          .send({
                   grant_type : "password",
-                  client_id : config.get("esdrClient:clientName"),
-                  client_secret : config.get("esdrClient:clientSecret"),
+                  client_id : client.clientName,
+                  client_secret : client.clientSecret,
                   username : user.email,
                   password : user.password
                })

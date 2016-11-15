@@ -37,6 +37,7 @@ wipeTableCommands.push(createDeleteAllRowsFromTableFunction("Feeds"));
 wipeTableCommands.push(createDeleteAllRowsFromTableFunction("Devices"));
 wipeTableCommands.push(createDeleteAllRowsFromTableFunction("Products"));
 wipeTableCommands.push(createDeleteAllRowsFromTableFunction("Tokens"));
+wipeTableCommands.push(createDeleteAllRowsFromTableFunction("UserProperties"));
 wipeTableCommands.push(createDeleteAllRowsFromTableFunction("Clients", "DELETE FROM Clients WHERE clientName <> 'ESDR'"));
 wipeTableCommands.push(createDeleteAllRowsFromTableFunction("Users"));
 

@@ -9,6 +9,7 @@ var Products = require('./Products.js');
 var Devices = require('./Devices.js');
 var Feeds = require('./Feeds.js');
 var Multifeeds = require('./Multifeeds.js');
+var UserProperties = require('./UserProperties.js');
 
 var DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
 
@@ -28,7 +29,12 @@ module.exports = {
       var db = {
          users : null,
          clients : null,
-         tokens : null
+         tokens : null,
+         products : null,
+         devices : null,
+         feeds : null,
+         multifeeds : null,
+         userProperties : null
       };
 
       // do the database initialization in serial order, since some tables have foreign keys to other tables
@@ -236,10 +242,31 @@ module.exports = {
                   }
                },
 
+               // create the UserProperties table, if necessary
+               function(done) {
+                  if (!hasErrors()) {
+                     log.info("10) Ensuring the UserProperties table exists.");
+                     var userProperties = new UserProperties(databaseHelper);
+                     userProperties.initialize(function(err) {
+                        if (err) {
+                           errors.push(err)
+                        }
+                        else {
+                           db.userProperties = userProperties;
+                        }
+
+                        done();
+                     });
+                  }
+                  else {
+                     done();
+                  }
+               },
+
                // create the ESDR client, if necessary
                function(done) {
                   if (!hasErrors()) {
-                     log.info("10) Ensuring the ESDR client exists.");
+                     log.info("11) Ensuring the ESDR client exists.");
                      var esdrClient = config.get("esdrClient");
                      db.clients.findByNameAndSecret(esdrClient.clientName,
                                                     esdrClient.clientSecret,
