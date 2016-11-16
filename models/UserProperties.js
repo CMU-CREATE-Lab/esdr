@@ -2,9 +2,7 @@ var JaySchema = require('jayschema');
 var jsonValidator = new JaySchema();
 var ValidationError = require('../lib/errors').ValidationError;
 var Query2Query = require('query2query');
-var PROPERTY_KEY_REGEX_STR = require('../lib/typeUtils').PROPERTY_KEY_REGEX_STR;
-
-var config = require('../config');
+var Properties = require('./Properties');
 
 var log = require('log4js').getLogger('esdr:models:userproperties');
 
@@ -37,102 +35,6 @@ var query2query = new Query2Query();
 query2query.addField('key', true, false, false);
 query2query.addField('type', true, false, false);
 
-const DATA_TYPE_TO_FIELD_NAME_MAP = {
-   "int" : "valueInt",
-   "double" : "valueDouble",
-   "string" : "valueString",
-   "json" : "valueJson",
-   "boolean" : "valueBoolean"
-};
-
-var PROPERTY_KEY_ATTRS = {
-   "type" : "string",
-   "minLength" : 1,
-   "maxLength" : 255,
-   "pattern" : PROPERTY_KEY_REGEX_STR
-};
-
-var JSON_SCHEMA_PROPERTY_KEY = {
-   "$schema" : "http://json-schema.org/draft-04/schema#",
-   "title" : "Property Key",
-   "description" : "An ESDR property key",
-   "type" : "object",
-   "properties" : {
-      "key" : PROPERTY_KEY_ATTRS
-   },
-   "required" : ["key"]
-};
-
-var JSON_SCHEMA_PROPERTY_VALUE = {
-   "$schema" : "http://json-schema.org/draft-04/schema#",
-   "title" : "Property Value",
-   "description" : "An ESDR property value",
-   "type" : "object",
-   "properties" : {
-      "type" : {
-         "enum" : Object.keys(DATA_TYPE_TO_FIELD_NAME_MAP)
-      },
-      "value" : {
-         "type" : ["integer", "number", "string", "object", "boolean", "null"]
-      }
-   },
-   "required" : ["type", "value"]
-};
-
-var TYPE_VALIDATION_JSON_SCHEMAS = {
-   'int' : {
-      "$schema" : "http://json-schema.org/draft-04/schema#",
-      "type" : "object",
-      "properties" : {
-         "value" : {
-            "type" : ["integer", "null"]
-         }
-      },
-      "required" : ["value"]
-   },
-   'double' : {
-      "$schema" : "http://json-schema.org/draft-04/schema#",
-      "type" : "object",
-      "properties" : {
-         "value" : {
-            "type" : ["number", "null"]
-         }
-      },
-      "required" : ["value"]
-   },
-   'string' : {
-      "$schema" : "http://json-schema.org/draft-04/schema#",
-      "type" : "object",
-      "properties" : {
-         "value" : {
-            "type" : ["string", "null"],
-            "maxLength" : 255
-         }
-      },
-      "required" : ["value"]
-   },
-   'json' : {
-      "$schema" : "http://json-schema.org/draft-04/schema#",
-      "type" : "object",
-      "properties" : {
-         "value" : {
-            "type" : ["object", "null"]
-         }
-      },
-      "required" : ["value"]
-   },
-   'boolean' : {
-      "$schema" : "http://json-schema.org/draft-04/schema#",
-      "type" : "object",
-      "properties" : {
-         "value" : {
-            "type" : ["boolean", "null"]
-         }
-      },
-      "required" : ["value"]
-   }
-};
-
 module.exports = function(databaseHelper) {
 
    this.initialize = function(callback) {
@@ -147,7 +49,7 @@ module.exports = function(databaseHelper) {
    };
 
    this.getProperty = function(clientId, userId, propertyKey, callback) {
-      jsonValidator.validate({ key : propertyKey }, JSON_SCHEMA_PROPERTY_KEY, function(err) {
+      jsonValidator.validate({ key : propertyKey }, Properties.JSON_SCHEMA_PROPERTY_KEY, function(err) {
          if (err) {
             return callback(new ValidationError(err));
          }
@@ -174,7 +76,7 @@ module.exports = function(databaseHelper) {
                                    if (record) {
                                       var propertyToReturn = {};
 
-                                      propertyToReturn[propertyKey] = record[DATA_TYPE_TO_FIELD_NAME_MAP[record.valueType]];
+                                      propertyToReturn[propertyKey] = record[Properties.DATA_TYPE_TO_FIELD_NAME_MAP[record.valueType]];
 
                                       // value conversions, if appropriate
                                       if (propertyToReturn[propertyKey] != null) {
@@ -228,7 +130,7 @@ module.exports = function(databaseHelper) {
                                  for (var i = 0; i < rows.length; i++) {
                                     var row = rows[i];
                                     var key = row.propertyKey;
-                                    var value = row[DATA_TYPE_TO_FIELD_NAME_MAP[row.valueType]];
+                                    var value = row[Properties.DATA_TYPE_TO_FIELD_NAME_MAP[row.valueType]];
 
                                     // value conversions, if appropriate
                                     if (value != null) {
@@ -253,20 +155,20 @@ module.exports = function(databaseHelper) {
 
    this.setProperty = function(clientId, userId, propertyKey, propertyValue, callback) {
       // first make sure that the property key is valid
-      jsonValidator.validate({ key : propertyKey }, JSON_SCHEMA_PROPERTY_KEY, function(err) {
+      jsonValidator.validate({ key : propertyKey }, Properties.JSON_SCHEMA_PROPERTY_KEY, function(err) {
          if (err) {
             return callback(new ValidationError(err));
          }
 
          // Now verify that the property value at least has the expected fields and the right sort of field values.
          // We'll worry later whether the value actually matches the stated type
-         jsonValidator.validate(propertyValue, JSON_SCHEMA_PROPERTY_VALUE, function(err) {
+         jsonValidator.validate(propertyValue, Properties.JSON_SCHEMA_PROPERTY_VALUE, function(err) {
             if (err) {
                return callback(new ValidationError(err));
             }
 
             // Now, depending on the stated type, validate the value against the type
-            var typeValidationSchema = TYPE_VALIDATION_JSON_SCHEMAS[propertyValue.type];
+            var typeValidationSchema = Properties.TYPE_VALIDATION_JSON_SCHEMAS[propertyValue.type];
             if (typeValidationSchema == null) {
                return callback(new ValidationError("Unexpected property value type: " + propertyValue.type));
             }
@@ -287,7 +189,7 @@ module.exports = function(databaseHelper) {
                property['userId'] = userId;
                property['clientId'] = clientId;
                property['valueType'] = propertyValue.type;
-               property[DATA_TYPE_TO_FIELD_NAME_MAP[propertyValue.type]] = propertyValue.value;
+               property[Properties.DATA_TYPE_TO_FIELD_NAME_MAP[propertyValue.type]] = propertyValue.value;
 
                // stringify the JSON for storing in the DB
                if (property['valueJson'] != null) {
@@ -331,7 +233,7 @@ module.exports = function(databaseHelper) {
    };
 
    this.deleteProperty = function(clientId, userId, propertyKey, callback) {
-      jsonValidator.validate({ key : propertyKey }, JSON_SCHEMA_PROPERTY_KEY, function(err) {
+      jsonValidator.validate({ key : propertyKey }, Properties.JSON_SCHEMA_PROPERTY_KEY, function(err) {
          if (err) {
             return callback(new ValidationError(err));
          }
