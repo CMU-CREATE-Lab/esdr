@@ -100,3 +100,9 @@ module.exports.deleteFeed = function(feedId, callback) {
 module.exports.insertMultifeed = function(feed, callback) {
    databaseHelper.execute("INSERT INTO Multifeeds SET ?", feed, callback);
 };
+
+module.exports.expireAccessToken = function(accessToken, callback) {
+   // set the new creation date such that the token will have expired 24 hours ago
+   var newCreatedDate = new Date(Date.now() - (86400 + config.get("security:tokenLifeSecs")) * 1000);
+   databaseHelper.execute("UPDATE Tokens SET created=? WHERE accessToken=?", [newCreatedDate, accessToken], callback);
+};

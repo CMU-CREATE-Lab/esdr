@@ -54,6 +54,8 @@ describe("OAuth2", function() {
                   should.not.exist(err);
                   should.exist(res);
 
+                  // save the tokens to compare with the next test
+                  tokens = res.body;
                   res.should.have.property('status', httpStatus.OK);
                   res.should.have.property('body');
                   res.body.should.have.properties('access_token', 'refresh_token');
@@ -67,7 +69,40 @@ describe("OAuth2", function() {
                });
       });
 
-      it("Should be able to request access and refresh tokens using Basic auth for the client ID and secret", function(done) {
+      it("Should be able to request access and refresh tokens for the same user, and get back the same tokens", function(done) {
+         superagent
+               .post(ESDR_OAUTH_ROOT_URL)
+               .send({
+                        grant_type : "password",
+                        client_id : client1.clientName,
+                        client_secret : client1.clientSecret,
+                        username : verifiedUser.email,
+                        password : verifiedUser.password
+                     })
+               .end(function(err, res) {
+                  should.not.exist(err);
+                  should.exist(res);
+
+                  res.should.have.property('status', httpStatus.OK);
+                  res.should.have.property('body');
+                  res.body.should.have.properties('access_token', 'refresh_token');
+                  res.body.should.have.properties({
+                                                     userId : verifiedUser.id,
+                                                     expires_in : config.get("security:tokenLifeSecs"),
+                                                     token_type : 'Bearer'
+                                                  });
+                  res.body.should.have.properties({
+                                                     access_token : tokens.access_token,
+                                                     refresh_token : tokens.refresh_token,
+                                                     userId : tokens.userId,
+                                                     expires_in : tokens.expires_in,
+                                                     token_type : tokens.token_type
+                                                  });
+                  done();
+               });
+      });
+
+      it("Should be able to request access and refresh tokens using Basic auth for the client ID and secret (and, again, get back the same tokens)", function(done) {
          superagent
                .post(ESDR_OAUTH_ROOT_URL)
                .auth(client1.clientName, client1.clientSecret)
@@ -88,12 +123,46 @@ describe("OAuth2", function() {
                                                      expires_in : config.get("security:tokenLifeSecs"),
                                                      token_type : 'Bearer'
                                                   });
-
-                  // remember these tokens
-                  tokens = res.body;
-
+                  res.body.should.have.properties({
+                                                     access_token : tokens.access_token,
+                                                     refresh_token : tokens.refresh_token,
+                                                     userId : tokens.userId,
+                                                     expires_in : tokens.expires_in,
+                                                     token_type : tokens.token_type
+                                                  });
                   done();
                });
+      });
+
+      it("Now force the existing tokens to be expired first, which should cause new tokens to be created", function(done) {
+         setup.expireAccessToken(tokens.access_token, function() {
+            superagent
+                  .post(ESDR_OAUTH_ROOT_URL)
+                  .auth(client1.clientName, client1.clientSecret)
+                  .send({
+                           grant_type : "password",
+                           username : verifiedUser.email,
+                           password : verifiedUser.password
+                        })
+                  .end(function(err, res) {
+                     should.not.exist(err);
+                     should.exist(res);
+
+                     res.should.have.property('status', httpStatus.OK);
+                     res.should.have.property('body');
+                     res.body.should.have.properties('access_token', 'refresh_token');
+                     res.body.should.have.properties({
+                                                        userId : verifiedUser.id,
+                                                        expires_in : config.get("security:tokenLifeSecs"),
+                                                        token_type : 'Bearer'
+                                                     });
+
+                     // remember these tokens for the refresh tests below
+                     tokens = res.body;
+
+                     done();
+                  });
+         });
       });
 
       var failureTests = [
@@ -173,7 +242,8 @@ describe("OAuth2", function() {
    });   // End Request Access Token
 
    describe("Refreshing Access Tokens", function() {
-      it("Should be able to refresh an access token", function(done) {
+
+      it("Should be able to refresh a not-yet-expired access token", function(done) {
          superagent
                .post(ESDR_OAUTH_ROOT_URL)
                .send({
@@ -198,10 +268,48 @@ describe("OAuth2", function() {
                   newTokens = res.body;
 
                   // make sure the new tokens are different
-                  newTokens.should.not.equal(tokens);
+                  newTokens.access_token.should.not.equal(tokens.access_token);
+                  newTokens.refresh_token.should.not.equal(tokens.refresh_token);
 
                   done();
                });
+      });
+
+      it("Should be able to refresh an expired access token", function(done) {
+         setup.expireAccessToken(newTokens.access_token, function() {
+            superagent
+                  .post(ESDR_OAUTH_ROOT_URL)
+                  .send({
+                           grant_type : "refresh_token",
+                           client_id : client1.clientName,
+                           client_secret : client1.clientSecret,
+                           refresh_token : newTokens.refresh_token
+                        })
+                  .end(function(err, res) {
+                     should.not.exist(err);
+                     should.exist(res);
+
+                     res.should.have.property('status', httpStatus.OK);
+                     res.should.have.property('body');
+                     res.body.should.have.properties('access_token', 'refresh_token');
+                     res.body.should.have.properties({
+                                                        expires_in : config.get("security:tokenLifeSecs"),
+                                                        token_type : 'Bearer'
+                                                     });
+
+                     // remember these new tokens
+                     var newerTokens = res.body;
+
+                     // make sure the new tokens are different
+                     newerTokens.access_token.should.not.equal(newTokens.access_token);
+                     newerTokens.refresh_token.should.not.equal(newTokens.refresh_token);
+
+                     // remember the tokens for the failure tests below
+                     newTokens = newerTokens;
+
+                     done();
+                  });
+         });
       });
 
       var failureTests = [

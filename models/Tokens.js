@@ -20,6 +20,10 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Tokens` ( " +
                          "CONSTRAINT `refreshtokens_ibfk_2` FOREIGN KEY (`clientId`) REFERENCES `Clients` (`id`) " +
                          ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
 
+var isTokenExpired = function(tokenRecord) {
+   return Math.round((Date.now() - new Date(tokenRecord.created).getTime()) / 1000) > config.get("security:tokenLifeSecs")
+};
+
 module.exports = function(databaseHelper) {
 
    var self = this;
@@ -45,27 +49,148 @@ module.exports = function(databaseHelper) {
    this.create = function(userId, clientId, callback) {
       log.debug("creating tokens for user [" + userId + "] and client [" + clientId + "]");
 
-      // generate new token values
-      var tokenValues = generateTokens();
-
-      var queryParams = {
-         userId : userId,
-         clientId : clientId,
-         accessToken : tokenValues.access,
-         refreshToken : tokenValues.refresh
+      var connection = null;
+      var error = null;
+      var hasError = function() {
+         return error != null;
       };
+      var tokens = null;
 
-      databaseHelper.execute("INSERT INTO Tokens SET ? ON DUPLICATE KEY UPDATE accessToken=VALUES(accessToken), refreshToken=VALUES(refreshToken), created=now()",
-                             queryParams,
-                             function(err2) {
-                                if (err2) {
-                                   log.error("Error trying to create tokens for user [" + userId + "] and client [" + clientId + "]: " + err2);
-                                   return callback(err2);
-                                }
+      flow.series(
+            [
+               // get the connection
+               function(done) {
+                  log.debug("create(): 1) Getting the connection");
+                  databaseHelper.getConnection(function(err, newConnection) {
+                     if (err) {
+                        error = err;
+                     }
+                     else {
+                        connection = newConnection;
+                     }
+                     done();
+                  });
+               },
 
-                                return callback(null, tokenValues);
-                             });
+               // begin the transaction
+               function(done) {
+                  if (!hasError()) {
+                     log.debug("create(): 2) Beginning the transaction");
+                     connection.beginTransaction(function(err) {
+                        if (err) {
+                           error = err;
+                        }
+                        done();
+                     });
+                  }
+                  else {
+                     done();
+                  }
+               },
 
+               // see whether this user already has unexpired tokens
+               function(done) {
+                  if (!hasError()) {
+                     log.debug("create(): 3) Looking for existing unexpired tokens");
+                     connection.query("SELECT * FROM Tokens WHERE userId=? AND clientId=?",
+                                      [userId, clientId],
+                                      function(err, rows) {
+                                         if (err) {
+                                            error = err;
+                                            done();
+                                         }
+                                         else {
+                                            if (rows && rows.length > 0) {
+                                               // existing token record found, so now see whether it's expired
+                                               var tokenRecord = rows[0];
+                                               if (isTokenExpired(tokenRecord)) {
+                                                  // token expired, so create new and update
+                                                  log.debug("create(): 4) Token is expired, so creating new and updating record");
+                                                  tokens = generateTokens();
+                                                  connection.query("UPDATE Tokens SET accessToken=?, refreshToken=?, created=now() WHERE id=?",
+                                                                   [tokens.access, tokens.refresh, tokenRecord.id],
+                                                                   function(err, result) {
+                                                                      if (err) {
+                                                                         error = err;
+                                                                      }
+                                                                      done();
+                                                                   });
+                                               }
+                                               else {
+                                                  // token still valid, so just update the created timestamp
+                                                  log.debug("create(): 4) Token is still valid, so updating the token's expiration date");
+
+                                                  tokens = {
+                                                     access : tokenRecord.accessToken,
+                                                     refresh : tokenRecord.refreshToken,
+                                                  };
+                                                  connection.query("UPDATE Tokens SET created=now() WHERE id=?",
+                                                                   [tokenRecord.id],
+                                                                   function(err, result) {
+                                                                      if (err) {
+                                                                         error = err;
+                                                                      }
+                                                                      done();
+                                                                   });
+                                               }
+                                            }
+                                            else {
+                                               // no existing tokens found, so create new and insert
+                                               log.debug("create(): 4) No token found, so creating new and inserting");
+                                               tokens = generateTokens();
+                                               connection.query("INSERT INTO Tokens (userId, clientId, accessToken, refreshToken) VALUES (?,?,?,?)",
+                                                                [userId, clientId, tokens.access, tokens.refresh],
+                                                                function(err, result) {
+                                                                   if (err) {
+                                                                      error = err;
+                                                                   }
+                                                                   done();
+                                                                });
+                                            }
+                                         }
+                                      });
+                  }
+                  else {
+                     done();
+                  }
+               }
+            ],
+            function() {
+               log.debug("create(): 5) All done, now checking status and performing commit/rollback as necessary!");
+               if (hasError() || tokens == null) {
+                  connection.rollback(function() {
+                     connection.release();
+                     if (hasError()) {
+                        log.error("create():    An error occurred while creating tokens, rolled back the transaction. Error:" + error);
+                        callback(error);
+                     }
+                     else {
+                        log.error("create():    Failed to create tokens, rolled back the transaction.");
+                        callback(null);
+                     }
+                  });
+               }
+               else {
+                  log.debug("create():    No errors while creating tokens, committing...");
+                  connection.commit(function(err) {
+                     if (err) {
+                        log.error("create():    Failed to commit the transaction after creating tokens");
+
+                        // rollback and then release the connection
+                        connection.rollback(function() {
+                           connection.release();
+                           callback(err);
+                        });
+                     }
+                     else {
+                        connection.release();
+                        log.debug("create():    Commit successful!");
+                        callback(null, tokens);
+                     }
+                  });
+               }
+            }
+      );
    };
 
    this.findAccessTokenForUserAndClient = function(userId, clientId, callback) {
@@ -152,20 +277,33 @@ module.exports = function(databaseHelper) {
                   }
                },
 
-               // generate new tokens and update the record
+               // delete old tokens and generate new
                function(done) {
                   if (!hasError() && userId) {
-                     log.debug("refreshToken(): 4) generate new tokens and update the record");
+                     log.debug("refreshToken(): 4) delete old tokens and generate new");
 
-                     self.create(userId, clientId, function(err, tokens) {
-                        if (err) {
-                           error = err;
-                        }
-                        else {
-                           newTokens = tokens;
-                        }
-                        done();
-                     });
+                     connection.query("DELETE FROM Tokens WHERE refreshToken=?",
+                                      [refreshToken],
+                                      function(err, result) {
+                                         if (err) {
+                                            error = err;
+                                            done();
+                                         }
+                                         else {
+                                            // Generate new tokens. We can't just call self.create here since we're in a transaction, and
+                                            // so DELETE above won't have been committed in the context that self.create will operate in,
+                                            // so it would just return the existing tokens.
+                                            newTokens = generateTokens();
+                                            connection.query("INSERT INTO Tokens (userId, clientId, accessToken, refreshToken) VALUES (?,?,?,?)",
+                                                             [userId, clientId, newTokens.access, newTokens.refresh],
+                                                             function(err, result) {
+                                                                if (err) {
+                                                                   error = err;
+                                                                }
+                                                                done();
+                                                             });
+                                         }
+                                      });
                   }
                   else {
                      done();
@@ -182,7 +320,8 @@ module.exports = function(databaseHelper) {
                      if (hasError()) {
                         log.error("refreshToken():    An error occurred while refreshing token, rolled back the transaction. Error:" + error);
                         callback(error);
-                     } else {
+                     }
+                     else {
                         log.error("refreshToken():    Invalid refresh token, rolled back the transaction.");
                         callback(null);
                      }
@@ -214,36 +353,30 @@ module.exports = function(databaseHelper) {
    /**
     * Tries to find the given access token. Returns the full token details (userId, clientId, access and refresh tokens,
     * creation date, etc.) if it exists and has not expired.  Returns <code>null</code> if it either doesn't exist or is
-    * expired.  Also, if expired, this method removes the token record from the database.
+    * expired.
     *
     * @param {string} accessToken the access token to validate
     * @param {function} callback callback function with signature <code>callback(err, token, message)</code>
     */
    this.validateAccessToken = function(accessToken, callback) {
 
-      log.debug("validateAccessToken(): validating access token: " + accessToken);
-      databaseHelper.findOne('SELECT * FROM Tokens where accessToken=?', [accessToken], function(err, token) {
+      databaseHelper.findOne('SELECT * FROM Tokens where accessToken=?', [accessToken], function(err, tokenRecord) {
          if (err) {
             return callback(err);
          }
 
          // if not null, then check expiration
-         if (token) {
-            var isExpired = Math.round((Date.now() - new Date(token.created).getTime()) / 1000) > config.get("security:tokenLifeSecs");
-            if (isExpired) {
-               databaseHelper.execute("DELETE FROM Tokens WHERE id=?", [token.id], function(err) {
-                  if (err) {
-                     return callback(err);
-                  }
-                  log.debug("validateAccessToken(): token expired!");
-                  return callback(null, null);
-               });
+         if (tokenRecord) {
+            if (isTokenExpired(tokenRecord)) {
+               log.debug("validateAccessToken(): token expired!");
+               return callback(null, null, 'Token expired');
             }
             else {
                log.debug("validateAccessToken(): token found!");
-               return callback(null, token);
+               return callback(null, tokenRecord);
             }
-         } else {
+         }
+         else {
             log.debug("validateAccessToken(): token not found!");
             callback(null, null);
          }
