@@ -1227,7 +1227,7 @@ describe("REST API", function() {
                                              {}
                                        );
                                     },
-                                    0
+                                    0  // expect there to be 0 properties deleted since we just deleted them in the previous test
                               );
                            });
                            it("Verify that deleting one user's properties shouldn't affect any other user's properties", function(done) {
