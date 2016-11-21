@@ -266,7 +266,7 @@ describe("REST API", function() {
    });
 
    describe("Feeds", function() {
-      describe.only("FeedProperties", function() {
+      describe("FeedProperties", function() {
          describe("Set Property", function() {
 
             describe("No Authentication", function() {
