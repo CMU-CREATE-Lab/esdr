@@ -161,7 +161,7 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                        feedId = parseInt(feedId);    // make it an int
                        FeedModel.deleteFeed(feedId,
                                             req.user.id,
-                                            function(err, result) {
+                                            function(err, deleteResult) {
                                                if (err) {
                                                   if (err instanceof JSendError) {
                                                      return res.jsendPassThrough(err.data);
@@ -171,7 +171,7 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                                   }
                                                }
                                                else {
-                                                  return res.jsendSuccess({ id : feedId });
+                                                  return res.jsendSuccess(deleteResult);
                                                }
                                             });
                     }

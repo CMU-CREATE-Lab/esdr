@@ -270,20 +270,32 @@ module.exports = function(databaseHelper) {
                   }
                },
 
-               // delete ONLY if there were no errors, the feed exists, and is owned by the user
+               // delete ONLY if there were no errors, the feed exists, and is owned by the user.  If so, start by
+               // deleting any feed properties and then delete the feed if no errors
                function(done) {
                   if (!hasError() && isExistingFeed && isFeedOwnedByUser) {
-                     log.debug("delete feed [user " + userId + ", feed " + feedId + "]: 4) Delete the feed");
-                     connection.query("DELETE FROM Feeds where id = ? AND userId = ?",
-                                      [feedId, userId],
-                                      function(err, result) {
+                     log.debug("delete feed [user " + userId + ", feed " + feedId + "]: 4) Delete the feed properties (if any), then the feed");
+                     connection.query("DELETE FROM FeedProperties where feedId = ?",
+                                      [feedId],
+                                      function(err) {
                                          if (err) {
                                             error = err;
                                          }
                                          else {
-                                            deleteResult = result;
+                                            connection.query("DELETE FROM Feeds where id = ? AND userId = ?",
+                                                             [feedId, userId],
+                                                             function(err) {
+                                                                if (err) {
+                                                                   error = err;
+                                                                }
+                                                                else {
+                                                                   deleteResult = {
+                                                                      id : feedId
+                                                                   };
+                                                                }
+                                                                done();
+                                                             });
                                          }
-                                         done();
                                       });
                   }
                   else {
@@ -806,7 +818,8 @@ module.exports = function(databaseHelper) {
          else {
             if (feed) {
                callback(null, feed.userId == userId);
-            } else {
+            }
+            else {
                callback(null, false);
             }
          }

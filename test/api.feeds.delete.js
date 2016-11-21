@@ -15,8 +15,11 @@ var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
 var ESDR_FEEDS_API_URL = ESDR_API_ROOT_URL + "/feeds";
 
 describe("REST API", function() {
+   var client1 = requireNew('./fixtures/client1.json');
+   var client2 = requireNew('./fixtures/client2.json');
    var user1 = requireNew('./fixtures/user1.json');
    var user2 = requireNew('./fixtures/user2.json');
+   var user1Client2 = null;
    var product1 = requireNew('./fixtures/product1.json');
    var product2 = requireNew('./fixtures/product2.json');
    var device1 = requireNew('./fixtures/device1.json');
@@ -69,13 +72,24 @@ describe("REST API", function() {
             [
                wipe.wipeAllData,
                function(done) {
+                  setup.createClient(client1, done);
+               },
+               function(done) {
+                  setup.createClient(client2, done);
+               },
+               function(done) {
                   setup.createUser(user1, done);
                },
                function(done) {
                   setup.verifyUser(user1, done);
                },
                function(done) {
-                  setup.authenticateUser(user1, done);
+                  setup.authenticateUserWithClient(user1, client1, done);
+               },
+               function(done) {
+                  // authenticate the same user with a different client
+                  user1Client2 = JSON.parse(JSON.stringify(user1));
+                  setup.authenticateUserWithClient(user1Client2, client2, done);
                },
                function(done) {
                   setup.createUser(user2, done);
@@ -185,7 +199,7 @@ describe("REST API", function() {
    });
 
    describe("Feeds", function() {
-      describe("Delete", function() {
+      describe.only("Delete", function() {
 
          var executeDelete = function(test, done) {
             superagent
@@ -323,6 +337,7 @@ describe("REST API", function() {
 
             it("Should be able to delete a public feed with authentication by the owning user", function(done) {
                executeDelete({
+                                willDebug:true,
                                 url : ESDR_FEEDS_API_URL + "/" + feed1.id,
                                 headers : createAuthorizationHeader(user1.accessToken),
                                 expectedHttpStatus : httpStatus.OK,
@@ -438,6 +453,126 @@ describe("REST API", function() {
                                 expectedResponseData : null
                              }, done);
             });
+            describe("Cascading Delete of Feed Properties", function() {
+               var setProperty = function(feedId, accessToken, propertyKey, propertyValue, callback, willDebug) {
+                  superagent
+                        .put(ESDR_FEEDS_API_URL + "/" + feedId + "/properties/" + propertyKey)
+                        .set(createAuthorizationHeader(accessToken))
+                        .send(propertyValue)
+                        .end(function(err, res) {
+                           should.not.exist(err);
+                           should.exist(res);
+
+                           if (willDebug) {
+                              console.log(JSON.stringify(res.body, null, 3));
+                           }
+
+                           res.should.have.property('status', httpStatus.OK);
+                           res.should.have.property('body');
+                           res.body.should.have.properties({
+                                                              code : httpStatus.OK,
+                                                              status : 'success'
+                                                           });
+                           res.body.should.have.property('data');
+
+                           var expectedResponse = {};
+                           expectedResponse[propertyKey] = propertyValue.value;
+                           res.body.data.should.have.properties(expectedResponse);
+
+                           callback();
+                        });
+               };
+
+               var getProperty = function(feedId, accessToken, propertyKey, callback, willDebug, expectedValue) {
+                  superagent
+                        .get(ESDR_FEEDS_API_URL + "/" + feedId + "/properties/" + propertyKey)
+                        .set(createAuthorizationHeader(accessToken))
+                        .end(function(err, res) {
+                           should.not.exist(err);
+                           should.exist(res);
+
+                           if (willDebug) {
+                              console.log(JSON.stringify(res.body, null, 3));
+                           }
+
+                           res.should.have.property('status', httpStatus.OK);
+                           res.should.have.property('body');
+                           res.body.should.have.properties({
+                                                              code : httpStatus.OK,
+                                                              status : 'success'
+                                                           });
+
+                           res.body.should.have.property('data');
+
+                           if (typeof expectedValue !== 'undefined') {
+                              var expectedResponse = {};
+                              expectedResponse[propertyKey] = expectedValue;
+                              res.body.data.should.have.properties(expectedResponse);
+                           }
+
+                           callback();
+                        });
+               };
+
+               before(function(initDone) {
+                  flow.series([
+                                 // set a property on feed 3 with client 1
+                                 function(done) {
+                                    setProperty(feed3.id,
+                                                user1.accessToken,
+                                                'foo',
+                                                { type : 'int', value : 42 },
+                                                done);
+                                 },
+                                 // verify the property is set
+                                 function(done) {
+                                    getProperty(feed3.id, user1.accessToken, 'foo', done, false, 42);
+                                 },
+                                 // set a property on feed 3 with client 2
+                                 function(done) {
+                                    setProperty(feed3.id,
+                                                user1Client2.accessToken,
+                                                'bar',
+                                                { type : 'string', value : 'forty-two' },
+                                                done);
+                                 },
+                                 // verify the property is set
+                                 function(done) {
+                                    getProperty(feed3.id, user1Client2.accessToken, 'bar', done, false, 'forty-two');
+                                 },
+                                 // set a property on feed 4 with client 1
+                                 function(done) {
+                                    setProperty(feed4.id,
+                                                user1.accessToken,
+                                                'baz',
+                                                { type : 'double', value : 42.42 },
+                                                done);
+                                 },
+                                 // verify the property is set
+                                 function(done) {
+                                    getProperty(feed4.id, user1.accessToken, 'baz', done, false, 42.42);
+                                 }
+
+                              ], initDone);
+               });
+
+               it("Should be able to delete a feed having feed properties, and the cascading delete will delete the feed's properties too", function(done) {
+                  executeDelete({
+                                   url : ESDR_FEEDS_API_URL + "/" + feed3.id,
+                                   headers : createAuthorizationHeader(user1.accessToken),
+                                   expectedHttpStatus : httpStatus.OK,
+                                   expectedStatusText : 'success',
+                                   expectedResponseData : { id : feed3.id },
+                                   additionalTests : function(done) {
+                                      // make sure the feed no longer exists
+                                      verifyFeedIsDeleted(feed3.id, user1, function(){
+                                         // make sure the property for feed4 didn't get deleted
+                                         getProperty(feed4.id, user1.accessToken, 'baz', done, false, 42.42);
+                                      });
+                                   }
+                                }, done);
+               });
+            });   // Cascading Delete of Feed Properties
 
          });   // End OAuth2 authentication
       });   // End Delete
