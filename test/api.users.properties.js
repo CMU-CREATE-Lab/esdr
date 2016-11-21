@@ -1359,7 +1359,7 @@ describe("REST API", function() {
                            it("Should be able to delete user2Client1Prop for user 2 client 1", function(done) {
                               deletePropertyForUser(user2.id, user2.accessToken, 'user2Client1Prop', done, 1);
                            });
-                           it("The property prop1 for user 2 client 1 should no longer exist", function(done) {
+                           it("The property user2Client1Prop for user 2 client 1 should no longer exist", function(done) {
                               verifyPropertyIsDeleted(user2.id, user2.accessToken, 'user2Client1Prop', done);
                            });
                            it("Verify user 2 client 1 has no properties", function(done) {
