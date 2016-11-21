@@ -11,6 +11,7 @@ var config = require('../config');
 
 var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
 var ESDR_USERS_API_URL = ESDR_API_ROOT_URL + "/users/";
+var BOGUS_USER_ID = 99999999999;
 
 var createValue = function(type, value) {
    return {
@@ -474,6 +475,21 @@ describe("REST API", function() {
                   });   // Success
 
                   describe("Failure", function() {
+                     it("Should fail to set a property for a non-existent user", function(done) {
+                        superagent
+                              .put(ESDR_USERS_API_URL + BOGUS_USER_ID + "/properties/foo")
+                              .set(createAuthorizationHeader(user1.accessToken))
+                              .send(createValue('int', 42))
+                              .end(function(err, res) {
+                                 should.not.exist(err);
+                                 should.exist(res);
+
+                                 res.should.have.property('status', httpStatus.FORBIDDEN);
+
+                                 done();
+                              });
+                     });
+
                      var testSetPropertyValidation = function(test) {
                         it(test.description, function(done) {
                            superagent
@@ -976,6 +992,19 @@ describe("REST API", function() {
                            });
                         });   // Success
                         describe("Failure", function() {
+                           it("Should fail to get a property for a non-existent user", function(done) {
+                              superagent
+                                    .get(ESDR_USERS_API_URL + BOGUS_USER_ID + "/properties/foo")
+                                    .set(createAuthorizationHeader(user1.accessToken))
+                                    .end(function(err, res) {
+                                       should.not.exist(err);
+                                       should.exist(res);
+
+                                       res.should.have.property('status', httpStatus.FORBIDDEN);
+
+                                       done();
+                                    });
+                           });
                            it("Should fail to get a property with a valid OAuth2 token, but for the wrong user", function(done) {
                               superagent
                                     .get(ESDR_USERS_API_URL + user1.id + "/properties/prop1")
@@ -1151,6 +1180,19 @@ describe("REST API", function() {
                            });
                         });   // Success
                         describe("Failure", function() {
+                           it("Should fail to get properties for a non-existent user", function(done) {
+                              superagent
+                                    .get(ESDR_USERS_API_URL + BOGUS_USER_ID + "/properties")
+                                    .set(createAuthorizationHeader(user1.accessToken))
+                                    .end(function(err, res) {
+                                       should.not.exist(err);
+                                       should.exist(res);
+
+                                       res.should.have.property('status', httpStatus.FORBIDDEN);
+
+                                       done();
+                                    });
+                           });
                            it("Should fail to get properties with a valid OAuth2 token, but for the wrong user", function(done) {
                               superagent
                                     .get(ESDR_USERS_API_URL + user1.id + "/properties")
@@ -1253,6 +1295,19 @@ describe("REST API", function() {
 
                         });   // Success
                         describe("Failure", function() {
+                           it("Should fail to delete properties for a non-existent user", function(done) {
+                              superagent
+                                    .del(ESDR_USERS_API_URL + BOGUS_USER_ID + "/properties")
+                                    .set(createAuthorizationHeader(user1.accessToken))
+                                    .end(function(err, res) {
+                                       should.not.exist(err);
+                                       should.exist(res);
+
+                                       res.should.have.property('status', httpStatus.FORBIDDEN);
+
+                                       done();
+                                    });
+                           });
                            it("Should fail to delete properties with a valid OAuth2 token, but for the wrong user", function(done) {
                               superagent
                                     .del(ESDR_USERS_API_URL + user1.id + "/properties")
@@ -1367,6 +1422,19 @@ describe("REST API", function() {
                            });
                         });   // Success
                         describe("Failure", function() {
+                           it("Should fail to delete a property for a non-existent user", function(done) {
+                              superagent
+                                    .del(ESDR_USERS_API_URL + BOGUS_USER_ID + "/properties/foo")
+                                    .set(createAuthorizationHeader(user1.accessToken))
+                                    .end(function(err, res) {
+                                       should.not.exist(err);
+                                       should.exist(res);
+
+                                       res.should.have.property('status', httpStatus.FORBIDDEN);
+
+                                       done();
+                                    });
+                           });
                            it("Should fail to delete a property with a valid OAuth2 token, but for the wrong user", function(done) {
                               superagent
                                     .del(ESDR_USERS_API_URL + user1Client2.id + "/properties/prop1")
