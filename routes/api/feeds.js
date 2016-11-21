@@ -5,11 +5,12 @@ var httpStatus = require('http-status');
 var log = require('log4js').getLogger('esdr:routes:api:feeds');
 var nr = require('newrelic');
 var JSendError = require('jsend-utils').JSendError;
+var ValidationError = require('../../lib/errors').ValidationError;
 var isPositiveIntString = require('../../lib/typeUtils').isPositiveIntString;
 var isString = require('../../lib/typeUtils').isString;
 var isFeedApiKey = require('../../lib/typeUtils').isFeedApiKey;
 
-module.exports = function(FeedModel, feedRouteHelper) {
+module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
 
    // for searching for feeds, optionally matching specified criteria and sort order
    router.get('/',
@@ -361,6 +362,158 @@ module.exports = function(FeedModel, feedRouteHelper) {
                                                },
                                                req, res, next)
               });
+
+   router.put('/:feedId/properties/:key',
+              passport.authenticate('bearer', { session : false }),
+              function(req, res) {
+                 verifyFeedOwnership(req, res, function(clientId, feedId) {
+                    // try setting the property
+                    FeedPropertiesModel.setProperty(clientId, feedId, req.params['key'], req.body, function(err, property) {
+                       if (err) {
+                          if (err instanceof ValidationError) {
+                             return res.jsendClientValidationError(err.message || "Validation failure", err.data);   // HTTP 422 Unprocessable Entity
+                          }
+                          if (typeof err.data !== 'undefined' &&
+                              typeof err.data.code !== 'undefined' &&
+                              typeof err.data.status !== 'undefined') {
+                             return res.jsendPassThrough(err.data);
+                          }
+
+                          var message = "Error setting property";
+                          log.error(message + ": " + err);
+                          return res.jsendServerError(message);
+                       }
+
+                       return res.jsendSuccess(property); // HTTP 200 OK
+                    });
+                 });
+              }
+   );
+
+   router.get('/:feedId/properties/:key',
+              passport.authenticate('bearer', { session : false }),
+              function(req, res) {
+                 verifyFeedOwnership(req, res, function(clientId, feedId) {
+                    FeedPropertiesModel.getProperty(clientId, feedId, req.params['key'], function(err, property) {
+                       if (err) {
+                          if (err instanceof ValidationError) {
+                             return res.jsendClientValidationError(err.message || "Validation failure", err.data);   // HTTP 422 Unprocessable Entity
+                          }
+                          if (typeof err.data !== 'undefined' &&
+                              typeof err.data.code !== 'undefined' &&
+                              typeof err.data.status !== 'undefined') {
+                             return res.jsendPassThrough(err.data);
+                          }
+
+                          var message = "Error while finding property [" + req.params['key'] + "]";
+                          log.error(message + ": " + err);
+                          return res.jsendServerError(message);
+                       }
+
+                       if (property) {
+                          return res.jsendSuccess(property); // HTTP 200 OK
+                       }
+                       else {
+                          return res.jsendClientError("Unknown or invalid property", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
+                       }
+                    });
+                 });
+              }
+   );
+
+   router.get('/:feedId/properties',
+              passport.authenticate('bearer', { session : false }),
+              function(req, res) {
+                 verifyFeedOwnership(req, res, function(clientId, feedId) {
+                    FeedPropertiesModel.find(clientId, feedId, req.query, function(err, properties) {
+                       if (err) {
+                          var message = "Error while finding the feed properties";
+                          log.error(message + ": " + err);
+                          return res.jsendServerError(message);
+                       }
+
+                       return res.jsendSuccess(properties); // HTTP 200 OK
+                    });
+                 });
+              }
+   );
+
+   router.delete('/:feedId/properties',
+                 passport.authenticate('bearer', { session : false }),
+                 function(req, res) {
+
+                    verifyFeedOwnership(req, res, function(clientId, feedId) {
+                       FeedPropertiesModel.deleteAll(clientId, feedId, function(err, deleteResult) {
+                          if (err) {
+                             var message = "Error while deleting the feed properties";
+                             log.error(message + ": " + err);
+                             return res.jsendServerError(message);
+                          }
+
+                          return res.jsendSuccess(deleteResult); // HTTP 200 OK
+                       });
+                    });
+                 }
+   );
+
+   router.delete('/:feedId/properties/:key',
+                 passport.authenticate('bearer', { session : false }),
+                 function(req, res) {
+                    verifyFeedOwnership(req, res, function(clientId, feedId) {
+                       FeedPropertiesModel.deleteProperty(clientId, feedId, req.params['key'], function(err, deleteResult) {
+                          if (err) {
+                             if (err instanceof ValidationError) {
+                                return res.jsendClientValidationError(err.message || "Validation failure", err.data);   // HTTP 422 Unprocessable Entity
+                             }
+                             if (typeof err.data !== 'undefined' &&
+                                 typeof err.data.code !== 'undefined' &&
+                                 typeof err.data.status !== 'undefined') {
+                                return res.jsendPassThrough(err.data);
+                             }
+
+                             var message = "Error while deleting property [" + req.params['key'] + "]";
+                             log.error(message + ": " + err);
+                             return res.jsendServerError(message);
+                          }
+
+                          return res.jsendSuccess(deleteResult); // HTTP 200 OK
+                       });
+                    });
+                 }
+   );
+
+   /**
+    * Executes the given <code>action</code> function if and only if the feed specified by the feedId in the URL is
+    * owned by the OAuth2 authenticated user.
+    *
+    * @param req the HTTP request
+    * @param res the HTTP response
+    * @param {function} action function with signature <code>callback(clientId, feedId)</code>
+    */
+   var verifyFeedOwnership = function(req, res, action) {
+      var feedId = req.params.feedId;
+      if (isPositiveIntString(feedId)) {
+         feedId = parseInt(feedId);    // make it an int
+         FeedModel.isFeedOwnedByUser(feedId, req.user.id, function(err, isOwnedByUser) {
+            if (err) {
+               var message = "Error determining whether feed [" + feedId + "] is owned by user [" + req.user.id + "]";
+               log.error(message + ": " + err);
+               return res.jsendServerError(message);
+            }
+            else {
+               if (isOwnedByUser) {
+                  action(req.authInfo.token.clientId, feedId);
+               }
+               else {
+                  return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 FORBIDDEN
+               }
+            }
+         });
+      }
+      else {
+         return res.jsendClientError("Unknown or invalid feed", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
+      }
+   };
 
    // Finds a feed for writing by ID or API Key
    var getFeedForWritingByIdOrApiKey = function(feedIdOrApiKey, fieldsToSelect, successCallback, req, res, next) {

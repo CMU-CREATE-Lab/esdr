@@ -791,6 +791,29 @@ module.exports = function(databaseHelper) {
    };
 
    /**
+    * Returns <code>true</code> if the feed denoted by the given <code>feedId</code> is owned by the user denoted by the
+    * given <code>userId</code>; <code>false</code> otherwise.
+    *
+    * @param {int} feedId ID of the feed to find.
+    * @param {int} userId ID of the user to find.
+    * @param {function} callback function with signature <code>callback(err, isOwnedByUser)</code>
+    */
+   this.isFeedOwnedByUser = function(feedId, userId, callback) {
+      self.findById(feedId, "userId", function(err, feed) {
+         if (err) {
+            callback(err);
+         }
+         else {
+            if (feed) {
+               callback(null, feed.userId == userId);
+            } else {
+               callback(null, false);
+            }
+         }
+      })
+   };
+
+   /**
     * Tries to find the feed with the given read-write or read-only API key and returns it to the given
     * <code>callback</code>. If successful, the feed is returned as the 2nd argument to the <code>callback</code>
     * function.  If unsuccessful, <code>null</code> is returned to the callback.
