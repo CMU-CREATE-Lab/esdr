@@ -238,7 +238,7 @@ module.exports = function(databaseHelper) {
             return callback(new ValidationError(err));
          }
 
-         databaseHelper.execute("DELETE FROM UserProperties WHERE clientId=? AND userId=? and propertyKey=?",
+         databaseHelper.execute("DELETE FROM UserProperties WHERE clientId=? AND userId=? AND propertyKey=?",
                                 [clientId, userId, propertyKey],
                                 function(err, deleteResult) {
                                    if (err) {
