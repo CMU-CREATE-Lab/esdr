@@ -104,7 +104,7 @@ module.exports = function(databaseHelper) {
                            }
 
                            // We need to be really careful about security here!  Restrict the WHERE clause to allow returning
-                           // only devices owned by the authenticated client user.
+                           // only properties for the authenticated client user.
                            var whereClause = "WHERE (clientId = " + clientId + " AND userId = " + userId + ")";
                            if (queryParts.whereExpressions.length > 0) {
                               // first replace all instances of "key" with "propertyKey" and "type" with "valueType"
