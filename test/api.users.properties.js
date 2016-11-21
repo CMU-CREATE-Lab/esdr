@@ -1335,25 +1335,25 @@ describe("REST API", function() {
                            it("Should be able to delete prop2 for user 2 client 1", function(done) {
                               deletePropertyForUser(user2.id, user2.accessToken, 'prop2', done, 1);
                            });
-                           it("The property prop1 for user 2 client 1 should no longer exist", function(done) {
+                           it("The property prop2 for user 2 client 1 should no longer exist", function(done) {
                               verifyPropertyIsDeleted(user2.id, user2.accessToken, 'prop2', done);
                            });
                            it("Should be able to delete prop3 for user 2 client 1", function(done) {
                               deletePropertyForUser(user2.id, user2.accessToken, 'prop3', done, 1);
                            });
-                           it("The property prop1 for user 2 client 1 should no longer exist", function(done) {
+                           it("The property prop3 for user 2 client 1 should no longer exist", function(done) {
                               verifyPropertyIsDeleted(user2.id, user2.accessToken, 'prop3', done);
                            });
                            it("Should be able to delete prop4 for user 2 client 1", function(done) {
                               deletePropertyForUser(user2.id, user2.accessToken, 'prop4', done, 1);
                            });
-                           it("The property prop1 for user 2 client 1 should no longer exist", function(done) {
+                           it("The property prop4 for user 2 client 1 should no longer exist", function(done) {
                               verifyPropertyIsDeleted(user2.id, user2.accessToken, 'prop4', done);
                            });
                            it("Should be able to delete prop5 for user 2 client 1", function(done) {
                               deletePropertyForUser(user2.id, user2.accessToken, 'prop5', done, 1);
                            });
-                           it("The property prop1 for user 2 client 1 should no longer exist", function(done) {
+                           it("The property prop5 for user 2 client 1 should no longer exist", function(done) {
                               verifyPropertyIsDeleted(user2.id, user2.accessToken, 'prop5', done);
                            });
                            it("Should be able to delete user2Client1Prop for user 2 client 1", function(done) {
