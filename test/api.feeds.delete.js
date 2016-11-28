@@ -337,7 +337,6 @@ describe("REST API", function() {
 
             it("Should be able to delete a public feed with authentication by the owning user", function(done) {
                executeDelete({
-                                willDebug:true,
                                 url : ESDR_FEEDS_API_URL + "/" + feed1.id,
                                 headers : createAuthorizationHeader(user1.accessToken),
                                 expectedHttpStatus : httpStatus.OK,
