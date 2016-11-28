@@ -199,7 +199,7 @@ describe("REST API", function() {
    });
 
    describe("Feeds", function() {
-      describe.only("Delete", function() {
+      describe("Delete", function() {
 
          var executeDelete = function(test, done) {
             superagent
