@@ -244,7 +244,7 @@ Database.create(function(err, db) {
          app.use('/api/v1/clients', require('./routes/api/clients')(db.clients));
          app.use('/api/v1/users', require('./routes/api/users')(db.users, db.userProperties));
          app.use('/api/v1/products', require('./routes/api/products')(db.products, db.devices));
-         app.use('/api/v1/devices', require('./routes/api/devices')(db.devices, db.feeds));
+         app.use('/api/v1/devices', require('./routes/api/devices')(db.devices, db.deviceProperties, db.feeds));
          app.use('/api/v1/feed', require('./routes/api/feed')(db.feeds, feedRouteHelper, authHelper));
          app.use('/api/v1/feeds', require('./routes/api/feeds')(db.feeds, db.feedProperties, feedRouteHelper));
          app.use('/api/v1/multifeeds', require('./routes/api/multifeeds')(db.feeds, db.multifeeds));

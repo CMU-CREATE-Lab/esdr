@@ -7,7 +7,7 @@ var JSendError = require('jsend-utils').JSendError;
 var log = require('log4js').getLogger('esdr:routes:api:devices');
 var isPositiveIntString = require('../../lib/typeUtils').isPositiveIntString;
 
-module.exports = function(DeviceModel, FeedModel) {
+module.exports = function(DeviceModel, DevicePropertiesModel, FeedModel) {
 
    // find devices
    router.get('/',
@@ -53,7 +53,7 @@ module.exports = function(DeviceModel, FeedModel) {
                        deviceId = parseInt(deviceId); // make it an int
                        DeviceModel.deleteDevice(deviceId,
                                                 req.user.id,
-                                                function(err, result) {
+                                                function(err, deleteResult) {
                                                    if (err) {
                                                       if (err instanceof JSendError) {
                                                          return res.jsendPassThrough(err.data);
@@ -63,7 +63,7 @@ module.exports = function(DeviceModel, FeedModel) {
                                                       }
                                                    }
                                                    else {
-                                                      return res.jsendSuccess({ id : deviceId });
+                                                      return res.jsendSuccess(deleteResult);
                                                    }
                                                 });
                     }
@@ -104,6 +104,139 @@ module.exports = function(DeviceModel, FeedModel) {
                      });
                   });
                });
+
+   router.put('/:deviceId/properties/:key',
+              passport.authenticate('bearer', { session : false }),
+              function(req, res) {
+                 verifyDeviceOwnership(req, res, function(clientId, deviceId) {
+                    // try setting the property
+                    DevicePropertiesModel.setProperty(clientId, deviceId, req.params['key'], req.body, function(err, property) {
+                       if (err) {
+                          if (err instanceof ValidationError) {
+                             return res.jsendClientValidationError(err.message || "Validation failure", err.data);   // HTTP 422 Unprocessable Entity
+                          }
+                          if (typeof err.data !== 'undefined' &&
+                              typeof err.data.code !== 'undefined' &&
+                              typeof err.data.status !== 'undefined') {
+                             return res.jsendPassThrough(err.data);
+                          }
+
+                          var message = "Error setting property";
+                          log.error(message + ": " + err);
+                          return res.jsendServerError(message);
+                       }
+
+                       return res.jsendSuccess(property); // HTTP 200 OK
+                    });
+                 });
+              }
+   );
+
+   router.get('/:deviceId/properties/:key',
+              passport.authenticate('bearer', { session : false }),
+              function(req, res) {
+                 verifyDeviceOwnership(req, res, function(clientId, deviceId) {
+                    DevicePropertiesModel.getProperty(clientId, deviceId, req.params['key'], function(err, property) {
+                       if (err) {
+                          if (err instanceof ValidationError) {
+                             return res.jsendClientValidationError(err.message || "Validation failure", err.data);   // HTTP 422 Unprocessable Entity
+                          }
+                          if (typeof err.data !== 'undefined' &&
+                              typeof err.data.code !== 'undefined' &&
+                              typeof err.data.status !== 'undefined') {
+                             return res.jsendPassThrough(err.data);
+                          }
+
+                          var message = "Error while finding property [" + req.params['key'] + "]";
+                          log.error(message + ": " + err);
+                          return res.jsendServerError(message);
+                       }
+
+                       if (property) {
+                          return res.jsendSuccess(property); // HTTP 200 OK
+                       }
+                       else {
+                          return res.jsendClientError("Unknown or invalid property", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
+                       }
+                    });
+                 });
+              }
+   );
+
+   router.get('/:deviceId/properties',
+              passport.authenticate('bearer', { session : false }),
+              function(req, res) {
+                 verifyDeviceOwnership(req, res, function(clientId, deviceId) {
+                    DevicePropertiesModel.find(clientId, deviceId, req.query, function(err, properties) {
+                       if (err) {
+                          var message = "Error while finding the device properties";
+                          log.error(message + ": " + err);
+                          return res.jsendServerError(message);
+                       }
+
+                       return res.jsendSuccess(properties); // HTTP 200 OK
+                    });
+                 });
+              }
+   );
+
+   router.delete('/:deviceId/properties',
+                 passport.authenticate('bearer', { session : false }),
+                 function(req, res) {
+
+                    verifyDeviceOwnership(req, res, function(clientId, deviceId) {
+                       DevicePropertiesModel.deleteAll(clientId, deviceId, function(err, deleteResult) {
+                          if (err) {
+                             var message = "Error while deleting the device properties";
+                             log.error(message + ": " + err);
+                             return res.jsendServerError(message);
+                          }
+
+                          return res.jsendSuccess(deleteResult); // HTTP 200 OK
+                       });
+                    });
+                 }
+   );
+
+   router.delete('/:deviceId/properties/:key',
+                 passport.authenticate('bearer', { session : false }),
+                 function(req, res) {
+                    verifyDeviceOwnership(req, res, function(clientId, deviceId) {
+                       DevicePropertiesModel.deleteProperty(clientId, deviceId, req.params['key'], function(err, deleteResult) {
+                          if (err) {
+                             if (err instanceof ValidationError) {
+                                return res.jsendClientValidationError(err.message || "Validation failure", err.data);   // HTTP 422 Unprocessable Entity
+                             }
+                             if (typeof err.data !== 'undefined' &&
+                                 typeof err.data.code !== 'undefined' &&
+                                 typeof err.data.status !== 'undefined') {
+                                return res.jsendPassThrough(err.data);
+                             }
+
+                             var message = "Error while deleting property [" + req.params['key'] + "]";
+                             log.error(message + ": " + err);
+                             return res.jsendServerError(message);
+                          }
+
+                          return res.jsendSuccess(deleteResult); // HTTP 200 OK
+                       });
+                    });
+                 }
+   );
+
+   /**
+    * Executes the given <code>action</code> function if and only if the device specified by the deviceId in the URL is
+    * owned by the OAuth2 authenticated user.
+    *
+    * @param req the HTTP request
+    * @param res the HTTP response
+    * @param {function} action function with signature <code>callback(clientId, deviceId)</code>
+    */
+   var verifyDeviceOwnership = function(req, res, action) {
+      findDeviceByIdForUser(res, req.params.deviceId, req.user.id, 'id', function(device) {
+         action(req.authInfo.token.clientId, device.id);
+      });
+   };
 
    var findDeviceByIdForUser = function(res, deviceId, authUserId, fieldsToSelect, successCallback) {
       if (isPositiveIntString(deviceId)) {

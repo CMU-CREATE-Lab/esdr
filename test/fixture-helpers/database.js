@@ -35,6 +35,7 @@ var wipeTableCommands = [];
 wipeTableCommands.push(createDeleteAllRowsFromTableFunction("Multifeeds"));
 wipeTableCommands.push(createDeleteAllRowsFromTableFunction("FeedProperties"));
 wipeTableCommands.push(createDeleteAllRowsFromTableFunction("Feeds"));
+wipeTableCommands.push(createDeleteAllRowsFromTableFunction("DeviceProperties"));
 wipeTableCommands.push(createDeleteAllRowsFromTableFunction("Devices"));
 wipeTableCommands.push(createDeleteAllRowsFromTableFunction("Products"));
 wipeTableCommands.push(createDeleteAllRowsFromTableFunction("Tokens"));

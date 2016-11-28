@@ -309,6 +309,10 @@ describe("REST API", function() {
                         should.not.exist(err);
                         should.exist(res);
 
+                        if (test.willDebug) {
+                           console.log(JSON.stringify(res.body, null, 3));
+                        }
+
                         res.should.have.property('status', test.expectedHttpStatus || httpStatus.OK);
                         if (!test.hasEmptyBody) {
                            res.should.have.property('body');
@@ -395,6 +399,30 @@ describe("REST API", function() {
                   additionalExpectedDataProperties : ['created', 'modified']
                },
                {
+                  description : "Should fail to find a device by product ID and device serial number for a product that doesn't exist",
+                  url : function() {
+                     return ESDR_PRODUCTS_API_URL + "/" + 1 + "/devices/" + device1User1.serialNumber;
+                  },
+                  accessToken : function() {
+                     return user1.accessToken
+                  },
+                  expectedHttpStatus : httpStatus.NOT_FOUND,
+                  expectedStatusText : 'error',
+                  hasEmptyData : true
+               },
+               {
+                  description : "Should fail to find a device by product name and device serial number for a product that doesn't exist",
+                  url : function() {
+                     return ESDR_PRODUCTS_API_URL + "/" + 'bogus_product' + "/devices/" + device1User1.serialNumber;
+                  },
+                  accessToken : function() {
+                     return user1.accessToken
+                  },
+                  expectedHttpStatus : httpStatus.NOT_FOUND,
+                  expectedStatusText : 'error',
+                  hasEmptyData : true
+               },
+               {
                   description : "Should fail to find a device by product name and device serial number by a user who doesn't own it",
                   url : function() {
                      return ESDR_PRODUCTS_API_URL + "/" + product2.name + "/devices/" + device1User1Product2.serialNumber;
@@ -429,6 +457,18 @@ describe("REST API", function() {
                   expectedHttpStatus : httpStatus.NOT_FOUND,
                   expectedStatusText : 'error',
                   hasEmptyData : true
+               },
+               {
+                  description : "Should fail to find a device by product name and device serial number if the serial number is unknown",
+                  url : function() {
+                     return ESDR_PRODUCTS_API_URL + "/" + product2.name + "/devices/" + "bogus";
+                  },
+                  accessToken : function() {
+                     return user2.accessToken
+                  },
+                  expectedHttpStatus : httpStatus.NOT_FOUND,
+                  expectedStatusText : 'error',
+                  hasEmptyData : true
                }
             ].forEach(executeFindTest);
 
@@ -454,6 +494,18 @@ describe("REST API", function() {
                      }
                   },
                   additionalExpectedDataProperties : ['created', 'modified']
+               },
+               {
+                  description : "Should fail to find a device by ID for an ID that doesn't exist",
+                  url : function() {
+                     return ESDR_DEVICES_API_URL + "/" + 1;
+                  },
+                  accessToken : function() {
+                     return user2.accessToken
+                  },
+                  expectedHttpStatus : httpStatus.NOT_FOUND,
+                  expectedStatusText : 'error',
+                  hasEmptyData : true
                },
                {
                   description : "Should fail to find a device by ID by a user who doesn't own it",

@@ -11,6 +11,7 @@ var Feeds = require('./Feeds.js');
 var Multifeeds = require('./Multifeeds.js');
 var UserProperties = require('./UserProperties.js');
 var FeedProperties = require('./FeedProperties.js');
+var DeviceProperties = require('./DeviceProperties.js');
 
 var DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
 
@@ -36,7 +37,8 @@ module.exports = {
          feeds : null,
          multifeeds : null,
          userProperties : null,
-         feedProperties : null
+         feedProperties : null,
+         deviceProperties : null
       };
 
       // do the database initialization in serial order, since some tables have foreign keys to other tables
@@ -286,10 +288,31 @@ module.exports = {
                   }
                },
 
+               // create the DeviceProperties table, if necessary
+               function(done) {
+                  if (!hasErrors()) {
+                     log.info("12) Ensuring the DeviceProperties table exists.");
+                     var deviceProperties = new DeviceProperties(databaseHelper);
+                     deviceProperties.initialize(function(err) {
+                        if (err) {
+                           errors.push(err)
+                        }
+                        else {
+                           db.deviceProperties = deviceProperties;
+                        }
+
+                        done();
+                     });
+                  }
+                  else {
+                     done();
+                  }
+               },
+
                // create the ESDR client, if necessary
                function(done) {
                   if (!hasErrors()) {
-                     log.info("12) Ensuring the ESDR client exists.");
+                     log.info("13) Ensuring the ESDR client exists.");
                      var esdrClient = config.get("esdrClient");
                      db.clients.findByNameAndSecret(esdrClient.clientName,
                                                     esdrClient.clientSecret,

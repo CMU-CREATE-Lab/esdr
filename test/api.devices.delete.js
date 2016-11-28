@@ -13,12 +13,17 @@ var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
 var ESDR_DEVICES_API_URL = ESDR_API_ROOT_URL + "/devices";
 
 describe("REST API", function() {
+   var client1 = requireNew('./fixtures/client1.json');
+   var client2 = requireNew('./fixtures/client2.json');
    var user1 = requireNew('./fixtures/user1.json');
    var user2 = requireNew('./fixtures/user2.json');
+   var user1Client2 = null;
    var product1 = requireNew('./fixtures/product1.json');
    var device1User1 = requireNew('./fixtures/device1.json');
    var device1User2 = requireNew('./fixtures/device1.json');
    var device2User1 = requireNew('./fixtures/device2.json');
+   var device3 = requireNew('./fixtures/device3.json');
+   var device4 = requireNew('./fixtures/device4.json');
    var feed1 = requireNew('./fixtures/feed1.json');
    var feed2 = requireNew('./fixtures/feed2.json');
    var feed3 = requireNew('./fixtures/feed3.json');
@@ -27,6 +32,12 @@ describe("REST API", function() {
       flow.series(
             [
                wipe.wipeAllData,
+               function(done) {
+                  setup.createClient(client1, done);
+               },
+               function(done) {
+                  setup.createClient(client2, done);
+               },
                function(done) {
                   setup.createUser(user1, done);
                },
@@ -40,7 +51,12 @@ describe("REST API", function() {
                   setup.verifyUser(user2, done);
                },
                function(done) {
-                  setup.authenticateUser(user1, done);
+                  setup.authenticateUserWithClient(user1, client1, done);
+               },
+               function(done) {
+                  // authenticate the same user with a different client
+                  user1Client2 = JSON.parse(JSON.stringify(user1));
+                  setup.authenticateUserWithClient(user1Client2, client2, done);
                },
                function(done) {
                   setup.authenticateUser(user2, done);
@@ -63,6 +79,16 @@ describe("REST API", function() {
                   device2User1.userId = user1.id;
                   device2User1.productId = product1.id;
                   setup.createDevice(device2User1, done);
+               },
+               function(done) {
+                  device3.userId = user1.id;
+                  device3.productId = product1.id;
+                  setup.createDevice(device3, done);
+               },
+               function(done) {
+                  device4.userId = user1.id;
+                  device4.productId = product1.id;
+                  setup.createDevice(device4, done);
                },
                function(done) {
                   feed1.userId = user1.id;
@@ -139,6 +165,25 @@ describe("REST API", function() {
                   });
          };
 
+         var verifyDeviceIsDeleted = function(deviceId, user, done) {
+            superagent
+                  .get(ESDR_DEVICES_API_URL + "/" + deviceId)
+                  .set(createAuthorizationHeader(user.accessToken))
+                  .end(function(err, res) {
+                     should.not.exist(err);
+                     should.exist(res);
+
+                     res.should.have.property('status', httpStatus.NOT_FOUND);
+                     res.should.have.property('body');
+                     res.body.should.have.properties({
+                                                        code : httpStatus.NOT_FOUND,
+                                                        status : 'error'
+                                                     });
+
+                     done();
+                  });
+         };
+
          describe("No Authentication", function() {
             it("Shouldn't be able to delete a device without authentication", function(done) {
                executeDelete({
@@ -188,7 +233,11 @@ describe("REST API", function() {
                                 headers : createAuthorizationHeader(user1.accessToken),
                                 expectedHttpStatus : httpStatus.OK,
                                 expectedStatusText : 'success',
-                                expectedResponseData : { id : device1User1.id }
+                                expectedResponseData : { id : device1User1.id },
+                                additionalTests : function(originalError, origianalResponse, done) {
+                                   // make sure the feed no longer exists
+                                   verifyDeviceIsDeleted(device1User1.id, user1, done);
+                                }
                              }, done);
             });
 
@@ -252,11 +301,135 @@ describe("REST API", function() {
                                                headers : createAuthorizationHeader(user1.accessToken),
                                                expectedHttpStatus : httpStatus.OK,
                                                expectedStatusText : 'success',
-                                               expectedResponseData : { id : device2User1.id }
+                                               expectedResponseData : { id : device2User1.id },
+                                               additionalTests : function(originalError, origianalResponse, done) {
+                                                  // make sure the feed no longer exists
+                                                  verifyDeviceIsDeleted(device2User1.id, user1, done);
+                                               }
                                             }, done);
                            });
             });
 
+            describe("Cascading Delete of Device Properties", function() {
+               var setProperty = function(deviceId, accessToken, propertyKey, propertyValue, callback, willDebug) {
+                  superagent
+                        .put(ESDR_DEVICES_API_URL + "/" + deviceId + "/properties/" + propertyKey)
+                        .set(createAuthorizationHeader(accessToken))
+                        .send(propertyValue)
+                        .end(function(err, res) {
+                           should.not.exist(err);
+                           should.exist(res);
+
+                           if (willDebug) {
+                              console.log(JSON.stringify(res.body, null, 3));
+                           }
+
+                           res.should.have.property('status', httpStatus.OK);
+                           res.should.have.property('body');
+                           res.body.should.have.properties({
+                                                              code : httpStatus.OK,
+                                                              status : 'success'
+                                                           });
+                           res.body.should.have.property('data');
+
+                           var expectedResponse = {};
+                           expectedResponse[propertyKey] = propertyValue.value;
+                           res.body.data.should.have.properties(expectedResponse);
+
+                           callback();
+                        });
+               };
+
+               var getProperty = function(deviceId, accessToken, propertyKey, callback, willDebug, expectedValue) {
+                  superagent
+                        .get(ESDR_DEVICES_API_URL + "/" + deviceId + "/properties/" + propertyKey)
+                        .set(createAuthorizationHeader(accessToken))
+                        .end(function(err, res) {
+                           should.not.exist(err);
+                           should.exist(res);
+
+                           if (willDebug) {
+                              console.log(JSON.stringify(res.body, null, 3));
+                           }
+
+                           res.should.have.property('status', httpStatus.OK);
+                           res.should.have.property('body');
+                           res.body.should.have.properties({
+                                                              code : httpStatus.OK,
+                                                              status : 'success'
+                                                           });
+
+                           res.body.should.have.property('data');
+
+                           if (typeof expectedValue !== 'undefined') {
+                              var expectedResponse = {};
+                              expectedResponse[propertyKey] = expectedValue;
+                              res.body.data.should.have.properties(expectedResponse);
+                           }
+
+                           callback();
+                        });
+               };
+
+               before(function(initDone) {
+                  flow.series([
+                                 // set a property on device 3 with client 1
+                                 function(done) {
+                                    setProperty(device3.id,
+                                                user1.accessToken,
+                                                'foo',
+                                                { type : 'int', value : 42 },
+                                                done);
+                                 },
+                                 // verify the property is set
+                                 function(done) {
+                                    getProperty(device3.id, user1.accessToken, 'foo', done, false, 42);
+                                 },
+                                 // set a property on device 3 with client 2
+                                 function(done) {
+                                    setProperty(device3.id,
+                                                user1Client2.accessToken,
+                                                'bar',
+                                                { type : 'string', value : 'forty-two' },
+                                                done);
+                                 },
+                                 // verify the property is set
+                                 function(done) {
+                                    getProperty(device3.id, user1Client2.accessToken, 'bar', done, false, 'forty-two');
+                                 },
+                                 // set a property on device 4 with client 1
+                                 function(done) {
+                                    setProperty(device4.id,
+                                                user1.accessToken,
+                                                'baz',
+                                                { type : 'double', value : 42.42 },
+                                                done);
+                                 },
+                                 // verify the property is set
+                                 function(done) {
+                                    getProperty(device4.id, user1.accessToken, 'baz', done, false, 42.42);
+                                 }
+
+                              ], initDone);
+               });
+
+               it("Should be able to delete a device having device properties, and the cascading delete will delete the device's properties too", function(done) {
+                  executeDelete({
+                                   url : ESDR_DEVICES_API_URL + "/" + device3.id,
+                                   headers : createAuthorizationHeader(user1.accessToken),
+                                   expectedHttpStatus : httpStatus.OK,
+                                   expectedStatusText : 'success',
+                                   expectedResponseData : { id : device3.id },
+                                   additionalTests : function(originalError, origianalResponse, done) {
+                                      // make sure the device no longer exists
+                                      verifyDeviceIsDeleted(device3.id, user1, function() {
+                                         // make sure the property for device4 didn't get deleted
+                                         getProperty(device4.id, user1.accessToken, 'baz', done, false, 42.42);
+                                      });
+                                   }
+                                }, done);
+               });
+            });   // Cascading Delete of Device Properties
 
          });   // End OAuth2 authentication
       });   // End Delete

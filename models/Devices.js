@@ -62,6 +62,7 @@ var JSON_SCHEMA = {
 };
 
 module.exports = function(databaseHelper) {
+   var self = this;
 
    this.jsonSchema = JSON_SCHEMA;
 
@@ -211,20 +212,32 @@ module.exports = function(databaseHelper) {
                   }
                },
 
-               // delete ONLY if there were no errors, the device exists, is owned by the user, and has no associated feeds
+               // delete ONLY if there were no errors, the device exists, is owned by the user, and has no associated
+               // feeds.   If so, start by deleting any device properties and then delete the device if no errors
                function(done) {
                   if (!hasError() && isExistingDevice && isDeviceOwnedByUser && !hasAssociatedFeeds()) {
-                     log.debug("delete device [user " + userId + ", device " + deviceId + "]: 5) Delete the device");
-                     connection.query("DELETE FROM Devices where id = ? AND userId = ?",
-                                      [deviceId, userId],
-                                      function(err, result) {
+                     log.debug("delete device [user " + userId + ", device " + deviceId + "]: 5) Delete the device properties (if any), then the device");
+                     connection.query("DELETE FROM DeviceProperties where deviceId = ?",
+                                      [deviceId],
+                                      function(err) {
                                          if (err) {
                                             error = err;
                                          }
                                          else {
-                                            deleteResult = result;
+                                            connection.query("DELETE FROM Devices where id = ? AND userId = ?",
+                                                             [deviceId, userId],
+                                                             function(err) {
+                                                                if (err) {
+                                                                   error = err;
+                                                                }
+                                                                else {
+                                                                   deleteResult = {
+                                                                      id : deviceId
+                                                                   };
+                                                                }
+                                                                done();
+                                                             });
                                          }
-                                         done();
                                       });
                   }
                   else {
