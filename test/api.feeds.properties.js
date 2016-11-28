@@ -575,7 +575,7 @@ describe("REST API", function() {
                                  should.not.exist(err);
                                  should.exist(res);
 
-                                 res.should.have.property('status', httpStatus.FORBIDDEN);
+                                 res.should.have.property('status', httpStatus.NOT_FOUND);
 
                                  done();
                               });
@@ -1212,7 +1212,7 @@ describe("REST API", function() {
                                        should.not.exist(err);
                                        should.exist(res);
 
-                                       res.should.have.property('status', httpStatus.FORBIDDEN);
+                                       res.should.have.property('status', httpStatus.NOT_FOUND);
 
                                        done();
                                     });
@@ -1416,7 +1416,7 @@ describe("REST API", function() {
                                        should.not.exist(err);
                                        should.exist(res);
 
-                                       res.should.have.property('status', httpStatus.FORBIDDEN);
+                                       res.should.have.property('status', httpStatus.NOT_FOUND);
 
                                        done();
                                     });
@@ -1564,7 +1564,7 @@ describe("REST API", function() {
                                        should.not.exist(err);
                                        should.exist(res);
 
-                                       res.should.have.property('status', httpStatus.FORBIDDEN);
+                                       res.should.have.property('status', httpStatus.NOT_FOUND);
 
                                        done();
                                     });
@@ -1695,7 +1695,7 @@ describe("REST API", function() {
                                        should.not.exist(err);
                                        should.exist(res);
 
-                                       res.should.have.property('status', httpStatus.FORBIDDEN);
+                                       res.should.have.property('status', httpStatus.NOT_FOUND);
 
                                        done();
                                     });

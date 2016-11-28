@@ -488,13 +488,13 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
     *
     * @param req the HTTP request
     * @param res the HTTP response
-    * @param {function} action function with signature <code>callback(clientId, feedId)</code>
+    * @param {function} action function with signature <code>callback(clientId, feedId, doesFeedExist)</code>
     */
    var verifyFeedOwnership = function(req, res, action) {
       var feedId = req.params.feedId;
       if (isPositiveIntString(feedId)) {
          feedId = parseInt(feedId);    // make it an int
-         FeedModel.isFeedOwnedByUser(feedId, req.user.id, function(err, isOwnedByUser) {
+         FeedModel.isFeedOwnedByUser(feedId, req.user.id, function(err, isOwnedByUser, doesFeedExist) {
             if (err) {
                var message = "Error determining whether feed [" + feedId + "] is owned by user [" + req.user.id + "]";
                log.error(message + ": " + err);
@@ -505,7 +505,12 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                   action(req.authInfo.token.clientId, feedId);
                }
                else {
-                  return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 FORBIDDEN
+                  if (doesFeedExist) {
+                     return res.jsendClientError("Access denied", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
+                  }
+                  else {
+                     return res.jsendClientError("Unknown or invalid feed", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
+                  }
                }
             }
          });

@@ -808,7 +808,7 @@ module.exports = function(databaseHelper) {
     *
     * @param {int} feedId ID of the feed to find.
     * @param {int} userId ID of the user to find.
-    * @param {function} callback function with signature <code>callback(err, isOwnedByUser)</code>
+    * @param {function} callback function with signature <code>callback(err, isOwnedByUser, doesFeedExist)</code>
     */
    this.isFeedOwnedByUser = function(feedId, userId, callback) {
       self.findById(feedId, "userId", function(err, feed) {
@@ -817,10 +817,10 @@ module.exports = function(databaseHelper) {
          }
          else {
             if (feed) {
-               callback(null, feed.userId == userId);
+               callback(null, feed.userId == userId, true);
             }
             else {
-               callback(null, false);
+               callback(null, false, false);
             }
          }
       })
