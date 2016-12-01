@@ -25,7 +25,7 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Products` ( " +
                          "CONSTRAINT `products_creatorUserId_fk_1` FOREIGN KEY (`creatorUserId`) REFERENCES `Users` (`id`) " +
                          ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
 
-var MAX_FOUND_PRODUCTS = 100;
+var MAX_FOUND_PRODUCTS = 1000;
 
 var query2query = new Query2Query();
 query2query.addField('id', true, true, false, Query2Query.types.INTEGER);
