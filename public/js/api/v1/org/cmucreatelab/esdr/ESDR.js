@@ -301,6 +301,16 @@ if (!window['superagent']) {
          }
       };
 
+      this.deviceProperties = {
+         set : function(deviceId, key, value, callbacks){
+            superagent
+                  .put(ESDR_API_ROOT_URL + "/devices/" + deviceId + "/properties/" + key)
+                  .set(authorizationHeader)
+                  .send(value)
+                  .end(createResponseHandler(callbacks));
+         }
+      };
+
       this.feeds = {
 
          /**
