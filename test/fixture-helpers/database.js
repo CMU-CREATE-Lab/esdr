@@ -32,6 +32,7 @@ var createDeleteAllRowsFromTableFunction = function(tableName, sql) {
 };
 
 var wipeTableCommands = [];
+wipeTableCommands.push(createDeleteAllRowsFromTableFunction("MirrorRegistrations"));
 wipeTableCommands.push(createDeleteAllRowsFromTableFunction("Multifeeds"));
 wipeTableCommands.push(createDeleteAllRowsFromTableFunction("FeedProperties"));
 wipeTableCommands.push(createDeleteAllRowsFromTableFunction("Feeds"));

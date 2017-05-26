@@ -248,6 +248,7 @@ Database.create(function(err, db) {
          app.use('/api/v1/feed', require('./routes/api/feed')(db.feeds, feedRouteHelper, authHelper));
          app.use('/api/v1/feeds', require('./routes/api/feeds')(db.feeds, db.feedProperties, feedRouteHelper));
          app.use('/api/v1/multifeeds', require('./routes/api/multifeeds')(db.feeds, db.multifeeds));
+         app.use('/api/v1/mirrors', require('./routes/api/mirrors')(db.products, db.mirrorRegistrations));
          app.use('/api/v1/user-verification', require('./routes/api/user-verification')(db.users));
          app.use('/api/v1/password-reset', require('./routes/api/password-reset')(db.users));
 

@@ -4,6 +4,7 @@ var jsonValidator = new JaySchema();
 var ValidationError = require('../lib/errors').ValidationError;
 var Query2Query = require('query2query');
 var log = require('log4js').getLogger('esdr:models:products');
+var isPositiveIntString = require('../lib/typeUtils').isPositiveIntString;
 
 var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Products` ( " +
                          "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
@@ -146,6 +147,24 @@ module.exports = function(databaseHelper) {
     */
    this.findById = function(id, fieldsToSelect, callback) {
       findProduct(fieldsToSelect, 'id', id, callback);
+   };
+
+   /**
+    * Tries to find the product with the given <code>productNameOrId</code> and returns it to the given
+    * <code>callback</code>. If successful, the product is returned as the 2nd argument to the <code>callback</code>
+    * function.  If unsuccessful, <code>null</code> is returned to the callback.
+    *
+    * @param {string|int} productNameOrId name or ID of the product to find.
+    * @param {string|array} fieldsToSelect comma-delimited string or array of strings of field names to select.
+    * @param {function} callback function with signature <code>callback(err, product)</code>
+    */
+   this.findByNameOrId = function(productNameOrId, fieldsToSelect, callback) {
+      var isId = isPositiveIntString('' + productNameOrId);
+      if (isId) {
+         this.findById(parseInt(productNameOrId), fieldsToSelect, callback)
+      } else {
+         this.findByName(productNameOrId, fieldsToSelect, callback)
+      }
    };
 
    this.find = function(queryString, callback) {

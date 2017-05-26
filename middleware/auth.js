@@ -123,6 +123,27 @@ module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {
       });
    };
 
+   var authenticateUser = function(username, password, callback) {
+      log.debug("auth.authenticateUser(" + username + "))");
+      UserModel.findByEmailAndPassword(username, password, function(err, user) {
+         log.debug("   in callback for UserModel.findByEmailAndPassword(" + username + ")");
+         if (err) {
+            return callback(err);
+         }
+         if (!user) {
+            return callback(null, false);
+         }
+         if (!user.isVerified) {
+            return done(null, false);
+         }
+
+         // don't ever need to expose the password
+         delete user.password;
+
+         return callback(null, user);
+      });
+   };
+
    /**
     * BasicStrategy & ClientPasswordStrategy
     *
@@ -152,7 +173,6 @@ module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {
                if (!token) {
                   return done(null, false, { message : message });
                }
-
                UserModel.findById(token.userId, function(err, user) {
                   if (err) {
                      return done(err);
@@ -170,6 +190,11 @@ module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {
             });
          }
    ));
+
+   /**
+    * This strategy is used to authenticate users who supply the username and password using the HTTP Basic scheme.
+    */
+   passport.use('basic-username-password', new BasicStrategy(authenticateUser));
 
    /**
     * LocalAPIKeyStrategy

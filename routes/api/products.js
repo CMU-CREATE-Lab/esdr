@@ -150,17 +150,10 @@ module.exports = function(ProductModel, DeviceModel) {
               });
 
    var findProductByNameOrId = function(res, productNameOrId, fieldsToSelect, successCallback) {
-      var isId = isPositiveIntString(productNameOrId);
-      if (isId) {
-         productNameOrId = parseInt(productNameOrId);    // make it an int
-      }
-      var methodName = isId ? "findById" : "findByName";
-      var fieldName = isId ? "ID" : "name";
-
-      ProductModel[methodName](productNameOrId, fieldsToSelect, function(err1, product) {
-         if (err1) {
-            var message = "Error while trying to find product with " + fieldName + " [" + productNameOrId + "]";
-            log.error(message + ": " + err1);
+      ProductModel.findByNameOrId(productNameOrId, fieldsToSelect, function(err, product) {
+         if (err) {
+            var message = "Error while trying to find product [" + productNameOrId + "]";
+            log.error(message + ": " + err);
             return res.jsendServerError(message);
          }
 
@@ -169,7 +162,7 @@ module.exports = function(ProductModel, DeviceModel) {
             return successCallback(product);
          }
          else {
-            return res.jsendClientError("Unknown or invalid product " + fieldName, null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
+            return res.jsendClientError("Unknown or invalid product", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
          }
       });
    };
