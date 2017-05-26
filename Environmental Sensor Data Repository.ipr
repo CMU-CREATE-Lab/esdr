@@ -471,8 +471,8 @@
         </sourceFilesUrls>
       </properties>
       <CLASSES>
-        <root url="file://$PROJECT_DIR$/public/lib/jquery/jquery-1.11.1.min.js" />
         <root url="file://$PROJECT_DIR$/public/lib/jquery/jquery-1.11.1.js" />
+        <root url="file://$PROJECT_DIR$/public/lib/jquery/jquery-1.11.1.min.js" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />
