@@ -50,41 +50,20 @@ query2query.addField('wasMirrorSuccessful', false, false, false, Query2Query.typ
 query2query.addField('created', false, false, false, Query2Query.types.DATETIME);
 query2query.addField('modified', false, false, false, Query2Query.types.DATETIME);
 
-var REALM_JSON_SCHEMA_PROPERTIES = {
-   "type" : "string",
-   "pattern" : "^[a-zA-Z0-9][a-zA-Z0-9_\\-\\.]*$",   // alphanumeric, underscore, hyphen, and period, but must start with an alphanumeric
-   "minLength" : 2,
-   "maxLength" : 64
-};
-
-var MIRROR_TOKEN_JSON_SCHEMA_PROPERTIES = {
-   "type" : "string",
-   "pattern" : "^[a-f0-9]{64}$",   // hex digits
-   "minLength" : 64,
-   "maxLength" : 64
-};
-
 var REALM_JSON_SCHEMA = {
    "$schema" : "http://json-schema.org/draft-04/schema#",
    "title" : "MirrorRegistrationRealm",
    "description" : "A data mirror registration realm",
    "type" : "object",
    "properties" : {
-      "realm" : REALM_JSON_SCHEMA_PROPERTIES
+      "realm" : {
+         "type" : "string",
+         "pattern" : "^[a-zA-Z0-9][a-zA-Z0-9_\\-\\.]*$",   // alphanumeric, underscore, hyphen, and period, but must start with an alphanumeric
+         "minLength" : 2,
+         "maxLength" : 64
+      }
    },
    "required" : ["realm"]
-};
-
-var REALM_AND_MIRROR_TOKEN_JSON_SCHEMA = {
-   "$schema" : "http://json-schema.org/draft-04/schema#",
-   "title" : "MirrorRegistrationRealmAndToken",
-   "description" : "A data mirror registration realm and mirror token",
-   "type" : "object",
-   "properties" : {
-      "realm" : REALM_JSON_SCHEMA_PROPERTIES,
-      "mirrorToken" : MIRROR_TOKEN_JSON_SCHEMA_PROPERTIES
-   },
-   "required" : ["realm", "mirrorToken"]
 };
 
 module.exports = function(databaseHelper) {
@@ -139,7 +118,7 @@ module.exports = function(databaseHelper) {
                                 realm : realm,
                                 mirrorToken : mirrorToken
                              },
-                             REALM_AND_MIRROR_TOKEN_JSON_SCHEMA,
+                             REALM_JSON_SCHEMA,
                              function(err) {
                                 if (err) {
                                    return callback(new ValidationError(err));
@@ -173,7 +152,7 @@ module.exports = function(databaseHelper) {
                                 realm : realm,
                                 mirrorToken : mirrorToken
                              },
-                             REALM_AND_MIRROR_TOKEN_JSON_SCHEMA,
+                             REALM_JSON_SCHEMA,
                              function(err) {
                                 if (err) {
                                    log.error(err);

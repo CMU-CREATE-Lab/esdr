@@ -90,7 +90,7 @@ describe("REST API", function() {
       );
    });
 
-   describe("Mirror Registrations", function() {
+   describe.only("Mirror Registrations", function() {
       describe("For Product", function() {
          describe("Create", function() {
 
@@ -1033,17 +1033,17 @@ describe("REST API", function() {
                                             VALID_BUT_UNKNOWN_MIRROR_TOKEN,
                                             done);
                   });
-                  it("Should fail to find mirror registration referenced by known realm and invalid mirror token", function(done) {
-                     findMirrorRegistrationWithValidationError(REALM1,
-                                                               "bogus",
-                                                               done);
+                  it("Should fail to find mirror registration referenced by known realm and unknown mirror token", function(done) {
+                     findMirrorRegistration(REALM1,
+                                            "bogus",
+                                            done);
                   });
                   it("Should fail to find mirror registration referenced by invalid realm and known mirror token", function(done) {
                      findMirrorRegistrationWithValidationError("X",
                                                                successfulMirrorRegistrations[0].mirrorToken,
                                                                done);
                   });
-                  it("Should fail to find mirror registration referenced by invalid realm and invalid mirror token", function(done) {
+                  it("Should fail to find mirror registration referenced by invalid realm and unknown mirror token", function(done) {
                      findMirrorRegistrationWithValidationError("X",
                                                                "bogus",
                                                                done);
@@ -1119,55 +1119,8 @@ describe("REST API", function() {
                                                    ],
                                                    done);
                });
-               it("Should fail to delete mirror registration with an invalid mirror token (too short)", function(done) {
-                  deleteFailedDueToValidationError(REALM1,
-                                                   "abcde",
-                                                   [
-                                                      {
-                                                         "instanceContext" : "#/mirrorToken",
-                                                         "constraintName" : "minLength",
-                                                         "constraintValue" : 64,
-                                                         "kind" : "StringValidationError"
-                                                      },
-                                                      {
-                                                         "instanceContext" : "#/mirrorToken",
-                                                         "constraintName" : "pattern",
-                                                         "kind" : "StringValidationError"
-                                                      }
-                                                   ],
-                                                   done);
-               });
-               it("Should fail to delete mirror registration with an invalid mirror token (too long)", function(done) {
-                  deleteFailedDueToValidationError(REALM1,
-                                                   VALID_BUT_UNKNOWN_MIRROR_TOKEN + "0",
-                                                   [
-                                                      {
-                                                         "instanceContext" : "#/mirrorToken",
-                                                         "constraintName" : "maxLength",
-                                                         "constraintValue" : 64,
-                                                         "kind" : "StringValidationError"
-                                                      },
-                                                      {
-                                                         "instanceContext" : "#/mirrorToken",
-                                                         "constraintName" : "pattern",
-                                                         "kind" : "StringValidationError"
-                                                      }
-                                                   ],
-                                                   done);
-               });
-               it("Should fail to delete mirror registration with an invalid mirror token (not hex chars)", function(done) {
-                  deleteFailedDueToValidationError(REALM1,
-                                                   "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz012345678900",
-                                                   [
-                                                      {
-                                                         "instanceContext" : "#/mirrorToken",
-                                                         "constraintName" : "pattern",
-                                                         "kind" : "StringValidationError"
-                                                      }
-                                                   ],
-                                                   done);
-               });
             });   // Failure
+            
             describe("Success", function() {
                var doDelete = function(realm, mirrorToken, expectedRegistrationsDeleted, done) {
                   superagent
