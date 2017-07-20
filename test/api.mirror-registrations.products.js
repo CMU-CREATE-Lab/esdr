@@ -90,7 +90,7 @@ describe("REST API", function() {
       );
    });
 
-   describe.only("Mirror Registrations", function() {
+   describe("Mirror Registrations", function() {
       describe("For Product", function() {
          describe("Create", function() {
 
