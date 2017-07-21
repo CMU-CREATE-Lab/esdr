@@ -13,8 +13,8 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `MirrorRegistrations` ( " 
                          "`deviceId` bigint(20) DEFAULT NULL, " +
                          "`feedId` bigint(20) DEFAULT NULL, " +
                          "`mirrorToken` varchar(64) NOT NULL, " +
-                         "`lastMirrorAttempt` timestamp NOT NULL DEFAULT 0, " +
-                         "`lastMirrorSuccess` timestamp NOT NULL DEFAULT 0, " +
+                         "`lastMirrorAttemptSecs` double DEFAULT NULL, " +
+                         "`lastMirrorSuccessSecs` double DEFAULT NULL, " +
                          "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
                          "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
                          "PRIMARY KEY (`id`), " +
@@ -27,8 +27,8 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `MirrorRegistrations` ( " 
                          "KEY `productId` (`productId`), " +
                          "KEY `deviceId` (`deviceId`), " +
                          "KEY `feedId` (`feedId`), " +
-                         "KEY `lastMirrorAttempt` (`lastMirrorAttempt`), " +
-                         "KEY `lastMirrorSuccess` (`lastMirrorSuccess`), " +
+                         "KEY `lastMirrorAttemptSecs` (`lastMirrorAttemptSecs`), " +
+                         "KEY `lastMirrorSuccessSecs` (`lastMirrorSuccessSecs`), " +
                          "KEY `created` (`created`), " +
                          "KEY `modified` (`modified`), " +
                          "CONSTRAINT `mirror_registrations_productId_fk_1` FOREIGN KEY (`productId`) REFERENCES `Products` (`id`), " +
@@ -45,8 +45,8 @@ query2query.addField('productId', false, false, true, Query2Query.types.INTEGER)
 query2query.addField('deviceId', false, false, true, Query2Query.types.INTEGER);
 query2query.addField('feedId', false, false, true, Query2Query.types.INTEGER);
 query2query.addField('mirrorToken', false, false, false);
-query2query.addField('lastMirrorAttempt', false, false, false, Query2Query.types.DATETIME);
-query2query.addField('lastMirrorSuccess', false, false, false, Query2Query.types.DATETIME);
+query2query.addField('lastMirrorAttemptSecs', false, false, false, Query2Query.types.NUMBER);
+query2query.addField('lastMirrorSuccessSecs', false, false, false, Query2Query.types.NUMBER);
 query2query.addField('created', false, false, false, Query2Query.types.DATETIME);
 query2query.addField('modified', false, false, false, Query2Query.types.DATETIME);
 

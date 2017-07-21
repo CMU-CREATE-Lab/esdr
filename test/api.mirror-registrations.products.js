@@ -706,7 +706,7 @@ describe("REST API", function() {
 
                      it("Should be able to filter returned fields", function(done) {
                         superagent
-                              .get(ESDR_MIRROR_REGISTRATIONS_API_URL + REALM1 + "/registrations/products/" + product1.id + "?fields=realm,userId,mirrorToken,lastMirrorAttempt,lastMirrorSuccess")
+                              .get(ESDR_MIRROR_REGISTRATIONS_API_URL + REALM1 + "/registrations/products/" + product1.id + "?fields=realm,userId,mirrorToken,lastMirrorAttemptSecs,lastMirrorSuccessSecs")
                               .auth(user1.email, user1.password)
                               .end(function(err, res) {
                                  should.not.exist(err);
@@ -724,8 +724,8 @@ describe("REST API", function() {
                                                                          userId : user1.id,
                                                                          mirrorToken : successfulMirrorRegistrations[0].mirrorToken,
                                                                       });
-                                 res.body.data.should.have.property('lastMirrorAttempt');
-                                 res.body.data.should.have.property('lastMirrorSuccess');
+                                 res.body.data.should.have.property('lastMirrorAttemptSecs');
+                                 res.body.data.should.have.property('lastMirrorSuccessSecs');
 
                                  res.body.data.should.not.have.property('id');
                                  res.body.data.should.not.have.property('productId');
@@ -943,7 +943,7 @@ describe("REST API", function() {
 
                   it("Should be able to filter returned fields", function(done) {
                      superagent
-                           .get(ESDR_MIRROR_REGISTRATIONS_API_URL + REALM1 + "/registrations/" + successfulMirrorRegistrations[0].mirrorToken + "?fields=realm,userId,mirrorToken,lastMirrorAttempt,lastMirrorSuccess")
+                           .get(ESDR_MIRROR_REGISTRATIONS_API_URL + REALM1 + "/registrations/" + successfulMirrorRegistrations[0].mirrorToken + "?fields=realm,userId,mirrorToken,lastMirrorAttemptSecs,lastMirrorSuccessSecs")
                            .end(function(err, res) {
                               should.not.exist(err);
                               should.exist(res);
@@ -960,8 +960,8 @@ describe("REST API", function() {
                                                                       userId : user1.id,
                                                                       mirrorToken : successfulMirrorRegistrations[0].mirrorToken,
                                                                    });
-                              res.body.data.should.have.property('lastMirrorAttempt');
-                              res.body.data.should.have.property('lastMirrorSuccess');
+                              res.body.data.should.have.property('lastMirrorAttemptSecs');
+                              res.body.data.should.have.property('lastMirrorSuccessSecs');
 
                               res.body.data.should.not.have.property('id');
                               res.body.data.should.not.have.property('productId');
