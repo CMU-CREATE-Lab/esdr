@@ -15,6 +15,7 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `MirrorRegistrations` ( " 
                          "`mirrorToken` varchar(64) NOT NULL, " +
                          "`lastMirrorAttemptSecs` double DEFAULT NULL, " +
                          "`lastMirrorSuccessSecs` double DEFAULT NULL, " +
+                         "`lastMirroredMaxTimeSecs` double DEFAULT NULL, " +
                          "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
                          "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
                          "PRIMARY KEY (`id`), " +
@@ -29,6 +30,7 @@ var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `MirrorRegistrations` ( " 
                          "KEY `feedId` (`feedId`), " +
                          "KEY `lastMirrorAttemptSecs` (`lastMirrorAttemptSecs`), " +
                          "KEY `lastMirrorSuccessSecs` (`lastMirrorSuccessSecs`), " +
+                         "KEY `lastMirroredMaxTimeSecs` (`lastMirroredMaxTimeSecs`), " +
                          "KEY `created` (`created`), " +
                          "KEY `modified` (`modified`), " +
                          "CONSTRAINT `mirror_registrations_productId_fk_1` FOREIGN KEY (`productId`) REFERENCES `Products` (`id`), " +
@@ -47,6 +49,7 @@ query2query.addField('feedId', false, false, true, Query2Query.types.INTEGER);
 query2query.addField('mirrorToken', false, false, false);
 query2query.addField('lastMirrorAttemptSecs', false, false, false, Query2Query.types.NUMBER);
 query2query.addField('lastMirrorSuccessSecs', false, false, false, Query2Query.types.NUMBER);
+query2query.addField('lastMirroredMaxTimeSecs', false, false, false, Query2Query.types.NUMBER);
 query2query.addField('created', false, false, false, Query2Query.types.DATETIME);
 query2query.addField('modified', false, false, false, Query2Query.types.DATETIME);
 
