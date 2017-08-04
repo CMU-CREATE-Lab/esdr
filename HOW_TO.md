@@ -1,24 +1,24 @@
-#How To Use ESDR
+# How To Use ESDR
 
 Until I get time to write good API docs, this document will attempt to at least describe how to get data into ESDR, and how to view it with a simple visualization.
 
 Instructions here use `curl` commands, but you could certainly imagine using other tools for making HTTP requests ([Superagent-ls](https://github.com/kmalakoff/superagent-ls) is my current favorite).
 
-##Create an Account
+## Create an Account
 
 To begin, the first thing you should do is go to [esdr.cmucreatelab.org](https://esdr.cmucreatelab.org/) and create yourself an account.
 
 Once your account is created and verified (ESDR will email you a verification link), follow the steps below in sequence.
 
 
-##Create the OAuth2 Client
+## Create the OAuth2 Client
 
 While logged in to ESDR, go to the Clients tab to create your OAuth2 client.
 
 NOTE: The *Visibility* setting in the client creation form merely controls whether the email address and URLs associated with your client will be publicly visible.  Upon further reflection, there's probably not a great need for making any part of any client publicly visible/discoverable, so that may change.
 
 
-##Authentication
+## Authentication
 
 Before you can do anything, you must first authenticate using your client and user account.  Create a file named `auth.json` using the content below as a template. Keep the `grant_type` set to `password`, but change the values of the other four fields. Use the Client ID and Client Secret you used above when creating your OAuth2 client, and also insert your ESDR username (i.e. your email address) and password:
 
@@ -76,7 +76,7 @@ ESDR should respond with an HTTP 200 and return new access and refresh tokens, s
 }
 ```
 
-##Create a Product
+## Create a Product
 
 Create a file named `product.json` using the content below as a template.  You may need to change the value for the `name` field, since product names must be unique.  A product name can contain letters, numbers, or underscores, but must contain at least one letter.
 
@@ -142,7 +142,7 @@ ESDR should respond with an HTTP 201, with content similar to:
 Remember that id...you'll need it in the next step when creating the device.
 
 
-##Create a Device
+## Create a Device
 
 Create a file named `device.json` using the content below as a template:
 
@@ -176,7 +176,7 @@ ESDR should respond with an HTTP 201, with content similar to:
 Remember that id...you'll need it in the next step when creating the feed.
 
 
-##Create A Feed
+## Create A Feed
 
 Create a file named `feed.json` using the content below as a template:
 
@@ -209,7 +209,7 @@ ESDR should respond with an HTTP 201, with content similar to:
 }
 ```
 
-##Upload Data
+## Upload Data
 
 We're finally ready to upload data samples to the feed.  To do so, you'll need either the feed's API Key (obtained above) or the feed ID and your OAuth2 access token.  Create a file named `data.json` and insert the following:
 
@@ -342,7 +342,7 @@ There are also strict rules for channel names.  A channel name must:
 
 As mentioned above, we use a feed's `channelSpecs` field to map pretty names and units to each of the channel names, for use in visualizations.
 
-##Get Info
+## Get Info
 
 For any public feed, you can get info about the feed with:
 
@@ -353,7 +353,7 @@ If you want the read-write feed API Key, you need to provide the OAuth2 access t
 You can also get info for a feed using the feed's read-write or read-only API key.  The URL is the same as above, but use the API key instead of the `FEED_ID`.
 
 
-##Fetch Tiles
+## Fetch Tiles
 
 For any public feed, you can fetch tiles with:
 
@@ -368,7 +368,7 @@ Details about how to compute `level` and `offset` are provided in [Fluxtream/Bod
 See the Viewing Data section below for an example which makes tile fetches.
 
 
-##Most Recent
+## Most Recent
 
 Sometimes, all you care about is the most recent value(s).  For example, if you're polling the feed every few minutes, then it probably makes sense to use the most-recent method instead of export or tile fetching, e.g.:
 
@@ -379,13 +379,13 @@ Or, for a single channel:
 	 https://esdr.cmucreatelab.org/api/v1/feeds/FEED_ID_OR_API_KEY/channels/CHANNEL_NAME/most-recent
 
 
-##Viewing Data
+## Viewing Data
 
 See the `/etc/plot.html` file in this repository for an example of the grapher doing tile fetches to render the plot. Just double-click it to open it in your browser, then append `?feed=FEED_ID_OR_API_KEY` to the URL, replacing `FEED_ID_OR_API_KEY` with your feed's ID (if public) or its read-write API key (obtained above when you created the feed).
 
 A fancier version will eventually be rolled into ESDR, but this at least provides a simple way to view feed channels.
 
-##Export
+## Export
 
 You can currently export one or more channels from a single feed to CSV (the default) or JSON.
 
@@ -404,7 +404,7 @@ Examples:
 Multi-feed export is coming soon.
 
 
-##Queries
+## Queries
 
 Querying over clients, products, devices, and feeds is fairly robust.  You can do where clauses joined by AND or OR (or both), order by (ASC or DESC), limit, offset, and specify which fields you want to select.  Where clauses also support comparison with =, <>, <, <=, >, >=, is null, and is not null.  Detailed examples will be coming soon.  Some simple examples:
 

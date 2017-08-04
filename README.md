@@ -1,12 +1,10 @@
-Environmental Sensor Data Repository (ESDR)
-===========================================
+# Environmental Sensor Data Repository (ESDR)
 
 ESDR is an open source data repository intended for storing and retrieving time series environmental data.  Basically, if the data has a timestamp and a value, ESDR can store it and provide ways to retrieve it quickly and securely.  Data is stored in a custom, open source [datastore](https://github.com/BodyTrack/datastore) which provides extremely fast data inserts and fetches, making for fast and responsive visualizations.  The ESDR web site ([esdr.cmucreatelab.org](https://esdr.cmucreatelab.org/)) provides a REST API interface to the datastore, making it easy to read/write data. Metadata is stored in a MySQL database.
 
 ESDR is pronounced like the female name, Esther.
 
-Concepts and Terminology
-========================
+## Concepts and Terminology
 
 If you're familiar with Xively's API, you'll see a lot of parallels with ESDR.  Our intention is to use ESDR as the data repository not only for our own products and visualizations, but also for anyone else who wants a place to store data and have tools to easily visualize it.
 
@@ -26,8 +24,7 @@ We don't yet do spatiotemporal aggregation, but it's on the TODO list.
 
 Please see the [HOW TO](https://github.com/CMU-CREATE-Lab/esdr/blob/master/HOW_TO.md) document for more details on how to use ESDR.
 
-Setup
-=====
+## Setup
 
 1. Install the module dependencies:
 
@@ -73,8 +70,7 @@ Setup
 
 7. Make sure the datastore data directory defined in the config file exists.
 
-Run
-===
+## Run
 
 The `NODE_ENV` environment variable may be specified when running, and must be one of `dev`, `development`, `test`, `prod`, or `production`. Defaults to `dev` if unspecified.
 
@@ -93,8 +89,8 @@ To run the server in production mode, do either of the following:
     NODE_ENV=prod npm start
     NODE_ENV=production npm start
 
-Development
-===========
+## Development
+
 To generate the CSS from the SCSS template, do:
 
     npm run-script gen-css
