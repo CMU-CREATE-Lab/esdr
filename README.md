@@ -59,7 +59,7 @@ Setup
 
     If you choose to change the password, make sure it matches the password in `config-test.json`.
 
-6. If running in production, dow the following:
+6. If running in production, do the following:
 
     1. Create the `config-prod.json` and `mail-config-prod.json` files. Just copy from the other configs, but you need only include the parts that differ from `config.js`.
 
