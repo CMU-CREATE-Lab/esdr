@@ -134,7 +134,7 @@ module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {
             return callback(null, false);
          }
          if (!user.isVerified) {
-            return done(null, false);
+            return callback(null, false);
          }
 
          // don't ever need to expose the password
