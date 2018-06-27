@@ -4,10 +4,12 @@
    <title>Browse ESDR</title>
    <meta http-equiv="content-type" content="text/html;charset=utf-8" />
    <style type="text/css">
+   #infowindow {
+    max-height:150px;
+    }
       html, body{
          height: 100%;
          width: 100%;
-         /*background-color: blue;*/
          margin: 0;
          padding: 0;
       }
@@ -122,6 +124,24 @@
         color: white;
       }
 
+      .load{
+        position: absolute;
+        right: 0px;
+        border-radius: 5px;
+        border: 2px solid grey;
+        color: grey;
+        top: 50%;
+        transform: translateY(-50%);
+        text-align: center;
+        line-height: 23px;
+        font-weight: lighter;
+        font-size: 12px;
+      }
+
+      #loadP{
+        margin:1px;
+      }
+
       #search-bar::-webkit-search-cancel-button{
           position: relative;
           right: 10px;
@@ -201,17 +221,26 @@
         background-color: rgba(190,190,190, .75)
       }
 
-      #clear-button{
+      #clear-button-div{
         top: 260px;
         left: 5%;
         min-width: 120px;
-        width: 10%;
+        width: 120px;
+        border-radius: 5px;
+        border: 2px solid grey;
+        color: grey;    
+      }
+      #clear-button{
+        top: 260px;
+        min-width: 120px;
+        width:  220px;       
       }
 
       #clear-button p{
         font-size: 11px;
         padding: 0px;
         line-height: 15px;
+        margin:10px;       
       }
 
       #results-title{
@@ -741,7 +770,7 @@
 
       @media (max-width: 1125px){
         #clear-button{
-          left: 50px;
+          left: 3px;
         }
         #legend {
           left: 225px;
@@ -763,9 +792,8 @@
   </div>
 
   <form class="tool-bar title-bar" id="search-box">
-    <input id="search-bar" type="search" autocomplete="off" placeholder=" (loading)" results="0" disabled>
+    <input id="search-bar" type="search" autocomplete="off" placeholder=" (loading)" results="0" disabled></input>
   </form>
-
   <div class="tool-bar title-bar" id="filter-title">
         <p>Search Result Filters</p>
   </div>
@@ -774,22 +802,21 @@
     <form id="air-quality">
       <fieldset>
        <section>
-          <label title="show PM2.5 channels"><input type="checkbox" name="pm25" onclick="updateHash()" disabled>PM2.5<br></label>
-          <label title="show PM10 channels"><input type="checkbox" name="pm10" onclick="updateHash()" disabled>PM10<br></label>
-          <label title="show ozone channels"><input type="checkbox" name="ozone" onclick="updateHash()" disabled>Ozone (O<sub>3</sub>)<br></label>
-          <label title="show nitric oxide Channels"><input type="checkbox" name="no" onclick="updateHash()" disabled>Nitric Oxide (NO)<br></label>
-          <label title="show nitrogen dioxide channels"><input type="checkbox" name="no2" onclick="updateHash()" disabled>Nitrogen Dioxide (NO<sub>2</sub>)<br></label>
-          <label title="show sulfur dioxide channels" ><input type="checkbox" name="so2" onclick="updateHash()" disabled>Sulfur Dioxide (SO<sub>2</sub>)<br></label>
-          <label title="show carbon monoxide channels"><input type="checkbox" name="co" onclick="updateHash()" disabled>Carbon Monoxide (CO)<br></label>
+          <label title="show PM2.5 channels"><input id="PM25"type="checkbox" name="pm25" onclick="updateSensors()" disabled>PM2.5<br></label>
+          <label title="show PM10 channels"><input id="PM10"type="checkbox" name="pm10" onclick="updateSensors()" disabled>PM10<br></label>
+          <label title="show ozone channels"><input id="O3"type="checkbox" name="ozone" onclick="updateSensors()" disabled>Ozone (O<sub>3</sub>)<br></label>
+          <label title="show nitric oxide Channels"><input id="NO"type="checkbox" name="no" onclick="updateSensors()" disabled>Nitric Oxide (NO)<br></label>
+          <label title="show nitrogen dioxide channels"><input id="NO2"type="checkbox" name="no2" onclick="updateSensors()" disabled>Nitrogen Dioxide (NO<sub>2</sub>)<br></label>
+          <label title="show sulfur dioxide channels" ><input id="SO2" type="checkbox" name="so2" onclick="updateSensors()" disabled>Sulfur Dioxide (SO<sub>2</sub>)<br></label>
+          <label title="show carbon monoxide channels"><input id="CO"type="checkbox" name="co" onclick="updateSensors()" disabled>Carbon Monoxide (CO)<br></label>
         </section>
       </fieldset>
     </form>
   </div>
-
-  <div class="title-bar tool-bar button" id="clear-button" onclick="clearFilters()" title="resets map to show all channels">
-    <p>Clear Search Filters</p>
-  </div>
-
+  <form class="tool-bar" id="clear-button">
+    <div id="clear-button-div" onclick="clearFilters()" title="resets map to show all channels"><p>Clear Search Filters</p></div>
+    <div class="load" onclick="getNext()"><p id="loadP">Load next 50</p></div>
+  </form>
   <div class="title-bar tool-bar" id="results-title">
       <p>Results (<span style="font-size:12px">Showing 0 of 0</span>):</p>
   </div>
@@ -917,6 +944,11 @@
      * ~~~~~~~~~~~~~~~~~~~~~~~~~~ GLOBAL VARIABLES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
      */
 
+     /*
+      *~~~~~~~~~~~~~~~~!NOTE!~~~~~~~~~~~~~~~~~~~~~~~~~~
+      *Anything that says Andrew's near it was implemented in a front end redesign to increase performance by reducing jQuery look up reliance 
+      */
+
     //___________________Initial loading feeds variables:_______________________
 
     var ESDR_API_ROOT_URL = 'https://esdr.cmucreatelab.org/api/v1';
@@ -930,6 +962,17 @@
       export: null,
     };
     var initParams = getHashParams();
+    //~~~~______________Check list variables_______________________~~~~~~~~
+    var checks={
+      PM25:document.getElementById("PM25"),
+      PM10:document.getElementById("PM10"),
+      O3:document.getElementById("O3"),
+      NO:document.getElementById("NO"),
+      NO2:document.getElementById("NO2"),
+      SO2:document.getElementById("SO2"),
+      CO:document.getElementById("CO")   
+    };
+    var checked=[];
     //___________________ Grapher variables ____________________________________
 
     var plotManager;           //handle for the PlotManager 
@@ -1047,7 +1090,32 @@
     var countryPointSizePixels = 7; 
     var blockPointSizePixels = 70; 
 
+    //____________________Andrew's variables_______________
+    var displaySensors=[];    //array of sensor objects that sshould be displayed in the side bar and on the map
+    var searchSensors=[];     //sensors that match the title search
+    var channelSensors=[];    //sesnors that match the channel search
+    var feedPlaceHolder=0;    //used to determin were the update display for loop should start
+    var channelPlaceHolder=0; //used to determin were the update display for loop should start
+    var numbDivs=0;           // keeps track of the number of divs being displayed
+    var numbLoad=100;           // the number of divs to be loaded per time more divs loading button is clicked  
+    var betterAllFeedNumb=[]; //an array of purely all ids  
+    var chanNames=[];   // keeps track of labels for sensors that meet checked box criteria
+    var placeInChanNames=0;   // keeps track of place to strat in update for loop for chanNames array
+    var chanNamesExisted=false;//becomes true if chanNames is altered as this may make it seem like it was never changed for the initial state of [] so this
+                              //is used to see if there are no things that meet request not just the array was always empty
+    //aliases used to have concrete names for channels which have names that vary
+    var aliases={
+      PM25:["PM2_5,PM25","PM25B_UG_M3,PM25_2__UG_M3","PM25_UG_M3,PM2_5_daily_max","PM2_5_daily_mean","PM2_5_daily_median","PM25B_UG_M3_daily_max","PM25B_UG_M3_daily_mean","PM25B_UG_M3_daily_median","PM25T_UG_M3,PM25_2__UG_M3_daily_max","PM25_2__UG_M3_daily_mean","PM25_2__UG_M3_daily_median","PM25_UG_M3,PM25_UG_M3_daily_max","PM25_UG_M3_daily_mean","PM25_UG_M3_daily_median","pm_2_5","PM2_5Value","pm2_5,pm2_5_1hr","pm2_5_24hr","PM_2_5","PM25_FL_PERCENT","pm","stats_pm"],
+      PM10:["PM10","PM10B_UG_M3","PM10_UG_M3","PM10_FL_PERCENT","pm","pm_10_0","pm_1_0","stats_pm"],
+      O3:["OZONE","OZONE_daily_max","OZONE_daily_mean","OZONE_daily_median","OZONE2_PPM","OZONE2_PPM_daily_max","OZONE2_PPM_daily_mean","OZONE2_PPM_daily_median","OZONE_PPM","OZONE_PPM_daily_max","OZONE_PPM_daily_mean","OZONE_PPM_daily_median","Ozone_O3","Ozone","Ozone_O3_daily_max","Ozone_O3_daily_mean","Ozone_O3_daily_median","UV_Ozone"],
+      NO:["NOY","NO","NOX","NO2Y","NOX_PPM","NO_PPM","NOX_PPB,NO_PPB,NOYDIF_PPB","NOY_PPB","Nitric_Oxide_NO","Oxides_of_Nitrogen_NOx","NO_000000000000","NO_000666626057","NO_0006666259B6","NO_000666626A96","NO_000666625C92"],
+      NO2:["NO2","NOY","NOX","NO2Y","NO2_PPM","NOX_PPM","NO2_PPB","NOX_PPB","NOYDIF_PPB","NOY_PPB","Nitrogen_Dioxide_NO2","Oxides_of_Nitrogen_NOx"],
+      SO2:["SO2","SO2_PPM","SO2_PPB","Sulfor_Dioxide","Sulfur_Dioxide","SO2_UNCALIB","Sulfur_Dioxide_SO2","UV_Sulfur_Dioxide","SO2_Xe"],
+      CO:["CO","CO_PPM","CO_PPB","Carbon_Monoxide_CO","FTIR_Carbon_Monoxide","CO_000000000000","CO_000666626057","CO_0006666259B6","CO_000666626A96","CO_000666625C92"] 
+    }
+
     //___________________ Search Filter Variables: _____________________________
+
 
     // Sorting Feeds:
     var sortedFeedIDs = { pm25:  [], 
@@ -1069,6 +1137,7 @@
                                co:    []};
 
     //Displaying Feed ID's: 
+    var allFeeds=[];
     var allFeedNums = [];         //All Feed ID's 
     var showNumList = [];         //Feed ID's to show
     var clickedNumList = [];      //Feed ID's clicked on
@@ -1118,8 +1187,12 @@
     var jsonRequest = [];
     //_______________________ Other Variables: ______________________________
 
+    
+
     var exportMenuOpen = false;
     var exportMenuTimer = null;
+
+    document.getElementById("loadP").innerHTML="Load next "+numbLoad;
 
     function createDatasource(source) {
        var split = source.split('.');
@@ -1158,7 +1231,6 @@
     }
     
     function addPlot(channel) {
-       console.log(channel);
        var html = [];
        html.push('<div style="height:100px; width:100%; position:relative; border-bottom:1px solid black">');
        var plotName = 'plot' + plotCount;
@@ -1198,7 +1270,6 @@
     }
 
     function clickChannel(input) {
-      console.log('clickChannel ' + input.name); 
       if (input.checked) {
         addPlot(input.name);
       } else {
@@ -1226,11 +1297,9 @@
        document.getElementById("loading").style['display'] = 'block';
        var data = response.data;
        var max = data.limit + data.offset;
-       console.log('Received feeds in range ' + data.offset + ' - ' + max);
        if (data.totalCount > max) {
          $.ajax({url: ESDR_API_ROOT_URL + '/feeds?offset=' + max, success: loadFeeds});
        }
-       // TODO(rsargent): get all the feeds not just the first 1K
        var feeds = data.rows;
        var html = [];
 
@@ -1246,207 +1315,338 @@
               feedLocList.color.push(0, 0, 1, ALPHA, 1, 0);
              }
 
+             allFeeds.push(feeds[i]);
+             displaySensors.push(feeds[i]);
+             betterAllFeedNumb.push(feeds[i].id);
+             allFeedNums.push(feeds[i].id);
+
              for (var c = 0; c < channels.length; c++) {
                 var channel = channels[c];
-                var channelId = sortChannel(feed.productId, feed.id, channel); 
                 var label = feed.name + ' (' + feed.id + ').' + channel;
                 var id = feed.id + '.' + channel;
-                var idHashTag = feed.id; 
                 channelLabels[id] = label;
-                html.push('<div class="sensors" style="margin-left: 3px" data-channel-type="' + channelId + '" id="' + label.toLowerCase() + " #" + idHashTag + '"> <label> <input type="checkbox" onclick="clickChannel(this)" name="' + id +'">' + label + '<br></label></div>');
              }
           }
-       }
-       $('#channels').append(html.join(''));  
-       $('#results-title p').replaceWith('<p>Results (<span style="font-size:12px">Showing ' 
-                    + $(".sensors").length + " of " + $(".sensors").length + '</span>):</p>');
+       }      
        if (data.totalCount <= max) {
           // That was the last data.  Ready to process
           document.getElementById("loading").style['display'] = 'none';
-          // TODO(rsargent): let's update this only when panning or zooming the time axis
-          // window.setInterval(updateHash, 100);
-
           feedLocList.latlng = new Float32Array(feedLocList.latlng); 
-          // feedLocList.index = new Float32Array(feedLocList.index); 
           feedLocList.color = new Float32Array(feedLocList.color); 
-
-          $("div[class = sensors]").each(function(){
-
-              var currentNum = $(this).attr('id').substr($(this).attr('id').lastIndexOf('#') + 1); 
-              
-              if (currentNum == 4712) console.log('hi')
-              if (allFeedNums.length == 0 || currentNum != allFeedNums[allFeedNums.length - 1]) {
-                  allFeedNums.push(parseInt(currentNum));
-              }
-          });  
-
           initializeWebGL();  
           document.getElementById("loading").style['display'] = 'none';
           loadHashInit();
           window.onhashchange = loadHash; 
           enableSearch();
+          updateSensors();
        }
 
     }
 
-    function sortChannel(productId, feedID, channel){
-      if (productId == 1){
-        //console.log("ACHD Found"); 
-        if (channel.indexOf("PM25") > -1){
-          if (sortedFeedIDs.pm25[sortedFeedIDs.pm25.length - 1] != feedID) sortedFeedIDs.pm25.push(feedID), sortedChannelNames.pm25.push(channel);
-          return "pm25";  
-        }
-        else if (channel.indexOf("PM10") > -1){
-          if (sortedFeedIDs.pm10[sortedFeedIDs.pm10.length - 1] != feedID) sortedFeedIDs.pm10.push(feedID), sortedChannelNames.pm10.push(channel);
-          return "pm10"; 
-        }
-        else if (channel.indexOf("OZONE") > -1){
-          if (sortedFeedIDs.ozone[sortedFeedIDs.ozone.length - 1] != feedID) sortedFeedIDs.ozone.push(feedID), sortedChannelNames.ozone.push(channel);
-          return "ozone";  
-        }
-        else if (channel.indexOf("NO_") > -1){
-          if (sortedFeedIDs.no[sortedFeedIDs.no.length - 1] != feedID) sortedFeedIDs.no.push(feedID), sortedChannelNames.no.push(channel);
-          return "no"; 
-        }
-        else if (channel.indexOf("NO2_") > -1){
-          if (sortedFeedIDs.no2[sortedFeedIDs.no2.length - 1] != feedID) sortedFeedIDs.no2.push(feedID), sortedChannelNames.no2.push(channel);
-          return "no2"; 
-        }
-        else if (channel.indexOf("SO2") > -1){
-          if (sortedFeedIDs.so2[sortedFeedIDs.so2.length - 1] != feedID) sortedFeedIDs.so2.push(feedID), sortedChannelNames.so2.push(channel);
-          return "so2"; 
-        }
-        else if (channel.indexOf("CO_") > -1){
-          if (sortedFeedIDs.co[sortedFeedIDs.co.length - 1] != feedID) sortedFeedIDs.co.push(feedID), sortedChannelNames.co.push(channel);
-          return "co"; 
-        }
-      }else if(productId == 11){
-        //console.log("AirNow Found");
-        if (channel.indexOf("PM2_5") > -1){
-          if (sortedFeedIDs.pm25[sortedFeedIDs.pm25.length - 1] != feedID) sortedFeedIDs.pm25.push(feedID), sortedChannelNames.pm25.push(channel);
-          return "pm25";  
-        }
-        else if (channel.indexOf("PM10") > -1){
-          if (sortedFeedIDs.pm10[sortedFeedIDs.pm10.length - 1] != feedID) sortedFeedIDs.pm10.push(feedID), sortedChannelNames.pm10.push(channel);
-          return "pm10";  
-        }
-        else if (channel.indexOf("OZONE") > -1){
-          if (sortedFeedIDs.ozone[sortedFeedIDs.ozone.length - 1] != feedID) sortedFeedIDs.ozone.push(feedID), sortedChannelNames.ozone.push(channel);
-          return "ozone"; 
-        }
-        else if (channel.indexOf("NO2") > -1){
-           if (sortedFeedIDs.no2[sortedFeedIDs.no2.length - 1] != feedID) sortedFeedIDs.no2.push(feedID), sortedChannelNames.no2.push(channel);
-          return "no2"; 
-        }
-        else if (channel.indexOf("NO") > -1){
-          if (sortedFeedIDs.no[sortedFeedIDs.no.length - 1] != feedID) sortedFeedIDs.no.push(feedID), sortedChannelNames.no.push(channel);
-          return "no"; 
-        }
-        else if (channel.indexOf("SO2") > -1){
-          if (sortedFeedIDs.so2[sortedFeedIDs.so2.length - 1] != feedID) sortedFeedIDs.so2.push(feedID), sortedChannelNames.so2.push(channel);
-          return "so2"; 
-        }
-        else if (channel.indexOf("CO") > -1){
-          if (sortedFeedIDs.co[sortedFeedIDs.co.length - 1] != feedID) sortedFeedIDs.co.push(feedID), sortedChannelNames.co.push(channel);
-          return "co"; 
-        }  
-      }else if(productId == 35){
-        //console.log("BAAQMD Found");
-        if (channel === "PM2_5"){
-          if (sortedFeedIDs.pm25[sortedFeedIDs.pm25.length - 1] != feedID) sortedFeedIDs.pm25.push(feedID), sortedChannelNames.pm25.push(channel);
-          return "pm25";  
-        }
-        else if (channel === "Ozone_O3"){
-          if (sortedFeedIDs.ozone[sortedFeedIDs.ozone.length - 1] != feedID) sortedFeedIDs.ozone.push(feedID), sortedChannelNames.ozone.push(channel); 
-          return "ozone"; 
-        }
-        else if (channel === "Nitrogen_Dioxide_NO2"){
-          if (sortedFeedIDs.no2[sortedFeedIDs.no2.length - 1] != feedID) sortedFeedIDs.no2.push(feedID), sortedChannelNames.no2.push(channel);
-          return "no2"; 
-        }
-        else if (channel === "Nitric_Oxide_NO"){
-          if (sortedFeedIDs.no[sortedFeedIDs.no.length - 1] != feedID) sortedFeedIDs.no.push(feedID), sortedChannelNames.no.push(channel);
-          return "no"; 
-        }
-        else if (channel === "Sulfur_Dioxide_SO2"){
-          if (sortedFeedIDs.so2[sortedFeedIDs.so2.length - 1] != feedID) sortedFeedIDs.so2.push(feedID), sortedChannelNames.so2.push(channel);
-          return "so2"; 
-        }
-        else if (channel === "Carbon_Monoxide_CO"){
-          if (sortedFeedIDs.co[sortedFeedIDs.co.length - 1] != feedID) sortedFeedIDs.co.push(feedID), sortedChannelNames.co.push(channel);
-          return "co"; 
-        }
-      }else if(productId == 9){
-        //console.log("Speck Found"); 
-        sortedFeedIDs.speck.push(feedID); 
-        return "speck"; 
+   
+    //Andrew's functions---------------------------------------------------------------------
+
+    //Orginally had more content now is just calls appendSensors
+    function getNext(){
+      appendSensors();
+
+    }
+
+    // returns the number of channels on the dsiplaySensor array
+    function getNumbChannels(){
+      var numb=0;
+      var counted=0;
+      displaySensors.forEach(function(sen,ind){
+         var keys=Object.keys(sen.channelBounds.channels);
+         numb+=keys.length;
+         counted++;
+      });
+      return numb;
+    }
+
+
+//returns a string with the correct div format
+    function makeDiv(channelForSensor,sensorFeed,labelIn){
+      var label="";
+       var channel;
+       var id;
+       var idHashTag; 
+       //if the chanNames array is being used than labelIn will be defined and should be used for all vars
+       if(labelIn!=undefined&&labelIn.length>0){
+        idHashTag=labelIn.substring(labelIn.indexOf("(")+1,labelIn.indexOf(")"));
+        channel=labelIn.substring(labelIn.indexOf(".")+1);
+        id=idHashTag+"."+channel;
+        label=labelIn;
+       }else{
+          label="";
+        channel=channelForSensor;
+        id = sensorFeed.id + '.' + channel;
+        idHashTag = sensorFeed.id; 
+        label = sensorFeed.name + ' (' + sensorFeed.id + ').' + channel;
+       }
+       //old way divs were structed vs new way
+       //var aDiv='<div class="sensors" style="margin-left: 3px" id='+idHashTag+'-'+channel+'> <label> <input type="checkbox" onclick="clickChannel(this)" data='+label+'name="' + id +'">' + label + '<br></label></div>';
+
+       var aDiv='<div class="sensors" style="margin-left: 3px" id='+idHashTag+'-'+channel+'> <label> <input type="checkbox" onclick="clickChannel(this)"data="'+label+'"name="' + id +'">' + label + '<br></label></div>';
+       return aDiv;
+    }
+
+//appends divs based on what is in the displaySensor and chanNames arrays
+    function appendSensors(){
+      var html=[];
+      var first=true;
+      var countChans=0;
+      var count2=0;
+      var numbChannels= getNumbChannels();    
+      //checks to see if there are just no channels that meet request
+      if(chanNamesExisted&&chanNames.length<1){
+        numbChannels=0;
+      }else{
+        //for loop of sensors starts on last used sensor
+      for(var i=feedPlaceHolder;i<displaySensors.length;i++){
+        var feed=displaySensors[i];
+        var keys=Object.keys(feed.channelBounds.channels);
+        //for loop of a sensors channels starts after the last logged channel
+        for(var k=channelPlaceHolder;k<keys.length;k++){
+          var holder;
+          //makes sure only numbLoad divs are loaded with each call
+          if(countChans<numbLoad){
+            channelPlaceHolder=0;
+            //if the channels search has created an array of labels i need to only look through that
+            if(chanNames.length>0){
+              numbChannels=chanNames.length;
+              for(var ic=placeInChanNames;ic<chanNames.length;ic++){
+                if(count2<numbLoad){
+                  holder=makeDiv(keys[k],displaySensors[i],chanNames[ic]);
+                  html.push(holder);
+                  numbDivs++;
+                  placeInChanNames++;
+                  count2++;
+                  countChans++;
+                }
+              }
+            }else{
+              //when channels haven't been made
+              placeInChanNames=0;
+              holder=makeDiv(keys[k],displaySensors[i]);
+              html.push(holder);
+              numbDivs++;
+            }    
+          }else{
+          //the else is when numbLoad divs have been made so we dont need more
+            if(first){
+              //tracks where the last div was appended so it can start here in the future
+              channelPlaceHolder=k;
+              feedPlaceHolder=i;
+              first=false;
+            }
+          }
+          countChans+=1;
+        }        
+        
+      }}
+      //actually appending things
+      if(numbDivs<=getNumbChannels()){
+        $('#results-title p').replaceWith('<p>Results (<span style="font-size:12px">Showing ' 
+                    + numbDivs+ " of " +numbChannels + '</span>):</p>');
+      $('#channels').append(html.join(''));  
+      }     
       }
-      // }else if(feedName.indexOf("Speck") > -1){
-      //   console.log("Speck Found");
-      // }else if(feedName.indexOf("Retigo") > -1){
-      //   console.log("Retigo Found");
-      // }else if(feedName.indexOf("Tepper") > -1){
-      //   console.log("Tepper Found");
-      // }else if(feedName.indexOf("Rodeo") > -1){
-      //   console.log("Rodeo Found");
-      // }else if(feedName.indexOf("fenceline_org") > -1){
-      //   console.log("fenceline_org Found");
-      else if(productId == 36){
-        //console.log("Fenceline Found")
-        if(channel == "PM_2_5"){
-          if (sortedFeedIDs.co[sortedFeedIDs.pm25.length - 1] != feedID) sortedFeedIDs.pm25.push(feedID), sortedChannelNames.pm25.push(channel);
-          return "pm25"; 
-        }else if(channel.indexOf("Ozone") > -1){
-          if (sortedFeedIDs.co[sortedFeedIDs.ozone.length - 1] != feedID) sortedFeedIDs.ozone.push(feedID), sortedChannelNames.ozone.push(channel);
-          return "ozone"; 
-        }else if(channel.indexOf("Sulfur_Dioxide") > -1){
-          if (sortedFeedIDs.so2[sortedFeedIDs.so2.length - 1] != feedID) sortedFeedIDs.so2.push(feedID), sortedChannelNames.so2.push(channel);
-          return "so2"; 
-        }else if(channel.indexOf("Carbon_Monoxide") > -1){
-          if (sortedFeedIDs.co[sortedFeedIDs.co.length - 1] != feedID) sortedFeedIDs.co.push(feedID), sortedChannelNames.co.push(channel);
-          return "co";
+      
+//sets dispalSensors to be a copy of allFeeds so that all sensors will be displayed
+    function resetDisplay(){
+      displaySensors=[];
+      for(var j=0;j<allFeeds.length;j++){
+        displaySensors.push(allFeeds[j]);
+      }
+    }
+
+//updates what needs to be displayed then displays it
+    function updateSensors(){
+      var t0 = performance.now();//times this function
+      resetDisplay();//sets displaySensors back to show all sensors
+      searchSensors=searchJSON();//array of sensors that meets search bar parameters
+      channelSensors=searchChannel();//array of sensors that meets checked box parameters
+      let holdArr=[]; //used to swap chanNames
+      //if chanNames has been created and a search was input then chanNames needs to be refined to meet the search bar
+      if(searchSensors.length>0&&chanNames.length>0){
+        chanNamesExisted=true;
+        for(var ik=0;ik<chanNames.length;ik++){
+          //checks if chanNames element meets search bar query
+          if(chanNames[ik].toLowerCase().indexOf(document.getElementById("search-bar").value)>-1){
+            holdArr.push(chanNames[ik]);
+          }
+        }
+        chanNames=holdArr;
+      }
+      var none=false;
+      var none2=false;
+      //used to tell the difference between no resualts found and no query in put
+      //if the condition was met no no input was used in the search
+      if(searchSensors.length>0&&searchSensors[0]==-1){
+        searchSensors=[];
+        //used later to set displaySensors=[]
+        none=true;
+      }
+      if(searchSensors.length>0&&searchSensors[0]==-2){
+        searchSensors=[];
+        //used later to set displaySensors=[]
+        none2=true;
+      }
+      var compat=[];
+      var short;
+      var long;
+
+      if(searchSensors.length>0||channelSensors.length>0){
+        //used to define which array is shorter to use in the for loops
+      if(channelSensors.length>searchSensors.length){
+        short=searchSensors;
+        long=channelSensors;
+      }else{
+        short=channelSensors;
+        long=searchSensors;
+      }
+      //if the short array has 0 elements there will be no matches so rather than look for matches just use the long array
+      if(short.length>0){
+        //looks for matches between the two arrays and puts them in a third array
+        for(var i=0;i<short.length;i++){
+        for(var k=0;k<long.length;k++){
+          if(short[i].id==long[k].id){
+            compat.push(short[i]);
+          }
+        }
+      }
+      }else{
+        compat=long;
+      }
+      }
+      //if none is true then no input to search was used so all that matters is the channel search
+      if(none){
+        //if the channel search was not used dont change displaySensors
+        if(channelSensors.length>0){
+        displaySensors=channelSensors;
         }
       }else{
-        //console.log("Other Found");
-        return "other"; 
+        //no special cases happened so uses the matches
+        if(compat.length>0){
+          displaySensors=compat;
+        }
       }
-      return "other"; 
+      if(none2){
+        displaySensors=[];
+      }  
+      var t1= performance.now();//used for timing
+      console.log("Timing "+(t1-t0))
+      channelPlaceHolder=0;
+      feedPlaceHolder=0;
+      numbDivs=0;
+      placeInChanNames=0;
+      document.getElementById("channels").innerHTML="";
+      appendSensors();
+      searchAttributes();
     }
 
-    function prepareJSON(){
-      var pm25Array = [];
-      var index = 0; 
-      var alreadySorted = [];
-
-      while(index < sortedChannelNames.pm25.length){
-        if (alreadySorted.indexOf(index) == -1){
-          var sameChannelName = []; 
-          var checkValue = sortedChannelNames.sortedFeedIDs.pm25[index];
-          var idx = sortedChannelNames.pm25.indexOf(checkValue); 
-          while (idx != -1){
-            sameChannelName.push(idx);
-            alreadySorted.push(idx);
-            idx = sortedChannelNames.pm25.indexOf(checkValue, idx + 1); 
+//searches sensors based on content of the search bar returns array
+    function searchJSON(){
+      //gets content of search bar which is what will be checked for in latter strings
+      var str=document.getElementById("search-bar").value;
+      var searchRes=[];
+      //checks if search was empty
+      if(str.length<1){
+        searchRes.push(-1);
+        return searchRes;
+      }
+      //search all sensor names for the search input and adds the to the search results array if input is there
+      for(var j=0;j<allFeeds.length;j++){
+          if(allFeeds[j].name.toLowerCase().indexOf(str.toLowerCase())>-1){
+            searchRes.push(allFeeds[j]);
+        }else{
+          let KeysArr=Object.keys(allFeeds[j].channelBounds.channels);
+          for(var ij=0;ij<KeysArr.length;ij++){
+            if(KeysArr[ij].toLowerCase().indexOf(str.toLowerCase())>-1){        
+              let testArr=[];
+              testArr.push(channels);
+              let channels5={
+                [KeysArr[ij]]:allFeeds[j].channelBounds.channels[KeysArr[ij]]
+              };
+              objCloneOfSensor = JSON.parse(JSON.stringify(allFeeds[j]));
+              objCloneOfSensor.channelBounds.channels=channels5;
+              searchRes.push(objCloneOfSensor);
+            }
           }
-          pm25Array.push(sameChannelName);
         }
-        index++;
+      }
+      if(searchRes.length<1){
+        searchRes.push(-2);
+      }
+      return searchRes;
       }
 
-      var pm25JSON = {name:"pm_25", spec:[]}; 
-      
-      for(var i = 0; i < pm25Array.length; i++){
-        var feedString = "whereOr="; 
-        console.log(pm25Array[i].length);
-        for (var k = 0; k < pm25Array[i].length; k++){
-          feedString += "id=" + sortedFeedIDs.pm25[pm25Array[i][k]] + ",";
-        }
-        feedString = feedString.substring(0, feedString.length - 1);
-        pm25JSON.spec.push({feeds: feedString, channels: [sortedChannelNames.sortedFeedIDs.pm25[pm25Array[i][0]]]});  
-      }
 
-      console.log(JSON.stringify(pm25JSON));
+  //searches sensors to see if they have a channel which matches checked box inputs
+    function searchChannel(){
+      chanNames=[];
+      chanNamesExisted=false;
+      var resArr=[];
+      var keys=Object.keys(checks);
+      for(var j=0;j<allFeeds.length;j++){
+        for(var i=0;i<keys.length;i++){
+          var x=checks[keys[i]];
+          if(x.checked){
+            //the rest of this method ifor itteration hasChannel actually checks for valid channels
+           if(hasChannel(allFeeds[j],keys[i])){
+            resArr.push(allFeeds[j]);
+           }
+          }
+        }
+        
+      }
+      return resArr;
     }
+
+
+//chekcs for valid channels
+    function hasChannel(sensor,dType){
+      var keys=Object.keys(sensor.channelBounds.channels);
+      //itterates through aliases array and channels uses the passes in key dType to determin which aliases to check
+      for(var k=0;k<aliases[dType].length;k++){
+        for(var i=0;i<keys.length;i++){
+          //if a valid channel is present then it formats a tring in the label format then adds it to the channel array and returns true
+          if(aliases[dType][k].toLowerCase()===keys[i].toLocaleLowerCase()){
+            let formated=sensor.name+" ("+sensor.id+")."+keys[i];
+            chanNames.push(formated);
+            return true;
+          }
+        }    
+      }
+      return false;
+    }
+    //returns a sensor object from the displayed array with matching ID
+    function getSensor(wantId,inArr){
+      for(var h=0;h<inArr.length;h++){
+        if(inArr[h].id==wantId){
+          return inArr[h];
+        }
+      }
+    }
+    //returns an array of the valid channels a sensor has
+    function getChannelFromSensor(sensorGiven,inArr){
+      var resArr=[];
+      for(var h=0;h<inArr.length;h++){
+        if(inArr[h].indexOf(sensorGiven.name)>-1){
+          resArr.push(inArr[h]);
+        }
+      }
+      return resArr;
+    }
+
+
+
+    //-----------------------------------------------------------------------------------------------
+    //------End Andrew's stuff-----------------------------------------------------------------------
+    //-----------------------------------------------------------------------------------------------
+
+
 
     function enableSearch(){
         $("#search-bar").prop('disabled', false);
@@ -1480,10 +1680,10 @@
           if ($('#search-bar').val() == ""){
              clearInterval(timer); 
              timer = null; 
-             updateHash();
+             updateSensors();
           }else if (timer == null) {
              timer = setTimeout(function(){
-             updateHash()}, 100)}
+             updateSensors()}, 800)}
        }).keydown(function(){
           if (timer) {
              clearInterval(timer);
@@ -1493,7 +1693,7 @@
           $(this).focus(); 
 
        }).on("search", function(){
-          updateHash(); 
+          updateSensors();
        }); 
 
        $('#duration').change(function(){
@@ -1697,6 +1897,7 @@
     }
 
     // from http://stackoverflow.com/questions/4197591/parsing-url-hash-fragment-identifier-with-javascript
+    //not Andrew was already here
     function getHashParams() {
        var hashParams = {};
        var e,
@@ -1764,7 +1965,6 @@
        }
 
        if(!oldPipeURL){
-          console.log("")
           if (oldChannels.join(',') != newChannels.join(',')) {
             for (var i = 0; i < oldChannels.length; i++) {
                removePlot(oldChannels[i]);
@@ -1840,7 +2040,6 @@
        }
 
        if(!oldPipeURL){
-          console.log("")
           if (oldChannels.join(',') != newChannels.join(',')) {
             for (var i = 0; i < oldChannels.length; i++) {
                removePlot(oldChannels[i]);
@@ -1872,7 +2071,6 @@
        var plotName = 'plot' + plotIdx;
        plotManager.getPlotContainer(plotName).removePlot(plotManager.getPlot(plotName));
        $('#plot' + plotIdx).parent().remove();
-       // window.clearInterval(plotScalers[plotIdx]);
        delete plotScalers[plotIdx]; 
        $('input[name="' + channel + '"]').prop('checked', false);
        var feedIndex = parseInt(channel.substr(0, channel.indexOf('.'))); 
@@ -1942,13 +2140,7 @@
       updateHash();
     }
 
-      // function doExport(willExportAllChannels) {
-      //   var idOrApiKey = selectedFeed.isPublic ? selectedFeed.id : selectedFeed.apiKeyReadOnly;
-      //   var channels = willExportAllChannels ? Object.keys(selectedFeed.channelBounds.channels).sort().join(',') : selectedChannelName;
-      //   var dateAxisRange = plotManager.getDateAxis().getRange();
-      //   window.open(ESDR_API_ROOT_URL + "/feeds/" + idOrApiKey + "/channels/" + channels + "/export?from=" + dateAxisRange.min + "&to=" + dateAxisRange.max, '_blank');
-      // }
-    
+
 
     window.grapherLoad = function() {
        var maxTimeSecs = Date.now() / 1000;
@@ -2012,107 +2204,20 @@
     }
 
     function searchAttributes() {
-       var str = $('#search-bar').val().toLowerCase();     
-       var wordList = str.split(" ") || [];
-       showNumList = [];$(".sensors").length;
-       var filterNumList = [];
-
-
-       var showConditions = "div[class = sensors]"; 
-       for (var i = 0; i < wordList.length; i++){
-          if (wordList[i] != "") {
-             showConditions += "[id *= '" + wordList[i] + "']";  
-          }
-       }; 
-
-       var finalSearchConditions = ""; 
-       var noneChecked = true; 
-       $('#filters [type = checkbox]').each(function(index, input) {
-          if (input.checked){
-            noneChecked = false; 
-            switch (input.name) {
-                case "pm25":
-                  filterNumList = filterNumList.concat(sortedFeedIDs.pm25);
-                  console.log("pm25 checked"); 
-                  finalSearchConditions += showConditions + "[data-channel-type = 'pm25'],"; 
-                  break;
-                case "pm10":
-                  filterNumList = filterNumList.concat(sortedFeedIDs.pm10);
-                  console.log("pm10 checked"); 
-                  finalSearchConditions += showConditions + "[data-channel-type = 'pm10'],"; 
-                  break;
-                case "ozone":
-                  filterNumList = filterNumList.concat(sortedFeedIDs.ozone);
-                  console.log("ozone checked"); 
-                  finalSearchConditions += showConditions + "[data-channel-type = 'ozone'],"; 
-                  break;
-                case "no":
-                  filterNumList = filterNumList.concat(sortedFeedIDs.no);
-                  console.log("no checked");
-                  finalSearchConditions += showConditions + "[data-channel-type = 'no'],"; 
-                  break;
-                case "no2":
-                  filterNumList = filterNumList.concat(sortedFeedIDs.no2);
-                  console.log("no2 checked"); 
-                  finalSearchConditions += showConditions + "[data-channel-type = 'no2'],"; 
-                case "so2":
-                  filterNumList = filterNumList.concat(sortedFeedIDs.so2);
-                  console.log("so2 checked")
-                  finalSearchConditions += showConditions + "[data-channel-type = 'so2'],"; 
-                  break;
-                case "co":
-                  filterNumList = filterNumList.concat(sortedFeedIDs.co);
-                  console.log("co checked");
-                  finalSearchConditions += showConditions + "[data-channel-type = 'co'],";
-                  break;
-
-            }
-          }
+      showNumList=[];
+      displaySensors.forEach(function(obj, ind){
+        showNumList.push(obj.id);
       });
-
-      if (noneChecked){
-        filterNumList = filterNumList.concat(allFeedNums);
-        finalSearchConditions = showConditions; 
-      }else{
-        finalSearchConditions = finalSearchConditions.substring(0,finalSearchConditions.length - 1); 
-      };
-
-      $(finalSearchConditions).each(function(){
-
-        var currentNum = $(this).attr('id').substr($(this).attr('id').lastIndexOf('#') + 1); 
-        if (filterNumList.indexOf(parseInt(currentNum)) > -1 && (showNumList.length == 0 || currentNum != showNumList[showNumList.length - 1])) {
-            showNumList.push(parseInt(currentNum)); 
-          }
-      });
-
-
-        var $allSelect = $("div[class = sensors]");
-        if($allSelect){
-          changeEnabled(allFeedNums, 0); 
+          changeEnabled(betterAllFeedNumb, 0); 
           if (showNumList.length != 0){
             changeEnabled(showNumList, 1);
-          }
-
-          fastdom.mutate(function(){
-            $allSelect.css({'display':'none'}); 
-            console.log("Hide All");
-            if (showNumList.length != 0){
-              fastdom.mutate(function(){
-                console.log("ShowNumList > 0 and show finalSearchConditions");
-                $(finalSearchConditions).css({'display':''});
-              });
-            }
-          });
-       }; 
-
-       $('#results-title p').replaceWith('<p>Results (<span style="font-size:12px">Showing ' + $(finalSearchConditions).length + " of " + $allSelect.length + '</span>):</p>');
+          }       
        drawInfoWindowLines(); 
-       console.log("-------------------")
     }
 
     function drawInfoWindowLines(){
       var $mapInfoWindow = $("#infowindow");
-      if ($mapInfoWindow) {
+      
         $("#notFoundMsg").hide();
         $('hr').show(); 
 
@@ -2122,10 +2227,9 @@
               $(element).hide(); 
             };
           });
-
         var visibleDivs = $(visibleElements).filter(".sensors"); 
-        if (visibleDivs.length == 0) {
-          console.log("All Invisible.");
+        if (visibleDivs.length ==-1) {
+          //console.log("All Invisible.");
           $("#notFoundMsg").show();
           $("#notFoundMsg").prevAll('hr').hide(); 
           $("#notFoundMsg").nextAll('hr').hide(); 
@@ -2139,7 +2243,7 @@
               }
             });
         }; 
-      };
+      
     };
 
     function clearFilters(){
@@ -2147,7 +2251,7 @@
           $(input).prop('checked', false); 
         }); 
         $('#search-bar').val('');
-        updateHash(); 
+        updateSensors(); 
     }
 
     function printFoundDivs($divList){
@@ -2259,7 +2363,6 @@
         }
         updateHash();
         $('#map-filters').children().children().filter(':reset').attr('disabled','disabled');
-        $('#map-filters')
         $('#legend').hide();
         disablePlayButton();
         pauseTimeline(); 
@@ -2278,8 +2381,7 @@
         reBindBuffer();
     }
 
-    function updateMultifeed(beginTime, endTime){
-      // timelineQueue = [];       
+    function updateMultifeed(beginTime, endTime){   
       if (multifeed) getTiles(beginTime, endTime, multifeed);
       
     } 
@@ -2604,7 +2706,7 @@
 
     function playNext(time){
       if(time != dateProperties.cursorPosition){
-        console.log("Dragging.");
+        //console.log("Dragging.");
         cursorInBound();
         pauseTimeline();
         clearTimeout(dragTimer);
@@ -2625,15 +2727,15 @@
 
         }else{
           if (onLoop){
-            console.log("loop.")
+
             if (time - timeIncrement > Date.now()/1000){
               pauseTimeline(); 
               return;
             }
             plotManager.getDateAxis().setCursorPosition(dateProperties.min - timeIncrement); 
           }else{
-            console.log(time - dateProperties.max, time - Date.now() / 1000);
-            console.log('Timeline Done'); 
+           //console.log(time - dateProperties.max, time - Date.now() / 1000);
+            //console.log('Timeline Done'); 
             pauseTimeline();
             playTransform();
             playing = false; 
@@ -2656,7 +2758,7 @@
       }else{
         $('#loop').val('Loop: Off');
       }
-      console.log("onLoop is " + onLoop);
+      //console.log("onLoop is " + onLoop);
     }
 
     function togglePlayPause(){
@@ -2763,7 +2865,7 @@
         return -1;
     }
 
-    function reBindBuffer(){
+    function reBindBuffer(){   
       if(!!gl){
         gl.bindBuffer(gl.ARRAY_BUFFER, feedLocList.colorBuffer);
 
@@ -2775,6 +2877,7 @@
       for(var i = 0, len = feedNumArray.length; i < len; i++){
           var listIndex = searchArray(feedNumArray[i], feedLocList.index);
           feedLocList.color[listIndex * 6 + 4] = value;
+
       }
       reBindBuffer();
       needWebGlRedraw = true;
@@ -3050,10 +3153,10 @@
               var inputNodes = null; 
               var count = 0;
               var visible = false; 
+              var finalDivArr=[];
               for (var i = 0; i < eltList.length; i++){
                  var listIndex = eltList[i].i; 
-                 if (feedLocList.color[listIndex * 6 + 3] != 0) {
-                  count++; 
+                 if (feedLocList.color[listIndex * 6 + 3] > .6) {
                   visible = true; 
                   changeOpacity(clickedNumList, currentAlpha);
                   changeOpacity(clickedandColoredList, COLOR_ALPHA);
@@ -3064,20 +3167,32 @@
                   }else{
                     clickedNumList.push(feedLocList.index[listIndex]);
                   }
-                  
-                  var clickedNode = $("#channels div[id $= '#" + feedLocList.index[eltList[i].i] + "']");
-                  inputNodes = $(clickedNode).children().children().filter('input');
+                  //TODO (AS) add more comments to Andrew's changes
+                  //gets a feed based on the old id storage which the webGl sensor finder uses
+                  var selectedFeed=getSensor(feedLocList.index[eltList[i].i],displaySensors);
+                  //checks if the nearest sensor is a displayed one
+                  if(!(selectedFeed==undefined)){
+                    count++; 
+                  var someKeys=Object.keys(selectedFeed.channelBounds.channels);
+                  //if specific channels have been selected only display those
+                  if(chanNames.length>0){
+                    var foundChanArr=getChannelFromSensor(selectedFeed,chanNames);
+                    for(var k=0;k<foundChanArr.length;k++){
+                    var anElem= makeDiv("","",foundChanArr[k]);
+                    finalDivArr.push(anElem)
+                    }
+                  }else{
+                    //else display based on sensor
+                  for(var k=0;k<someKeys.length;k++){
+                    var anElem= makeDiv(someKeys[k],selectedFeed);
+                    finalDivArr.push(anElem)
+                  }}
 
-                  $(finalInput).append(inputNodes.clone()); 
-
-                  if(i > 0 && i < eltList.length)$(finalDiv).append(sectionBreak.clone());
-                  $(finalDiv).append(clickedNode.clone()); 
-                  $('input[name="' + $(this).attr('name') + '"]').prop('checked', $(this).prop('checked'));
-                  
                   meanLat += eltList[i].lat; 
                   meanLng += eltList[i].lng; 
                 }   
-            }
+            }}
+
             if (count != 0){
               meanLat = meanLat/count; 
               meanLng = meanLng/count; 
@@ -3087,12 +3202,11 @@
                 if (infoWindow){
                   infoWindow.close();
                 };
-
+            $(finalDiv).append(finalDivArr.join(''));
                infoWindow = new google.maps.InfoWindow(
                     {content: printFoundDivs(finalDiv), 
                     position: new google.maps.LatLng(meanLat, meanLng)});
                 infoWindow.open(map);
-
                 changeOpacity(clickedNumList, 1);
                 changeOpacity(clickedandColoredList, 1);
                 reBindBuffer();
@@ -3123,7 +3237,6 @@
           changeOpacity(clickedNumList, 1);
           changeOpacity(clickedandColoredList, 1);
           reBindBuffer();
-
           hoverNumList = [];
           hoverAndColored = [];
 
@@ -3147,7 +3260,7 @@
             
         });
     }
-
+//Code that is actually initially run (starting point)
   initializeMap();
   </script>
 
