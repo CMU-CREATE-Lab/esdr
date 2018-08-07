@@ -925,34 +925,29 @@
 
   <div id="loading"></div>
 
-   <script src="https://esdr.cmucreatelab.org/lib/jquery/jquery-1.11.1.min.js" type="text/javascript"></script>
-   <script src="https://esdr.cmucreatelab.org/lib/superagent/superagent.js" type="text/javascript"></script>
-   <script src="https://esdr.cmucreatelab.org/lib/bodytrack-grapher/org/bodytrack/grapher/grapher2.nocache.js" type="text/javascript"></script>
-   <script src="https://esdr.cmucreatelab.org/lib/plot-manager/org/bodytrack/grapher/PlotManager.js" type="text/javascript"></script>
+  <script src="https://esdr.cmucreatelab.org/lib/jquery/jquery-1.11.1.min.js" type="text/javascript"></script>
+  <script src="https://esdr.cmucreatelab.org/lib/superagent/superagent.js" type="text/javascript"></script>
+  <script src="https://esdr.cmucreatelab.org/lib/bodytrack-grapher/org/bodytrack/grapher/grapher2.nocache.js" type="text/javascript"></script>
+  <script src="https://esdr.cmucreatelab.org/lib/plot-manager/org/bodytrack/grapher/PlotManager.js" type="text/javascript"></script>
 
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjVZHnH5L8ty50awHChDGdtJ5ZHqCFc-Y"></script>
+  <script src="./utils.js"></script>
+  <script src="./rAF.js"></script>
+  <script src="./series2.js"></script>
+  <script src="./CanvasLayer.js"></script>
+  <script src="./fastdom.js"></script>
+  <script src="./dateFormat.js"></script>
 
-   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjVZHnH5L8ty50awHChDGdtJ5ZHqCFc-Y"></script>
-   <script src="./utils.js"></script>
-   <script src="./rAF.js"></script>
-   <script src="./series2.js"></script>
-   <script src="./CanvasLayer.js"></script>
-   <script src="./fastdom.js"></script>
-   <script src="./dateFormat.js"></script>
-
-
-   <script language="JavaScript" type="text/javascript">
-
+  <script language="JavaScript" type="text/javascript">
+    "use strict"
     /*
      * ~~~~~~~~~~~~~~~~~~~~~~~~~~ GLOBAL VARIABLES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
      */
-
-     /*
-      *~~~~~~~~~~~~~~~~!NOTE!~~~~~~~~~~~~~~~~~~~~~~~~~~
-      *Anything that says Andrew's near it was implemented in a front end redesign to increase performance by reducing jQuery look up reliance
-      */
-
+    /*
+     *~~~~~~~~~~~~~~~~!NOTE!~~~~~~~~~~~~~~~~~~~~~~~~~~
+     *Anything that says Andrew's near it was implemented in a front end redesign to increase performance by reducing jQuery look up reliance
+     */
     //___________________Initial loading feeds variables:_______________________
-
     var ESDR_API_ROOT_URL = 'https://esdr.cmucreatelab.org/api/v1';
     var DEFAULT_CHANNEL = 'particle_concentration';
     var oldParams = {
@@ -965,122 +960,125 @@
     };
     var initParams = getHashParams();
     //~~~~______________Check list variables_______________________~~~~~~~~
-    var checks={
-      PM25:document.getElementById("PM25"),
-      PM10:document.getElementById("PM10"),
-      O3:document.getElementById("O3"),
-      NO:document.getElementById("NO"),
-      NO2:document.getElementById("NO2"),
-      SO2:document.getElementById("SO2"),
-      CO:document.getElementById("CO")
+    var checks = {
+      PM25: document.getElementById("PM25"),
+      PM10: document.getElementById("PM10"),
+      O3: document.getElementById("O3"),
+      NO: document.getElementById("NO"),
+      NO2: document.getElementById("NO2"),
+      SO2: document.getElementById("SO2"),
+      CO: document.getElementById("CO")
     };
-    var checked=[];
+    var checked = [];
     //___________________ Grapher variables ____________________________________
 
-    var plotManager;           //handle for the PlotManager
+    var plotManager; //handle for the PlotManager
 
-    var plotCount = 0;        //records how many plots have come into existance
-    var channelLabels = {};   //records all channelLabels
-    var plotScalers = {};     //set of handles to iterate y-axis clamp
-    var channelToPlotIdx = {};//keys: channel names, value: plotId
-    var plotIdxToChannel = {};//keys: plotId, value: channel names
+    var plotCount = 0; //records how many plots have come into existance
+    var channelLabels = {}; //records all channelLabels
+    var plotScalers = {}; //set of handles to iterate y-axis clamp
+    var channelToPlotIdx = {}; //keys: channel names, value: plotId
+    var plotIdxToChannel = {}; //keys: plotId, value: channel names
 
-    var hashTimer;   //timer to updateHash when dateAxis changes
+    var hashTimer; //timer to updateHash when dateAxis changes
     var clampTimer; //timer to clamp y-axis to data when dateAxis changes
 
     //grapher styles
     var lineStyle = {
-      "styles" : [
-         { "type" : "bar",
-           "stripPosition" : "center",
-           "stripWidthSecs" : 30,
-           "rangedColors" : "rgba(210,210,210,.8); 10;rgba(185,185,185,.8); 20;rgba(160,160,160,.8); 30;rgba(135,135,135,.8); 40;rgba(110,110,110,.8); 50;rgba(110,110,110,.8);60;rgba(85,85,85,.8);70;rgba(70,70,70,.8);80;rgba(50,50,50,.8)"
-         },
-         { "type" : "line", "lineWidth" : 3, "show" : true, "color" : "rgba(60,60,60, .8)" }
+      "styles": [{
+          "type": "bar",
+          "stripPosition": "center",
+          "stripWidthSecs": 30,
+          "rangedColors": "rgba(210,210,210,.8); 10;rgba(185,185,185,.8); 20;rgba(160,160,160,.8); 30;rgba(135,135,135,.8); 40;rgba(110,110,110,.8); 50;rgba(110,110,110,.8);60;rgba(85,85,85,.8);70;rgba(70,70,70,.8);80;rgba(50,50,50,.8)"
+        },
+        {
+          "type": "line",
+          "lineWidth": 3,
+          "show": true,
+          "color": "rgba(60,60,60, .8)"
+        }
       ],
-      "highlight" : {
-         "lineWidth" : 3,
-         "styles" : [
-            {
-               "show" : true,
-               "type" : "lollipop",
-               "color" : "green",
-               "radius" : 0,
-               "lineWidth" : 1,
-               "fill" : false
-            },
-            {
-               "type" : "circle",
-               radius : 3,
-               "lineWidth" : 0.5,
-               "show" : true,
-               "color" : "#ff0000",
-               fill : true
-            },
-            {
-               "show" : true,
-               "type" : "value",
-               "fillColor" : "#000000",
-               "marginWidth" : 10,
-               "font" : "9pt Helvetica,Arial,Verdana,sans-serif",
-               "verticalOffset" : 7
-            }
-         ]
+      "highlight": {
+        "lineWidth": 3,
+        "styles": [{
+            "show": true,
+            "type": "lollipop",
+            "color": "green",
+            "radius": 0,
+            "lineWidth": 1,
+            "fill": false
+          },
+          {
+            "type": "circle",
+            radius: 3,
+            "lineWidth": 0.5,
+            "show": true,
+            "color": "#ff0000",
+            fill: true
+          },
+          {
+            "show": true,
+            "type": "value",
+            "fillColor": "#000000",
+            "marginWidth": 10,
+            "font": "9pt Helvetica,Arial,Verdana,sans-serif",
+            "verticalOffset": 7
+          }
+        ]
       }
     };
 
     var barStyle = {
-       "styles" : [
+      "styles": [{
+        "type": "bar",
+        "stripPosition": "center",
+        "stripWidthSecs": 3600,
+        "rangedColors": "rgb(210,210,210); 8;rgb(190,190,190); 16;rgb(170,170,170); 24;rgb(150,150,150); 32;rgb(130,130,130); 40;rgb(110,110,110);48;rgb(90,90,90);56;rgb(70,70,70);64;rgb(50,50,50)"
+      }, ],
+      "highlight": {
+        "lineWidth": 1,
+        "styles": [{
+            "show": true,
+            "type": "lollipop",
+            "color": "green",
+            "radius": 0,
+            "lineWidth": 1,
+            "fill": false
+          },
           {
-                   "type" : "bar",
-                   "stripPosition" : "center",
-                   "stripWidthSecs" : 3600,
-                   "rangedColors" : "rgb(210,210,210); 8;rgb(190,190,190); 16;rgb(170,170,170); 24;rgb(150,150,150); 32;rgb(130,130,130); 40;rgb(110,110,110);48;rgb(90,90,90);56;rgb(70,70,70);64;rgb(50,50,50)"
-                },
-       ],
-       "highlight" : {
-          "lineWidth" : 1,
-          "styles" : [
-             {
-                "show" : true,
-                "type" : "lollipop",
-                "color" : "green",
-                "radius" : 0,
-                "lineWidth" : 1,
-                "fill" : false
-             },
-             {
-                "type" : "circle",
-                radius : 3,
-                "lineWidth" : 0.5,
-                "show" : true,
-                "color" : "#ff0000",
-                fill : true
-             },
-             {
-                "show" : true,
-                "type" : "value",
-                "fillColor" : "#000000",
-                "marginWidth" : 10,
-                "font" : "9pt Helvetica,Arial,Verdana,sans-serif",
-                "verticalOffset" : 7
-             }
-          ]
-       }
+            "type": "circle",
+            radius: 3,
+            "lineWidth": 0.5,
+            "show": true,
+            "color": "#ff0000",
+            fill: true
+          },
+          {
+            "show": true,
+            "type": "value",
+            "fillColor": "#000000",
+            "marginWidth": 10,
+            "font": "9pt Helvetica,Arial,Verdana,sans-serif",
+            "verticalOffset": 7
+          }
+        ]
+      }
     };
 
     //___________________ WebGL Variables: _____________________________________
 
-    var feedLocList = {latlng: [],  //Mutated by WebGL and parameters added for
-                       index:  [],  //WebGL buffer
-                       color:  []};
+    var feedLocList = {
+      latlng: [], //Mutated by WebGL and parameters added for
+      index: [], //WebGL buffer
+      color: []
+    };
 
-    var ALPHA = 0.50;      //Initial page node alpha
-    var COLOR_ALPHA = 1;   //Alpha value for colored nodes
-    var NULL_ALPHA = .3;   //Alpha value for gray, null nodes
+    var ALPHA = 0.50; //Initial page node alpha
+    var COLOR_ALPHA = 1; //Alpha value for colored nodes
+    var NULL_ALPHA = .3; //Alpha value for gray, null nodes
 
-    var currentAlpha = ALPHA;  //default alpha to change all values to
-    var currentPointSize = 0;  //size of nodes for hover radius
+    var currentAlpha = ALPHA; //default alpha to change all values to
+    var currentPointSize = 0; //size of nodes for hover radius
 
     var map;
     // var geocoder;
@@ -1093,98 +1091,108 @@
     var blockPointSizePixels = 70;
 
     //____________________Andrew's variables_______________
-    var displaySensors=[];    //array of sensor objects that sshould be displayed in the side bar and on the map
-    var searchSensors=[];     //sensors that match the title search
-    var channelSensors=[];    //sesnors that match the channel search
-    var feedPlaceHolder=0;    //used to determin were the update display for loop should start
-    var channelPlaceHolder=0; //used to determin were the update display for loop should start
-    var numbDivs=0;           // keeps track of the number of divs being displayed
-    var numbLoad=100;           // the number of divs to be loaded per time more divs loading button is clicked
-    var chanNames=[];   // keeps track of labels for sensors that meet checked box criteria
-    var placeInChanNames=0;   // keeps track of place to strat in update for loop for chanNames array
-    var chanNamesExisted=false;//becomes true if chanNames is altered as this may make it seem like it was never changed for the initial state of [] so this
-                              //is used to see if there are no things that meet request not just the array was always empty
+    var displaySensors = []; //array of sensor objects that sshould be displayed in the side bar and on the map
+    var searchSensors = []; //sensors that match the title search
+    var channelSensors = []; //sesnors that match the channel search
+    var feedPlaceHolder = 0; //used to determin were the update display for loop should start
+    var channelPlaceHolder = 0; //used to determin were the update display for loop should start
+    var numbDivs = 0; // keeps track of the number of divs being displayed
+    var numbLoad = 100; // the number of divs to be loaded per time more divs loading button is clicked
+    var chanNames = []; // keeps track of labels for sensors that meet checked box criteria
+    var placeInChanNames = 0; // keeps track of place to strat in update for loop for chanNames array
+    var chanNamesExisted = false; //becomes true if chanNames is altered as this may make it seem like it was never changed for the initial state of [] so this
+    //is used to see if there are no things that meet request not just the array was always empty
     //aliases used to have concrete names for channels which have names that vary
-    var aliases={
-      PM25:["PM2_5,PM25","PM25B_UG_M3,PM25_2__UG_M3","PM25_UG_M3,PM2_5_daily_max","PM2_5_daily_mean","PM2_5_daily_median","PM25B_UG_M3_daily_max","PM25B_UG_M3_daily_mean","PM25B_UG_M3_daily_median","PM25T_UG_M3,PM25_2__UG_M3_daily_max","PM25_2__UG_M3_daily_mean","PM25_2__UG_M3_daily_median","PM25_UG_M3,PM25_UG_M3_daily_max","PM25_UG_M3_daily_mean","PM25_UG_M3_daily_median","pm_2_5","PM2_5Value","pm2_5,pm2_5_1hr","pm2_5_24hr","PM_2_5","PM25_FL_PERCENT","pm","stats_pm"],
-      PM10:["PM10","PM10B_UG_M3","PM10_UG_M3","PM10_FL_PERCENT","pm","pm_10_0","pm_1_0","stats_pm"],
-      O3:["OZONE","OZONE_daily_max","OZONE_daily_mean","OZONE_daily_median","OZONE2_PPM","OZONE2_PPM_daily_max","OZONE2_PPM_daily_mean","OZONE2_PPM_daily_median","OZONE_PPM","OZONE_PPM_daily_max","OZONE_PPM_daily_mean","OZONE_PPM_daily_median","Ozone_O3","Ozone","Ozone_O3_daily_max","Ozone_O3_daily_mean","Ozone_O3_daily_median","UV_Ozone"],
-      NO:["NOY","NO","NOX","NO2Y","NOX_PPM","NO_PPM","NOX_PPB,NO_PPB,NOYDIF_PPB","NOY_PPB","Nitric_Oxide_NO","Oxides_of_Nitrogen_NOx","NO_000000000000","NO_000666626057","NO_0006666259B6","NO_000666626A96","NO_000666625C92"],
-      NO2:["NO2","NOY","NOX","NO2Y","NO2_PPM","NOX_PPM","NO2_PPB","NOX_PPB","NOYDIF_PPB","NOY_PPB","Nitrogen_Dioxide_NO2","Oxides_of_Nitrogen_NOx"],
-      SO2:["SO2","SO2_PPM","SO2_PPB","Sulfor_Dioxide","Sulfur_Dioxide","SO2_UNCALIB","Sulfur_Dioxide_SO2","UV_Sulfur_Dioxide","SO2_Xe"],
-      CO:["CO","CO_PPM","CO_PPB","Carbon_Monoxide_CO","FTIR_Carbon_Monoxide","CO_000000000000","CO_000666626057","CO_0006666259B6","CO_000666626A96","CO_000666625C92"]
+    var aliases = {
+      PM25: ["PM2_5,PM25", "PM25B_UG_M3,PM25_2__UG_M3", "PM25_UG_M3,PM2_5_daily_max", "PM2_5_daily_mean", "PM2_5_daily_median", "PM25B_UG_M3_daily_max", "PM25B_UG_M3_daily_mean", "PM25B_UG_M3_daily_median", "PM25T_UG_M3,PM25_2__UG_M3_daily_max", "PM25_2__UG_M3_daily_mean", "PM25_2__UG_M3_daily_median", "PM25_UG_M3,PM25_UG_M3_daily_max", "PM25_UG_M3_daily_mean", "PM25_UG_M3_daily_median", "pm_2_5", "PM2_5Value", "pm2_5,pm2_5_1hr", "pm2_5_24hr", "PM_2_5", "PM25_FL_PERCENT", "pm", "stats_pm"],
+      PM10: ["PM10", "PM10B_UG_M3", "PM10_UG_M3", "PM10_FL_PERCENT", "pm", "pm_10_0", "pm_1_0", "stats_pm"],
+      O3: ["OZONE", "OZONE_daily_max", "OZONE_daily_mean", "OZONE_daily_median", "OZONE2_PPM", "OZONE2_PPM_daily_max", "OZONE2_PPM_daily_mean", "OZONE2_PPM_daily_median", "OZONE_PPM", "OZONE_PPM_daily_max", "OZONE_PPM_daily_mean", "OZONE_PPM_daily_median", "Ozone_O3", "Ozone", "Ozone_O3_daily_max", "Ozone_O3_daily_mean", "Ozone_O3_daily_median", "UV_Ozone"],
+      NO: ["NOY", "NO", "NOX", "NO2Y", "NOX_PPM", "NO_PPM", "NOX_PPB,NO_PPB,NOYDIF_PPB", "NOY_PPB", "Nitric_Oxide_NO", "Oxides_of_Nitrogen_NOx", "NO_000000000000", "NO_000666626057", "NO_0006666259B6", "NO_000666626A96", "NO_000666625C92"],
+      NO2: ["NO2", "NOY", "NOX", "NO2Y", "NO2_PPM", "NOX_PPM", "NO2_PPB", "NOX_PPB", "NOYDIF_PPB", "NOY_PPB", "Nitrogen_Dioxide_NO2", "Oxides_of_Nitrogen_NOx"],
+      SO2: ["SO2", "SO2_PPM", "SO2_PPB", "Sulfor_Dioxide", "Sulfur_Dioxide", "SO2_UNCALIB", "Sulfur_Dioxide_SO2", "UV_Sulfur_Dioxide", "SO2_Xe"],
+      CO: ["CO", "CO_PPM", "CO_PPB", "Carbon_Monoxide_CO", "FTIR_Carbon_Monoxide", "CO_000000000000", "CO_000666626057", "CO_0006666259B6", "CO_000666626A96", "CO_000666625C92"]
     }
 
     //___________________ Search Filter Variables: _____________________________
 
 
     // Sorting Feeds:
-    var sortedFeedIDs = { pm25:  [],
-                          pm10:  [],
-                          ozone: [],
-                          no:    [],
-                          no2:   [],
-                          so2:   [],
-                          co:    [],
-                          speck: []};
+    var sortedFeedIDs = {
+      pm25: [],
+      pm10: [],
+      ozone: [],
+      no: [],
+      no2: [],
+      so2: [],
+      co: [],
+      speck: []
+    };
 
 
-    var sortedChannelNames = { pm25:  [],
-                               pm10:  [],
-                               ozone: [],
-                               no:    [],
-                               no2:   [],
-                               so2:   [],
-                               co:    []};
+    var sortedChannelNames = {
+      pm25: [],
+      pm10: [],
+      ozone: [],
+      no: [],
+      no2: [],
+      so2: [],
+      co: []
+    };
 
     //Displaying Feed ID's:
-    var allFeeds=[];
-    var allFeedNums = [];         //All Feed ID's
-    var showNumList = [];         //Feed ID's to show
-    var clickedNumList = [];      //Feed ID's clicked on
+    var allFeeds = [];
+    var allFeedNums = []; //All Feed ID's
+    var showNumList = []; //Feed ID's to show
+    var clickedNumList = []; //Feed ID's clicked on
     var clickedandColoredList = []; //Feed ID's clicked on and are colored
-    var hoverNumList = [];        //Feed ID's hovered on
-    var hoverAndColored = [];     //Feed ID's hovered and colored
+    var hoverNumList = []; //Feed ID's hovered on
+    var hoverAndColored = []; //Feed ID's hovered and colored
 
     //_______________________ Timeline Variables: ______________________________
 
     // Date Axis Timeline variables:
-    var dateProperties;         //current date axis properties
-    var currentLevel = 0;       //current level of date axis
+    var dateProperties; //current date axis properties
+    var currentLevel = 0; //current level of date axis
 
     //Data Processing variables:
-    var multifeed = "";         //current multifeed name
-    var timelineReady = false;  //flag if timeline is ready to play
-    var timelineQueue = [];     //contains elements with timeStamp and
-                                //  functionList to call at each cursor position
+    var multifeed = ""; //current multifeed name
+    var timelineReady = false; //flag if timeline is ready to play
+    var timelineQueue = []; //contains elements with timeStamp and
+    //  functionList to call at each cursor position
 
-    var dataProcessQueue = [];  //queue for processing ajax data in order
+    var dataProcessQueue = []; //queue for processing ajax data in order
 
-    var refreshTimer;           //timer for refreshing data
+    var refreshTimer; //timer for refreshing data
 
     //Playback variables:
-    var DEFAULT_SPEED = 35;     //default speed for setInterval
-    var DEFAULT_DURATION = 15;  //default duration of timeline loop
+    var DEFAULT_SPEED = 35; //default speed for setInterval
+    var DEFAULT_DURATION = 15; //default duration of timeline loop
 
     var pause = true;
     var onLoop = false;
     var playing = false;
     var playButtonEnabled = false;
 
-    var speed = DEFAULT_SPEED;  //current speed of setInterval
-    var timeSlices = DEFAULT_DURATION/speed*1000; //distance of each tick
+    var speed = DEFAULT_SPEED; //current speed of setInterval
+    var timeSlices = DEFAULT_DURATION / speed * 1000; //distance of each tick
     var duration = DEFAULT_DURATION; //current duration of timeline loop
 
-    var dragTimer;       //timer for when user is dragging
-    var playInterval;    //setInterval for play
+    var dragTimer; //timer for when user is dragging
+    var playInterval; //setInterval for play
 
     //Play button transformations
-    var pauseTransformation = {bar1: 'translateX(13px) translateY(10px)',
-                               bar2: 'translateX(28px) translateY(10px)'};
-    var playTransformation = {bar1: 'translateX(24px) translateY(2px) rotate(135deg)',
-                              bar2: 'translateX(24px) translateY(18px) rotate(45deg)'};
-    var spinnerTransformation = {bar1: 'translateX(21px) translateY(10px) rotate(135deg)',
-                                 bar2: 'translateX(21px) translateY(10px) rotate(45deg)'};
+    var pauseTransformation = {
+      bar1: 'translateX(13px) translateY(10px)',
+      bar2: 'translateX(28px) translateY(10px)'
+    };
+    var playTransformation = {
+      bar1: 'translateX(24px) translateY(2px) rotate(135deg)',
+      bar2: 'translateX(24px) translateY(18px) rotate(45deg)'
+    };
+    var spinnerTransformation = {
+      bar1: 'translateX(21px) translateY(10px) rotate(135deg)',
+      bar2: 'translateX(21px) translateY(10px) rotate(45deg)'
+    };
     var jsonRequest = [];
     //_______________________ Other Variables: ______________________________
 
@@ -1193,81 +1201,82 @@
     var exportMenuOpen = false;
     var exportMenuTimer = null;
 
-    document.getElementById("loadP").innerHTML="Load next "+numbLoad;
+    document.getElementById("loadP").innerHTML = "Load next " + numbLoad;
 
     function createDatasource(source) {
-       var split = source.split('.');
-       if (split.length != 2) {
-          console.log('createDatasource must have source of form ID.channel but was ' + source);
-          return null;
-       }
-       var feedIdOrApiKey = split[0];
-       var channelName = split[1];
+      var split = source.split('.');
+      if (split.length != 2) {
+        console.log('createDatasource must have source of form ID.channel but was ' + source);
+        return null;
+      }
+      var feedIdOrApiKey = split[0];
+      var channelName = split[1];
 
-       return function(level, offset, successCallback) {
-          var url = ESDR_API_ROOT_URL + "/feeds/" + feedIdOrApiKey + "/channels/" + channelName + "/tiles/" + level + "." + offset;
-          console.log('getting ' + url);
-          superagent.get(url)
-                    .end(function(err, res) {
-                       console.log('done getting ' + url);
-                       if (err) {
-                          return console.log("Error: " + res.body);
-                       }
-                       switch (res.status) {
-                          case 200:
-                              { var ret = successCallback(JSON.stringify(res.body.data));
-                                clearTimeout(clampTimer);
-                                clampTimer = setTimeout(clampAllPlots, 300);
-                                return ret;
-                              }
-                          case 401:
-                             return console.log("Unauthorized");
-                          case 403:
-                             return console.log("Forbidden");
-                          default:
-                             return console.log("Error: " + res.body);
-                       }
-                    });
-       };
+      return function(level, offset, successCallback) {
+        var url = ESDR_API_ROOT_URL + "/feeds/" + feedIdOrApiKey + "/channels/" + channelName + "/tiles/" + level + "." + offset;
+        console.log('getting ' + url);
+        superagent.get(url)
+          .end(function(err, res) {
+            console.log('done getting ' + url);
+            if (err) {
+              return console.log("Error: " + res.body);
+            }
+            switch (res.status) {
+              case 200:
+                {
+                  var ret = successCallback(JSON.stringify(res.body.data));
+                  clearTimeout(clampTimer);
+                  clampTimer = setTimeout(clampAllPlots, 300);
+                  return ret;
+                }
+              case 401:
+                return console.log("Unauthorized");
+              case 403:
+                return console.log("Forbidden");
+              default:
+                return console.log("Error: " + res.body);
+            }
+          });
+      };
     }
 
     function addPlot(channel) {
-       var html = [];
-       html.push('<div style="height:100px; width:100%; position:relative; border-bottom:1px solid black">');
-       var plotName = 'plot' + plotCount;
-       var yAxisName = 'yaxis' + plotCount;
-       html.push('<div id="' + plotName + '" style="position:absolute; left:0px; top:0px; bottom:0px; right:30px"></div>');
-       html.push('<div id="' + yAxisName + '" style="position:absolute; width:30px; top:0px; bottom:0px; right:0px"></div>');
-       html.push('<div style="position:absolute"><span style="cursor:pointer" onclick="removePlot(\'' + channel + '\')">☒</span> <font size=-1>' + channelLabels[channel] + '</font></div>');
-       html.push('</div>');
-       $('#plots').append(html.join(''));
+      var html = [];
+      html.push('<div style="height:100px; width:100%; position:relative; border-bottom:1px solid black">');
+      var plotName = 'plot' + plotCount;
+      var yAxisName = 'yaxis' + plotCount;
+      html.push('<div id="' + plotName + '" style="position:absolute; left:0px; top:0px; bottom:0px; right:30px"></div>');
+      html.push('<div id="' + yAxisName + '" style="position:absolute; width:30px; top:0px; bottom:0px; right:0px"></div>');
+      html.push('<div style="position:absolute"><span style="cursor:pointer" onclick="removePlot(\'' + channel + '\')">☒</span> <font size=-1>' + channelLabels[channel] + '</font></div>');
+      html.push('</div>');
+      $('#plots').append(html.join(''));
 
-       plotManager.addDataSeriesPlot(plotName, createDatasource(channel), plotName, yAxisName, 0, 100, lineStyle);
-       var thisPlotIdx = plotCount;
-       setTimeout(function(){
-          clampNumberAxisToDataRange(thisPlotIdx);
-       }, 2500);
-       plotScalers[plotCount] = thisPlotIdx;
-       channelToPlotIdx[channel] = plotCount;
-       plotIdxToChannel[plotCount] = channel;
-       plotCount++;
-       $('input[name="' + channel + '"]').prop('checked', true);
+      plotManager.addDataSeriesPlot(plotName, createDatasource(channel), plotName, yAxisName, 0, 100, lineStyle);
+      var thisPlotIdx = plotCount;
+      setTimeout(function() {
+        clampNumberAxisToDataRange(thisPlotIdx);
+      }, 2500);
+      plotScalers[plotCount] = thisPlotIdx;
+      channelToPlotIdx[channel] = plotCount;
+      plotIdxToChannel[plotCount] = channel;
+      plotCount++;
+      $('input[name="' + channel + '"]').prop('checked', true);
 
-       var feedIndex = parseInt(channel.substr(0, channel.indexOf('.')));
+      var feedIndex = parseInt(channel.substr(0, channel.indexOf('.')));
 
-       changeCircled(feedIndex, 1);
-       updateHash()
-       var chartsHeight = $("#charts").height();
+      changeCircled(feedIndex, 1);
+      updateHash()
+      var chartsHeight = $("#charts").height();
     }
 
 
     function clampNumberAxisToDataRange(plotIdx) {
-       var plot = plotManager.getPlot('plot' + plotIdx);
-       var yAxis = plotManager.getYAxis('yaxis' + plotIdx);
-       var stats = plot.getStatisticsWithinRange(plotManager.getDateAxis().getRange());
-       if (typeof stats['minValue'] !== 'undefined' && typeof stats['maxValue'] !== 'undefined') {
-          yAxis.setRange(stats['minValue'], stats['maxValue']);
-       }
+      var plot = plotManager.getPlot('plot' + plotIdx);
+      var yAxis = plotManager.getYAxis('yaxis' + plotIdx);
+      var stats = plot.getStatisticsWithinRange(plotManager.getDateAxis().getRange());
+      if (typeof stats['minValue'] !== 'undefined' && typeof stats['maxValue'] !== 'undefined') {
+        yAxis.setRange(stats['minValue'], stats['maxValue']);
+      }
     }
 
     function clickChannel(input) {
@@ -1278,14 +1287,14 @@
       }
     }
 
-    function checkIfAnyChecked(index){
+    function checkIfAnyChecked(index) {
 
       var foundDivs = $("#channels div[id $= '#" + index + "']");
 
       var inputNodes = $(foundDivs).children().children().filter('input');
       var result = false;
-      $(inputNodes).each(function(){
-        if ($(this).get(0).checked){
+      $(inputNodes).each(function() {
+        if ($(this).get(0).checked) {
           result = true;
         }
       });
@@ -1295,51 +1304,54 @@
     }
 
     function loadFeeds(response) {
-       document.getElementById("loading").style['display'] = 'block';
-       var data = response.data;
-       var max = data.limit + data.offset;
-       if (data.totalCount > max) {
-         $.ajax({url: ESDR_API_ROOT_URL + '/feeds?offset=' + max, success: loadFeeds});
-       }
-       var feeds = data.rows;
-       var html = [];
+      document.getElementById("loading").style['display'] = 'block';
+      var data = response.data;
+      var max = data.limit + data.offset;
+      if (data.totalCount > max) {
+        $.ajax({
+          url: ESDR_API_ROOT_URL + '/feeds?offset=' + max,
+          success: loadFeeds
+        });
+      }
+      var feeds = data.rows;
+      var html = [];
 
-       for (var i = 0; i < feeds.length; i++) {
-          var feed = feeds[i];
+      for (var i = 0; i < feeds.length; i++) {
+        var feed = feeds[i];
 
-          if (feed.channelBounds) {
-             var channels = Object.keys(feed.channelBounds.channels).sort();
+        if (feed.channelBounds) {
+          var channels = Object.keys(feed.channelBounds.channels).sort();
 
-             if (channels.length > 0) {
-              feedLocList.latlng.push(feed.latitude, feed.longitude);
-              feedLocList.index.push(feed.id);
-              feedLocList.color.push(0, 0, 1, ALPHA, 1, 0);
-             }
-
-             allFeeds.push(feeds[i]);
-             displaySensors.push(feeds[i]);
-             allFeedNums.push(feeds[i].id);
-
-             for (var c = 0; c < channels.length; c++) {
-                var channel = channels[c];
-                var label = feed.name + ' (' + feed.id + ').' + channel;
-                var id = feed.id + '.' + channel;
-                channelLabels[id] = label;
-             }
+          if (channels.length > 0) {
+            feedLocList.latlng.push(feed.latitude, feed.longitude);
+            feedLocList.index.push(feed.id);
+            feedLocList.color.push(0, 0, 1, ALPHA, 1, 0);
           }
-       }
-       if (data.totalCount <= max) {
-          // That was the last data.  Ready to process
-          document.getElementById("loading").style['display'] = 'none';
-          feedLocList.latlng = new Float32Array(feedLocList.latlng);
-          feedLocList.color = new Float32Array(feedLocList.color);
-          initializeWebGL();
-          document.getElementById("loading").style['display'] = 'none';
-          loadHashInit();
-          window.onhashchange = loadHash;
-          enableSearch();
-          updateSensors();
-       }
+
+          allFeeds.push(feeds[i]);
+          displaySensors.push(feeds[i]);
+          allFeedNums.push(feeds[i].id);
+
+          for (var c = 0; c < channels.length; c++) {
+            var channel = channels[c];
+            var label = feed.name + ' (' + feed.id + ').' + channel;
+            var id = feed.id + '.' + channel;
+            channelLabels[id] = label;
+          }
+        }
+      }
+      if (data.totalCount <= max) {
+        // That was the last data.  Ready to process
+        document.getElementById("loading").style['display'] = 'none';
+        feedLocList.latlng = new Float32Array(feedLocList.latlng);
+        feedLocList.color = new Float32Array(feedLocList.color);
+        initializeWebGL();
+        document.getElementById("loading").style['display'] = 'none';
+        loadHashInit();
+        window.onhashchange = loadHash;
+        enableSearch();
+        updateSensors();
+      }
 
     }
 
@@ -1347,231 +1359,232 @@
     //Andrew's functions---------------------------------------------------------------------
 
     //Orginally had more content now is just calls appendSensors
-    function getNext(){
+    function getNext() {
       appendSensors();
 
     }
 
     // returns the number of channels on the displaySensor array
-    function getNumbChannels(){
-      var numb=0;
-      var counted=0;
-      displaySensors.forEach(function(sen,ind){
-         var keys=Object.keys(sen.channelBounds.channels);
-         numb+=keys.length;
-         counted++;
+    function getNumbChannels() {
+      var numb = 0;
+      var counted = 0;
+      displaySensors.forEach(function(sen, ind) {
+        var keys = Object.keys(sen.channelBounds.channels);
+        numb += keys.length;
+        counted++;
       });
       return numb;
     }
 
 
-//returns a string with the correct div format
-    function makeDiv(channelForSensor,sensorFeed,labelIn){
-      var label="";
-       var channel;
-       var id;
-       var idHashTag;
-       //if the chanNames array is being used than labelIn will be defined and should be used for all vars
-       if(labelIn!=undefined&&labelIn.length>0){
-        idHashTag=labelIn.substring(labelIn.indexOf("(")+1,labelIn.indexOf(")"));
-        channel=labelIn.substring(labelIn.indexOf(".")+1);
-        id=idHashTag+"."+channel;
-        label=labelIn;
-       }else{
-          label="";
-        channel=channelForSensor;
+    //returns a string with the correct div format
+    function makeDiv(channelForSensor, sensorFeed, labelIn) {
+      var label = "";
+      var channel;
+      var id;
+      var idHashTag;
+      //if the chanNames array is being used than labelIn will be defined and should be used for all vars
+      if (labelIn != undefined && labelIn.length > 0) {
+        idHashTag = labelIn.substring(labelIn.indexOf("(") + 1, labelIn.indexOf(")"));
+        channel = labelIn.substring(labelIn.indexOf(".") + 1);
+        id = idHashTag + "." + channel;
+        label = labelIn;
+      } else {
+        label = "";
+        channel = channelForSensor;
         id = sensorFeed.id + '.' + channel;
         idHashTag = sensorFeed.id;
         label = sensorFeed.name + ' (' + sensorFeed.id + ').' + channel;
-       }
-       //old way divs were structed vs new way
-       //var aDiv='<div class="sensors" style="margin-left: 3px" id='+idHashTag+'-'+channel+'> <label> <input type="checkbox" onclick="clickChannel(this)" data='+label+'name="' + id +'">' + label + '<br></label></div>';
+      }
+      //old way divs were structed vs new way
+      //var aDiv='<div class="sensors" style="margin-left: 3px" id='+idHashTag+'-'+channel+'> <label> <input type="checkbox" onclick="clickChannel(this)" data='+label+'name="' + id +'">' + label + '<br></label></div>';
 
-       var aDiv='<div class="sensors" style="margin-left: 3px" id='+idHashTag+'-'+channel+'> <label> <input type="checkbox" onclick="clickChannel(this)"data="'+label+'"name="' + id +'">' + label + '<br></label></div>';
-       return aDiv;
+      var aDiv = '<div class="sensors" style="margin-left: 3px" id=' + idHashTag + '-' + channel + '> <label> <input type="checkbox" onclick="clickChannel(this)"data="' + label + '"name="' + id + '">' + label + '<br></label></div>';
+      return aDiv;
     }
 
-//appends divs based on what is in the displaySensor and chanNames arrays
-    function appendSensors(){
-      var html=[];
-      var first=true;
-      var countChans=0;
-      var count2=0;
-      var numbChannels= getNumbChannels();
+    //appends divs based on what is in the displaySensor and chanNames arrays
+    function appendSensors() {
+      var html = [];
+      var first = true;
+      var countChans = 0;
+      var count2 = 0;
+      var numbChannels = getNumbChannels();
       //checks to see if there are just no channels that meet request
-      if(chanNamesExisted&&chanNames.length<1){
-        numbChannels=0;
-      }else{
+      if (chanNamesExisted && chanNames.length < 1) {
+        numbChannels = 0;
+      } else {
         //for loop of sensors starts on last used sensor
-      for(var i=feedPlaceHolder;i<displaySensors.length;i++){
-        var feed=displaySensors[i];
-        var keys=Object.keys(feed.channelBounds.channels);
-        //for loop of a sensors channels starts after the last logged channel
-        for(var k=channelPlaceHolder;k<keys.length;k++){
-          var holder;
-          //makes sure only numbLoad divs are loaded with each call
-          if(countChans<numbLoad){
-            channelPlaceHolder=0;
-            //if the channels search has created an array of labels i need to only look through that
-            if(chanNames.length>0){
-              numbChannels=chanNames.length;
-              for(var ic=placeInChanNames;ic<chanNames.length;ic++){
-                if(count2<numbLoad){
-                  holder=makeDiv(keys[k],displaySensors[i],chanNames[ic]);
-                  html.push(holder);
-                  numbDivs++;
-                  placeInChanNames++;
-                  count2++;
-                  countChans++;
+        for (var i = feedPlaceHolder; i < displaySensors.length; i++) {
+          var feed = displaySensors[i];
+          var keys = Object.keys(feed.channelBounds.channels);
+          //for loop of a sensors channels starts after the last logged channel
+          for (var k = channelPlaceHolder; k < keys.length; k++) {
+            var holder;
+            //makes sure only numbLoad divs are loaded with each call
+            if (countChans < numbLoad) {
+              channelPlaceHolder = 0;
+              //if the channels search has created an array of labels i need to only look through that
+              if (chanNames.length > 0) {
+                numbChannels = chanNames.length;
+                for (var ic = placeInChanNames; ic < chanNames.length; ic++) {
+                  if (count2 < numbLoad) {
+                    holder = makeDiv(keys[k], displaySensors[i], chanNames[ic]);
+                    html.push(holder);
+                    numbDivs++;
+                    placeInChanNames++;
+                    count2++;
+                    countChans++;
+                  }
                 }
+              } else {
+                //when channels haven't been made
+                placeInChanNames = 0;
+                holder = makeDiv(keys[k], displaySensors[i]);
+                html.push(holder);
+                numbDivs++;
               }
-            }else{
-              //when channels haven't been made
-              placeInChanNames=0;
-              holder=makeDiv(keys[k],displaySensors[i]);
-              html.push(holder);
-              numbDivs++;
+            } else {
+              //the else is when numbLoad divs have been made so we dont need more
+              if (first) {
+                //tracks where the last div was appended so it can start here in the future
+                channelPlaceHolder = k;
+                feedPlaceHolder = i;
+                first = false;
+              }
             }
-          }else{
-          //the else is when numbLoad divs have been made so we dont need more
-            if(first){
-              //tracks where the last div was appended so it can start here in the future
-              channelPlaceHolder=k;
-              feedPlaceHolder=i;
-              first=false;
-            }
+            countChans += 1;
           }
-          countChans+=1;
+
         }
-
-      }}
+      }
       //actually appending things
-      if(numbDivs<=getNumbChannels()){
-        $('#results-title p').replaceWith('<p>Results (<span style="font-size:12px">Showing '
-                    + numbDivs+ " of " +numbChannels + '</span>):</p>');
-      $('#channels').append(html.join(''));
+      if (numbDivs <= getNumbChannels()) {
+        $('#results-title p').replaceWith('<p>Results (<span style="font-size:12px">Showing ' +
+          numbDivs + " of " + numbChannels + '</span>):</p>');
+        $('#channels').append(html.join(''));
       }
-      }
+    }
 
-//sets dispalSensors to be a copy of allFeeds so that all sensors will be displayed
-    function resetDisplay(){
-      displaySensors=[];
-      for(var j=0;j<allFeeds.length;j++){
+    //sets dispalSensors to be a copy of allFeeds so that all sensors will be displayed
+    function resetDisplay() {
+      displaySensors = [];
+      for (var j = 0; j < allFeeds.length; j++) {
         displaySensors.push(allFeeds[j]);
       }
     }
 
-//updates what needs to be displayed then displays it
-    function updateSensors(){
-      var t0 = performance.now();//times this function
-      resetDisplay();//sets displaySensors back to show all sensors
-      searchSensors=searchJSON();//array of sensors that meets search bar parameters
-      channelSensors=searchChannel();//array of sensors that meets checked box parameters
-      let holdArr=[]; //used to swap chanNames
+    //updates what needs to be displayed then displays it
+    function updateSensors() {
+      var t0 = performance.now(); //times this function
+      resetDisplay(); //sets displaySensors back to show all sensors
+      searchSensors = searchJSON(); //array of sensors that meets search bar parameters
+      channelSensors = searchChannel(); //array of sensors that meets checked box parameters
+      let holdArr = []; //used to swap chanNames
       //if chanNames has been created and a search was input then chanNames needs to be refined to meet the search bar
-      if(searchSensors.length>0&&chanNames.length>0){
-        chanNamesExisted=true;
-        for(var ik=0;ik<chanNames.length;ik++){
+      if (searchSensors.length > 0 && chanNames.length > 0) {
+        chanNamesExisted = true;
+        for (var ik = 0; ik < chanNames.length; ik++) {
           //checks if chanNames element meets search bar query
-          if(chanNames[ik].toLowerCase().indexOf(document.getElementById("search-bar").value)>-1){
+          if (chanNames[ik].toLowerCase().indexOf(document.getElementById("search-bar").value) > -1) {
             holdArr.push(chanNames[ik]);
           }
         }
-        chanNames=holdArr;
+        chanNames = holdArr;
       }
-      var none=false;
-      var none2=false;
+      var none = false;
+      var none2 = false;
       //used to tell the difference between no resualts found and no query in put
       //if the condition was met no no input was used in the search
-      if(searchSensors.length>0&&searchSensors[0]==-1){
-        searchSensors=[];
+      if (searchSensors.length > 0 && searchSensors[0] == -1) {
+        searchSensors = [];
         //used later to set displaySensors=[]
-        none=true;
+        none = true;
       }
-      if(searchSensors.length>0&&searchSensors[0]==-2){
-        searchSensors=[];
+      if (searchSensors.length > 0 && searchSensors[0] == -2) {
+        searchSensors = [];
         //used later to set displaySensors=[]
-        none2=true;
+        none2 = true;
       }
-      var compat=[];
+      var compat = [];
       var short;
       var long;
 
-      if(searchSensors.length>0||channelSensors.length>0){
+      if (searchSensors.length > 0 || channelSensors.length > 0) {
         //used to define which array is shorter to use in the for loops
-      if(channelSensors.length>searchSensors.length){
-        short=searchSensors;
-        long=channelSensors;
-      }else{
-        short=channelSensors;
-        long=searchSensors;
-      }
-      //if the short array has 0 elements there will be no matches so rather than look for matches just use the long array
-      if(short.length>0){
-        //looks for matches between the two arrays and puts them in a third array
-        for(var i=0;i<short.length;i++){
-        for(var k=0;k<long.length;k++){
-          if(short[i].id==long[k].id){
-            compat.push(short[i]);
-          }
+        if (channelSensors.length > searchSensors.length) {
+          short = searchSensors;
+          long = channelSensors;
+        } else {
+          short = channelSensors;
+          long = searchSensors;
         }
-      }
-      }else{
-        compat=long;
-      }
+        //if the short array has 0 elements there will be no matches so rather than look for matches just use the long array
+        if (short.length > 0) {
+          //looks for matches between the two arrays and puts them in a third array
+          for (var i = 0; i < short.length; i++) {
+            for (var k = 0; k < long.length; k++) {
+              if (short[i].id == long[k].id) {
+                compat.push(short[i]);
+              }
+            }
+          }
+        } else {
+          compat = long;
+        }
       }
       //if none is true then no input to search was used so all that matters is the channel search
-      if(none){
+      if (none) {
         //if the channel search was not used dont change displaySensors
-        if(channelSensors.length>0){
-        displaySensors=channelSensors;
+        if (channelSensors.length > 0) {
+          displaySensors = channelSensors;
         }
-      }else{
+      } else {
         //no special cases happened so uses the matches
-        if(compat.length>0){
-          displaySensors=compat;
+        if (compat.length > 0) {
+          displaySensors = compat;
         }
       }
-      if(none2){
-        displaySensors=[];
+      if (none2) {
+        displaySensors = [];
       }
-      var t1= performance.now();//used for timing
-      console.log("Timing "+(t1-t0))
-      channelPlaceHolder=0;
-      feedPlaceHolder=0;
-      numbDivs=0;
-      placeInChanNames=0;
-      document.getElementById("channels").innerHTML="";
+      var t1 = performance.now(); //used for timing
+      console.log("Timing " + (t1 - t0))
+      channelPlaceHolder = 0;
+      feedPlaceHolder = 0;
+      numbDivs = 0;
+      placeInChanNames = 0;
+      document.getElementById("channels").innerHTML = "";
       appendSensors();
       searchAttributes();
     }
 
-//searches sensors based on content of the search bar returns array
-    function searchJSON(){
+    //searches sensors based on content of the search bar returns array
+    function searchJSON() {
       //gets content of search bar which is what will be checked for in latter strings
-      var str=document.getElementById("search-bar").value;
-      var searchRes=[];
+      var str = document.getElementById("search-bar").value;
+      var searchRes = [];
       //checks if search was empty
-      if(str.length<1){
+      if (str.length < 1) {
         searchRes.push(-1);
         return searchRes;
       }
       //search all sensor names for the search input and adds the to the search results array if input is there
-      for(var j=0;j<allFeeds.length;j++){
-          // TODO(pdille): Do we want to check for ids too?
-          if(allFeeds[j].name.toLowerCase().indexOf(str.toLowerCase())>-1){
-            searchRes.push(allFeeds[j]);
-        }else{
-          let KeysArr=Object.keys(allFeeds[j].channelBounds.channels);
-          for(var ij=0;ij<KeysArr.length;ij++){
-            if(KeysArr[ij].toLowerCase().indexOf(str.toLowerCase())>-1){
-              let testArr=[];
+      for (var j = 0; j < allFeeds.length; j++) {
+        // TODO(pdille): Do we want to check for ids too?
+        if (allFeeds[j].name.toLowerCase().indexOf(str.toLowerCase()) > -1) {
+          searchRes.push(allFeeds[j]);
+        } else {
+          let KeysArr = Object.keys(allFeeds[j].channelBounds.channels);
+          for (var ij = 0; ij < KeysArr.length; ij++) {
+            if (KeysArr[ij].toLowerCase().indexOf(str.toLowerCase()) > -1) {
+              let testArr = [];
               testArr.push(channels);
-              let channels5={
-                [KeysArr[ij]]:allFeeds[j].channelBounds.channels[KeysArr[ij]]
+              let channels5 = {
+                [KeysArr[ij]]: allFeeds[j].channelBounds.channels[KeysArr[ij]]
               };
-              objCloneOfSensor = JSON.parse(JSON.stringify(allFeeds[j]));
-              objCloneOfSensor.channelBounds.channels=channels5;
+              var objCloneOfSensor = JSON.parse(JSON.stringify(allFeeds[j]));
+              objCloneOfSensor.channelBounds.channels = channels5;
               var addNewEntry = true;
               for (var k = 0; k < searchRes.length; k++) {
                 if (searchRes[k].id == objCloneOfSensor.id) {
@@ -1587,27 +1600,27 @@
           }
         }
       }
-      if(searchRes.length<1){
+      if (searchRes.length < 1) {
         searchRes.push(-2);
       }
       return searchRes;
-      }
+    }
 
 
-  //searches sensors to see if they have a channel which matches checked box inputs
-    function searchChannel(){
-      chanNames=[];
-      chanNamesExisted=false;
-      var resArr=[];
-      var keys=Object.keys(checks);
-      for(var j=0;j<allFeeds.length;j++){
-        for(var i=0;i<keys.length;i++){
-          var x=checks[keys[i]];
-          if(x.checked){
+    //searches sensors to see if they have a channel which matches checked box inputs
+    function searchChannel() {
+      chanNames = [];
+      chanNamesExisted = false;
+      var resArr = [];
+      var keys = Object.keys(checks);
+      for (var j = 0; j < allFeeds.length; j++) {
+        for (var i = 0; i < keys.length; i++) {
+          var x = checks[keys[i]];
+          if (x.checked) {
             //the rest of this method ifor itteration hasChannel actually checks for valid channels
-           if(hasChannel(allFeeds[j],keys[i])){
-            resArr.push(allFeeds[j]);
-           }
+            if (hasChannel(allFeeds[j], keys[i])) {
+              resArr.push(allFeeds[j]);
+            }
           }
         }
 
@@ -1616,15 +1629,15 @@
     }
 
 
-//chekcs for valid channels
-    function hasChannel(sensor,dType){
-      var keys=Object.keys(sensor.channelBounds.channels);
+    //chekcs for valid channels
+    function hasChannel(sensor, dType) {
+      var keys = Object.keys(sensor.channelBounds.channels);
       //itterates through aliases array and channels uses the passes in key dType to determin which aliases to check
-      for(var k=0;k<aliases[dType].length;k++){
-        for(var i=0;i<keys.length;i++){
+      for (var k = 0; k < aliases[dType].length; k++) {
+        for (var i = 0; i < keys.length; i++) {
           //if a valid channel is present then it formats a tring in the label format then adds it to the channel array and returns true
-          if(aliases[dType][k].toLowerCase()===keys[i].toLocaleLowerCase()){
-            let formated=sensor.name+" ("+sensor.id+")."+keys[i];
+          if (aliases[dType][k].toLowerCase() === keys[i].toLocaleLowerCase()) {
+            let formated = sensor.name + " (" + sensor.id + ")." + keys[i];
             chanNames.push(formated);
             return true;
           }
@@ -1633,18 +1646,18 @@
       return false;
     }
     //returns a sensor object from the displayed array with matching ID
-    function getSensor(wantId,inArr){
-      for(var h=0;h<inArr.length;h++){
-        if(inArr[h].id==wantId){
+    function getSensor(wantId, inArr) {
+      for (var h = 0; h < inArr.length; h++) {
+        if (inArr[h].id == wantId) {
           return inArr[h];
         }
       }
     }
     //returns an array of the valid channels a sensor has
-    function getChannelFromSensor(sensorGiven,inArr){
-      var resArr=[];
-      for(var h=0;h<inArr.length;h++){
-        if(inArr[h].indexOf(sensorGiven.name)>-1){
+    function getChannelFromSensor(sensorGiven, inArr) {
+      var resArr = [];
+      for (var h = 0; h < inArr.length; h++) {
+        if (inArr[h].indexOf(sensorGiven.name) > -1) {
           resArr.push(inArr[h]);
         }
       }
@@ -1659,184 +1672,190 @@
 
 
 
-    function enableSearch(){
-        $("#search-bar").prop('disabled', false);
-        $("#air-quality input").prop('disabled', false);
-        $("#air-quality label").css('color', 'black');
-        $("#search-bar").attr('placeholder', ' search for channel name:')
+    function enableSearch() {
+      $("#search-bar").prop('disabled', false);
+      $("#air-quality input").prop('disabled', false);
+      $("#air-quality label").css('color', 'black');
+      $("#search-bar").attr('placeholder', ' search for channel name:')
     }
 
     //~~~~~~~~~~~~~~~~~~~~ init() function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     function init() {
-       map.addListener('dragend', updateHash);
-       map.addListener('zoom_changed', updateHash);
-       $.ajax({url: ESDR_API_ROOT_URL + '/feeds', success: loadFeeds});
-
-       $(document).on('click', function(event) {
-          if (!$(event.target).closest('#search-bar').length) {
-             $('#search-bar').blur();
-          }
-       });
-
-       $('#export-button').on('click', exportData);
-
-       var timer = null;
-
-       document.getElementById('search-box').addEventListener('submit', function(e) {
-            e.preventDefault();
-        }, false);
-
-       $('#search-bar').keyup(function(){
-          if ($('#search-bar').val() == ""){
-             clearInterval(timer);
-             timer = null;
-             updateSensors();
-          }else if (timer == null) {
-             timer = setTimeout(function(){
-             updateSensors()}, 800)}
-       }).keydown(function(){
-          if (timer) {
-             clearInterval(timer);
-             timer = null;
-          }
-       }).click(function(){
-          $(this).focus();
-
-       }).on("search", function(){
-          updateSensors();
-       });
-
-       $('#duration').change(function(){
-          setSpeed();
-       })
-
-       playTransform()
-
-       $(document).keydown(function(e) {
-          switch(e.which) {
-              case 32: //space
-                if (playButtonEnabled && !$("#search-bar").is(":focus")){
-                  togglePlayPause();
-                }
-              break
-              case 37: //left arrow
-              if (!$("#search-bar").is(":focus")){
-                cursorInBound();
-                if(!pause){
-                  playTransform();
-                  pauseTimeline();
-                  playing = false;
-                }
-
-                if (dateProperties.max > Date.now() / 1000){
-                  var timeIncrement = (Date.now() / 1000 - dateProperties.min)/timeSlices;
-                }else{
-                  var timeIncrement = (dateProperties.max - dateProperties.min)/timeSlices;
-                }
-                plotManager.getDateAxis().setCursorPosition(dateProperties.cursorPosition - timeIncrement);
-                cursorInBound();
-              }
-              break
-              case 39: //right arrow
-              if (!$("#search-bar").is(":focus")){
-                cursorInBound();
-                if(!pause){
-                  playTransform();
-                  pauseTimeline();
-                  playing = false;
-                }
-
-                if (dateProperties.max > Date.now() / 1000){
-                  var timeIncrement = (Date.now() / 1000 - dateProperties.min)/timeSlices;
-                }else{
-                  var timeIncrement = (dateProperties.max - dateProperties.min)/timeSlices;
-                }
-                plotManager.getDateAxis().setCursorPosition(dateProperties.cursorPosition + timeIncrement);
-                cursorInBound();
-              }
-              break
-              default: return;
-          }
+      map.addListener('dragend', updateHash);
+      map.addListener('zoom_changed', updateHash);
+      $.ajax({
+        url: ESDR_API_ROOT_URL + '/feeds',
+        success: loadFeeds
       });
 
-      $('#map-filters').keydown(function(e){
+      $(document).on('click', function(event) {
+        if (!$(event.target).closest('#search-bar').length) {
+          $('#search-bar').blur();
+        }
+      });
+
+      $('#export-button').on('click', exportData);
+
+      var timer = null;
+
+      document.getElementById('search-box').addEventListener('submit', function(e) {
+        e.preventDefault();
+      }, false);
+
+      $('#search-bar').keyup(function() {
+        if ($('#search-bar').val() == "") {
+          clearInterval(timer);
+          timer = null;
+          updateSensors();
+        } else if (timer == null) {
+          timer = setTimeout(function() {
+            updateSensors()
+          }, 800)
+        }
+      }).keydown(function() {
+        if (timer) {
+          clearInterval(timer);
+          timer = null;
+        }
+      }).click(function() {
+        $(this).focus();
+
+      }).on("search", function() {
+        updateSensors();
+      });
+
+      $('#duration').change(function() {
+        setSpeed();
+      })
+
+      playTransform()
+
+      $(document).keydown(function(e) {
+        switch (e.which) {
+          case 32: //space
+            if (playButtonEnabled && !$("#search-bar").is(":focus")) {
+              togglePlayPause();
+            }
+            break
+          case 37: //left arrow
+            if (!$("#search-bar").is(":focus")) {
+              cursorInBound();
+              if (!pause) {
+                playTransform();
+                pauseTimeline();
+                playing = false;
+              }
+
+              if (dateProperties.max > Date.now() / 1000) {
+                var timeIncrement = (Date.now() / 1000 - dateProperties.min) / timeSlices;
+              } else {
+                var timeIncrement = (dateProperties.max - dateProperties.min) / timeSlices;
+              }
+              plotManager.getDateAxis().setCursorPosition(dateProperties.cursorPosition - timeIncrement);
+              cursorInBound();
+            }
+            break
+          case 39: //right arrow
+            if (!$("#search-bar").is(":focus")) {
+              cursorInBound();
+              if (!pause) {
+                playTransform();
+                pauseTimeline();
+                playing = false;
+              }
+
+              if (dateProperties.max > Date.now() / 1000) {
+                var timeIncrement = (Date.now() / 1000 - dateProperties.min) / timeSlices;
+              } else {
+                var timeIncrement = (dateProperties.max - dateProperties.min) / timeSlices;
+              }
+              plotManager.getDateAxis().setCursorPosition(dateProperties.cursorPosition + timeIncrement);
+              cursorInBound();
+            }
+            break
+          default:
+            return;
+        }
+      });
+
+      $('#map-filters').keydown(function(e) {
         e.preventDefault();
       });
 
-      $("#go-left-button").on('click', function(){
+      $("#go-left-button").on('click', function() {
         var diff = dateProperties.max - dateProperties.min;
-        plotManager.getDateAxis().setRange(dateProperties.min - (diff/4), dateProperties.max - (diff/4));
+        plotManager.getDateAxis().setRange(dateProperties.min - (diff / 4), dateProperties.max - (diff / 4));
       });
 
-      $("#go-right-button").on('click', function(){
+      $("#go-right-button").on('click', function() {
         var diff = dateProperties.max - dateProperties.min;
-        plotManager.getDateAxis().setRange(dateProperties.min + (diff/4), dateProperties.max + (diff/4));
+        plotManager.getDateAxis().setRange(dateProperties.min + (diff / 4), dateProperties.max + (diff / 4));
 
       });
 
-      $("#zoom-in").on('click', function(){
+      $("#zoom-in").on('click', function() {
         zoomGrapher(0.7);
       });
 
-      $("#zoom-out").on('click', function(){
+      $("#zoom-out").on('click', function() {
         zoomGrapher(1.3);
       });
 
-      $("#now-button").on('click', function(){
+      $("#now-button").on('click', function() {
         var diff = dateProperties.max - dateProperties.min;
-        var now = Date.now()/1000;
-        plotManager.getDateAxis().setRange(now-diff/2, now+diff/2);
+        var now = Date.now() / 1000;
+        plotManager.getDateAxis().setRange(now - diff / 2, now + diff / 2);
         plotManager.getDateAxis().setCursorPosition(now);
       });
 
-      $("#day-button").on('click', function(){
-        var secondsInDay = 60*60*24;
-        var dayInMiddle = (isCursorInBound()) ? new Date(new Date(dateProperties.cursorPosition*1000).toDateString()).getTime() / 1000 : new Date(new Date(((dateProperties.max + dateProperties.min) / 2)*1000).toDateString()).getTime() / 1000;
-        plotManager.getDateAxis().setRange(dayInMiddle, dayInMiddle+secondsInDay);
+      $("#day-button").on('click', function() {
+        var secondsInDay = 60 * 60 * 24;
+        var dayInMiddle = (isCursorInBound()) ? new Date(new Date(dateProperties.cursorPosition * 1000).toDateString()).getTime() / 1000 : new Date(new Date(((dateProperties.max + dateProperties.min) / 2) * 1000).toDateString()).getTime() / 1000;
+        plotManager.getDateAxis().setRange(dayInMiddle, dayInMiddle + secondsInDay);
       });
 
-      $("#month-button").on('click', function(){
-        var dayInMiddle = (isCursorInBound()) ? new Date(new Date(dateProperties.cursorPosition*1000).toDateString()) : new Date(new Date(((dateProperties.max + dateProperties.min) / 2)*1000).toDateString());
-        var startOfMonth = new Date(dayInMiddle.getFullYear(), dayInMiddle.getMonth(),1,0);
-        var secondsInMonth = new Date(dayInMiddle.getFullYear(), dayInMiddle.getMonth(),0);
-        secondsInMonth = 60*60*24*secondsInMonth.getDate();
+      $("#month-button").on('click', function() {
+        var dayInMiddle = (isCursorInBound()) ? new Date(new Date(dateProperties.cursorPosition * 1000).toDateString()) : new Date(new Date(((dateProperties.max + dateProperties.min) / 2) * 1000).toDateString());
+        var startOfMonth = new Date(dayInMiddle.getFullYear(), dayInMiddle.getMonth(), 1, 0);
+        var secondsInMonth = new Date(dayInMiddle.getFullYear(), dayInMiddle.getMonth(), 0);
+        secondsInMonth = 60 * 60 * 24 * secondsInMonth.getDate();
         startOfMonth = startOfMonth.getTime() / 1000;
-        plotManager.getDateAxis().setRange(startOfMonth, startOfMonth+secondsInMonth);
+        plotManager.getDateAxis().setRange(startOfMonth, startOfMonth + secondsInMonth);
       });
 
-      $("#year-button").on('click', function(){
-        var dayInMiddle = (isCursorInBound()) ? new Date(new Date(dateProperties.cursorPosition*1000).toDateString()) : new Date(new Date(((dateProperties.max + dateProperties.min) / 2)*1000).toDateString());
-        var startOfYear = new Date(dayInMiddle.getFullYear(),0).getTime() / 1000;
-        var secondsInYear = (dayInMiddle.isLeapYear()) ? 60*60*24*364 : 60*60*24*365;
-        plotManager.getDateAxis().setRange(startOfYear, startOfYear+secondsInYear);
+      $("#year-button").on('click', function() {
+        var dayInMiddle = (isCursorInBound()) ? new Date(new Date(dateProperties.cursorPosition * 1000).toDateString()) : new Date(new Date(((dateProperties.max + dateProperties.min) / 2) * 1000).toDateString());
+        var startOfYear = new Date(dayInMiddle.getFullYear(), 0).getTime() / 1000;
+        var secondsInYear = (dayInMiddle.isLeapYear()) ? 60 * 60 * 24 * 364 : 60 * 60 * 24 * 365;
+        plotManager.getDateAxis().setRange(startOfYear, startOfYear + secondsInYear);
       });
     }
 
     Date.prototype.isLeapYear = function(utc) {
-        var y = utc ? this.getUTCFullYear() : this.getFullYear();
-        return !(y % 4) && (y % 100) || !(y % 400);
+      var y = utc ? this.getUTCFullYear() : this.getFullYear();
+      return !(y % 4) && (y % 100) || !(y % 400);
     };
 
     function zoomGrapher(scale) {
-        if(isCursorInBound()){
-          var cursorPosition = dateProperties.cursorPosition;
-          var leftRange = scale*(dateProperties.cursorPosition - dateProperties.min);
-          var rightRange = scale*(dateProperties.max - dateProperties.cursorPosition);
-          plotManager.getDateAxis().setRange(cursorPosition-leftRange,cursorPosition+rightRange);
-        }else{
-          var min_time = dateProperties.min;
-          var max_time = dateProperties.max;
-          var mean_time = (max_time+min_time)/2;
-          var range_half_scaled = scale*(max_time-min_time)/2;
-          plotManager.getDateAxis().setRange(mean_time-range_half_scaled,mean_time+range_half_scaled);
-        }
+      if (isCursorInBound()) {
+        var cursorPosition = dateProperties.cursorPosition;
+        var leftRange = scale * (dateProperties.cursorPosition - dateProperties.min);
+        var rightRange = scale * (dateProperties.max - dateProperties.cursorPosition);
+        plotManager.getDateAxis().setRange(cursorPosition - leftRange, cursorPosition + rightRange);
+      } else {
+        var min_time = dateProperties.min;
+        var max_time = dateProperties.max;
+        var mean_time = (max_time + min_time) / 2;
+        var range_half_scaled = scale * (max_time - min_time) / 2;
+        plotManager.getDateAxis().setRange(mean_time - range_half_scaled, mean_time + range_half_scaled);
+      }
     }
 
 
- //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ init() function END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ init() function END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    function clampAllPlots(){
+    function clampAllPlots() {
       for (var key in plotScalers) {
         if (plotScalers.hasOwnProperty(key)) {
           clampNumberAxisToDataRange(plotScalers[key]);
@@ -1847,248 +1866,249 @@
     }
 
     function getChannels() {
-       var plotDivs = $('#plots [id^=plot]');
-       var channels = [];
-       for (var i = 0; i < plotDivs.length; i++) {
-          var plotName = plotDivs[i].id;
-          var plotIdx = parseInt(plotName.slice(4));
-          var channel = plotIdxToChannel[plotIdx];
-          channels.push(channel);
-       }
-       return channels;
+      var plotDivs = $('#plots [id^=plot]');
+      var channels = [];
+      for (var i = 0; i < plotDivs.length; i++) {
+        var plotName = plotDivs[i].id;
+        var plotIdx = parseInt(plotName.slice(4));
+        var channel = plotIdxToChannel[plotIdx];
+        channels.push(channel);
+      }
+      return channels;
     }
 
     function updateHash() {
-       var channels = getChannels();
-       var params = [];
-       if (channels.length > 0) {
-          params.push('channels=' + channels.join(','));
-       }
+      var channels = getChannels();
+      var params = [];
+      if (channels.length > 0) {
+        params.push('channels=' + channels.join(','));
+      }
 
-       var timeRange = plotManager.getDateAxis().getRange();
-       params.push('time=' + timeRange.min + ',' + timeRange.max);
-       if(map){
-          params.push("zoom=" + map.getZoom());
-          params.push("center=" + map.getCenter().lat() + "," + map.getCenter().lng());
-       }
-       var color = "";
-       $('#map-filters [type = radio]').each(function(index, input) {
-          if (input.checked && !$(input).is("[data-filter='none']")){
-            color = $(input).data("filter");
-          }
-       });
-       if(color){
-          params.push("color=" + color);
-       }
-       if(dateProperties.cursorPosition){
-          params.push("cursor=" + dateProperties.cursorPosition);
-       }
-       var checked = [];
-       $('#filters [type = checkbox]').each(function(index, input) {
-          if (input.checked){
-            checked.push(input.name);
-          }
-       });
-       if(checked.length > 0){
-          params.push('checked=' + checked.join(','));
-       }
-       var search = $('#search-bar').val().toLowerCase();
-       if(search){
-          params.push('search=' + encodeURI(search));
-       }
+      var timeRange = plotManager.getDateAxis().getRange();
+      params.push('time=' + timeRange.min + ',' + timeRange.max);
+      if (map) {
+        params.push("zoom=" + map.getZoom());
+        params.push("center=" + map.getCenter().lat() + "," + map.getCenter().lng());
+      }
+      var color = "";
+      $('#map-filters [type = radio]').each(function(index, input) {
+        if (input.checked && !$(input).is("[data-filter='none']")) {
+          color = $(input).data("filter");
+        }
+      });
+      if (color) {
+        params.push("color=" + color);
+      }
+      if (dateProperties.cursorPosition) {
+        params.push("cursor=" + dateProperties.cursorPosition);
+      }
+      var checked = [];
+      $('#filters [type = checkbox]').each(function(index, input) {
+        if (input.checked) {
+          checked.push(input.name);
+        }
+      });
+      if (checked.length > 0) {
+        params.push('checked=' + checked.join(','));
+      }
+      var search = $('#search-bar').val().toLowerCase();
+      if (search) {
+        params.push('search=' + encodeURI(search));
+      }
 
-       if(exportMenuOpen){
-          params.push('export=open');
-       }
+      if (exportMenuOpen) {
+        params.push('export=open');
+      }
 
-       var newHash = '#' + params.join('&');
-       if (window.location.hash != newHash) {
-          window.location.hash = newHash;
-       }
+      var newHash = '#' + params.join('&');
+      if (window.location.hash != newHash) {
+        window.location.hash = newHash;
+      }
     }
 
     // from http://stackoverflow.com/questions/4197591/parsing-url-hash-fragment-identifier-with-javascript
     //not Andrew was already here
     function getHashParams() {
-       var hashParams = {};
-       var e,
-           a = /\+/g,  // Regex for replacing addition symbol with a space
-           r = /([^&;=]+)=?([^&;]*)/g,
-           d = function (s) { return decodeURIComponent(s.replace(a, " ")); },
-           q = window.location.hash.substring(1);
+      var hashParams = {};
+      var e,
+        a = /\+/g, // Regex for replacing addition symbol with a space
+        r = /([^&;=]+)=?([^&;]*)/g,
+        d = function(s) {
+          return decodeURIComponent(s.replace(a, " "));
+        },
+        q = window.location.hash.substring(1);
 
-       while (e = r.exec(q)) hashParams[d(e[1])] = d(e[2]);
+      while (e = r.exec(q)) hashParams[d(e[1])] = d(e[2]);
 
-       return hashParams;
+      return hashParams;
     }
 
     function loadHash() {
-       var params = getHashParams();
-       if (params.time && params.time != oldParams.time) {
-          var split = params.time.split(',');
-          plotManager.getDateAxis().setRange(parseFloat(split[0]), parseFloat(split[1]));
-       }
+      var params = getHashParams();
+      if (params.time && params.time != oldParams.time) {
+        var split = params.time.split(',');
+        plotManager.getDateAxis().setRange(parseFloat(split[0]), parseFloat(split[1]));
+      }
 
-       var reSearchNeeded = false;
+      var reSearchNeeded = false;
 
-       if(params.checked != oldParams.checked){
-          if(params.checked){
-            var checked = params.checked.split(',');
-            $("#air-quality input").prop('checked', false);
-            for(name in checked){
-              $("#air-quality input[name = " + checked[name] + "]").prop('checked', true);
-            }
-          }else{
-            $("#air-quality input").prop('checked', false);
+      if (params.checked != oldParams.checked) {
+        if (params.checked) {
+          var checked = params.checked.split(',');
+          $("#air-quality input").prop('checked', false);
+          for (name in checked) {
+            $("#air-quality input[name = " + checked[name] + "]").prop('checked', true);
           }
-          reSearchNeeded = true;
-       }
+        } else {
+          $("#air-quality input").prop('checked', false);
+        }
+        reSearchNeeded = true;
+      }
 
-       if(params.search != oldParams.search){
-          if(params.search){
-            $('#search-bar').val(decodeURI(params.search));
-          }else{
-            $('#search-bar').val("");
+      if (params.search != oldParams.search) {
+        if (params.search) {
+          $('#search-bar').val(decodeURI(params.search));
+        } else {
+          $('#search-bar').val("");
+        }
+        reSearchNeeded = true;
+      }
+
+      if (reSearchNeeded) {
+        searchAttributes();
+      }
+
+      if (params.cursor && params.cursor != oldParams.cursor) {
+        plotManager.getDateAxis().setCursorPosition(parseFloat(params.cursor));
+      }
+
+      if (params.color && params.color != oldParams.color) {
+        $('#map-filters [type = radio][data-filter="' + params.color + '"]').trigger('click');
+      }
+
+      var oldChannels = getChannels();
+      var newChannels = [];
+      var oldPipeURL = false;
+
+      if (params.channels) {
+        var oldPipURL = (params.channels.split('|').length > 1);
+        newChannels = (!oldPipURL) ? params.channels.split(',') : params.channels.split('|');
+      }
+
+      if (!oldPipeURL) {
+        if (oldChannels.join(',') != newChannels.join(',')) {
+          for (var i = 0; i < oldChannels.length; i++) {
+            removePlot(oldChannels[i]);
           }
-          reSearchNeeded = true;
-       }
-
-       if(reSearchNeeded){
-          searchAttributes();
-       }
-
-       if(params.cursor && params.cursor != oldParams.cursor){
-          plotManager.getDateAxis().setCursorPosition(parseFloat(params.cursor));
-       }
-
-       if(params.color && params.color != oldParams.color){
-          $('#map-filters [type = radio][data-filter="' + params.color + '"]').trigger('click');
-       }
-
-       var oldChannels = getChannels();
-       var newChannels = [];
-       var oldPipeURL = false;
-
-
-       if (params.channels) {
-          oldPipURL = (params.channels.split('|').length > 1);
-          newChannels = (!oldPipURL) ? params.channels.split(',') : params.channels.split('|');
-       }
-
-       if(!oldPipeURL){
-          if (oldChannels.join(',') != newChannels.join(',')) {
-            for (var i = 0; i < oldChannels.length; i++) {
-               removePlot(oldChannels[i]);
-            }
-            for (i = 0; i < newChannels.length; i++) {
-               addPlot(newChannels[i]);
-            }
-         }
-       }else{
-          if (oldChannels.join('|') != newChannels.join('|')) {
-            for (var i = 0; i < oldChannels.length; i++) {
-               removePlot(oldChannels[i]);
-            }
-            for (i = 0; i < newChannels.length; i++) {
-               addPlot(newChannels[i]);
-            }
-         }
-       }
-
-       if(params.export != oldParams.export){
-          if(params.export && !$("#dark-background").length){
-            exportData();
-          }else if(!params.export){
-            exportMenuOpen = false;
-            $("#dark-background").remove();
+          for (i = 0; i < newChannels.length; i++) {
+            addPlot(newChannels[i]);
           }
-       }
+        }
+      } else {
+        if (oldChannels.join('|') != newChannels.join('|')) {
+          for (var i = 0; i < oldChannels.length; i++) {
+            removePlot(oldChannels[i]);
+          }
+          for (i = 0; i < newChannels.length; i++) {
+            addPlot(newChannels[i]);
+          }
+        }
+      }
 
-       oldParams = params;
+      if (params.export != oldParams.export) {
+        if (params.export && !$("#dark-background").length) {
+          exportData();
+        } else if (!params.export) {
+          exportMenuOpen = false;
+          $("#dark-background").remove();
+        }
+      }
+
+      oldParams = params;
     }
 
-    function loadHashInit(){
+    function loadHashInit() {
       if (initParams.time) {
-          var split = initParams.time.split(',');
-          plotManager.getDateAxis().setRange(parseFloat(split[0]), parseFloat(split[1]));
-       }
+        var split = initParams.time.split(',');
+        plotManager.getDateAxis().setRange(parseFloat(split[0]), parseFloat(split[1]));
+      }
 
-       var reSearchNeeded = false;
+      var reSearchNeeded = false;
 
-       if(initParams.checked){
-            var checked = initParams.checked.split(',');
-            $("#air-quality input").prop('checked', false);
-            for(name in checked){
-              $("#air-quality input[name = " + checked[name] + "]").prop('checked', true);
-            }
-            reSearchNeeded = true;
-       }
+      if (initParams.checked) {
+        var checked = initParams.checked.split(',');
+        $("#air-quality input").prop('checked', false);
+        for (name in checked) {
+          $("#air-quality input[name = " + checked[name] + "]").prop('checked', true);
+        }
+        reSearchNeeded = true;
+      }
 
-       if(initParams.search){
-          $('#search-bar').val(decodeURI(initParams.search));
-          reSearchNeeded = true;
-       }
+      if (initParams.search) {
+        $('#search-bar').val(decodeURI(initParams.search));
+        reSearchNeeded = true;
+      }
 
-       if(reSearchNeeded){
-          searchAttributes();
-       }
+      if (reSearchNeeded) {
+        searchAttributes();
+      }
 
-       if(initParams.cursor){
-          plotManager.getDateAxis().setCursorPosition(parseFloat(initParams.cursor));
-       }
+      if (initParams.cursor) {
+        plotManager.getDateAxis().setCursorPosition(parseFloat(initParams.cursor));
+      }
 
-       if(initParams.color){
-          $('#map-filters [type = radio][data-filter="' + initParams.color + '"]').trigger('click');
-       }
+      if (initParams.color) {
+        $('#map-filters [type = radio][data-filter="' + initParams.color + '"]').trigger('click');
+      }
 
-       var oldChannels = getChannels();
-       var newChannels = [];
-       var oldPipeURL = false;
+      var oldChannels = getChannels();
+      var newChannels = [];
+      var oldPipeURL = false;
 
-       if (initParams.channels) {
-          oldPipURL = (initParams.channels.split('|').length > 1);
-          newChannels = (!oldPipURL) ? initParams.channels.split(',') : initParams.channels.split('|');
-       }
+      if (initParams.channels) {
+        var oldPipURL = (initParams.channels.split('|').length > 1);
+        newChannels = (!oldPipURL) ? initParams.channels.split(',') : initParams.channels.split('|');
+      }
 
-       if(!oldPipeURL){
-          if (oldChannels.join(',') != newChannels.join(',')) {
-            for (var i = 0; i < oldChannels.length; i++) {
-               removePlot(oldChannels[i]);
-            }
-            for (i = 0; i < newChannels.length; i++) {
-               addPlot(newChannels[i]);
-            }
-         }
-       }else{
-          if (oldChannels.join('|') != newChannels.join('|')) {
-            for (var i = 0; i < oldChannels.length; i++) {
-               removePlot(oldChannels[i]);
-            }
-            for (i = 0; i < newChannels.length; i++) {
-               addPlot(newChannels[i]);
-            }
-         }
-       }
+      if (!oldPipeURL) {
+        if (oldChannels.join(',') != newChannels.join(',')) {
+          for (var i = 0; i < oldChannels.length; i++) {
+            removePlot(oldChannels[i]);
+          }
+          for (i = 0; i < newChannels.length; i++) {
+            addPlot(newChannels[i]);
+          }
+        }
+      } else {
+        if (oldChannels.join('|') != newChannels.join('|')) {
+          for (var i = 0; i < oldChannels.length; i++) {
+            removePlot(oldChannels[i]);
+          }
+          for (i = 0; i < newChannels.length; i++) {
+            addPlot(newChannels[i]);
+          }
+        }
+      }
 
-       if(initParams.export){
-          exportData();
-       }
+      if (initParams.export) {
+        exportData();
+      }
 
-       oldParams = initParams;
+      oldParams = initParams;
     }
 
     function removePlot(channel) {
-       var plotIdx = channelToPlotIdx[channel];
-       var plotName = 'plot' + plotIdx;
-       plotManager.getPlotContainer(plotName).removePlot(plotManager.getPlot(plotName));
-       $('#plot' + plotIdx).parent().remove();
-       delete plotScalers[plotIdx];
-       $('input[name="' + channel + '"]').prop('checked', false);
-       var feedIndex = parseInt(channel.substr(0, channel.indexOf('.')));
-       if (!(checkIfAnyChecked(feedIndex))) changeCircled(feedIndex, 0);
-       updateHash();
-       delete plotIdxToChannel[plotIdx];
-       delete channelToPlotIdx[channel];
+      var plotIdx = channelToPlotIdx[channel];
+      var plotName = 'plot' + plotIdx;
+      plotManager.getPlotContainer(plotName).removePlot(plotManager.getPlot(plotName));
+      $('#plot' + plotIdx).parent().remove();
+      delete plotScalers[plotIdx];
+      $('input[name="' + channel + '"]').prop('checked', false);
+      var feedIndex = parseInt(channel.substr(0, channel.indexOf('.')));
+      if (!(checkIfAnyChecked(feedIndex))) changeCircled(feedIndex, 0);
+      updateHash();
+      delete plotIdxToChannel[plotIdx];
+      delete channelToPlotIdx[channel];
     }
 
     function exportData() {
@@ -2099,9 +2119,9 @@
         if (plotIdxToChannel.hasOwnProperty(key)) {
           var feedNumAndChannelName = plotIdxToChannel[key].split(".");
           var feedIDIndex = feedIDs.indexOf(feedNumAndChannelName[0]);
-          if (feedIDIndex > -1){
+          if (feedIDIndex > -1) {
             channelNamesPerID[feedIDIndex].push(feedNumAndChannelName[1]);
-          }else{
+          } else {
             feedIDs.push(feedNumAndChannelName[0]);
             channelNamesPerID.push([feedNumAndChannelName[1]]);
           }
@@ -2110,39 +2130,39 @@
 
       var menuDiv = [];
       menuDiv.push('<div id="dark-background">');
-        menuDiv.push('<div id="export-menu">');
-          menuDiv.push('<div id="export-title">');
-            menuDiv.push('<p>Export Information</p>');
-            menuDiv.push('<div class="x-button"><span style="color:rgb(200,200,200);">&times</span></div>');
-          menuDiv.push('</div>');
-          menuDiv.push('<div id="export-content">');
+      menuDiv.push('<div id="export-menu">');
+      menuDiv.push('<div id="export-title">');
+      menuDiv.push('<p>Export Information</p>');
+      menuDiv.push('<div class="x-button"><span style="color:rgb(200,200,200);">&times</span></div>');
+      menuDiv.push('</div>');
+      menuDiv.push('<div id="export-content">');
 
-          for (var i = 0; i < feedIDs.length; i++){
-            var url = ESDR_API_ROOT_URL + "/feeds/" + feedIDs[i] + "/channels/" + channelNamesPerID[i].join(',') + "/export?from=" + dateProperties.min + "&to=" + dateProperties.max;
-              menuDiv.push('<div class="file-info">');
-              menuDiv.push('<p style="text-decoration: underline;">File ' + (i + 1) + ':</p>');
-              menuDiv.push('<p>Feed ID: ' + feedIDs[i] + '</p>');
-              menuDiv.push('<p>Channels: ' + channelNamesPerID[i].join(', ') + '</p>');
-              menuDiv.push('<p>Time Range: ' + new Date(dateProperties.min*1000).format("dddd, mmmm d, yyyy hh:MM:ss TT") + " to " + new Date(dateProperties.max*1000).format("mmmm d, yyyy hh:MM:ss TT")  + '</p>');
-              menuDiv.push('<a href=' + url + '&format=csv'+ ' download>Download Link (.csv)</a>');
-              menuDiv.push('&emsp;&emsp;&emsp;&emsp;&emsp;')
-              menuDiv.push('<a href=' + url + '&format=json'+ ' download>Download Link (.json)</a>');
+      for (var i = 0; i < feedIDs.length; i++) {
+        var url = ESDR_API_ROOT_URL + "/feeds/" + feedIDs[i] + "/channels/" + channelNamesPerID[i].join(',') + "/export?from=" + dateProperties.min + "&to=" + dateProperties.max;
+        menuDiv.push('<div class="file-info">');
+        menuDiv.push('<p style="text-decoration: underline;">File ' + (i + 1) + ':</p>');
+        menuDiv.push('<p>Feed ID: ' + feedIDs[i] + '</p>');
+        menuDiv.push('<p>Channels: ' + channelNamesPerID[i].join(', ') + '</p>');
+        menuDiv.push('<p>Time Range: ' + new Date(dateProperties.min * 1000).format("dddd, mmmm d, yyyy hh:MM:ss TT") + " to " + new Date(dateProperties.max * 1000).format("mmmm d, yyyy hh:MM:ss TT") + '</p>');
+        menuDiv.push('<a href=' + url + '&format=csv' + ' download>Download Link (.csv)</a>');
+        menuDiv.push('&emsp;&emsp;&emsp;&emsp;&emsp;')
+        menuDiv.push('<a href=' + url + '&format=json' + ' download>Download Link (.json)</a>');
 
-              menuDiv.push('</div>');
-              menuDiv.push('<hr>');
-          }
-          if(!feedIDs.length){
-            menuDiv.push('<div class="file-info"><p><span style="color:red;">&#9888;&emsp;&emsp;</span>No channel data to export.<br><br>Open up a channel by checkboxing in the sidebar or by clicking a node on the map.</p></div>');
-          }
-          menuDiv.push('</div>');
         menuDiv.push('</div>');
+        menuDiv.push('<hr>');
+      }
+      if (!feedIDs.length) {
+        menuDiv.push('<div class="file-info"><p><span style="color:red;">&#9888;&emsp;&emsp;</span>No channel data to export.<br><br>Open up a channel by checkboxing in the sidebar or by clicking a node on the map.</p></div>');
+      }
+      menuDiv.push('</div>');
+      menuDiv.push('</div>');
       menuDiv.push('</div>');
 
       var exportDiv = $(menuDiv.join(""));
 
       $('body').append(exportDiv);
 
-      $(exportDiv).children().children().children().filter(".x-button").click(function(){
+      $(exportDiv).children().children().children().filter(".x-button").click(function() {
         exportMenuOpen = false;
         $(exportDiv).remove();
         updateHash();
@@ -2154,132 +2174,132 @@
 
 
     window.grapherLoad = function() {
-       var maxTimeSecs = Date.now() / 1000;
-       var minTimeSecs = maxTimeSecs - 7 * 24 * 60 * 60;
+      var maxTimeSecs = Date.now() / 1000;
+      var minTimeSecs = maxTimeSecs - 7 * 24 * 60 * 60;
 
-       plotManager = new org.bodytrack.grapher.PlotManager("date_axis", minTimeSecs, maxTimeSecs);
+      plotManager = new org.bodytrack.grapher.PlotManager("date_axis", minTimeSecs, maxTimeSecs);
 
-       plotManager.setWillAutoResizeWidth(true, function() {
-               return $('#plots').width()         // window width
-                      // - 30;
+      plotManager.setWillAutoResizeWidth(true, function() {
+        return $('#plots').width() // window width
+        // - 30;
+      });
+
+      plotManager.getDateAxis().constrainRangeTo(0, 4118011200);
+
+      dateProperties = plotManager.getDateAxis().getRange();
+
+      //Fires when cursor position changes or date axis bound changes
+      plotManager.getDateAxis().addAxisChangeListener(function(dateAxisProperties) {
+        clearTimeout(clampTimer);
+        clampTimer = setTimeout(clampAllPlots, 300);
+
+        if (Math.abs(dateAxisProperties.max - dateProperties.max) >= Number.MIN_VALUE || Math.abs(dateAxisProperties.min - dateProperties.min) >= Number.MIN_VALUE) {
+          clearTimeout(hashTimer);
+          hashTimer = setTimeout(updateHash, 300);
+        }
+
+        if (timelineReady) {
+          var now = Date.now() / 1000;
+          var lastDataTime = timelineQueue[timelineQueue.length - 1].timeStamp;
+          var firstDataTime = timelineQueue[0].timeStamp;
+          var level = offsetLimitCalculator(dateAxisProperties.min, dateAxisProperties.max).limit;
+          if ((Math.abs(dateAxisProperties.max - dateAxisProperties.min - dateProperties.max + dateProperties.min) >= Number.MIN_VALUE && level != currentLevel) ||
+            ((dateAxisProperties.max > lastDataTime && dateAxisProperties.max < now) &&
+              !(lastDataTime < dateAxisProperties.max && dateAxisProperties.max < now)) ||
+            ((dateAxisProperties.min < firstDataTime && dateAxisProperties.min > 1374638275))) {
+            clearTimeout(refreshTimer);
+            refreshTimer = setTimeout(function() {
+              updateMultifeed(dateAxisProperties.min, dateAxisProperties.max);
+            }, 800);
+          }
+
+          if (Math.abs(dateProperties.cursorPosition - dateAxisProperties.cursorPosition) >= Number.MIN_VALUE) {
+            window.requestAnimationFrame(function() {
+              showColorAtIndex(findIndexAtTime(timelineQueue, dateAxisProperties.cursorPosition));
             });
-
-       plotManager.getDateAxis().constrainRangeTo(0, 4118011200);
-
-       dateProperties = plotManager.getDateAxis().getRange();
-
-       //Fires when cursor position changes or date axis bound changes
-       plotManager.getDateAxis().addAxisChangeListener(function(dateAxisProperties) {
-          clearTimeout(clampTimer);
-          clampTimer = setTimeout(clampAllPlots, 300);
-
-          if (Math.abs(dateAxisProperties.max - dateProperties.max) >= Number.MIN_VALUE || Math.abs(dateAxisProperties.min - dateProperties.min) >= Number.MIN_VALUE){
-            clearTimeout(hashTimer);
-            hashTimer = setTimeout(updateHash, 300);
           }
 
-          if (timelineReady){
-            var now = Date.now() / 1000;
-            var lastDataTime = timelineQueue[timelineQueue.length - 1].timeStamp;
-            var firstDataTime = timelineQueue[0].timeStamp;
-            var level = offsetLimitCalculator(dateAxisProperties.min, dateAxisProperties.max).limit;
-            if ((Math.abs(dateAxisProperties.max - dateAxisProperties.min - dateProperties.max + dateProperties.min) >= Number.MIN_VALUE && level != currentLevel)
-                || ((dateAxisProperties.max > lastDataTime && dateAxisProperties.max < now)
-                && !(lastDataTime < dateAxisProperties.max && dateAxisProperties.max < now))
-                || ((dateAxisProperties.min < firstDataTime && dateAxisProperties.min > 1374638275))){
-                clearTimeout(refreshTimer);
-                refreshTimer = setTimeout(function() {
-                  updateMultifeed(dateAxisProperties.min, dateAxisProperties.max);
-                }, 800);
-            }
-
-            if (Math.abs(dateProperties.cursorPosition - dateAxisProperties.cursorPosition) >= Number.MIN_VALUE){
-                window.requestAnimationFrame(function(){
-                  showColorAtIndex(findIndexAtTime(timelineQueue, dateAxisProperties.cursorPosition));
-                });
-            }
-
-            if (dateAxisProperties.cursorPosition > maxTimeSecs){
-                pauseTimeline();
-                playTransform();
-                disablePlayButton();
-            }else{
-                enablePlayButton();
-            }
+          if (dateAxisProperties.cursorPosition > maxTimeSecs) {
+            pauseTimeline();
+            playTransform();
+            disablePlayButton();
+          } else {
+            enablePlayButton();
           }
+        }
 
-          dateProperties = dateAxisProperties;
+        dateProperties = dateAxisProperties;
       });
       plotManager.getDateAxis().setCursorPosition(new Date().getTime() / 1000);
       init();
     }
 
     function searchAttributes() {
-      showNumList=[];
-      displaySensors.forEach(function(obj, ind){
+      showNumList = [];
+      displaySensors.forEach(function(obj, ind) {
         showNumList.push(obj.id);
       });
-          changeEnabled(allFeedNums, 0);
-          if (showNumList.length != 0){
-            changeEnabled(showNumList, 1);
-          }
-       drawInfoWindowLines();
+      changeEnabled(allFeedNums, 0);
+      if (showNumList.length != 0) {
+        changeEnabled(showNumList, 1);
+      }
+      drawInfoWindowLines();
     }
 
-    function drawInfoWindowLines(){
+    function drawInfoWindowLines() {
       var $mapInfoWindow = $("#infowindow");
 
-        $("#notFoundMsg").hide();
-        $('hr').show();
+      $("#notFoundMsg").hide();
+      $('hr').show();
 
-        var visibleElements = $mapInfoWindow.children().filter(":visible");
-        visibleElements.each(function(index, element){
-            if ($(element).is('hr') && $(visibleElements).eq(index + 1).is('hr')){
-              $(element).hide();
-            };
-          });
-        var visibleDivs = $(visibleElements).filter(".sensors");
-        if (visibleDivs.length ==-1) {
-          //console.log("All Invisible.");
-          $("#notFoundMsg").show();
-          $("#notFoundMsg").prevAll('hr').hide();
-          $("#notFoundMsg").nextAll('hr').hide();
-        }else{
-            $(visibleDivs).each(function(index, element){
-              if (index==0){
-                $(this).prevAll('hr').hide();
-              }
-              if (index==$(visibleDivs).length - 1){
-                $(this).nextAll('hr').hide();
-              }
-            });
+      var visibleElements = $mapInfoWindow.children().filter(":visible");
+      visibleElements.each(function(index, element) {
+        if ($(element).is('hr') && $(visibleElements).eq(index + 1).is('hr')) {
+          $(element).hide();
         };
+      });
+      var visibleDivs = $(visibleElements).filter(".sensors");
+      if (visibleDivs.length == -1) {
+        //console.log("All Invisible.");
+        $("#notFoundMsg").show();
+        $("#notFoundMsg").prevAll('hr').hide();
+        $("#notFoundMsg").nextAll('hr').hide();
+      } else {
+        $(visibleDivs).each(function(index, element) {
+          if (index == 0) {
+            $(this).prevAll('hr').hide();
+          }
+          if (index == $(visibleDivs).length - 1) {
+            $(this).nextAll('hr').hide();
+          }
+        });
+      };
 
     };
 
-    function clearFilters(){
-        $('#filters [type = checkbox]').each(function(index, input){
-          $(input).prop('checked', false);
-        });
-        $('#search-bar').val('');
-        updateSensors();
+    function clearFilters() {
+      $('#filters [type = checkbox]').each(function(index, input) {
+        $(input).prop('checked', false);
+      });
+      $('#search-bar').val('');
+      updateSensors();
     }
 
-    function printFoundDivs($divList){
+    function printFoundDivs($divList) {
       var string = "";
-      $($divList).each(function(index, element){
+      $($divList).each(function(index, element) {
         string += $(element).get(0).outerHTML;
       })
 
       return string;
     }
 
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   Timeline start  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   Timeline start  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    function reColor(radioInput){
+    function reColor(radioInput) {
       resetTimeline(30, 30, 30, NULL_ALPHA);
       cursorInBound();
-      switch(radioInput.dataset.filter){
+      switch (radioInput.dataset.filter) {
         case "pm10":
           multifeed = "pm_10";
           var legend = $('.legend-container').eq(0).children();
@@ -2308,17 +2328,17 @@
           legend.eq(0).addClass("purpleMaroon");
           legend.eq(1).text(' 354   -    424  μg/m3');
           legend = $('.legend-container').eq(5).children();
-          legend.eq(0).css('background-color', 'rgba(125, 0, 0,' + COLOR_ALPHA +')');
+          legend.eq(0).css('background-color', 'rgba(125, 0, 0,' + COLOR_ALPHA + ')');
           legend.eq(1).text('         >    424  μg/m3');
           legend = $('.legend-container').eq(6).children();
-          legend.eq(0).css('background-color', 'rgba(30, 30, 30,' + COLOR_ALPHA +')');
+          legend.eq(0).css('background-color', 'rgba(30, 30, 30,' + COLOR_ALPHA + ')');
           legend.eq(1).text('no data');
           $('#legend').show();
           break;
         case "pm25":
           multifeed = "pm_25";
           var legend = $('.legend-container').eq(0).children();
-           // legend.eq(0).css('background-color', 'rgba(0, 255, 0,' + COLOR_ALPHA +')');
+          // legend.eq(0).css('background-color', 'rgba(0, 255, 0,' + COLOR_ALPHA +')');
           legend.eq(0).removeClass("greenYellow");
           legend.eq(0).addClass("greenYellow");
           legend.eq(1).text('     0   -      13  μg/m3');
@@ -2343,10 +2363,10 @@
           legend.eq(0).addClass("purpleMaroon");
           legend.eq(1).text('150.4 - 250.4  μg/m3');
           legend = $('.legend-container').eq(5).children();
-          legend.eq(0).css('background-color', 'rgba(125, 0, 0,' + COLOR_ALPHA +')');
+          legend.eq(0).css('background-color', 'rgba(125, 0, 0,' + COLOR_ALPHA + ')');
           legend.eq(1).text('         > 250.4  μg/m3');
           legend = $('.legend-container').eq(6).children();
-          legend.eq(0).css('background-color', 'rgba(30, 30, 30,' + COLOR_ALPHA +')');
+          legend.eq(0).css('background-color', 'rgba(30, 30, 30,' + COLOR_ALPHA + ')');
           legend.eq(1).text('no data');
           $('#legend').show();
           break;
@@ -2356,55 +2376,58 @@
       getGrapherTimeTiles(multifeed);
     }
 
-    function clearColors(r,g,b){
-      for (var i = 0, len = allFeedNums.length; i < len; i++){
-        changeColor(r,g,b,allFeedNums[i]);
+    function clearColors(r, g, b) {
+      for (var i = 0, len = allFeedNums.length; i < len; i++) {
+        changeColor(r, g, b, allFeedNums[i]);
       }
     };
 
-    function resetOpacity(a){
+    function resetOpacity(a) {
       changeOpacity(allFeedNums, a);
     }
 
-    function resetTimeline(r,g,b,a){
-        var i = jsonRequest.length;
-        while(i--){
-          jsonRequest[i].abort();
-          jsonRequest.splice(i,1);
-        }
-        updateHash();
-        $('#map-filters').children().children().filter(':reset').attr('disabled','disabled');
-        $('#legend').hide();
-        disablePlayButton();
-        pauseTimeline();
-        playTransform();
-        playing = false;
-        timelineReady = false;
-        timelineQueue = [];
-        dataProcessQueue = [];
-        multifeed = '';
-        currentLevel = 0;
-        clearTimeout(dragTimer);
-        clearTimeout(refreshTimer);
-        clearColors(r,g,b);
-        currentAlpha = a;
-        resetOpacity(a);
-        reBindBuffer();
+    function resetTimeline(r, g, b, a) {
+      var i = jsonRequest.length;
+      while (i--) {
+        jsonRequest[i].abort();
+        jsonRequest.splice(i, 1);
+      }
+      updateHash();
+      $('#map-filters').children().children().filter(':reset').attr('disabled', 'disabled');
+      $('#legend').hide();
+      disablePlayButton();
+      pauseTimeline();
+      playTransform();
+      playing = false;
+      timelineReady = false;
+      timelineQueue = [];
+      dataProcessQueue = [];
+      multifeed = '';
+      currentLevel = 0;
+      clearTimeout(dragTimer);
+      clearTimeout(refreshTimer);
+      clearColors(r, g, b);
+      currentAlpha = a;
+      resetOpacity(a);
+      reBindBuffer();
     }
 
-    function updateMultifeed(beginTime, endTime){
+    function updateMultifeed(beginTime, endTime) {
       if (multifeed) getTiles(beginTime, endTime, multifeed);
 
     }
 
-    function offsetLimitCalculator(beginTime, endTime){
-      var level = Math.ceil(Math.log(Math.abs(endTime - beginTime)/512)/Math.log(2));
-      var offset = Math.floor(beginTime/(512*Math.pow(2, level)));
-      return {level: level, offset: offset};
+    function offsetLimitCalculator(beginTime, endTime) {
+      var level = Math.ceil(Math.log(Math.abs(endTime - beginTime) / 512) / Math.log(2));
+      var offset = Math.floor(beginTime / (512 * Math.pow(2, level)));
+      return {
+        level: level,
+        offset: offset
+      };
     }
 
     //beginTime and endTime are in Epoch
-    function getTiles(beginTime, endTime, multifeedName){
+    function getTiles(beginTime, endTime, multifeedName) {
       dataPocessQueue = [];
       var result = offsetLimitCalculator(beginTime, endTime);
       var level = result.level;
@@ -2422,28 +2445,28 @@
       getData(url3, multifeedName);
     }
 
-    function getGrapherTimeTiles(multifeedName){
+    function getGrapherTimeTiles(multifeedName) {
       var beginTime = dateProperties.min;
       var endTime = dateProperties.max;
       getTiles(beginTime, endTime, multifeedName);
     }
 
-    function getData(url, multifeedName){
+    function getData(url, multifeedName) {
       var dataList = [];
       var feedNums = [];
-      jsonRequest.push($.getJSON(url, function(data){
+      jsonRequest.push($.getJSON(url, function(data) {
         var dataSet = data.data;
 
-        for (var i = 0, len = dataSet.length; i < len; i++){
+        for (var i = 0, len = dataSet.length; i < len; i++) {
           var allNull = true;
           var dataArray = dataSet[i];
-          for (var k = 1, lenth = dataArray.length; k < lenth; k++){
+          for (var k = 1, lenth = dataArray.length; k < lenth; k++) {
             if (dataArray[k] != null) allNull = false;
           }
           if (!allNull) dataList.push(dataArray);
         }
 
-        $(data.full_channel_names).each(function(index, name){
+        $(data.full_channel_names).each(function(index, name) {
           feedNums.push(parseInt(name.split(".", 2)[1].split("_")[1]));
         });
 
@@ -2453,132 +2476,136 @@
       }));
     }
 
-    function dataWorkHorse(){
-      if (dataProcessQueue.length == 3){
-        while (dataProcessQueue.length){
+    function dataWorkHorse() {
+      if (dataProcessQueue.length == 3) {
+        while (dataProcessQueue.length) {
           dataProcessQueue[0]();
           dataProcessQueue.shift();
         }
-        if(!$('#map-filters [type = radio][data-filter="none"]')[0].checked){
+        if (!$('#map-filters [type = radio][data-filter="none"]')[0].checked) {
           $('#map-filters').children().children().filter(':reset').removeAttr('disabled');
           cursorInBound();
           timelineReady = true;
           cursorInBound();
-          if (dateProperties.cursorPosition < Date.now()/1000){
+          if (dateProperties.cursorPosition < Date.now() / 1000) {
             enablePlayButton();
           }
           if (playing) {
             playTimeline();
             pauseTranform();
-          }else{
+          } else {
             playTransform();
           }
 
           showColorAtIndex(findIndexAtTime(timelineQueue, dateProperties.cursorPosition));
-          }
+        }
       }
     }
 
-    function queuePush(element){
+    function queuePush(element) {
       var min = 0;
       var max = timelineQueue.length - 1;
       var guess;
       var minDifference = Number.MAX_VALUE;
       var answer = -1;
-      while (min <= max){
-        guess = Math.floor((min + max)/2);
+      while (min <= max) {
+        guess = Math.floor((min + max) / 2);
         var difference = element.timeStamp - timelineQueue[guess].timeStamp;
 
-        if (Math.abs(difference) < Number.MIN_VALUE){
+        if (Math.abs(difference) < Number.MIN_VALUE) {
           timelineQueue[guess] = element;
           return;
-        }else if(Math.abs(difference) < Math.abs(minDifference)){
+        } else if (Math.abs(difference) < Math.abs(minDifference)) {
           minDifference = difference;
           answer = guess;
-        }else if (min == max){
+        } else if (min == max) {
           break;
         }
 
-        if (difference > 0){
+        if (difference > 0) {
           min = guess + 1;
-        }else{
+        } else {
           max = guess - 1;
         }
 
       }
-      if (answer == -1){
+      if (answer == -1) {
         timelineQueue.push(element);
-      }else if(answer == 0){
-        if (minDifference < 0){
-          timelineQueue.splice(0,0,element);
-        }else{
-          timelineQueue.splice(1,0,element);
+      } else if (answer == 0) {
+        if (minDifference < 0) {
+          timelineQueue.splice(0, 0, element);
+        } else {
+          timelineQueue.splice(1, 0, element);
         }
-      }else if(minDifference > 0){
+      } else if (minDifference > 0) {
         timelineQueue.splice(answer + 1, 0, element);
-      }else{
+      } else {
         timelineQueue.splice(answer - 1, 0, element);
       }
     }
 
-    function wrapFunction(fn, context, params){
-      return function(){
+    function wrapFunction(fn, context, params) {
+      return function() {
         fn.apply(context, params);
       }
     }
 
-    function clickedOpaque(a){
+    function clickedOpaque(a) {
       changeOpacity(clickedNumList, a);
     }
 
-    function hoverOpaque(a){
+    function hoverOpaque(a) {
       changeOpacity(hoverNumList, a);
     }
 
-    function interpolateColors(r1, g1, b1, r2, g2, b2, min, max, val){
-      var t = (val - min)/(max - min);
-      return {r:(1 - t)*r1 + t*r2, g:(1 - t)*g1 + t*g2,b:(1 - t)*b1 + t*b2}
+    function interpolateColors(r1, g1, b1, r2, g2, b2, min, max, val) {
+      var t = (val - min) / (max - min);
+      return {
+        r: (1 - t) * r1 + t * r2,
+        g: (1 - t) * g1 + t * g2,
+        b: (1 - t) * b1 + t * b2
+      }
     }
 
-    function processData(dataList, feedNums, multifeedName){
-      switch (multifeedName){
+    function processData(dataList, feedNums, multifeedName) {
+      switch (multifeedName) {
         case "pm_10":
-          for (var i = 0, len = dataList.length; i < len; i++){
+          for (var i = 0, len = dataList.length; i < len; i++) {
             var colorFunctions = {
-                functionList: [],
-                timeStamp: dataList[i][0],
+              functionList: [],
+              timeStamp: dataList[i][0],
             };
 
             var nullList = [];
 
-            for (var k = 1, lenth = dataList[i].length; k < lenth; k++){
-               var val = dataList[i][k];
-                if (val == null){
-                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [30, 30, 30, feedNums[k - 1]]));
-                  nullList.push(feedNums[k - 1]);
-                }else if (val <= 54){
-                  var interColors = interpolateColors(0, 255, 0, 255, 255, 0, 0, 54, val);
-                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
-                  // colorFunctions.functionList.push(wrapFunction(changeColor, this, [0, 255, 0, feedNums[k - 1]]));
-                }else if(val <= 154){
-                  var interColors = interpolateColors(255, 255, 0, 255, 125, 0, 54, 154, val);
-                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
-                  // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 255, 0, feedNums[k - 1]]));
-                }else if(val <= 254){
-                  var interColors = interpolateColors(255, 125, 0, 255, 0, 0, 154, 254, val);
-                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
-                  // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 125, 0, feedNums[k - 1]]));
-                }else if(val <= 354){
-                  var interColors = interpolateColors(255, 0, 0, 150, 0, 80, 254, 354, val);
-                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
-                  // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 0, 0, feedNums[k - 1]]));
-                }else if(val <= 424){
-                  var interColors = interpolateColors(150, 0, 80, 125, 0, 0, 354, 424, val);
-                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
-                  // colorFunctions.functionList.push(wrapFunction(changeColor, this, [150, 0, 80, feedNums[k - 1]]));
-                }else{
-                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [125, 0, 0, feedNums[k - 1]]));
-                }
+            for (var k = 1, lenth = dataList[i].length; k < lenth; k++) {
+              var val = dataList[i][k];
+              if (val == null) {
+                colorFunctions.functionList.push(wrapFunction(changeColor, this, [30, 30, 30, feedNums[k - 1]]));
+                nullList.push(feedNums[k - 1]);
+              } else if (val <= 54) {
+                var interColors = interpolateColors(0, 255, 0, 255, 255, 0, 0, 54, val);
+                colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                // colorFunctions.functionList.push(wrapFunction(changeColor, this, [0, 255, 0, feedNums[k - 1]]));
+              } else if (val <= 154) {
+                var interColors = interpolateColors(255, 255, 0, 255, 125, 0, 54, 154, val);
+                colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 255, 0, feedNums[k - 1]]));
+              } else if (val <= 254) {
+                var interColors = interpolateColors(255, 125, 0, 255, 0, 0, 154, 254, val);
+                colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 125, 0, feedNums[k - 1]]));
+              } else if (val <= 354) {
+                var interColors = interpolateColors(255, 0, 0, 150, 0, 80, 254, 354, val);
+                colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 0, 0, feedNums[k - 1]]));
+              } else if (val <= 424) {
+                var interColors = interpolateColors(150, 0, 80, 125, 0, 0, 354, 424, val);
+                colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                // colorFunctions.functionList.push(wrapFunction(changeColor, this, [150, 0, 80, feedNums[k - 1]]));
+              } else {
+                colorFunctions.functionList.push(wrapFunction(changeColor, this, [125, 0, 0, feedNums[k - 1]]));
+              }
             }
             colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [feedNums, COLOR_ALPHA]));
             colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [nullList, NULL_ALPHA]));
@@ -2589,42 +2616,42 @@
           }
           break;
         case "pm_25":
-          for (var i = 0, len = dataList.length; i < len; i++){
+          for (var i = 0, len = dataList.length; i < len; i++) {
             var colorFunctions = {
-                functionList: [],
-                timeStamp: dataList[i][0],
+              functionList: [],
+              timeStamp: dataList[i][0],
             };
 
             var nullList = [];
 
-            for (var k = 1, lenth = dataList[i].length; k < lenth; k++){
-               var val = dataList[i][k];
-                if (val == null){
-                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [30, 30, 30, feedNums[k - 1]]));
-                  nullList.push(feedNums[k - 1]);
-                }else if (val <= 12){
-                  var interColors = interpolateColors(0, 255, 0, 255, 255, 0, 0, 12, val);
-                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
-                  // colorFunctions.functionList.push(wrapFunction(changeColor, this, [0, 255, 0, feedNums[k - 1]]));
-                }else if(val <= 35.4){
-                  var interColors = interpolateColors(255, 255, 0, 255, 125, 0, 12, 35.4, val);
-                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
-                  // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 255, 0, feedNums[k - 1]]));
-                }else if(val <= 55.4){
-                  var interColors = interpolateColors(255, 125, 0, 255, 0, 0, 35.4, 55.4, val);
-                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
-                  // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 125, 0, feedNums[k - 1]]));
-                }else if(val <= 150.4){
-                  var interColors = interpolateColors(255, 0, 0, 150, 0, 80, 55.4, 150.4, val);
-                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
-                  // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 0, 0, feedNums[k - 1]]));
-                }else if(val <= 250.4){
-                  var interColors = interpolateColors(150, 0, 80, 125, 0, 0, 150.4, 250.4, val);
-                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
-                  // colorFunctions.functionList.push(wrapFunction(changeColor, this, [150, 0, 80, feedNums[k - 1]]));
-                }else{
-                  colorFunctions.functionList.push(wrapFunction(changeColor, this, [125, 0, 0, feedNums[k - 1]]));
-                }
+            for (var k = 1, lenth = dataList[i].length; k < lenth; k++) {
+              var val = dataList[i][k];
+              if (val == null) {
+                colorFunctions.functionList.push(wrapFunction(changeColor, this, [30, 30, 30, feedNums[k - 1]]));
+                nullList.push(feedNums[k - 1]);
+              } else if (val <= 12) {
+                var interColors = interpolateColors(0, 255, 0, 255, 255, 0, 0, 12, val);
+                colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                // colorFunctions.functionList.push(wrapFunction(changeColor, this, [0, 255, 0, feedNums[k - 1]]));
+              } else if (val <= 35.4) {
+                var interColors = interpolateColors(255, 255, 0, 255, 125, 0, 12, 35.4, val);
+                colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 255, 0, feedNums[k - 1]]));
+              } else if (val <= 55.4) {
+                var interColors = interpolateColors(255, 125, 0, 255, 0, 0, 35.4, 55.4, val);
+                colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 125, 0, feedNums[k - 1]]));
+              } else if (val <= 150.4) {
+                var interColors = interpolateColors(255, 0, 0, 150, 0, 80, 55.4, 150.4, val);
+                colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                // colorFunctions.functionList.push(wrapFunction(changeColor, this, [255, 0, 0, feedNums[k - 1]]));
+              } else if (val <= 250.4) {
+                var interColors = interpolateColors(150, 0, 80, 125, 0, 0, 150.4, 250.4, val);
+                colorFunctions.functionList.push(wrapFunction(changeColor, this, [interColors.r, interColors.g, interColors.b, feedNums[k - 1]]));
+                // colorFunctions.functionList.push(wrapFunction(changeColor, this, [150, 0, 80, feedNums[k - 1]]));
+              } else {
+                colorFunctions.functionList.push(wrapFunction(changeColor, this, [125, 0, 0, feedNums[k - 1]]));
+              }
             }
             colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [feedNums, COLOR_ALPHA]));
             colorFunctions.functionList.push(wrapFunction(changeOpacity, this, [nullList, NULL_ALPHA]));
@@ -2637,29 +2664,29 @@
     }
 
     //inspiratini's from binarySearch.js
-    function findIndexAtTime(list, time){
+    function findIndexAtTime(list, time) {
       var min = 0;
       var max = list.length - 1;
       var guess;
       var minDifference = Number.MAX_VALUE;
       var answer = -1;
 
-      while (min <= max){
-        guess = Math.floor((min + max)/2);
+      while (min <= max) {
+        guess = Math.floor((min + max) / 2);
         var difference = time - list[guess].timeStamp;
 
-        if (Math.abs(difference) < Number.MIN_VALUE){
+        if (Math.abs(difference) < Number.MIN_VALUE) {
           return guess;
-        }else if(Math.abs(difference) <= minDifference){
+        } else if (Math.abs(difference) <= minDifference) {
           minDifference = Math.abs(difference);
           answer = guess;
-        }else if (min == max){
+        } else if (min == max) {
           break;
         }
 
-        if (difference > 0){
+        if (difference > 0) {
           min = guess + 1;
-        }else{
+        } else {
           max = guess - 1;
         }
 
@@ -2668,84 +2695,84 @@
 
     }
 
-    function showColorAtIndex(index){
-      if (timelineReady && timelineQueue[index]){
+    function showColorAtIndex(index) {
+      if (timelineReady && timelineQueue[index]) {
         var functionList = timelineQueue[index].functionList || [];
-        for (var i = 0, len = functionList.length; i < len; i++){
+        for (var i = 0, len = functionList.length; i < len; i++) {
           functionList[i]();
         }
       }
     }
 
-    function cursorInBound(){
-      if (dateProperties.cursorPosition < dateProperties.min || !dateProperties.cursorPosition){
-          plotManager.getDateAxis().setCursorPosition(dateProperties.min);
-      }else if(dateProperties.cursorPosition > dateProperties.max){
-          plotManager.getDateAxis().setCursorPosition(dateProperties.max);
+    function cursorInBound() {
+      if (dateProperties.cursorPosition < dateProperties.min || !dateProperties.cursorPosition) {
+        plotManager.getDateAxis().setCursorPosition(dateProperties.min);
+      } else if (dateProperties.cursorPosition > dateProperties.max) {
+        plotManager.getDateAxis().setCursorPosition(dateProperties.max);
       }
     }
 
-    function isCursorInBound(){
+    function isCursorInBound() {
       return (dateProperties.cursorPosition && dateProperties.cursorPosition >= dateProperties.min && dateProperties.cursorPosition <= dateProperties.max);
     }
 
-    function setSpeed(){
-      if ($("#duration").val() < 1){
+    function setSpeed() {
+      if ($("#duration").val() < 1) {
         $("#duration").val(1);
-      }else if($("#duration").val() > 100){
+      } else if ($("#duration").val() > 100) {
         $("#duration").val(99);
       }
 
       duration = $("#duration").val();
-      timeSlices = duration/speed*1000
+      timeSlices = duration / speed * 1000
 
-      if (playing){
+      if (playing) {
         pauseTimeline();
         playTimeline();
       }
     }
 
-    function playTimeline(){
+    function playTimeline() {
       pause = false;
       playing = true;
       cursorInBound();
       clearInterval(playInterval);
-      playInterval = setInterval(function(){
-          playNext(dateProperties.cursorPosition)
+      playInterval = setInterval(function() {
+        playNext(dateProperties.cursorPosition)
       }, speed);
     }
 
-    function playNext(time){
-      if(time != dateProperties.cursorPosition){
+    function playNext(time) {
+      if (time != dateProperties.cursorPosition) {
         //console.log("Dragging.");
         cursorInBound();
         pauseTimeline();
         clearTimeout(dragTimer);
-        dragTimer = setTimeout(function(){
+        dragTimer = setTimeout(function() {
           playTimeline();
         }, 300);
-      }else{
-        if (dateProperties.max > Date.now() / 1000){
-          var timeIncrement = (Date.now() / 1000 - dateProperties.min)/timeSlices;
-        }else{
-          var timeIncrement = (dateProperties.max - dateProperties.min)/timeSlices;
+      } else {
+        if (dateProperties.max > Date.now() / 1000) {
+          var timeIncrement = (Date.now() / 1000 - dateProperties.min) / timeSlices;
+        } else {
+          var timeIncrement = (dateProperties.max - dateProperties.min) / timeSlices;
         }
         time += timeIncrement;
-        if (time < dateProperties.max && time <= Date.now() / 1000){
-          window.requestAnimationFrame(function(){
+        if (time < dateProperties.max && time <= Date.now() / 1000) {
+          window.requestAnimationFrame(function() {
             plotManager.getDateAxis().setCursorPosition(time);
           });
 
-        }else{
-          if (onLoop){
+        } else {
+          if (onLoop) {
 
-            if (time - timeIncrement > Date.now()/1000){
+            if (time - timeIncrement > Date.now() / 1000) {
               pauseTimeline();
               return;
             }
             plotManager.getDateAxis().setCursorPosition(dateProperties.min - timeIncrement);
-          }else{
-           //console.log(time - dateProperties.max, time - Date.now() / 1000);
+          } else {
+            //console.log(time - dateProperties.max, time - Date.now() / 1000);
             //console.log('Timeline Done');
             pauseTimeline();
             playTransform();
@@ -2757,35 +2784,35 @@
       }
     }
 
-    function pauseTimeline(){
+    function pauseTimeline() {
       pause = true;
       clearInterval(playInterval);
     }
 
-    function toggleLoop(){
+    function toggleLoop() {
       onLoop = !onLoop;
-      if (onLoop){
+      if (onLoop) {
         $('#loop').val('Loop: On');
-      }else{
+      } else {
         $('#loop').val('Loop: Off');
       }
       //console.log("onLoop is " + onLoop);
     }
 
-    function togglePlayPause(){
-      if(pause){
+    function togglePlayPause() {
+      if (pause) {
         pauseTranform();
         playTimeline();
-      }else{
+      } else {
         playTransform();
         pauseTimeline();
         playing = false;
       }
     }
 
-    function enablePlayButton(){
-      if (!playButtonEnabled){
-        if ($('.play-pause').css('opacity') != 1){
+    function enablePlayButton() {
+      if (!playButtonEnabled) {
+        if ($('.play-pause').css('opacity') != 1) {
           $('.play-pause').css('opacity', .75);
         }
         $('.play-pause')
@@ -2793,264 +2820,271 @@
           .css('cursor', 'pointer')
           .on({
             click: togglePlayPause,
-            mouseenter: function(){
-                          $('.play-pause').css('opacity', 1);
-                        },
-            mouseleave: function(){
-                         $('.play-pause').css('opacity', .75);
+            mouseenter: function() {
+              $('.play-pause').css('opacity', 1);
+            },
+            mouseleave: function() {
+              $('.play-pause').css('opacity', .75);
             }
           });
 
-        if($('.play-pause').is(':hover')) $('.play-pause').css('opacity', 1);
+        if ($('.play-pause').is(':hover')) $('.play-pause').css('opacity', 1);
         playButtonEnabled = true;
       }
     }
 
-    function disablePlayButton(){
-      if (playButtonEnabled){
+    function disablePlayButton() {
+      if (playButtonEnabled) {
         $('.play-pause')
           .unbind('mouseenter mouseleave click')
-          .css({'opacity' : .30,
-                'cursor' : 'default'});
+          .css({
+            'opacity': .30,
+            'cursor': 'default'
+          });
 
         playButtonEnabled = false;
       }
 
     }
 
-    function pauseTranform(){
-      $('#bar1').css({'transition' : "transform .5s ease-out",
-                      '-webkit-transition' : "-webkit-transform .5s ease-out",
-                      'transform'  : pauseTransformation.bar1,
-                      '-webkit-transform'  : pauseTransformation.bar1});
-      $('#bar2').css({'transition' : "transform .5s ease-out",
-                      '-webkit-transition' : "-webkit-transform .5s ease-out",
-                      'transform'  : pauseTransformation.bar2,
-                      '-webkit-transform'  : pauseTransformation.bar2});
-    }
-    function playTransform(){
-      $('#bar1').css({'transition' : "transform .5s ease-out",
-                      '-webkit-transition' : "-webkit-transform .5s ease-out",
-                      'transform'  : playTransformation.bar1,
-                      '-webkit-transform'  : playTransformation.bar1});
-      $('#bar2').css({'transition' : "transform .5s ease-out",
-                      '-webkit-transition' : "-webkit-transform .5s ease-out",
-                      'transform'  : playTransformation.bar2,
-                      '-webkit-transform'  : playTransformation.bar2});
+    function pauseTranform() {
+      $('#bar1').css({
+        'transition': "transform .5s ease-out",
+        '-webkit-transition': "-webkit-transform .5s ease-out",
+        'transform': pauseTransformation.bar1,
+        '-webkit-transform': pauseTransformation.bar1
+      });
+      $('#bar2').css({
+        'transition': "transform .5s ease-out",
+        '-webkit-transition': "-webkit-transform .5s ease-out",
+        'transform': pauseTransformation.bar2,
+        '-webkit-transform': pauseTransformation.bar2
+      });
     }
 
-    function spinnerTransform(){
-      $('#bar1').css({'transition' : "transform .3s ease-out",
-                      '-webkit-transition' : "transform .3s ease-out",
-                      'transform'  : spinnerTransformation.bar1,
-                      '-webkit-transform'  : spinnerTransformation.bar1});
-      $('#bar2').css({'transition' : "transform .3s ease-out",
-                      '-webkit-transition' : "transform .3s ease-out",
-                      'transform'  : spinnerTransformation.bar2,
-                      '-webkit-transform'  : spinnerTransformation.bar2});
+    function playTransform() {
+      $('#bar1').css({
+        'transition': "transform .5s ease-out",
+        '-webkit-transition': "-webkit-transform .5s ease-out",
+        'transform': playTransformation.bar1,
+        '-webkit-transform': playTransformation.bar1
+      });
+      $('#bar2').css({
+        'transition': "transform .5s ease-out",
+        '-webkit-transition': "-webkit-transform .5s ease-out",
+        'transform': playTransformation.bar2,
+        '-webkit-transform': playTransformation.bar2
+      });
     }
 
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   WebGL START   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    function searchArray(searchElement, array){
-       'use strict';
-        var minIndex = 0;
-        var maxIndex = array.length - 1;
-        var currentIndex;
-        var currentElement;
+    function spinnerTransform() {
+      $('#bar1').css({
+        'transition': "transform .3s ease-out",
+        '-webkit-transition': "transform .3s ease-out",
+        'transform': spinnerTransformation.bar1,
+        '-webkit-transform': spinnerTransformation.bar1
+      });
+      $('#bar2').css({
+        'transition': "transform .3s ease-out",
+        '-webkit-transition': "transform .3s ease-out",
+        'transform': spinnerTransformation.bar2,
+        '-webkit-transform': spinnerTransformation.bar2
+      });
+    }
 
-        while (minIndex <= maxIndex) {
-            currentIndex = (minIndex + maxIndex) / 2 | 0;
-            currentElement = array[currentIndex];
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   WebGL START   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    function searchArray(searchElement, array) {
+      'use strict';
+      var minIndex = 0;
+      var maxIndex = array.length - 1;
+      var currentIndex;
+      var currentElement;
 
-            if (currentElement < searchElement) {
-                minIndex = currentIndex + 1;
-            }
-            else if (currentElement > searchElement) {
-                maxIndex = currentIndex - 1;
-            }
-            else {
-                return currentIndex;
-            }
+      while (minIndex <= maxIndex) {
+        currentIndex = (minIndex + maxIndex) / 2 | 0;
+        currentElement = array[currentIndex];
+
+        if (currentElement < searchElement) {
+          minIndex = currentIndex + 1;
+        } else if (currentElement > searchElement) {
+          maxIndex = currentIndex - 1;
+        } else {
+          return currentIndex;
         }
+      }
 
-        return -1;
+      return -1;
     }
 
-    function reBindBuffer(){
-      if(!!gl){
+    function reBindBuffer() {
+      if (!!gl) {
         gl.bindBuffer(gl.ARRAY_BUFFER, feedLocList.colorBuffer);
 
         gl.bufferData(gl.ARRAY_BUFFER, feedLocList.color, gl.STATIC_DRAW);
       }
     }
 
-    function changeEnabled(feedNumArray, value){
-      for(var i = 0, len = feedNumArray.length; i < len; i++){
-          var listIndex = searchArray(feedNumArray[i], feedLocList.index);
-          feedLocList.color[listIndex * 6 + 4] = value;
+    function changeEnabled(feedNumArray, value) {
+      for (var i = 0, len = feedNumArray.length; i < len; i++) {
+        var listIndex = searchArray(feedNumArray[i], feedLocList.index);
+        feedLocList.color[listIndex * 6 + 4] = value;
 
       }
       reBindBuffer();
       needWebGlRedraw = true;
     }
 
-    function changeCircled(feedNum, value){
+    function changeCircled(feedNum, value) {
       var listIndex = searchArray(feedNum, feedLocList.index);
       feedLocList.color[listIndex * 6 + 5] = value;
       reBindBuffer();
       needWebGlRedraw = true;
     }
 
-    function changeColor(r, g, b, feedNum){
+    function changeColor(r, g, b, feedNum) {
       var listIndex = searchArray(feedNum, feedLocList.index);
-      feedLocList.color[listIndex * 6 + 0] = r/255;
-      feedLocList.color[listIndex * 6 + 1] = g/255;
-      feedLocList.color[listIndex * 6 + 2] = b/255;
+      feedLocList.color[listIndex * 6 + 0] = r / 255;
+      feedLocList.color[listIndex * 6 + 1] = g / 255;
+      feedLocList.color[listIndex * 6 + 2] = b / 255;
       needWebGlRedraw = true;
     }
 
-    function changeOpacity(feedNumArray, value){
-      for(var i = 0, len = feedNumArray.length; i < len; i++){
-          var listIndex = searchArray(feedNumArray[i], feedLocList.index);
-          feedLocList.color[listIndex * 6 + 3] = value;
+    function changeOpacity(feedNumArray, value) {
+      for (var i = 0, len = feedNumArray.length; i < len; i++) {
+        var listIndex = searchArray(feedNumArray[i], feedLocList.index);
+        feedLocList.color[listIndex * 6 + 3] = value;
       }
       needWebGlRedraw = true;
     }
 
-    function growShrink(){
-      if(timelineReady){
-        (countryPointSizePixels >= 13) ? countryPointSizePixels = 13 : (countryPointSizePixels += .5, needWebGlRedraw = true);
-      }else{
-        (countryPointSizePixels <= 7) ? countryPointSizePixels = 7 : (countryPointSizePixels -= .5, needWebGlRedraw = true);
+    function growShrink() {
+      if (timelineReady) {
+        (countryPointSizePixels >= 13) ? countryPointSizePixels = 13: (countryPointSizePixels += .5, needWebGlRedraw = true);
+      } else {
+        (countryPointSizePixels <= 7) ? countryPointSizePixels = 7: (countryPointSizePixels -= .5, needWebGlRedraw = true);
       }
     }
 
     function initializeMap() {
-          var myStyle = [
-                          {
-                            "featureType": "poi",
-                            "elementType": "labels.text",
-                            "stylers": [
-                              { "visibility": "off" }
-                            ]
-                          },
-                          {
-                            "featureType": "road",
-                            "elementType": "labels.icon",
-                            "stylers": [
-                              { "visibility": "off" }
-                            ]
-                          },{
-                              "featureType": "road",
-                              "elementType": "geometry.stroke",
-                              "stylers": [
-                                { "visibility": "off" }
-                              ]
-                            },{
-                              "featureType": "road.highway",
-                              "elementType": "geometry.fill",
-                              "stylers": [
-                                { "color": "#bbbbbb" }
-                              ]
-                            },{
-                              "featureType": "road"  },{
-                              "featureType": "road",
-                              "elementType": "labels.text.fill",
-                              "stylers": [
-                                { "color": "#888888" }
-                              ]
-                            },{
-                              "featureType": "administrative",
-                              "elementType": "labels.text.fill",
-                              "stylers": [
-                                { "color": "#606060" }
-                              ]
-                            },
-                            {
-                              "featureType": "administrative.locality",
-                              "elementType": "labels.icon",
-                              "stylers": [
-                                { "visibility": "off" }
-                              ]
-                            },
-                            {
-                              "featureType": "road",
-                              "elementType": "geometry",
-                              "stylers": [
-                                  {
-                                      "lightness": 100
-                                  },
-                                  {
-                                      "visibility": "simplified"
-                                  }
-                              ]
-                            },
-                            {
-                              "featureType": "water",
-                              "elementType": "geometry",
-                              "stylers": [
-                                  {
-                                      "visibility": "on"
-                                  },
-                                  {
-                                      "color": "#C6E2FF"
-                                  }
-                              ]
-                            },
-                            {
-                              "featureType": "poi",
-                              "elementType": "geometry.fill",
-                              "stylers": [
-                                  {
-                                      "color": "#C5E3BF"
-                                  }
-                              ]
-                            },
-                            {
-                              "featureType": "road",
-                              "elementType": "geometry.fill",
-                              "stylers": [
-                                  {
-                                      "color": "#D1D1B8"
-                                  }
-                              ]
-                            }
-                        ]
-         var center = null;
-         if(getHashParams().center){
-            center = getHashParams().center.split(",").map(parseFloat);
-            center = new google.maps.LatLng(center[0], center[1]);
-         }
+      var myStyle = [{
+          "featureType": "poi",
+          "elementType": "labels.text",
+          "stylers": [{
+            "visibility": "off"
+          }]
+        },
+        {
+          "featureType": "road",
+          "elementType": "labels.icon",
+          "stylers": [{
+            "visibility": "off"
+          }]
+        }, {
+          "featureType": "road",
+          "elementType": "geometry.stroke",
+          "stylers": [{
+            "visibility": "off"
+          }]
+        }, {
+          "featureType": "road.highway",
+          "elementType": "geometry.fill",
+          "stylers": [{
+            "color": "#bbbbbb"
+          }]
+        }, {
+          "featureType": "road"
+        }, {
+          "featureType": "road",
+          "elementType": "labels.text.fill",
+          "stylers": [{
+            "color": "#888888"
+          }]
+        }, {
+          "featureType": "administrative",
+          "elementType": "labels.text.fill",
+          "stylers": [{
+            "color": "#606060"
+          }]
+        },
+        {
+          "featureType": "administrative.locality",
+          "elementType": "labels.icon",
+          "stylers": [{
+            "visibility": "off"
+          }]
+        },
+        {
+          "featureType": "road",
+          "elementType": "geometry",
+          "stylers": [{
+              "lightness": 100
+            },
+            {
+              "visibility": "simplified"
+            }
+          ]
+        },
+        {
+          "featureType": "water",
+          "elementType": "geometry",
+          "stylers": [{
+              "visibility": "on"
+            },
+            {
+              "color": "#C6E2FF"
+            }
+          ]
+        },
+        {
+          "featureType": "poi",
+          "elementType": "geometry.fill",
+          "stylers": [{
+            "color": "#C5E3BF"
+          }]
+        },
+        {
+          "featureType": "road",
+          "elementType": "geometry.fill",
+          "stylers": [{
+            "color": "#D1D1B8"
+          }]
+        }
+      ]
+      var center = null;
+      if (getHashParams().center) {
+        center = getHashParams().center.split(",").map(parseFloat);
+        center = new google.maps.LatLng(center[0], center[1]);
+      }
 
-         var mapOptions = {
-          //start at middle of US
-          zoom: parseInt(getHashParams().zoom) || 3,
-          center: center || new google.maps.LatLng(49.35720091782239,-92.91969375610346),
-          styles: myStyle,
+      var mapOptions = {
+        //start at middle of US
+        zoom: parseInt(getHashParams().zoom) || 3,
+        center: center || new google.maps.LatLng(49.35720091782239, -92.91969375610346),
+        styles: myStyle,
 
-          // start in Pittsburgh
-          // zoom: 13,
-          // center: new google.maps.LatLng(40.442493, -79.942553),
-          // styles: myStyle,
-          mapTypeControl: true,
-          mapTypeControlOptions: {
-              style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
-              position: google.maps.ControlPosition.TOP_LEFT
-          },
-          zoomControl: true,
-          zoomControlOptions: {
-              position: google.maps.ControlPosition.TOP_RIGHT
-          },
-          streetViewControl: true,
-          streetViewControlOptions: {
-              position: google.maps.ControlPosition.TOP_RIGHT
-          },
-       };
+        // start in Pittsburgh
+        // zoom: 13,
+        // center: new google.maps.LatLng(40.442493, -79.942553),
+        // styles: myStyle,
+        mapTypeControl: true,
+        mapTypeControlOptions: {
+          style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+          position: google.maps.ControlPosition.TOP_LEFT
+        },
+        zoomControl: true,
+        zoomControlOptions: {
+          position: google.maps.ControlPosition.TOP_RIGHT
+        },
+        streetViewControl: true,
+        streetViewControlOptions: {
+          position: google.maps.ControlPosition.TOP_RIGHT
+        },
+      };
 
-       map = new google.maps.Map(document.getElementById('map-div'),
-          mapOptions);
+      map = new google.maps.Map(document.getElementById('map-div'),
+        mapOptions);
 
-       // geocoder = new google.maps.Geocoder();
+      // geocoder = new google.maps.Geocoder();
 
     }
 
@@ -3084,7 +3118,7 @@
       needWebGlRedraw = false;
 
       gl.enable(gl.BLEND);
-      gl.blendEquationSeparate( gl.FUNC_ADD, gl.FUNC_ADD );
+      gl.blendEquationSeparate(gl.FUNC_ADD, gl.FUNC_ADD);
       gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
       // Erase frame
@@ -3098,8 +3132,10 @@
 
       var count = feedLocList.index.length;
 
-      drawPoints(gl, mapMatrix, feedLocList, 0, count,
-                 {pointSize: pointSize, hardFraction: hardFraction});
+      drawPoints(gl, mapMatrix, feedLocList, 0, count, {
+        pointSize: pointSize,
+        hardFraction: hardFraction
+      });
     }
 
     //for implementation of WebGL
@@ -3113,7 +3149,7 @@
       };
       canvasLayer = new CanvasLayer(canvasLayerOptions);
 
-      window.addEventListener('resize', function(){
+      window.addEventListener('resize', function() {
         google.maps.event.trigger(map, 'resize');
       }, false);
 
@@ -3130,152 +3166,157 @@
       gl.viewport(0, 0, w, h);
 
       // Map canvas pixel coordinates to WebGL coordinates
-      pixelsToWebGLMatrix.set([2/w, 0,   0, 0,
-                               0,  -2/h, 0, 0,
-                               0,   0,   1, 0,
-                              -1,   1,   0, 1]);
+      pixelsToWebGLMatrix.set([2 / w, 0, 0, 0,
+        0, -2 / h, 0, 0,
+        0, 0, 1, 0,
+        -1, 1, 0, 1
+      ]);
     }
 
     //When ready to draw points
-    function initializeWebGL(){
+    function initializeWebGL() {
 
-       if (!initWebGL()) {
-           $('#map-div').append('<div align="center" style="position: absolute; z-index:1000000; margin:50px; padding:10px; border-color:black; border-style:solid; border-width:1px;ground-color:white; font-size:20px"><b>WebGL required</b><br>Please try using a browser that supports WebGL,<br>such as Chrome, Firefox, or Internet Explorer 11.</div>');
-         }
+      if (!initWebGL()) {
+        $('#map-div').append('<div align="center" style="position: absolute; z-index:1000000; margin:50px; padding:10px; border-color:black; border-style:solid; border-width:1px;ground-color:white; font-size:20px"><b>WebGL required</b><br>Please try using a browser that supports WebGL,<br>such as Chrome, Firefox, or Internet Explorer 11.</div>');
+      }
 
-        // Convert from latlng to xy for map, and set up shader programs
-       prepareSeries(gl, feedLocList);
+      // Convert from latlng to xy for map, and set up shader programs
+      prepareSeries(gl, feedLocList);
 
-       $('#map-bar').show()
+      $('#map-bar').show()
 
-       currentIndex = minIndex = feedLocList.index[0];
-       maxIndex = feedLocList.index[feedLocList.index.length - 1];
+      currentIndex = minIndex = feedLocList.index[0];
+      maxIndex = feedLocList.index[feedLocList.index.length - 1];
 
-       var infoWindow;
-       google.maps.event.addListener(map, 'click', function(event) {
-         var finalDiv = $('<div id="infowindow"><div id="notFoundMsg" style="display:none;">No channels found based on search criteria.</div></div>');
-         var finalInput = $('<div></div>');
-         var sectionBreak = $('<hr>');
-         var meanLat = 0;
-         var meanLng = 0;
-         var maxDistInPixels = currentPointSize / 2;
+      var infoWindow;
+      google.maps.event.addListener(map, 'click', function(event) {
+        var finalDiv = $('<div id="infowindow"><div id="notFoundMsg" style="display:none;">No channels found based on search criteria.</div></div>');
+        var finalInput = $('<div></div>');
+        var sectionBreak = $('<hr>');
+        var meanLat = 0;
+        var meanLng = 0;
+        var maxDistInPixels = currentPointSize / 2;
 
-         var eltList = findClosestElements(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
-         var inputNodes = null;
-         var count = 0;
-         var visible = false;
-         var finalDivArr = [];
-         for (var i = 0; i < eltList.length; i++) {
-           var listIndex = eltList[i].i;
-           if (feedLocList.color[listIndex * 6 + 3] > .6) {
-             visible = true;
-             changeOpacity(clickedNumList, currentAlpha);
-             changeOpacity(clickedandColoredList, COLOR_ALPHA);
-             clickedNumList = [];
-             clickedandColoredList = [];
-             if (hoverAndColored.indexOf(feedLocList.index[listIndex]) > -1) {
-               clickedandColoredList.push(feedLocList.index[listIndex]);
-             } else {
-               clickedNumList.push(feedLocList.index[listIndex]);
-             }
-             //TODO (AS) add more comments to Andrew's changes
-             //gets a feed based on the old id storage which the webGl sensor finder uses
-             var selectedFeed = getSensor(feedLocList.index[eltList[i].i], displaySensors);
-             //checks if the nearest sensor is a displayed one
-             if (selectedFeed) {
-               count++;
-               var someKeys = Object.keys(selectedFeed.channelBounds.channels);
-               //if specific channels have been selected only display those
-               if (chanNames.length > 0) {
-                 var foundChanArr = getChannelFromSensor(selectedFeed, chanNames);
-                 for (var k = 0; k < foundChanArr.length; k++) {
-                   var anElem = makeDiv("", "", foundChanArr[k]);
-                   finalDivArr.push(anElem)
-                 }
-               } else {
-                 //else display based on sensor
-                 for (var k = 0; k < someKeys.length; k++) {
-                   var anElem = makeDiv(someKeys[k], selectedFeed);
-                   finalDivArr.push(anElem)
-                 }
-               }
+        var eltList = findClosestElements(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
+        var inputNodes = null;
+        var count = 0;
+        var visible = false;
+        var finalDivArr = [];
+        for (var i = 0; i < eltList.length; i++) {
+          var listIndex = eltList[i].i;
+          if (feedLocList.color[listIndex * 6 + 3] > .6) {
+            visible = true;
+            changeOpacity(clickedNumList, currentAlpha);
+            changeOpacity(clickedandColoredList, COLOR_ALPHA);
+            clickedNumList = [];
+            clickedandColoredList = [];
+            if (hoverAndColored.indexOf(feedLocList.index[listIndex]) > -1) {
+              clickedandColoredList.push(feedLocList.index[listIndex]);
+            } else {
+              clickedNumList.push(feedLocList.index[listIndex]);
+            }
+            //TODO (AS) add more comments to Andrew's changes
+            //gets a feed based on the old id storage which the webGl sensor finder uses
+            var selectedFeed = getSensor(feedLocList.index[eltList[i].i], displaySensors);
+            //checks if the nearest sensor is a displayed one
+            if (selectedFeed) {
+              count++;
+              var someKeys = Object.keys(selectedFeed.channelBounds.channels);
+              //if specific channels have been selected only display those
+              if (chanNames.length > 0) {
+                var foundChanArr = getChannelFromSensor(selectedFeed, chanNames);
+                for (var k = 0; k < foundChanArr.length; k++) {
+                  var anElem = makeDiv("", "", foundChanArr[k]);
+                  finalDivArr.push(anElem)
+                }
+              } else {
+                //else display based on sensor
+                for (var k = 0; k < someKeys.length; k++) {
+                  var anElem = makeDiv(someKeys[k], selectedFeed);
+                  finalDivArr.push(anElem)
+                }
+              }
 
-               meanLat += eltList[i].lat;
-               meanLng += eltList[i].lng;
-             }
-           }
-         }
+              meanLat += eltList[i].lat;
+              meanLng += eltList[i].lng;
+            }
+          }
+        }
 
-         if (count != 0) {
-           meanLat = meanLat / count;
-           meanLng = meanLng / count;
-         }
+        if (count != 0) {
+          meanLat = meanLat / count;
+          meanLng = meanLng / count;
+        }
 
-         if (eltList.length != 0 && visible) {
-           if (infoWindow) {
-             infoWindow.close();
-           };
-           $(finalDiv).append(finalDivArr.join(''));
-           infoWindow = new google.maps.InfoWindow({
-             content: printFoundDivs(finalDiv),
-             position: new google.maps.LatLng(meanLat, meanLng)
-           });
-           infoWindow.open(map);
-           changeOpacity(clickedNumList, 1);
-           changeOpacity(clickedandColoredList, 1);
-           reBindBuffer();
-
-           google.maps.event.addListener(infoWindow, 'domready', function() {
-             $(finalInput).children().each(function(index, inputs) {
-               $('input[name="' + $(this).attr('name') + '"]').prop('checked', $(this).prop('checked'));
-             });
-             drawInfoWindowLines();
-           });
-
-           google.maps.event.addListener(infoWindow, 'closeclick', function() {
-             changeOpacity(clickedNumList, currentAlpha);
-             changeOpacity(clickedandColoredList, COLOR_ALPHA);
-             clickedNumList = [];
-             clickedandColoredList = [];
-             reBindBuffer();
-           });
-         }
-       });
-
-        google.maps.event.addListener(map, 'mousemove', function(event) {
-          var maxDistInPixels = currentPointSize/2;
-          var eltList = findClosestElements(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
-
-          changeOpacity(hoverNumList, currentAlpha);
-          changeOpacity(hoverAndColored, COLOR_ALPHA);
+        if (eltList.length != 0 && visible) {
+          if (infoWindow) {
+            infoWindow.close();
+          };
+          $(finalDiv).append(finalDivArr.join(''));
+          infoWindow = new google.maps.InfoWindow({
+            content: printFoundDivs(finalDiv),
+            position: new google.maps.LatLng(meanLat, meanLng)
+          });
+          infoWindow.open(map);
           changeOpacity(clickedNumList, 1);
           changeOpacity(clickedandColoredList, 1);
           reBindBuffer();
-          hoverNumList = [];
-          hoverAndColored = [];
 
-          for (var i = 0; i < eltList.length; i++){
-              var listIndex = eltList[i].i;
-              if (feedLocList.color[listIndex * 6 + 3] != 0) {
-                map.setOptions({ draggableCursor: 'default' });
-                if (Math.abs(feedLocList.color[listIndex*6+3] - COLOR_ALPHA) <= 1e-7){
-                  hoverAndColored.push(feedLocList.index[listIndex]);
-                }else{
-                  hoverNumList.push(feedLocList.index[listIndex]);
-                }
-                changeOpacity([feedLocList.index[listIndex]], 1);
-                reBindBuffer();
-              }
+          google.maps.event.addListener(infoWindow, 'domready', function() {
+            $(finalInput).children().each(function(index, inputs) {
+              $('input[name="' + $(this).attr('name') + '"]').prop('checked', $(this).prop('checked'));
+            });
+            drawInfoWindowLines();
+          });
+
+          google.maps.event.addListener(infoWindow, 'closeclick', function() {
+            changeOpacity(clickedNumList, currentAlpha);
+            changeOpacity(clickedandColoredList, COLOR_ALPHA);
+            clickedNumList = [];
+            clickedandColoredList = [];
+            reBindBuffer();
+          });
+        }
+      });
+
+      google.maps.event.addListener(map, 'mousemove', function(event) {
+        var maxDistInPixels = currentPointSize / 2;
+        var eltList = findClosestElements(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
+
+        changeOpacity(hoverNumList, currentAlpha);
+        changeOpacity(hoverAndColored, COLOR_ALPHA);
+        changeOpacity(clickedNumList, 1);
+        changeOpacity(clickedandColoredList, 1);
+        reBindBuffer();
+        hoverNumList = [];
+        hoverAndColored = [];
+
+        for (var i = 0; i < eltList.length; i++) {
+          var listIndex = eltList[i].i;
+          if (feedLocList.color[listIndex * 6 + 3] != 0) {
+            map.setOptions({
+              draggableCursor: 'default'
+            });
+            if (Math.abs(feedLocList.color[listIndex * 6 + 3] - COLOR_ALPHA) <= 1e-7) {
+              hoverAndColored.push(feedLocList.index[listIndex]);
+            } else {
+              hoverNumList.push(feedLocList.index[listIndex]);
+            }
+            changeOpacity([feedLocList.index[listIndex]], 1);
+            reBindBuffer();
           }
+        }
 
-          if (eltList.length == 0){
-              map.setOptions({ draggableCursor: null });
-          }
+        if (eltList.length == 0) {
+          map.setOptions({
+            draggableCursor: null
+          });
+        }
 
-        });
+      });
     }
-//Code that is actually initially run (starting point)
-  initializeMap();
+    //Code that is actually initially run (starting point)
+    initializeMap();
   </script>
 
   <script id="pointVertexShader" type="x-shader/x-vertex">
