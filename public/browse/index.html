@@ -1093,6 +1093,7 @@
 
     //____________________Andrew's variables_______________
     var displaySensors = []; //array of sensor objects that sshould be displayed in the side bar and on the map
+    var displaySensorsIds = {}; //map storing feed IDs of currently displayed sensors so we can do quick lookups for whether a sensor is currently being displayed
     var searchSensors = []; //sensors that match the title search
     var channelSensors = []; //sesnors that match the channel search
     var feedPlaceHolder = 0; //used to determin were the update display for loop should start
@@ -1304,6 +1305,15 @@
 
     }
 
+    // rebuilds the displaySensorsIds map from displaySensors.  This MUST be called any time you mutate displaySensors!
+    function updateDisplaySensorsIds() {
+      displaySensorsIds = {};
+      for (var i = 0; i < displaySensors.length; i++) {
+        var sensor = displaySensors[i];
+        displaySensorsIds[sensor.id] = sensor;
+      }
+    }
+
     function loadFeeds(response) {
       document.getElementById("loading").style['display'] = 'block';
       var data = response.data;
@@ -1341,6 +1351,8 @@
           }
         }
       }
+      updateDisplaySensorsIds();  // keep displaySensorsIds in sync with displaySensors
+
       if (data.totalCount <= max) {
         // That was the last data.  Ready to process
         document.getElementById("loading").style['display'] = 'none';
@@ -1473,6 +1485,7 @@
       for (var j = 0; j < allFeeds.length; j++) {
         displaySensors.push(allFeeds[j]);
       }
+      updateDisplaySensorsIds();  // keep displaySensorsIds in sync with displaySensors
     }
 
     //updates what needs to be displayed then displays it
@@ -1539,15 +1552,18 @@
         //if the channel search was not used dont change displaySensors
         if (channelSensors.length > 0) {
           displaySensors = channelSensors;
+          updateDisplaySensorsIds();  // keep displaySensorsIds in sync with displaySensors
         }
       } else {
         //no special cases happened so uses the matches
         if (compat.length > 0) {
           displaySensors = compat;
+          updateDisplaySensorsIds();  // keep displaySensorsIds in sync with displaySensors
         }
       }
       if (none2) {
         displaySensors = [];
+        updateDisplaySensorsIds();  // keep displaySensorsIds in sync with displaySensors
       }
       var t1 = performance.now(); //used for timing
       console.log("Timing " + (t1 - t0))
@@ -3174,6 +3190,17 @@
       ]);
     }
 
+    // Find closest elements to click location, but filter to only include sensors which are currently visible.
+    function findClosestVisibleElements(pixelXY, maxDistInPixels) {
+      return findClosestElements(gl, mapMatrix, feedLocList, pixelXY, maxDistInPixels).filter(function(sensor) {
+        var feed = allFeeds[sensor.i];
+        if (feed && 'id' in feed) {
+          return (feed.id in displaySensorsIds);
+        }
+        return false;
+      });
+    }
+
     //When ready to draw points
     function initializeWebGL() {
 
@@ -3198,7 +3225,7 @@
         var meanLng = 0;
         var maxDistInPixels = currentPointSize / 2;
 
-        var eltList = findClosestElements(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
+        var eltList = findClosestVisibleElements(event.pixel, maxDistInPixels);
         var inputNodes = null;
         var count = 0;
         var visible = false;
@@ -3213,7 +3240,8 @@
             clickedandColoredList = [];
             if (hoverAndColored.indexOf(feedLocList.index[listIndex]) > -1) {
               clickedandColoredList.push(feedLocList.index[listIndex]);
-            } else {
+            }
+            else {
               clickedNumList.push(feedLocList.index[listIndex]);
             }
             //TODO (AS) add more comments to Andrew's changes
@@ -3230,7 +3258,8 @@
                   var anElem = makeDiv("", "", foundChanArr[k]);
                   finalDivArr.push(anElem)
                 }
-              } else {
+              }
+              else {
                 //else display based on sensor
                 for (var k = 0; k < someKeys.length; k++) {
                   var anElem = makeDiv(someKeys[k], selectedFeed);
@@ -3252,12 +3281,13 @@
         if (eltList.length != 0 && visible) {
           if (infoWindow) {
             infoWindow.close();
-          };
+          }
+
           $(finalDiv).append(finalDivArr.join(''));
           infoWindow = new google.maps.InfoWindow({
-            content: printFoundDivs(finalDiv),
-            position: new google.maps.LatLng(meanLat, meanLng)
-          });
+                                                    content : printFoundDivs(finalDiv),
+                                                    position : new google.maps.LatLng(meanLat, meanLng)
+                                                  });
           infoWindow.open(map);
           changeOpacity(clickedNumList, 1);
           changeOpacity(clickedandColoredList, 1);
@@ -3282,7 +3312,7 @@
 
       google.maps.event.addListener(map, 'mousemove', function(event) {
         var maxDistInPixels = currentPointSize / 2;
-        var eltList = findClosestElements(gl, mapMatrix, feedLocList, event.pixel, maxDistInPixels);
+        var eltList = findClosestVisibleElements(event.pixel, maxDistInPixels);
 
         changeOpacity(hoverNumList, currentAlpha);
         changeOpacity(hoverAndColored, COLOR_ALPHA);
