@@ -16,7 +16,7 @@
   <component name="DependencyValidationManager">
     <option name="SKIP_IMPORT_STATEMENTS" value="false" />
   </component>
-  <component name="Encoding">
+  <component name="Encoding" addBOMForNewFiles="with NO BOM">
     <file url="PROJECT" charset="x-MacRoman" />
   </component>
   <component name="EntryPointsManager">
@@ -84,7 +84,7 @@
         <option name="HTML_INLINE_ELEMENTS" value="a,abbr,acronym,b,basefont,bdo,big,br,cite,cite,code,dfn,em,font,i,img,kbd,q,s,samp,select,span,strike,strong,sub,sup,textarea,tt,u,var,li,td,option,label,input" />
         <option name="HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT" value="title,h1,h2,h3,h4,h5,h6,p,tr,td,span" />
       </HTMLCodeStyleSettings>
-      <JSCodeStyleSettings>
+      <JSCodeStyleSettings version="0">
         <option name="FIELD_PREFIX" value="" />
         <option name="SPACE_BEFORE_PROPERTY_COLON" value="true" />
         <option name="SPACE_BEFORE_FUNCTION_LEFT_PARENTH" value="false" />
@@ -783,8 +783,8 @@
         </sourceFilesUrls>
       </properties>
       <CLASSES>
-        <root url="file://$APPLICATION_CONFIG_DIR$/javascript/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_mocha_mocha.d.ts" />
         <root url="file://$APPLICATION_CONFIG_DIR$/javascript/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_mocha_mocha-node.d.ts" />
+        <root url="file://$APPLICATION_CONFIG_DIR$/javascript/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_mocha_mocha.d.ts" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />
