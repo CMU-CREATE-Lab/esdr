@@ -3,7 +3,7 @@
    "appenders" : [
       {
          "type" : "dateFile",
-         "filename" : "./logs/esdr",
+         "filename" : "/logs/esdr/esdr",
          "pattern" : "-yyyy-MM-dd.log",
          "alwaysIncludePattern" : true,
          "layout" : {
