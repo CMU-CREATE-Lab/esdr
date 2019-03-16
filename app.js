@@ -26,7 +26,6 @@ var expressHandlebars = require('express-handlebars');
 var path = require('path');
 var favicon = require('serve-favicon');
 var compress = require('compression');
-var requestLogger = require('morgan');
 var bodyParser = require('body-parser');
 var passport = require('passport');
 var Database = require("./models/Database");
@@ -100,34 +99,43 @@ Database.create(function(err, db) {
          app.use(compress());                // enables gzip compression
          app.use(express.static(path.join(__dirname, 'public')));          // static file serving
 
-         // enable logging of the user ID, if authenticated
-         requestLogger.token('uid', function(req) {
-            if (req.user) {
-               return req.user.id;
-            }
-            return '-';
-         });
+         // configure request logging, if enabled (do this AFTER the static file serving so we don't log those)
+         if (config.get("requestLogging:isEnabled")) {
+            var requestLogger = require('morgan');
 
-         // set up HTTP request logging (do this AFTER the static file serving so we don't log those)
-         if (RunMode.isStaging() || RunMode.isProduction()) {
-            // create a write stream (in append mode)
-            var fs = require('fs');
-            var httpAccessLogDirectory = config.get("httpAccessLogDirectory");
-            log.info("HTTP access log: " + httpAccessLogDirectory);
-            var accessLogStream = fs.createWriteStream(httpAccessLogDirectory, { flags : 'a' });
-
-            // get the correct remote address from the X-Forwarded-For header
-            requestLogger.token('remote-addr', function(req) {
-               return req.headers['x-forwarded-for'];
+            // enable logging of the user ID, if authenticated
+            requestLogger.token('uid', function(req) {
+               if (req.user) {
+                  return req.user.id;
+               }
+               return '-';
             });
 
-            // This is just the "combined" format with response time and UID appended to the end
-            var logFormat = ':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" :response-time ms :uid';
-            app.use(requestLogger(logFormat, { stream : accessLogStream }));
+            // we'll only log to a file if we're in staging or production
+            if (RunMode.isStaging() || RunMode.isProduction()) {
+               // create a write stream (in append mode)
+               var fs = require('fs');
+               var logFile = config.get("requestLogging:logFile");
+               log.info("HTTP access log: " + logFile);
+               var accessLogStream = fs.createWriteStream(logFile, { flags : 'a' });
+
+               // get the correct remote address from the X-Forwarded-For header
+               requestLogger.token('remote-addr', function(req) {
+                  return req.headers['x-forwarded-for'];
+               });
+
+               // This is just the "combined" format with response time and UID appended to the end
+               var logFormat = ':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" :response-time ms :uid';
+               app.use(requestLogger(logFormat, { stream : accessLogStream }));
+            }
+            else {
+               app.use(requestLogger(':method :url :status :response-time ms :res[content-length] :uid'));      // simple console request logging when in non-production mode
+            }
          }
          else {
-            app.use(requestLogger(':method :url :status :response-time ms :res[content-length] :uid'));      // simple request logging when in non-production mode
+            log.info("HTTP access logging is DISABLED (see ESDR config setting requestLogging:isEnabled)");
          }
+
          app.use(bodyParser.urlencoded({ extended : true }));     // form parsing
          app.use(bodyParser.json({ limit : '25mb' }));            // json body parsing (25 MB limit)
          app.use(function(err, req, res, next) { // function MUST have arity 4 here!

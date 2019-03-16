@@ -36,7 +36,10 @@ config.defaults({
                       "verificationUrl" : "http://localhost:3000/verification/:verificationToken",
                       "isPublic" : true
                    },
-                   "httpAccessLogDirectory" : path.join(__dirname, './logs/access.log'),
+                   "requestLogging" : {
+                      "isEnabled" : false,
+                      "logFile" : path.join(__dirname, './logs/access.log')
+                   },
                    "resetPasswordToken" : {
                       "willReturnViaApi" : false,
                       "willEmailToUser" : true
