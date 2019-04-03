@@ -202,7 +202,6 @@ Database.create(function(err, db) {
             passport.session(),              // enable session support for passport
             function(req, res, next) {
                log.debug("req.isAuthenticated()=[" + req.isAuthenticated() + "]");
-               log.debug(req.url);
                res.locals.isAuthenticated = req.isAuthenticated();
 
                if (req.isAuthenticated()) {
