@@ -9,16 +9,15 @@ var BodyTrackDatastore = require('bodytrack-datastore');
 var query2query = require('./feeds-query2query');
 var config = require('../config');
 var flow = require('nimble');
-var nr = require('newrelic');
 var JSendClientError = require('jsend-utils').JSendClientError;
 var JSendServerError = require('jsend-utils').JSendServerError;
 var isString = require('../lib/typeUtils').isString;
 
 // instantiate the datastore
 var datastore = new BodyTrackDatastore({
-   binDir : config.get("datastore:binDirectory"),
-   dataDir : config.get("datastore:dataDirectory")
-});
+                                          binDir : config.get("datastore:binDirectory"),
+                                          dataDir : config.get("datastore:dataDirectory")
+                                       });
 
 var log = require('log4js').getLogger('esdr:models:feeds');
 
@@ -376,29 +375,27 @@ module.exports = function(databaseHelper) {
                         channelName,
                         level,
                         offset,
-                        nr.createTracer("datastore:getTile",
-                                        function(err, tile) {
+                        function(err, tile) {
 
-                                           if (err) {
-                                              if (err.data && err.data.code == httpStatus.UNPROCESSABLE_ENTITY) {
-                                                 return callback(err);
-                                              }
+                           if (err) {
+                              if (err.data && err.data.code == httpStatus.UNPROCESSABLE_ENTITY) {
+                                 return callback(err);
+                              }
 
-                                              return callback(new Error("Failed to fetch tile: " + err.message));
-                                           }
+                              return callback(new Error("Failed to fetch tile: " + err.message));
+                           }
 
-                                           // no error, so check whether there was actually any data returned at all
-                                           if (typeof tile['data'] === 'undefined') {
-                                              tile = createEmptyTile(level, offset);
-                                           }
+                           // no error, so check whether there was actually any data returned at all
+                           if (typeof tile['data'] === 'undefined') {
+                              tile = createEmptyTile(level, offset);
+                           }
 
-                                           // Must set the type since the grapher won't render anything if the type is not set
-                                           // (TODO: get this from the feed's channel specs, and default to value if undefined)
-                                           tile['type'] = "value";
+                           // Must set the type since the grapher won't render anything if the type is not set
+                           // (TODO: get this from the feed's channel specs, and default to value if undefined)
+                           tile['type'] = "value";
 
-                                           return callback(null, tile);
-                                        })
-      );
+                           return callback(null, tile);
+                        });
    };
 
    /**
@@ -447,7 +444,7 @@ module.exports = function(databaseHelper) {
       });
 
       try {
-         datastore.getTiles(userIdDeviceChannelObjects, level, offset, nr.createTracer("datastore:getTiles", callback));
+         datastore.getTiles(userIdDeviceChannelObjects, level, offset, callback);
       }
       catch (e) {
          log.error("Error calling datastore.getTiles: " + JSON.stringify(e, null, 3));
@@ -477,119 +474,115 @@ module.exports = function(databaseHelper) {
       datastore.importJson(feed.userId,
                            deviceName,
                            data,
-                           nr.createTracer("datastore:importJson",
-                                           function(err, importResult) {
-                                              if (err) {
-                                                 // See if the error contains a JSend data object.  If so, pass it on through.
-                                                 if (typeof err.data !== 'undefined' &&
-                                                     typeof err.data.code !== 'undefined' &&
-                                                     typeof err.data.status !== 'undefined') {
-                                                    return callback(err);
-                                                 }
-                                                 return callback(new Error("Failed to import data"));
-                                              }
+                           function(err, importResult) {
+                              if (err) {
+                                 // See if the error contains a JSend data object.  If so, pass it on through.
+                                 if (typeof err.data !== 'undefined' &&
+                                     typeof err.data.code !== 'undefined' &&
+                                     typeof err.data.status !== 'undefined') {
+                                    return callback(err);
+                                 }
+                                 return callback(new Error("Failed to import data"));
+                              }
 
-                                              // create the bounds object we'll return to the caller
-                                              var bounds = {
-                                                 channelBounds : {},
-                                                 importedBounds : {}
-                                              };
+                              // create the bounds object we'll return to the caller
+                              var bounds = {
+                                 channelBounds : {},
+                                 importedBounds : {}
+                              };
 
-                                              // If there was no error, then first see whether any data were actually
-                                              // imported.  The "channel_specs" field will be defined and non-null if so.
-                                              var wasDataActuallyImported = typeof importResult.channel_specs !== 'undefined' && importResult.channel_specs != null;
+                              // If there was no error, then first see whether any data were actually
+                              // imported.  The "channel_specs" field will be defined and non-null if so.
+                              var wasDataActuallyImported = typeof importResult.channel_specs !== 'undefined' && importResult.channel_specs != null;
 
-                                              // if data was imported, then copy the imported_bounds from importResult to our
-                                              // new bounds object, but change field names from snake case to camel case.
-                                              if (wasDataActuallyImported) {
-                                                 bounds.importedBounds.channels = {};
-                                                 bounds.importedBounds.minTimeSecs = Number.MAX_VALUE;
-                                                 bounds.importedBounds.maxTimeSecs = Number.MIN_VALUE;
-                                                 Object.keys(importResult.channel_specs).forEach(function(channelName) {
-                                                    var importedBounds = importResult.channel_specs[channelName].imported_bounds;
-                                                    bounds.importedBounds.channels[channelName] = {
-                                                       minTimeSecs : importedBounds.min_time,
-                                                       maxTimeSecs : importedBounds.max_time,
-                                                       minValue : importedBounds.min_value,
-                                                       maxValue : importedBounds.max_value
-                                                    };
+                              // if data was imported, then copy the imported_bounds from importResult to our
+                              // new bounds object, but change field names from snake case to camel case.
+                              if (wasDataActuallyImported) {
+                                 bounds.importedBounds.channels = {};
+                                 bounds.importedBounds.minTimeSecs = Number.MAX_VALUE;
+                                 bounds.importedBounds.maxTimeSecs = Number.MIN_VALUE;
+                                 Object.keys(importResult.channel_specs).forEach(function(channelName) {
+                                    var importedBounds = importResult.channel_specs[channelName].imported_bounds;
+                                    bounds.importedBounds.channels[channelName] = {
+                                       minTimeSecs : importedBounds.min_time,
+                                       maxTimeSecs : importedBounds.max_time,
+                                       minValue : importedBounds.min_value,
+                                       maxValue : importedBounds.max_value
+                                    };
 
-                                                    bounds.importedBounds.minTimeSecs = Math.min(bounds.importedBounds.minTimeSecs, importedBounds.min_time);
-                                                    bounds.importedBounds.maxTimeSecs = Math.max(bounds.importedBounds.maxTimeSecs, importedBounds.max_time);
-                                                 });
-                                              }
+                                    bounds.importedBounds.minTimeSecs = Math.min(bounds.importedBounds.minTimeSecs, importedBounds.min_time);
+                                    bounds.importedBounds.maxTimeSecs = Math.max(bounds.importedBounds.maxTimeSecs, importedBounds.max_time);
+                                 });
+                              }
 
-                                              // Get the info for this device so we can return the current state to the caller and
-                                              // optionally update the channel bounds, min/max times, and last upload time in the DB.
-                                              datastore.getInfo({
-                                                                   userId : feed.userId,
-                                                                   deviceName : deviceName
-                                                                },
-                                                                nr.createTracer("datastore:getInfo",
-                                                                                function(err, info) {
-                                                                                   if (err) {
-                                                                                      // See if the error contains a JSend data object.  If so, pass it on through.
-                                                                                      if (typeof err.data !== 'undefined' &&
-                                                                                          typeof err.data.code !== 'undefined' &&
-                                                                                          typeof err.data.status !== 'undefined') {
-                                                                                         return callback(err);
-                                                                                      }
-                                                                                      return callback(new Error("Failed to get info after importing data"));
-                                                                                   }
+                              // Get the info for this device so we can return the current state to the caller and
+                              // optionally update the channel bounds, min/max times, and last upload time in the DB.
+                              datastore.getInfo({
+                                                   userId : feed.userId,
+                                                   deviceName : deviceName
+                                                },
+                                                function(err, info) {
+                                                   if (err) {
+                                                      // See if the error contains a JSend data object.  If so, pass it on through.
+                                                      if (typeof err.data !== 'undefined' &&
+                                                          typeof err.data.code !== 'undefined' &&
+                                                          typeof err.data.status !== 'undefined') {
+                                                         return callback(err);
+                                                      }
+                                                      return callback(new Error("Failed to get info after importing data"));
+                                                   }
 
-                                                                                   // If there's data in the datastore for this device, then min and max
-                                                                                   // time will be defined.  If they are, and if data was actually
-                                                                                   // imported above, then update the database with the channel bounds,
-                                                                                   // the min/max times, and last upload time
-                                                                                   if (wasDataActuallyImported &&
-                                                                                       typeof info.min_time !== 'undefined' &&
-                                                                                       typeof info.max_time !== 'undefined') {
+                                                   // If there's data in the datastore for this device, then min and max
+                                                   // time will be defined.  If they are, and if data was actually
+                                                   // imported above, then update the database with the channel bounds,
+                                                   // the min/max times, and last upload time
+                                                   if (wasDataActuallyImported &&
+                                                       typeof info.min_time !== 'undefined' &&
+                                                       typeof info.max_time !== 'undefined') {
 
-                                                                                      // Iterate over each of the channels in the info from the datastore
-                                                                                      // and copy to our bounds object.
-                                                                                      var deviceAndChannelPrefixLength = (deviceName + ".").length;
-                                                                                      bounds.channelBounds.channels = {};
-                                                                                      Object.keys(info.channel_specs).forEach(function(deviceAndChannel) {
-                                                                                         var channelName = deviceAndChannel.slice(deviceAndChannelPrefixLength);
-                                                                                         var channelInfo = info.channel_specs[deviceAndChannel];
+                                                      // Iterate over each of the channels in the info from the datastore
+                                                      // and copy to our bounds object.
+                                                      var deviceAndChannelPrefixLength = (deviceName + ".").length;
+                                                      bounds.channelBounds.channels = {};
+                                                      Object.keys(info.channel_specs).forEach(function(deviceAndChannel) {
+                                                         var channelName = deviceAndChannel.slice(deviceAndChannelPrefixLength);
+                                                         var channelInfo = info.channel_specs[deviceAndChannel];
 
-                                                                                         // copy the bounds (changing from snake to camel case)
-                                                                                         var channelBounds = channelInfo.channel_bounds;
-                                                                                         bounds.channelBounds.channels[channelName] = {
-                                                                                            minTimeSecs : channelBounds.min_time,
-                                                                                            maxTimeSecs : channelBounds.max_time,
-                                                                                            minValue : channelBounds.min_value,
-                                                                                            maxValue : channelBounds.max_value
-                                                                                         };
-                                                                                      });
-                                                                                      bounds.channelBounds.minTimeSecs = info.min_time;
-                                                                                      bounds.channelBounds.maxTimeSecs = info.max_time;
+                                                         // copy the bounds (changing from snake to camel case)
+                                                         var channelBounds = channelInfo.channel_bounds;
+                                                         bounds.channelBounds.channels[channelName] = {
+                                                            minTimeSecs : channelBounds.min_time,
+                                                            maxTimeSecs : channelBounds.max_time,
+                                                            minValue : channelBounds.min_value,
+                                                            maxValue : channelBounds.max_value
+                                                         };
+                                                      });
+                                                      bounds.channelBounds.minTimeSecs = info.min_time;
+                                                      bounds.channelBounds.maxTimeSecs = info.max_time;
 
-                                                                                      // finally, update the database with the new bounds and lastUpload time
-                                                                                      databaseHelper.execute("UPDATE Feeds SET " +
-                                                                                                             "minTimeSecs=?, " +
-                                                                                                             "maxTimeSecs=?, " +
-                                                                                                             "channelBounds=?, " +
-                                                                                                             "lastUpload=now() " +
-                                                                                                             "WHERE id=?",
-                                                                                                             [bounds.channelBounds.minTimeSecs,
-                                                                                                              bounds.channelBounds.maxTimeSecs,
-                                                                                                              JSON.stringify(bounds.channelBounds),
-                                                                                                              feed.id],
-                                                                                                             function(err) {
-                                                                                                                if (err) {
-                                                                                                                   return callback(new Error("Failed to update last upload time after importing data"));
-                                                                                                                }
-                                                                                                                return callback(null, bounds);
-                                                                                                             });
-                                                                                   }
-                                                                                   else {
-                                                                                      return callback(null, bounds);
-                                                                                   }
-                                                                                })
-                                              );
-                                           }
-                           )
+                                                      // finally, update the database with the new bounds and lastUpload time
+                                                      databaseHelper.execute("UPDATE Feeds SET " +
+                                                                             "minTimeSecs=?, " +
+                                                                             "maxTimeSecs=?, " +
+                                                                             "channelBounds=?, " +
+                                                                             "lastUpload=now() " +
+                                                                             "WHERE id=?",
+                                                                             [bounds.channelBounds.minTimeSecs,
+                                                                              bounds.channelBounds.maxTimeSecs,
+                                                                              JSON.stringify(bounds.channelBounds),
+                                                                              feed.id],
+                                                                             function(err) {
+                                                                                if (err) {
+                                                                                   return callback(new Error("Failed to update last upload time after importing data"));
+                                                                                }
+                                                                                return callback(null, bounds);
+                                                                             });
+                                                   }
+                                                   else {
+                                                      return callback(null, bounds);
+                                                   }
+                                                });
+                           }
       );
    };
 
@@ -607,63 +600,61 @@ module.exports = function(databaseHelper) {
       }
 
       datastore.getInfo(options,
-                        nr.createTracer("datastore:getInfo",
-                                        function(err, rawInfo) {
-                                           if (err) {
-                                              // See if the error contains a JSend data object.  If so, pass it on through.
-                                              if (typeof err.data !== 'undefined' &&
-                                                  typeof err.data.code !== 'undefined' &&
-                                                  typeof err.data.status !== 'undefined') {
-                                                 return callback(err);
-                                              }
-                                              return callback(new Error("Failed to get feed info"));
-                                           }
+                        function(err, rawInfo) {
+                           if (err) {
+                              // See if the error contains a JSend data object.  If so, pass it on through.
+                              if (typeof err.data !== 'undefined' &&
+                                  typeof err.data.code !== 'undefined' &&
+                                  typeof err.data.status !== 'undefined') {
+                                 return callback(err);
+                              }
+                              return callback(new Error("Failed to get feed info"));
+                           }
 
-                                           var channelInfo = {
-                                              channels : {}
-                                           };
+                           var channelInfo = {
+                              channels : {}
+                           };
 
-                                           // If there's data in the datastore for this device, rawInfo.channel_specs will be non-empty
-                                           if (rawInfo && rawInfo.channel_specs) {
-                                              // Iterate over each of the channels in the info from the datastore
-                                              // and copy to our channelInfo object.
-                                              var deviceAndChannelPrefixLength = (deviceName + ".").length;
-                                              Object.keys(rawInfo.channel_specs).forEach(function(deviceAndChannel) {
-                                                 var channelName = deviceAndChannel.slice(deviceAndChannelPrefixLength);
-                                                 var rawChannelInfo = rawInfo.channel_specs[deviceAndChannel];
+                           // If there's data in the datastore for this device, rawInfo.channel_specs will be non-empty
+                           if (rawInfo && rawInfo.channel_specs) {
+                              // Iterate over each of the channels in the info from the datastore
+                              // and copy to our channelInfo object.
+                              var deviceAndChannelPrefixLength = (deviceName + ".").length;
+                              Object.keys(rawInfo.channel_specs).forEach(function(deviceAndChannel) {
+                                 var channelName = deviceAndChannel.slice(deviceAndChannelPrefixLength);
+                                 var rawChannelInfo = rawInfo.channel_specs[deviceAndChannel];
 
-                                                 channelInfo.channels[channelName] = {};
+                                 channelInfo.channels[channelName] = {};
 
-                                                 // copy the bounds and most recent data sample (changing from snake to camel case)
-                                                 if (rawChannelInfo.channel_bounds) {
-                                                    channelInfo.channels[channelName].channelBounds = {
-                                                       minTimeSecs : rawChannelInfo.channel_bounds.min_time,
-                                                       maxTimeSecs : rawChannelInfo.channel_bounds.max_time,
-                                                       minValue : rawChannelInfo.channel_bounds.min_value,
-                                                       maxValue : rawChannelInfo.channel_bounds.max_value
-                                                    };
-                                                 }
-                                                 if (rawChannelInfo.most_recent_data_sample) {
-                                                    channelInfo.channels[channelName].mostRecentDataSample = {
-                                                       timeSecs : rawChannelInfo.most_recent_data_sample.time,
-                                                       value : rawChannelInfo.most_recent_data_sample.value
-                                                    };
-                                                 }
-                                                 if (rawChannelInfo.most_recent_string_sample) {
-                                                    channelInfo.channels[channelName].mostRecentStringSample = {
-                                                       timeSecs : rawChannelInfo.most_recent_string_sample.time,
-                                                       value : rawChannelInfo.most_recent_string_sample.value
-                                                    };
-                                                 }
-                                              });
+                                 // copy the bounds and most recent data sample (changing from snake to camel case)
+                                 if (rawChannelInfo.channel_bounds) {
+                                    channelInfo.channels[channelName].channelBounds = {
+                                       minTimeSecs : rawChannelInfo.channel_bounds.min_time,
+                                       maxTimeSecs : rawChannelInfo.channel_bounds.max_time,
+                                       minValue : rawChannelInfo.channel_bounds.min_value,
+                                       maxValue : rawChannelInfo.channel_bounds.max_value
+                                    };
+                                 }
+                                 if (rawChannelInfo.most_recent_data_sample) {
+                                    channelInfo.channels[channelName].mostRecentDataSample = {
+                                       timeSecs : rawChannelInfo.most_recent_data_sample.time,
+                                       value : rawChannelInfo.most_recent_data_sample.value
+                                    };
+                                 }
+                                 if (rawChannelInfo.most_recent_string_sample) {
+                                    channelInfo.channels[channelName].mostRecentStringSample = {
+                                       timeSecs : rawChannelInfo.most_recent_string_sample.time,
+                                       value : rawChannelInfo.most_recent_string_sample.value
+                                    };
+                                 }
+                              });
 
-                                              return callback(null, channelInfo);
-                                           }
-                                           else {
-                                              return callback(null, channelInfo);
-                                           }
-                                        })
-      );
+                              return callback(null, channelInfo);
+                           }
+                           else {
+                              return callback(null, channelInfo);
+                           }
+                        });
    };
 
    /**
@@ -690,7 +681,7 @@ module.exports = function(databaseHelper) {
                               maxTime : filter.maxTime,
                               format : filter.format
                            },
-                           nr.createTracer("datastore:exportData", callback));
+                           callback);
    };
 
    this.find = function(authUserId, queryString, callback) {

@@ -16,7 +16,7 @@
   <component name="DependencyValidationManager">
     <option name="SKIP_IMPORT_STATEMENTS" value="false" />
   </component>
-  <component name="Encoding" addBOMForNewFiles="with NO BOM">
+  <component name="Encoding">
     <file url="PROJECT" charset="x-MacRoman" />
   </component>
   <component name="EntryPointsManager">
@@ -55,8 +55,11 @@
   </component>
   <component name="JavaScriptLibraryMappings">
     <file url="file://$PROJECT_DIR$" libraries="{EnvironmentalSensorDataRepository/node_modules}" />
-    <file url="PROJECT" libraries="{EnvironmentalSensorDataRepository/node_modules, Generated files, jQuery 1.11.1, mocha-DefinitelyTyped, nconf-DefinitelyTyped, should-DefinitelyTyped, superagent-DefinitelyTyped}" />
+    <file url="PROJECT" libraries="{@types/bcrypt, @types/body-parser, @types/compression, @types/cookie-parser, @types/express, @types/express-handlebars, @types/express-mysql-session, @types/express-session, @types/http-status, @types/mocha, @types/morgan, @types/mysql, @types/nconf, @types/nodemailer, @types/nodemailer-smtp-transport, @types/oauth2orize, @types/passport, @types/passport-http, @types/passport-http-bearer, @types/passport-local, @types/passport-oauth2-client-password, @types/qs, @types/rimraf, @types/serve-favicon, @types/string, @types/superagent, EnvironmentalSensorDataRepository/node_modules, Generated files, jQuery 1.11.1, should-DefinitelyTyped}" />
     <includedPredefinedLibrary name="Node.js Core" />
+  </component>
+  <component name="JavaScriptSettings">
+    <option name="languageLevel" value="ES6" />
   </component>
   <component name="ProjectCodeStyleConfiguration">
     <option name="USE_PER_PROJECT_SETTINGS" value="true" />
@@ -775,32 +778,6 @@
       <JAVADOC />
       <SOURCES />
     </library>
-    <library name="mocha-DefinitelyTyped" type="javaScript">
-      <properties>
-        <sourceFilesUrls>
-          <item url="file://$APPLICATION_CONFIG_DIR$/javascript/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_mocha_mocha-node.d.ts" />
-          <item url="file://$APPLICATION_CONFIG_DIR$/javascript/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_mocha_mocha.d.ts" />
-        </sourceFilesUrls>
-      </properties>
-      <CLASSES>
-        <root url="file://$APPLICATION_CONFIG_DIR$/javascript/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_mocha_mocha-node.d.ts" />
-        <root url="file://$APPLICATION_CONFIG_DIR$/javascript/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_mocha_mocha.d.ts" />
-      </CLASSES>
-      <JAVADOC />
-      <SOURCES />
-    </library>
-    <library name="nconf-DefinitelyTyped" type="javaScript">
-      <properties>
-        <sourceFilesUrls>
-          <item url="file://$APPLICATION_CONFIG_DIR$/javascript/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_nconf_nconf.d.ts" />
-        </sourceFilesUrls>
-      </properties>
-      <CLASSES>
-        <root url="file://$APPLICATION_CONFIG_DIR$/javascript/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_nconf_nconf.d.ts" />
-      </CLASSES>
-      <JAVADOC />
-      <SOURCES />
-    </library>
     <library name="should-DefinitelyTyped" type="javaScript">
       <properties>
         <sourceFilesUrls>
@@ -809,18 +786,6 @@
       </properties>
       <CLASSES>
         <root url="file://$APPLICATION_CONFIG_DIR$/javascript/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_should_should.d.ts" />
-      </CLASSES>
-      <JAVADOC />
-      <SOURCES />
-    </library>
-    <library name="superagent-DefinitelyTyped" type="javaScript">
-      <properties>
-        <sourceFilesUrls>
-          <item url="file://$APPLICATION_CONFIG_DIR$/javascript/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_superagent_superagent.d.ts" />
-        </sourceFilesUrls>
-      </properties>
-      <CLASSES>
-        <root url="file://$APPLICATION_CONFIG_DIR$/javascript/extLibs/http_github.com_borisyankov_DefinitelyTyped_raw_master_superagent_superagent.d.ts" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />

@@ -10,8 +10,31 @@
     <orderEntry type="library" name="jQuery 1.11.1" level="project" />
     <orderEntry type="library" name="Generated files" level="project" />
     <orderEntry type="library" name="should-DefinitelyTyped" level="project" />
-    <orderEntry type="library" name="mocha-DefinitelyTyped" level="project" />
-    <orderEntry type="library" name="nconf-DefinitelyTyped" level="project" />
-    <orderEntry type="library" name="superagent-DefinitelyTyped" level="project" />
+    <orderEntry type="library" name="@types/mocha" level="application" />
+    <orderEntry type="library" name="@types/nconf" level="application" />
+    <orderEntry type="library" name="@types/rimraf" level="application" />
+    <orderEntry type="library" name="@types/string" level="application" />
+    <orderEntry type="library" name="@types/superagent" level="application" />
+    <orderEntry type="library" name="@types/passport" level="application" />
+    <orderEntry type="library" name="@types/bcrypt" level="application" />
+    <orderEntry type="library" name="@types/body-parser" level="application" />
+    <orderEntry type="library" name="@types/compression" level="application" />
+    <orderEntry type="library" name="@types/cookie-parser" level="application" />
+    <orderEntry type="library" name="@types/express" level="application" />
+    <orderEntry type="library" name="@types/express-mysql-session" level="application" />
+    <orderEntry type="library" name="@types/express-handlebars" level="application" />
+    <orderEntry type="library" name="@types/express-session" level="application" />
+    <orderEntry type="library" name="@types/http-status" level="application" />
+    <orderEntry type="library" name="@types/morgan" level="application" />
+    <orderEntry type="library" name="@types/mysql" level="application" />
+    <orderEntry type="library" name="@types/nodemailer" level="application" />
+    <orderEntry type="library" name="@types/nodemailer-smtp-transport" level="application" />
+    <orderEntry type="library" name="@types/oauth2orize" level="application" />
+    <orderEntry type="library" name="@types/passport-http" level="application" />
+    <orderEntry type="library" name="@types/passport-http-bearer" level="application" />
+    <orderEntry type="library" name="@types/passport-local" level="application" />
+    <orderEntry type="library" name="@types/passport-oauth2-client-password" level="application" />
+    <orderEntry type="library" name="@types/qs" level="application" />
+    <orderEntry type="library" name="@types/serve-favicon" level="application" />
   </component>
 </module>

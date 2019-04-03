@@ -4,7 +4,6 @@ var jsonValidator = new JaySchema();
 var ValidationError = require('../lib/errors').ValidationError;
 var Query2Query = require('query2query');
 var createRandomHexToken = require('../lib/token').createRandomHexToken;
-var S = require('string');
 var qs = require('qs');
 var feedsQuery2query = require('./feeds-query2query');
 var log = require('log4js').getLogger('esdr:models:multifeeds');

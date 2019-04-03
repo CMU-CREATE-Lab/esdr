@@ -1,10 +1,25 @@
-var config = require('nconf');
-var path = require('path');
-var log = require('log4js').getLogger('esdr:config');
-var RunMode = require('run-mode');
+const config = require('nconf');
+const path = require('path');
+const fs = require('fs');
+const log = require('log4js').getLogger('esdr:config');
+const RunMode = require('run-mode');
 
-var configFile = './config-' + RunMode.get() + '.json';
-var mailConfigFile = './mail-config-' + RunMode.get() + '.json';
+const configFile = path.resolve(__dirname, './config-' + RunMode.get() + '.json');
+const mailConfigFile = path.resolve(__dirname, './mail-config-' + RunMode.get() + '.json');
+
+const ensureFileExists = function(file){
+   try {
+      fs.accessSync(file, fs.constants.R_OK);
+   }
+   catch (err) {
+      console.error("Config file [" + file + "] not found or not readable! Aborting. Error: " + err.message);
+      process.exit(1);
+   }
+};
+
+ensureFileExists(configFile);
+ensureFileExists(mailConfigFile);
+
 log.info("Using config file:      " + configFile);
 log.info("Using mail config file: " + mailConfigFile);
 

@@ -301,7 +301,7 @@ describe("REST API", function() {
                               }
                            }
 
-                           if (test.expectedHttpStatus == httpStatus.CREATED) {
+                           if (test.expectedHttpStatus === httpStatus.CREATED) {
                               res.body.data.should.have.property('id');
                               res.body.data.should.have.property('apiKey');
                               res.body.data.should.have.property('apiKeyReadOnly');
