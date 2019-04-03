@@ -202,6 +202,7 @@ Database.create(function(err, db) {
             passport.session(),              // enable session support for passport
             function(req, res, next) {
                log.debug("req.isAuthenticated()=[" + req.isAuthenticated() + "]");
+               log.debug(req.url);
                res.locals.isAuthenticated = req.isAuthenticated();
 
                if (req.isAuthenticated()) {
@@ -264,7 +265,6 @@ Database.create(function(err, db) {
          app.use('/api/v1/password-reset', require('./routes/api/password-reset')(db.users));
 
          // configure routing
-         app.use('/', sessionSupport, require('./routes/index'));
          app.use('/signup', sessionSupport, require('./routes/signup'));
          app.use('/login', sessionSupport, require('./routes/login'));
          app.use('/logout', sessionSupport, require('./routes/logout')(db.tokens));
@@ -272,6 +272,7 @@ Database.create(function(err, db) {
          app.use('/password-reset', sessionSupport, require('./routes/password-reset'));
          app.use('/access-token', sessionSupport, require('./routes/access-token')(db.tokens));
          app.use('/home', sessionSupport, ensureAuthenticated, require('./routes/home/index'));
+         app.use('/', sessionSupport, require('./routes/index'));
 
          // ERROR HANDLERS ---------------------------------------------------------------------------------------------
 
