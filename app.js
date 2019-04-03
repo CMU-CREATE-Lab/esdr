@@ -1,4 +1,4 @@
-var RunMode = require('run-mode');
+const RunMode = require('run-mode');
 if (!RunMode.isValid()) {
    console.log("FATAL ERROR: Unknown NODE_ENV '" + process.env.NODE_ENV + "'. Must be one of: " + RunMode.getValidModes());
    process.exit(1);
@@ -7,44 +7,45 @@ if (!RunMode.isValid()) {
 if (RunMode.isTest()) {
    process.env['NEW_RELIC_APP_NAME'] = "ESDR Test";
 }
-var nr = require('newrelic');
+const nr = require('newrelic');
 
-var log4js = require('log4js');
+const log4js = require('log4js');
 log4js.configure('log4js-config-' + RunMode.get() + '.json');
-var log = log4js.getLogger('esdr');
+const log = log4js.getLogger('esdr');
 log.info("Run Mode: " + RunMode.get());
 
 log.info("New Relic enabled for app: " + ((nr.agent && nr.agent.config && nr.agent.config.app_name) ? nr.agent.config.app_name : "unknown"));
 
 // dependencies
-var config = require('./config');
-var BodyTrackDatastore = require('bodytrack-datastore');
-var express = require('express');
-var app = express();
-var cors = require('cors');
-var expressHandlebars = require('express-handlebars');
-var path = require('path');
-var favicon = require('serve-favicon');
-var compress = require('compression');
-var bodyParser = require('body-parser');
-var passport = require('passport');
-var Database = require("./models/Database");
-var cookieParser = require('cookie-parser');
-var session = require('express-session');
-var SessionStore = require('express-mysql-session');
-var httpStatus = require('http-status');
+const config = require('./config');
+const BodyTrackDatastore = require('bodytrack-datastore');
+const express = require('express');
+const app = express();
+const cors = require('cors');
+const expressHandlebars = require('express-handlebars');
+const path = require('path');
+const favicon = require('serve-favicon');
+const compress = require('compression');
+const bodyParser = require('body-parser');
+const passport = require('passport');
+const Database = require("./models/Database");
+const cookieParser = require('cookie-parser');
+const session = require('express-session');
+const SessionStore = require('express-mysql-session');
+const httpStatus = require('http-status');
 
 // instantiate the datastore
-var datastore = new BodyTrackDatastore({
-                                          binDir : config.get("datastore:binDirectory"),
-                                          dataDir : config.get("datastore:dataDirectory")
-                                       });
+// noinspection JSUnusedLocalSymbols
+const datastore = new BodyTrackDatastore({
+                                            binDir : config.get("datastore:binDirectory"),
+                                            dataDir : config.get("datastore:dataDirectory")
+                                         });
 
 // decorate express.response with JSend methods
+// noinspection JSCheckFunctionSignatures
 require('jsend-utils').decorateExpressResponse(require('express').response);
 
-var gracefulExit = function() {
-   // TODO: any way (or need?) to gracefully shut down the database pool?
+const gracefulExit = function() {
    log.info("Shutting down...");
    process.exit(0);
 };
@@ -67,23 +68,24 @@ Database.create(function(err, db) {
          // VIEW -------------------------------------------------------------------------------------------------------------
 
          // setup view engine
-         var viewsDir = path.join(__dirname, 'views');
+         const viewsDir = path.join(__dirname, 'views');
          app.set('views', viewsDir);
-         var handlebars = expressHandlebars.create({
-                                                      extname : '.hbs',
-                                                      defaultLayout : 'main-layout',
-                                                      layoutsDir : path.join(viewsDir, "layouts"),
-                                                      partialsDir : path.join(viewsDir, "partials"),
-                                                      helpers : {
-                                                         // Got this from http://stackoverflow.com/a/9405113
-                                                         ifEqual : function(v1, v2, options) {
-                                                            if (v1 === v2) {
-                                                               return options.fn(this);
-                                                            }
-                                                            return options.inverse(this);
-                                                         }
-                                                      }
-                                                   });
+         // noinspection JSUnusedGlobalSymbols
+         const handlebars = expressHandlebars.create({
+                                                        extname : '.hbs',
+                                                        defaultLayout : 'main-layout',
+                                                        layoutsDir : path.join(viewsDir, "layouts"),
+                                                        partialsDir : path.join(viewsDir, "partials"),
+                                                        helpers : {
+                                                           // Got this from http://stackoverflow.com/a/9405113
+                                                           ifEqual : function(v1, v2, options) {
+                                                              if (v1 === v2) {
+                                                                 return options.fn(this);
+                                                              }
+                                                              return options.inverse(this);
+                                                           }
+                                                        }
+                                                     });
 
          app.engine('hbs', handlebars.engine);
          app.set('view engine', '.hbs');
@@ -92,8 +94,8 @@ Database.create(function(err, db) {
 
          // MIDDLEWARE -------------------------------------------------------------------------------------------------
 
-         var oauthServer = require('./middleware/oauth2')(db.users, db.tokens);   // create and configure OAuth2 server
-         var error_handlers = require('./middleware/error_handlers');
+         const oauthServer = require('./middleware/oauth2')(db.users, db.tokens);   // create and configure OAuth2 server
+         const error_handlers = require('./middleware/error_handlers');
 
          app.use(favicon(path.join(__dirname, 'public/favicon.ico')));     // favicon serving
          app.use(compress());                // enables gzip compression
@@ -101,12 +103,12 @@ Database.create(function(err, db) {
 
          // configure request logging, if enabled (do this AFTER the static file serving so we don't log those)
          if (config.get("requestLogging:isEnabled")) {
-            var requestLogger = require('morgan');
+            const requestLogger = require('morgan');
 
             // enable logging of the user ID, if authenticated
             requestLogger.token('uid', function(req) {
-               if (req.user) {
-                  return req.user.id;
+               if (req['user']) {
+                  return req['user'].id;
                }
                return '-';
             });
@@ -114,18 +116,19 @@ Database.create(function(err, db) {
             // we'll only log to a file if we're in staging or production
             if (RunMode.isStaging() || RunMode.isProduction()) {
                // create a write stream (in append mode)
-               var fs = require('fs');
-               var logFile = config.get("requestLogging:logFile");
+               const fs = require('fs');
+               const logFile = config.get("requestLogging:logFile");
                log.info("HTTP access log: " + logFile);
-               var accessLogStream = fs.createWriteStream(logFile, { flags : 'a' });
+               const accessLogStream = fs.createWriteStream(logFile, { flags : 'a' });
 
                // get the correct remote address from the X-Forwarded-For header
+               // noinspection JSCheckFunctionSignatures
                requestLogger.token('remote-addr', function(req) {
                   return req.headers['x-forwarded-for'];
                });
 
                // This is just the "combined" format with response time and UID appended to the end
-               var logFormat = ':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" :response-time ms :uid';
+               const logFormat = ':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" :response-time ms :uid';
                app.use(requestLogger(logFormat, { stream : accessLogStream }));
             }
             else {
@@ -141,9 +144,9 @@ Database.create(function(err, db) {
          app.use(function(err, req, res, next) { // function MUST have arity 4 here!
             // catch body parser error (beefed up version of http://stackoverflow.com/a/15819808/703200)
             if (err) {
-               var statusCode = err.status || httpStatus.INTERNAL_SERVER_ERROR;
-               var message = err.message || (statusCode < httpStatus.INTERNAL_SERVER_ERROR ? "Bad Request" : "Internal Server Error");
-               var data = err;
+               const statusCode = err.status || httpStatus.INTERNAL_SERVER_ERROR;
+               const message = err.message || (statusCode < httpStatus.INTERNAL_SERVER_ERROR ? "Bad Request" : "Internal Server Error");
+               const data = err;
 
                // Manually set the CORS header here--I couldn't figure out how to get it working with the CORS
                // middleware. We need to do this so that client-side AJAX uploads which try to send files larger than
@@ -164,7 +167,7 @@ Database.create(function(err, db) {
          });
 
          // configure passport
-         var authHelper = require('./middleware/auth')(db.clients, db.users, db.tokens, db.feeds);
+         const authHelper = require('./middleware/auth')(db.clients, db.users, db.tokens, db.feeds);
 
          // CUSTOM MIDDLEWARE ------------------------------------------------------------------------------------------
 
@@ -173,7 +176,7 @@ Database.create(function(err, db) {
          }
 
          // define the various middleware required for routes which need session support
-         var sessionSupport = [
+         const sessionSupport = [
             cookieParser(),                  // cookie parsing--MUST come before setting up session middleware!
             session({                        // configure support for storing sessions in the database
                        key : config.get("cookie:name"),
@@ -219,21 +222,21 @@ Database.create(function(err, db) {
          ];
 
          // define the various middleware required for routes which don't need (and should not have!) session support
-         var noSessionSupport = [
+         const noSessionSupport = [
             passport.initialize()         // initialize passport
          ];
 
          // create the FeedRouteHelper
-         var FeedRouteHelper = require('./routes/api/feed-route-helper');
-         var feedRouteHelper = new FeedRouteHelper(db.feeds);
+         const FeedRouteHelper = require('./routes/api/feed-route-helper');
+         const feedRouteHelper = new FeedRouteHelper(db.feeds);
 
          // define CORS options and apply CORS to specific route groups
-         var corsSupport = cors({
-                                   origin : '*'
-                                });
+         const corsSupport = cors({
+                                     origin : '*'
+                                  });
 
          // ensure the user is authenticated before serving up the page
-         var ensureAuthenticated = function(req, res, next) {
+         const ensureAuthenticated = function(req, res, next) {
             if (req.isAuthenticated()) {
                return next();
             }
@@ -273,6 +276,7 @@ Database.create(function(err, db) {
          // ERROR HANDLERS ---------------------------------------------------------------------------------------------
 
          // custom 404
+         // noinspection JSCheckFunctionSignatures
          app.use(error_handlers.http404);
 
          // dev and prod should handle errors differently: e.g. don't show stacktraces in staging or production
@@ -282,7 +286,7 @@ Database.create(function(err, db) {
 
          // set the port and start the server
          app.set('port', config.get("server:port"));
-         var server = app.listen(app.get('port'), function() {
+         const server = app.listen(app.get('port'), function() {
             log.info('Express server listening on port ' + server.address().port);
          });
 
