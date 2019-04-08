@@ -8,12 +8,12 @@ var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
 var ESDR_TIME_API_URL = ESDR_API_ROOT_URL + "/time";
 
 describe("REST API", function() {
-   describe.only("Time", function() {
+   describe("Time", function() {
       describe("UNIX Time Seconds", function() {
 
          var computeChecksum = function(time) {
             var b = Buffer.alloc(4);
-            b.writeInt32BE(time);
+            b.writeInt32BE(time, 0);
             return 0xff & b.toJSON().data.reduce(
                         function(prev, cur) {
                            return prev + cur;
