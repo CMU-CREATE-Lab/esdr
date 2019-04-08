@@ -80,6 +80,9 @@ describe("REST API", function() {
                      should.not.exist(err);
                      should.exist(res);
 
+                     if (test.debug) {
+                        console.log(JSON.stringify(res.body, null, 3));
+                     }
                      res.should.have.property('status', test.expectedHttpStatus);
                      res.should.have.property('body');
                      res.body.should.have.properties({
@@ -89,17 +92,13 @@ describe("REST API", function() {
                      res.body.should.have.property('data');
 
                      if (typeof test.expectedResponseData !== 'undefined') {
-                        if (Array.isArray(test.expectedResponseData)) {
-                           res.body.data.should.have.length(test.expectedResponseData.length);
-
-                           res.body.data.forEach(function(validationItem, index) {
-                              validationItem.should.have.properties(test.expectedResponseData[index]);
-                           });
-
-                        }
-                        else {
-                           res.body.data.should.have.properties(test.expectedResponseData);
-                        }
+                        res.body.data.should.have.properties(test.expectedResponseData);
+                     }
+                     if (Array.isArray(test.expectedErrors)) {
+                        res.body.data.errors.should.have.length(test.expectedErrors.length);
+                        res.body.data.errors.forEach(function(validationItem, index) {
+                           validationItem.should.have.properties(test.expectedErrors[index]);
+                        });
                      }
 
                      done();
@@ -157,6 +156,7 @@ describe("REST API", function() {
 
       testResetPassword(
             {
+               debug : true,
                description : "Should fail to set the password using an invalid password",
                password : "z",
                token : function() {
@@ -164,14 +164,17 @@ describe("REST API", function() {
                },
                expectedHttpStatus : httpStatus.UNPROCESSABLE_ENTITY,
                expectedStatusText : 'error',
-               expectedResponseData : [
+               expectedResponseData : {
+                  "message" : "validation failed"
+               },
+               expectedErrors : [
                   {
-                     instanceContext : '#/password',
-                     constraintName : 'minLength',
-                     testedValue : 1,
-                     kind : 'StringValidationError'
+                     keyword : 'minLength',
+                     dataPath : '.password',
+                     schemaPath : '#/properties/password/minLength'
                   }
                ]
+
             }
       );
 

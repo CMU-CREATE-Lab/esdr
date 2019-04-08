@@ -1,29 +1,29 @@
-var should = require('should');
-var flow = require('nimble');
-var httpStatus = require('http-status');
-var superagent = require('superagent-ls');
-var requireNew = require('require-new');
-var wipe = require('./fixture-helpers/wipe');
-var setup = require('./fixture-helpers/setup');
+const should = require('should');
+const flow = require('nimble');
+const httpStatus = require('http-status');
+const superagent = require('superagent-ls');
+const requireNew = require('require-new');
+const wipe = require('./fixture-helpers/wipe');
+const setup = require('./fixture-helpers/setup');
 
-var config = require('../config');
+const config = require('../config');
 
-var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
-var ESDR_USERS_API_URL = ESDR_API_ROOT_URL + "/users";
+const ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
+const ESDR_USERS_API_URL = ESDR_API_ROOT_URL + "/users";
 
 describe("REST API", function() {
-   var client1 = requireNew('./fixtures/client1.json');
-   var user1 = requireNew('./fixtures/user1.json');
-   var userNoDisplayName = requireNew('./fixtures/user2.json');
-   var userNeedsTrimming = requireNew('./fixtures/user3-needs-trimming.json');
-   var userEmptyDisplayName = requireNew('./fixtures/user4-empty-displayName.json');
-   var userEmailTooShort = requireNew('./fixtures/user5-email-too-short.json');
-   var userEmailTooLong = requireNew('./fixtures/user6-email-too-long.json');
-   var userPasswordTooShort = requireNew('./fixtures/user7-password-too-short.json');
-   var userPasswordTooLong = requireNew('./fixtures/user8-password-too-long.json');
-   var userDisplayNameTooLong = requireNew('./fixtures/user9-displayName-too-long.json');
-   var userEmailInvalid = requireNew('./fixtures/user10-email-invalid.json');
-   var user11 = requireNew('./fixtures/user11.json');
+   const client1 = requireNew('./fixtures/client1.json');
+   const user1 = requireNew('./fixtures/user1.json');
+   const userNoDisplayName = requireNew('./fixtures/user2.json');
+   const userNeedsTrimming = requireNew('./fixtures/user3-needs-trimming.json');
+   const userEmptyDisplayName = requireNew('./fixtures/user4-empty-displayName.json');
+   const userEmailTooShort = requireNew('./fixtures/user5-email-too-short.json');
+   const userEmailTooLong = requireNew('./fixtures/user6-email-too-long.json');
+   const userPasswordTooShort = requireNew('./fixtures/user7-password-too-short.json');
+   const userPasswordTooLong = requireNew('./fixtures/user8-password-too-long.json');
+   const userDisplayNameTooLong = requireNew('./fixtures/user9-displayName-too-long.json');
+   const userEmailInvalid = requireNew('./fixtures/user10-email-invalid.json');
+   const user11 = requireNew('./fixtures/user11.json');
 
    before(function(initDone) {
       flow.series(
@@ -40,7 +40,7 @@ describe("REST API", function() {
    describe("Users", function() {
 
       describe("Create", function() {
-         var creationTests = [
+         const creationTests = [
             {
                description : "Should be able to create a new user",
                client : client1,
@@ -48,8 +48,8 @@ describe("REST API", function() {
                expectedHttpStatus : httpStatus.CREATED,
                expectedStatusText : 'success',
                expectedResponseData : {
-                  email : user1.email,
-                  displayName : user1.displayName
+                  email : user1['email'],
+                  displayName : user1['displayName']
                }
             },
             {
@@ -59,8 +59,8 @@ describe("REST API", function() {
                expectedHttpStatus : httpStatus.CREATED,
                expectedStatusText : 'success',
                expectedResponseData : {
-                  email : userNeedsTrimming.email.trim(),
-                  displayName : userNeedsTrimming.displayName.trim()
+                  email : userNeedsTrimming['email'].trim(),
+                  displayName : userNeedsTrimming['displayName'].trim()
                }
             },
             {
@@ -70,7 +70,7 @@ describe("REST API", function() {
                expectedHttpStatus : httpStatus.CREATED,
                expectedStatusText : 'success',
                expectedResponseData : {
-                  email : userNoDisplayName.email
+                  email : userNoDisplayName['email']
                }
             },
             {
@@ -80,7 +80,7 @@ describe("REST API", function() {
                expectedHttpStatus : httpStatus.CREATED,
                expectedStatusText : 'success',
                expectedResponseData : {
-                  email : userEmptyDisplayName.email
+                  email : userEmptyDisplayName['email']
                }
             },
             {
@@ -90,7 +90,7 @@ describe("REST API", function() {
                expectedHttpStatus : httpStatus.CONFLICT,
                expectedStatusText : 'error',
                expectedResponseData : {
-                  email : user1.email
+                  email : user1['email']
                }
             }
          ];
@@ -115,7 +115,7 @@ describe("REST API", function() {
                         res.body.should.have.property('data');
                         res.body.data.should.have.properties(test.expectedResponseData);
 
-                        if (test.expectedHttpStatus == httpStatus.CREATED) {
+                        if (test.expectedHttpStatus === httpStatus.CREATED) {
                            res.body.data.should.have.properties('id', 'verificationToken');
 
                            // remember the database ID and verificationToken
@@ -128,21 +128,23 @@ describe("REST API", function() {
             });
          });
 
-         var creationValidationTests = [
+         const creationValidationTests = [
             {
                description : "Should fail to create a new user with missing user data",
                user : {},
                getExpectedValidationItems : function() {
                   return [
                      {
-                        instanceContext : '#',
-                        constraintName : 'required',
-                        constraintValue : global.db.users.jsonSchema.required
+                        "keyword" : "required",
+                        "params" : {
+                           "missingProperty" : "email"
+                        }
                      },
                      {
-                        instanceContext : '#/password',
-                        constraintName : 'type',
-                        constraintValue : 'string'
+                        "keyword" : "required",
+                        "params" : {
+                           "missingProperty" : "password"
+                        }
                      }
                   ];
                }
@@ -152,9 +154,9 @@ describe("REST API", function() {
                user : userEmailTooShort,
                getExpectedValidationItems : function() {
                   return [{
-                     instanceContext : '#/email',
-                     constraintName : 'minLength',
-                     constraintValue : global.db.users.jsonSchema.properties.email.minLength
+                     "keyword" : "minLength",
+                     "dataPath" : ".email",
+                     "schemaPath" : "#/properties/email/minLength"
                   }];
                }
             },
@@ -163,9 +165,16 @@ describe("REST API", function() {
                user : userEmailTooLong,
                getExpectedValidationItems : function() {
                   return [{
-                     instanceContext : '#/email',
-                     constraintName : 'maxLength',
-                     constraintValue : global.db.users.jsonSchema.properties.email.maxLength
+                     "keyword" : "maxLength",
+                     "dataPath" : ".email",
+                     "schemaPath" : "#/properties/email/maxLength"
+                  }, {
+                     "keyword" : "format",
+                     "dataPath" : ".email",
+                     "schemaPath" : "#/properties/email/format",
+                     "params" : {
+                        "format" : "email"
+                     }
                   }];
                }
             },
@@ -174,9 +183,9 @@ describe("REST API", function() {
                user : userPasswordTooShort,
                getExpectedValidationItems : function() {
                   return [{
-                     instanceContext : '#/password',
-                     constraintName : 'minLength',
-                     constraintValue : global.db.users.jsonSchema.properties.password.minLength
+                     "keyword" : "minLength",
+                     "dataPath" : ".password",
+                     "schemaPath" : "#/properties/password/minLength"
                   }];
                }
             },
@@ -185,9 +194,9 @@ describe("REST API", function() {
                user : userPasswordTooLong,
                getExpectedValidationItems : function() {
                   return [{
-                     instanceContext : '#/password',
-                     constraintName : 'maxLength',
-                     constraintValue : global.db.users.jsonSchema.properties.password.maxLength
+                     "keyword" : "maxLength",
+                     "dataPath" : ".password",
+                     "schemaPath" : "#/properties/password/maxLength"
                   }];
                }
             },
@@ -196,9 +205,9 @@ describe("REST API", function() {
                user : userDisplayNameTooLong,
                getExpectedValidationItems : function() {
                   return [{
-                     instanceContext : '#/displayName',
-                     constraintName : 'maxLength',
-                     constraintValue : global.db.users.jsonSchema.properties.displayName.maxLength
+                     "keyword" : "maxLength",
+                     "dataPath" : ".displayName",
+                     "schemaPath" : "#/properties/displayName/maxLength"
                   }];
                }
             },
@@ -207,10 +216,12 @@ describe("REST API", function() {
                user : userEmailInvalid,
                getExpectedValidationItems : function() {
                   return [{
-                     instanceContext : '#/email',
-                     constraintName : 'format',
-                     constraintValue : 'email',
-                     kind : 'FormatValidationError'
+                     "keyword" : "format",
+                     "dataPath" : ".email",
+                     "schemaPath" : "#/properties/email/format",
+                     "params" : {
+                        "format" : "email"
+                     }
                   }];
                }
             }
@@ -218,10 +229,10 @@ describe("REST API", function() {
 
          creationValidationTests.forEach(function(test) {
             it(test.description, function(done) {
-               var expectedValidationItems = test.getExpectedValidationItems();
+               const expectedValidationItems = test.getExpectedValidationItems();
                superagent
                      .post(ESDR_USERS_API_URL)
-                     .auth(client1.clientName, client1.clientSecret)
+                     .auth(client1['clientName'], client1['clientSecret'])
                      .send(test.user)
                      .end(function(err, res) {
                         should.not.exist(err);
@@ -235,8 +246,8 @@ describe("REST API", function() {
                                                         });
 
                         res.body.should.have.property('data');
-                        res.body.data.should.have.length(expectedValidationItems.length);
-                        res.body.data.forEach(function(validationItem, index) {
+                        res.body.data.errors.should.have.length(expectedValidationItems.length);
+                        res.body.data.errors.forEach(function(validationItem, index) {
                            validationItem.should.have.properties(expectedValidationItems[index]);
                         });
 
@@ -261,17 +272,19 @@ describe("REST API", function() {
                                                      });
 
                      res.body.should.have.property('data');
-                     res.body.data.should.have.length(2);
-                     res.body.data[0].should.have.properties({
-                                                                instanceContext : '#',
-                                                                constraintName : 'required',
-                                                                constraintValue : global.db.users.jsonSchema.required
-                                                             });
-                     res.body.data[1].should.have.properties({
-                                                                instanceContext : '#/password',
-                                                                constraintName : 'type',
-                                                                constraintValue : 'string'
-                                                             });
+                     res.body.data.errors.should.have.length(2);
+                     res.body.data.errors[0].should.have.properties({
+                                                                       "keyword" : "required",
+                                                                       "params" : {
+                                                                          "missingProperty" : "email"
+                                                                       }
+                                                                    });
+                     res.body.data.errors[1].should.have.properties({
+                                                                       "keyword" : "required",
+                                                                       "params" : {
+                                                                          "missingProperty" : "password"
+                                                                       }
+                                                                    });
 
                      done();
                   });
