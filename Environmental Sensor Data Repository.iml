@@ -14,7 +14,6 @@
     <orderEntry type="library" name="@types/nconf" level="application" />
     <orderEntry type="library" name="@types/rimraf" level="application" />
     <orderEntry type="library" name="@types/string" level="application" />
-    <orderEntry type="library" name="@types/superagent" level="application" />
     <orderEntry type="library" name="@types/passport" level="application" />
     <orderEntry type="library" name="@types/bcrypt" level="application" />
     <orderEntry type="library" name="@types/body-parser" level="application" />
@@ -36,5 +35,6 @@
     <orderEntry type="library" name="@types/passport-oauth2-client-password" level="application" />
     <orderEntry type="library" name="@types/qs" level="application" />
     <orderEntry type="library" name="@types/serve-favicon" level="application" />
+    <orderEntry type="library" name="@types/superagent" level="application" />
   </component>
 </module>
