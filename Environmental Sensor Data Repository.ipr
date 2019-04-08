@@ -701,9 +701,6 @@
       <module fileurl="file://$PROJECT_DIR$/Environmental Sensor Data Repository.iml" filepath="$PROJECT_DIR$/Environmental Sensor Data Repository.iml" />
     </modules>
   </component>
-  <component name="ProjectPlainTextFileTypeManager">
-    <file url="file://$PROJECT_DIR$/etc/conf_new.conf" />
-  </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" project-jdk-name="JDK 1.6" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
