@@ -6,7 +6,7 @@ var NUM_CHECKSUM_BYTES = 4;
 
 var computeChecksum = function(number) {
    // compute a checksum by summing the 4 bytes and then using only the lowest 8 bits
-   var b = new Buffer(4);
+   var b = Buffer.alloc(4);
    b.writeInt32BE(number);
 
    var sum = 0;
