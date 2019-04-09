@@ -1,37 +1,38 @@
-var JaySchema = require('jayschema');
-var jsonValidator = new JaySchema();
-var ValidationError = require('../lib/errors').ValidationError;
-var Query2Query = require('query2query');
-var Properties = require('./Properties');
+const JaySchema = require('jayschema');
+const jsonValidator = new JaySchema();
+const ValidationError = require('../lib/errors').ValidationError;
+const Query2Query = require('query2query');
+const Properties = require('./Properties');
 
-var log = require('log4js').getLogger('esdr:models:deviceproperties');
+const log = require('log4js').getLogger('esdr:models:deviceproperties');
 
-var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `DeviceProperties` ( " +
-                         "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
-                         "`deviceId` bigint(20) NOT NULL, " +
-                         "`clientId` bigint(20) NOT NULL, " +
-                         "`propertyKey` varchar(255) NOT NULL, " +
-                         "`valueType` enum('int','double','string','json','boolean') NOT NULL, " +
-                         "`valueInt` bigint(20) DEFAULT NULL, " +
-                         "`valueDouble` double DEFAULT NULL, " +
-                         "`valueString` varchar(255) DEFAULT NULL, " +
-                         "`valueJson` text DEFAULT NULL, " +
-                         "`valueBoolean` boolean DEFAULT NULL, " +
-                         "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
-                         "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
-                         "PRIMARY KEY (`id`), " +
-                         "UNIQUE KEY `deviceId_clientId_propertyKey_index` (`deviceId`,`clientId`,`propertyKey`), " +
-                         "KEY `deviceId` (`deviceId`), " +
-                         "KEY `clientId` (`clientId`), " +
-                         "KEY `propertyKey` (`propertyKey`), " +
-                         "KEY `valueType` (`valueType`), " +
-                         "KEY `created` (`created`), " +
-                         "KEY `modified` (`modified`), " +
-                         "CONSTRAINT `device_properties_deviceId` FOREIGN KEY (`deviceId`) REFERENCES `Devices` (`id`), " +
-                         "CONSTRAINT `device_properties_clientId` FOREIGN KEY (`clientId`) REFERENCES `Clients` (`id`) " +
-                         ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
+// noinspection SqlNoDataSourceInspection
+const CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `DeviceProperties` ( " +
+                           "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
+                           "`deviceId` bigint(20) NOT NULL, " +
+                           "`clientId` bigint(20) NOT NULL, " +
+                           "`propertyKey` varchar(255) NOT NULL, " +
+                           "`valueType` enum('int','double','string','json','boolean') NOT NULL, " +
+                           "`valueInt` bigint(20) DEFAULT NULL, " +
+                           "`valueDouble` double DEFAULT NULL, " +
+                           "`valueString` varchar(255) DEFAULT NULL, " +
+                           "`valueJson` text DEFAULT NULL, " +
+                           "`valueBoolean` boolean DEFAULT NULL, " +
+                           "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
+                           "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
+                           "PRIMARY KEY (`id`), " +
+                           "UNIQUE KEY `deviceId_clientId_propertyKey_index` (`deviceId`,`clientId`,`propertyKey`), " +
+                           "KEY `deviceId` (`deviceId`), " +
+                           "KEY `clientId` (`clientId`), " +
+                           "KEY `propertyKey` (`propertyKey`), " +
+                           "KEY `valueType` (`valueType`), " +
+                           "KEY `created` (`created`), " +
+                           "KEY `modified` (`modified`), " +
+                           "CONSTRAINT `device_properties_deviceId` FOREIGN KEY (`deviceId`) REFERENCES `Devices` (`id`), " +
+                           "CONSTRAINT `device_properties_clientId` FOREIGN KEY (`clientId`) REFERENCES `Clients` (`id`) " +
+                           ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
 
-var query2query = new Query2Query();
+const query2query = new Query2Query();
 query2query.addField('key', true, false, false);
 query2query.addField('type', true, false, false);
 
@@ -74,16 +75,16 @@ module.exports = function(databaseHelper) {
                                    }
 
                                    if (record) {
-                                      var propertyToReturn = {};
+                                      const propertyToReturn = {};
 
                                       propertyToReturn[propertyKey] = record[Properties.DATA_TYPE_TO_FIELD_NAME_MAP[record.valueType]];
 
                                       // value conversions, if appropriate
                                       if (propertyToReturn[propertyKey] != null) {
-                                         if (record.valueType == 'json') {
+                                         if (record.valueType === 'json') {
                                             propertyToReturn[propertyKey] = JSON.parse(propertyToReturn[propertyKey]);
                                          }
-                                         else if (record.valueType == 'boolean') {
+                                         else if (record.valueType === 'boolean') {
                                             propertyToReturn[propertyKey] = !!propertyToReturn[propertyKey];
                                          }
                                       }
@@ -105,16 +106,16 @@ module.exports = function(databaseHelper) {
 
                            // We need to be really careful about security here!  Restrict the WHERE clause to allow returning
                            // only properties for the device owned by the authenticated client user.
-                           var whereClause = "WHERE (clientId = " + clientId + " AND deviceId = " + deviceId + ")";
+                           let whereClause = "WHERE (clientId = " + clientId + " AND deviceId = " + deviceId + ")";
                            if (queryParts.whereExpressions.length > 0) {
                               // first replace all instances of "key" with "propertyKey" and "type" with "valueType"
-                              var where = queryParts.where.replace(/\(key/g, '(propertyKey');
+                              let where = queryParts.where.replace(/\(key/g, '(propertyKey');
                               where = where.replace(/\(type/g, '(valueType');
                               whereClause += " AND (" + where + ")";
                            }
 
                            // build the restricted SQL query
-                           var restrictedSql = [
+                           const restrictedSql = [
                               "SELECT propertyKey, valueType, valueInt, valueDouble, valueString, valueJson, valueBoolean ",
                               "FROM DeviceProperties",
                               whereClause
@@ -125,19 +126,19 @@ module.exports = function(databaseHelper) {
                                  return callback(err);
                               }
 
-                              var properties = {};
+                              const properties = {};
                               if (rows) {
-                                 for (var i = 0; i < rows.length; i++) {
-                                    var row = rows[i];
-                                    var key = row.propertyKey;
-                                    var value = row[Properties.DATA_TYPE_TO_FIELD_NAME_MAP[row.valueType]];
+                                 for (let i = 0; i < rows.length; i++) {
+                                    const row = rows[i];
+                                    const key = row.propertyKey;
+                                    let value = row[Properties.DATA_TYPE_TO_FIELD_NAME_MAP[row.valueType]];
 
                                     // value conversions, if appropriate
                                     if (value != null) {
-                                       if (row.valueType == 'json') {
+                                       if (row.valueType === 'json') {
                                           value = JSON.parse(value);
                                        }
-                                       else if (row.valueType == 'boolean') {
+                                       else if (row.valueType === 'boolean') {
                                           value = !!value;
                                        }
                                     }
@@ -168,7 +169,7 @@ module.exports = function(databaseHelper) {
             }
 
             // Now, depending on the stated type, validate the value against the type
-            var typeValidationSchema = Properties.TYPE_VALIDATION_JSON_SCHEMAS[propertyValue.type];
+            const typeValidationSchema = Properties.TYPE_VALIDATION_JSON_SCHEMAS[propertyValue.type];
             if (typeValidationSchema == null) {
                return callback(new ValidationError("Unexpected property value type: " + propertyValue.type));
             }
@@ -181,7 +182,7 @@ module.exports = function(databaseHelper) {
                // We can now be sure that the property value has both 'type' and 'value' fields, and that the value
                // is of the stated type.  Now create the object we'll use to insert/update...
 
-               var property = {
+               const property = {
                   propertyKey : propertyKey
                };
 
@@ -197,6 +198,7 @@ module.exports = function(databaseHelper) {
                }
 
                // now try to insert
+               // noinspection SqlNoDataSourceInspection
                databaseHelper.execute("INSERT INTO DeviceProperties SET ? " +
                                       "ON DUPLICATE KEY UPDATE " +
                                       "valueType=VALUES(valueType)," +
@@ -204,21 +206,24 @@ module.exports = function(databaseHelper) {
                                       "valueDouble=VALUES(valueDouble)," +
                                       "valueString=VALUES(valueString)," +
                                       "valueJson=VALUES(valueJson)," +
-                                      "valueBoolean=VALUES(valueBoolean)", property, function(err, result) {
-                  if (err) {
-                     return callback(err);
-                  }
+                                      "valueBoolean=VALUES(valueBoolean)",
+                                      property,
+                                      function(err) {
+                                         if (err) {
+                                            return callback(err);
+                                         }
 
-                  var propertyToReturn = {};
-                  propertyToReturn[propertyKey] = propertyValue.value;
-                  callback(null, propertyToReturn);
-               });
+                                         const propertyToReturn = {};
+                                         propertyToReturn[propertyKey] = propertyValue.value;
+                                         callback(null, propertyToReturn);
+                                      });
             });
          });
       });
    };
 
    this.deleteAll = function(clientId, deviceId, callback) {
+      // noinspection SqlNoDataSourceInspection,SqlDialectInspection
       databaseHelper.execute("DELETE FROM DeviceProperties WHERE clientId=? AND deviceId=?",
                              [clientId, deviceId],
                              function(err, deleteResult) {
@@ -237,6 +242,7 @@ module.exports = function(databaseHelper) {
             return callback(new ValidationError(err));
          }
 
+         // noinspection SqlNoDataSourceInspection,SqlDialectInspection
          databaseHelper.execute("DELETE FROM DeviceProperties WHERE clientId=? AND deviceId=? AND propertyKey=?",
                                 [clientId, deviceId, propertyKey],
                                 function(err, deleteResult) {

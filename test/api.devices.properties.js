@@ -1,26 +1,26 @@
-var should = require('should');
-var flow = require('nimble');
-var httpStatus = require('http-status');
-var superagent = require('superagent-ls');
-var requireNew = require('require-new');
-var wipe = require('./fixture-helpers/wipe');
-var setup = require('./fixture-helpers/setup');
-var createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
+const should = require('should');
+const flow = require('nimble');
+const httpStatus = require('http-status');
+const superagent = require('superagent-ls');
+const requireNew = require('require-new');
+const wipe = require('./fixture-helpers/wipe');
+const setup = require('./fixture-helpers/setup');
+const createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
 
-var config = require('../config');
+const config = require('../config');
 
-var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
-var ESDR_DEVICES_API_URL = ESDR_API_ROOT_URL + "/devices/";
-var BOGUS_DEVICE_ID = 1;
+const ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
+const ESDR_DEVICES_API_URL = ESDR_API_ROOT_URL + "/devices/";
+const BOGUS_DEVICE_ID = 1;
 
-var createValue = function(type, value) {
+const createValue = function(type, value) {
    return {
       type : type,
       value : value
    };
 };
 
-var setProperty = function(deviceId, accessToken, propertyKey, propertyValue, callback, willDebug) {
+const setProperty = function(deviceId, accessToken, propertyKey, propertyValue, callback, willDebug) {
    superagent
          .put(ESDR_DEVICES_API_URL + deviceId + "/properties/" + propertyKey)
          .set(createAuthorizationHeader(accessToken))
@@ -41,7 +41,7 @@ var setProperty = function(deviceId, accessToken, propertyKey, propertyValue, ca
                                             });
             res.body.should.have.property('data');
 
-            var expectedResponse = {};
+            const expectedResponse = {};
             expectedResponse[propertyKey] = propertyValue.value;
             res.body.data.should.have.properties(expectedResponse);
 
@@ -49,7 +49,7 @@ var setProperty = function(deviceId, accessToken, propertyKey, propertyValue, ca
          });
 };
 
-var getProperty = function(deviceId, accessToken, propertyKey, callback, willDebug, expectedValue) {
+const getProperty = function(deviceId, accessToken, propertyKey, callback, willDebug, expectedValue) {
    superagent
          .get(ESDR_DEVICES_API_URL + deviceId + "/properties/" + propertyKey)
          .set(createAuthorizationHeader(accessToken))
@@ -71,7 +71,7 @@ var getProperty = function(deviceId, accessToken, propertyKey, callback, willDeb
             res.body.should.have.property('data');
 
             if (typeof expectedValue !== 'undefined') {
-               var expectedResponse = {};
+               const expectedResponse = {};
                expectedResponse[propertyKey] = expectedValue;
                res.body.data.should.have.properties(expectedResponse);
             }
@@ -80,7 +80,7 @@ var getProperty = function(deviceId, accessToken, propertyKey, callback, willDeb
          });
 };
 
-var getProperties = function(deviceId, accessToken, queryString, callback, willDebug, expectedResponse) {
+const getProperties = function(deviceId, accessToken, queryString, callback, willDebug, expectedResponse) {
    superagent
          .get(ESDR_DEVICES_API_URL + deviceId + "/properties" + queryString)
          .set(createAuthorizationHeader(accessToken))
@@ -109,7 +109,7 @@ var getProperties = function(deviceId, accessToken, queryString, callback, willD
          });
 };
 
-var deletePropertiesForDevice = function(deviceId, accessToken, callback, expectedNumPropertiesDeleted) {
+const deletePropertiesForDevice = function(deviceId, accessToken, callback, expectedNumPropertiesDeleted) {
    superagent
          .del(ESDR_DEVICES_API_URL + deviceId + "/properties")
          .set(createAuthorizationHeader(accessToken))
@@ -134,7 +134,7 @@ var deletePropertiesForDevice = function(deviceId, accessToken, callback, expect
          });
 };
 
-var deletePropertyForDevice = function(deviceId, accessToken, key, callback, expectedNumPropertiesDeleted) {
+const deletePropertyForDevice = function(deviceId, accessToken, key, callback, expectedNumPropertiesDeleted) {
    superagent
          .del(ESDR_DEVICES_API_URL + deviceId + "/properties/" + key)
          .set(createAuthorizationHeader(accessToken))
@@ -160,18 +160,18 @@ var deletePropertyForDevice = function(deviceId, accessToken, key, callback, exp
 };
 
 describe("REST API", function() {
-   var client1 = requireNew('./fixtures/client1.json');
-   var client2 = requireNew('./fixtures/client2.json');
-   var user1 = requireNew('./fixtures/user1.json');
-   var user2 = requireNew('./fixtures/user2.json');
-   var user1Client2 = null;
-   var user2Client2 = null;
-   var product1 = requireNew('./fixtures/product1.json');      // user 1
-   var product2 = requireNew('./fixtures/product2.json');      // user 2
-   var device1 = requireNew('./fixtures/device1.json');        // user 1, product 1
-   var device2 = requireNew('./fixtures/device2.json');        // user 1, product 1
-   var device3 = requireNew('./fixtures/device3.json');        // user 2, product 1
-   var device4 = requireNew('./fixtures/device4.json');        // user 2, product 2
+   const client1 = requireNew('./fixtures/client1.json');
+   const client2 = requireNew('./fixtures/client2.json');
+   const user1 = requireNew('./fixtures/user1.json');
+   const user2 = requireNew('./fixtures/user2.json');
+   let user1Client2 = null;
+   let user2Client2 = null;
+   const product1 = requireNew('./fixtures/product1.json');      // user 1
+   const product2 = requireNew('./fixtures/product2.json');      // user 2
+   const device1 = requireNew('./fixtures/device1.json');        // user 1, product 1
+   const device2 = requireNew('./fixtures/device2.json');        // user 1, product 1
+   const device3 = requireNew('./fixtures/device3.json');        // user 2, product 1
+   const device4 = requireNew('./fixtures/device4.json');        // user 2, product 2
 
    before(function(initDone) {
       flow.series(
@@ -212,31 +212,31 @@ describe("REST API", function() {
                   setup.authenticateUserWithClient(user2Client2, client2, done);
                },
                function(done) {
-                  product1.creatorUserId = user1.id;
+                  product1.creatorUserId = user1['id'];
                   setup.createProduct(product1, done);
                },
                function(done) {
-                  product2.creatorUserId = user2.id;
+                  product2.creatorUserId = user2['id'];
                   setup.createProduct(product2, done);
                },
                function(done) {
-                  device1.userId = user1.id;
-                  device1.productId = product1.id;
+                  device1.userId = user1['id'];
+                  device1.productId = product1['id'];
                   setup.createDevice(device1, done);
                },
                function(done) {
-                  device2.userId = user1.id;
-                  device2.productId = product1.id;
+                  device2.userId = user1['id'];
+                  device2.productId = product1['id'];
                   setup.createDevice(device2, done);
                },
                function(done) {
-                  device3.userId = user2.id;
-                  device3.productId = product1.id;
+                  device3.userId = user2['id'];
+                  device3.productId = product1['id'];
                   setup.createDevice(device3, done);
                },
                function(done) {
-                  device4.userId = user2.id;
-                  device4.productId = product2.id;
+                  device4.userId = user2['id'];
+                  device4.productId = product2['id'];
                   setup.createDevice(device4, done);
                }
             ],
@@ -244,14 +244,14 @@ describe("REST API", function() {
       );
    });
 
-   describe("Devices", function() {
+   describe.only("Devices", function() {
       describe("DeviceProperties", function() {
          describe("Set Property", function() {
 
             describe("No Authentication", function() {
                it("Should fail to set a property with no OAuth2 token specified", function(done) {
                   superagent
-                        .put(ESDR_DEVICES_API_URL + device1.id + "/properties/foo")
+                        .put(ESDR_DEVICES_API_URL + device1['id'] + "/properties/foo")
                         .send(createValue('int', 42))
                         .end(function(err, res) {
                            should.not.exist(err);
@@ -268,7 +268,7 @@ describe("REST API", function() {
                describe("Invalid Authentication", function() {
                   it("Should fail to set a property with an invalid OAuth2 token specified", function(done) {
                      superagent
-                           .put(ESDR_DEVICES_API_URL + device1.id + "/properties/foo")
+                           .put(ESDR_DEVICES_API_URL + device1['id'] + "/properties/foo")
                            .set(createAuthorizationHeader("bogus"))
                            .send(createValue('int', 42))
                            .end(function(err, res) {
@@ -282,8 +282,8 @@ describe("REST API", function() {
                   });
                   it("Should fail to set a property with an OAuth2 token for a different user", function(done) {
                      superagent
-                           .put(ESDR_DEVICES_API_URL + device1.id + "/properties/foo")
-                           .set(createAuthorizationHeader(user2.accessToken))
+                           .put(ESDR_DEVICES_API_URL + device1['id'] + "/properties/foo")
+                           .set(createAuthorizationHeader(user2['accessToken']))
                            .send(createValue('int', 42))
                            .end(function(err, res) {
                               should.not.exist(err);
@@ -297,19 +297,19 @@ describe("REST API", function() {
                });   // Invalid Authentication
                describe("Valid Authentication", function() {
                   describe("Success", function() {
-                     var testSetProperty = function(test) {
+                     const testSetProperty = function(test) {
                         it(test.description, function(done) {
-                           var deviceId = (typeof test.device === 'function') ? test.device().id : test.device.id;
+                           const deviceId = (typeof test.device === 'function') ? test.device()['id'] : test.device['id'];
 
                            setProperty(deviceId,
-                                       test.accessToken,
+                                       test['accessToken'],
                                        test.propertyKey,
                                        test.propertyValue,
                                        function() {
                                           // now try to fetch the property through the API to verify it was set correctly
                                           getProperty(
                                                 deviceId,
-                                                test.accessToken,
+                                                test['accessToken'],
                                                 test.propertyKey,
                                                 function() {
                                                    if (typeof test.additionalTests === 'function') {
@@ -327,12 +327,12 @@ describe("REST API", function() {
                         });
                      };
 
-                     var createTest = function(description, key, value, type, willDebug) {
+                     const createTest = function(description, key, value, type, willDebug) {
                         return {
                            description : description,
                            device : device1,
                            accessToken : function() {
-                              return user1.accessToken
+                              return user1['accessToken']
                            },
                            propertyKey : key,
                            propertyValue : createValue(type, value),
@@ -340,13 +340,13 @@ describe("REST API", function() {
                         }
                      };
 
-                     var shapeShifterInt = 42;
-                     var shapeShifterDouble = 42.00042;
-                     var shapeShifterString = "please to make englishes";
-                     var shapeShifterJson = { foo : "bar", isTest : true, num : 3.14159 };
-                     var shapeShifterBoolean = true;
+                     const shapeShifterInt = 42;
+                     const shapeShifterDouble = 42.00042;
+                     const shapeShifterString = "please to make englishes";
+                     const shapeShifterJson = { foo : "bar", isTest : true, num : 3.14159 };
+                     const shapeShifterBoolean = true;
 
-                     var shapeshifterTypes = {
+                     const shapeshifterTypes = {
                         int : shapeShifterInt,
                         double : shapeShifterDouble,
                         string : shapeShifterString,
@@ -354,8 +354,8 @@ describe("REST API", function() {
                         boolean : shapeShifterBoolean
                      };
 
-                     var createTypeSwitchTest = function(fromTypeName, toTypeName) {
-                        var propertyValue = {};
+                     const createTypeSwitchTest = function(fromTypeName, toTypeName) {
+                        const propertyValue = {};
                         propertyValue[toTypeName] = shapeshifterTypes[toTypeName];
 
                         return createTest(
@@ -451,7 +451,7 @@ describe("REST API", function() {
                            description : "Should be able to set a property for device 1 owned by user 1 and client 1 (prep for showing properties are private to device+user+client)",
                            device : device1,
                            accessToken : function() {
-                              return user1.accessToken
+                              return user1['accessToken']
                            },
                            propertyKey : 'this_is_my_property',
                            propertyValue : createValue('string', 'device 1 user 1 client 1')
@@ -460,7 +460,7 @@ describe("REST API", function() {
                            description : "Should be able to set a property for device 2 owned by user 1 and client 1",
                            device : device2,
                            accessToken : function() {
-                              return user1.accessToken
+                              return user1['accessToken']
                            },
                            propertyKey : 'this_is_my_property',
                            propertyValue : createValue('string', 'device 2 user 1 client 1')
@@ -469,7 +469,7 @@ describe("REST API", function() {
                            description : "Should be able to set a property for device 1 owned by user 1 and client 2",
                            device : device1,
                            accessToken : function() {
-                              return user1Client2.accessToken
+                              return user1Client2['accessToken']
                            },
                            propertyKey : 'this_is_my_property',
                            propertyValue : createValue('string', 'device 1 user 1 client 2')
@@ -478,7 +478,7 @@ describe("REST API", function() {
                            description : "Should be able to set a property for device 2 owned by user 1 and client 2",
                            device : device2,
                            accessToken : function() {
-                              return user1Client2.accessToken
+                              return user1Client2['accessToken']
                            },
                            propertyKey : 'this_is_my_property',
                            propertyValue : createValue('string', 'device 2 user 1 client 2')
@@ -488,7 +488,7 @@ describe("REST API", function() {
                            description : "Should be able to set a property for device 3 owned by user 2 and client 1",
                            device : device3,
                            accessToken : function() {
-                              return user2.accessToken
+                              return user2['accessToken']
                            },
                            propertyKey : 'this_is_my_property',
                            propertyValue : createValue('string', 'device 3 user 2 client 1')
@@ -497,7 +497,7 @@ describe("REST API", function() {
                            description : "Should be able to set a property for device 4 owned by user 2 and client 1",
                            device : device4,
                            accessToken : function() {
-                              return user2.accessToken
+                              return user2['accessToken']
                            },
                            propertyKey : 'this_is_my_property',
                            propertyValue : createValue('string', 'device 4 user 2 client 1')
@@ -506,7 +506,7 @@ describe("REST API", function() {
                            description : "Should be able to set a property for device 3 owned by user 2 and client 2",
                            device : device3,
                            accessToken : function() {
-                              return user2Client2.accessToken
+                              return user2Client2['accessToken']
                            },
                            propertyKey : 'this_is_my_property',
                            propertyValue : createValue('string', 'device 3 user 2 client 2')
@@ -515,21 +515,21 @@ describe("REST API", function() {
                            description : "Should be able to set a property for device 4 owned by user 2 and client 2",
                            device : device4,
                            accessToken : function() {
-                              return user2Client2.accessToken
+                              return user2Client2['accessToken']
                            },
                            propertyKey : 'this_is_my_property',
                            propertyValue : createValue('string', 'device 4 user 2 client 2'),
                            additionalTests : function(done) {
                               // now verify the properties
-                              var key = 'this_is_my_property';
-                              getProperty(device1.id, user1.accessToken, key, function() {
-                                 getProperty(device2.id, user1.accessToken, key, function() {
-                                    getProperty(device1.id, user1Client2.accessToken, key, function() {
-                                       getProperty(device2.id, user1Client2.accessToken, key, function() {
-                                          getProperty(device3.id, user2.accessToken, key, function() {
-                                             getProperty(device4.id, user2.accessToken, key, function() {
-                                                getProperty(device3.id, user2Client2.accessToken, key, function() {
-                                                   getProperty(device4.id, user2Client2.accessToken, key, function() {
+                              const key = 'this_is_my_property';
+                              getProperty(device1['id'], user1['accessToken'], key, function() {
+                                 getProperty(device2['id'], user1['accessToken'], key, function() {
+                                    getProperty(device1['id'], user1Client2['accessToken'], key, function() {
+                                       getProperty(device2['id'], user1Client2['accessToken'], key, function() {
+                                          getProperty(device3['id'], user2['accessToken'], key, function() {
+                                             getProperty(device4['id'], user2['accessToken'], key, function() {
+                                                getProperty(device3['id'], user2Client2['accessToken'], key, function() {
+                                                   getProperty(device4['id'], user2Client2['accessToken'], key, function() {
                                                       done();
                                                    }, false, 'device 4 user 2 client 2');
                                                 }, false, 'device 3 user 2 client 2');
@@ -548,7 +548,7 @@ describe("REST API", function() {
                      it("Should fail to set a property for a non-existent device", function(done) {
                         superagent
                               .put(ESDR_DEVICES_API_URL + BOGUS_DEVICE_ID + "/properties/foo")
-                              .set(createAuthorizationHeader(user1.accessToken))
+                              .set(createAuthorizationHeader(user1['accessToken']))
                               .send(createValue('int', 42))
                               .end(function(err, res) {
                                  should.not.exist(err);
@@ -560,11 +560,11 @@ describe("REST API", function() {
                               });
                      });
 
-                     var testSetPropertyValidation = function(test) {
+                     const testSetPropertyValidation = function(test) {
                         it(test.description, function(done) {
                            superagent
-                                 .put(ESDR_DEVICES_API_URL + test.device.id + "/properties/" + test.propertyKey)
-                                 .set(createAuthorizationHeader(test.accessToken))
+                                 .put(ESDR_DEVICES_API_URL + test.device['id'] + "/properties/" + test.propertyKey)
+                                 .set(createAuthorizationHeader(test['accessToken']))
                                  .send(test.propertyValue)
                                  .end(function(err, res) {
                                     should.not.exist(err);
@@ -581,7 +581,7 @@ describe("REST API", function() {
                                                                        status : 'error'
                                                                     });
 
-                                    var expectedValidationItems = test.getExpectedValidationItems();
+                                    const expectedValidationItems = test.getExpectedValidationItems();
                                     res.body.should.have.property('data');
                                     res.body.data.should.have.length(expectedValidationItems.length);
                                     res.body.data.forEach(function(validationItem, index) {
@@ -593,12 +593,12 @@ describe("REST API", function() {
                         });
                      };
 
-                     var createValidationTest = function(description, key, value, type, expectedValidationItems, willDebug) {
+                     const createValidationTest = function(description, key, value, type, expectedValidationItems, willDebug) {
                         return {
                            description : description,
                            device : device1,
                            accessToken : function() {
-                              return user1.accessToken
+                              return user1['accessToken']
                            },
                            propertyKey : key,
                            propertyValue : createValue(type, value),
@@ -609,7 +609,7 @@ describe("REST API", function() {
                         }
                      };
 
-                     var createSimpleValidationTest = function(description, key, value, type, constraintType, testedType, willDebug) {
+                     const createSimpleValidationTest = function(description, key, value, type, constraintType, testedType, willDebug) {
                         return createValidationTest(description,
                                                     key,
                                                     value,
@@ -860,11 +860,12 @@ describe("REST API", function() {
 
          describe("Get and Delete", function() {
 
-            var propertiesByUserIdDeviceIdAndAccessToken = {};
+            const propertiesByUserIdDeviceIdAndAccessToken = {};
 
-            var getPropertiesForDevice = function(userId, deviceId, accessToken, done) {
-               var expectedProperties = {};
-               for (var key in propertiesByUserIdDeviceIdAndAccessToken[userId][deviceId][accessToken]) {
+            const getPropertiesForDevice = function(userId, deviceId, accessToken, done) {
+               const expectedProperties = {};
+               for (const key in propertiesByUserIdDeviceIdAndAccessToken[userId][deviceId][accessToken]) {
+                  // noinspection JSUnfilteredForInLoop
                   expectedProperties[key] = propertiesByUserIdDeviceIdAndAccessToken[userId][deviceId][accessToken][key].value;
                }
                getProperties(
@@ -878,10 +879,10 @@ describe("REST API", function() {
             };
 
             before(function(initDone) {
-               propertiesByUserIdDeviceIdAndAccessToken[user1.id] = {};
-               propertiesByUserIdDeviceIdAndAccessToken[user1.id][device1.id] = {};
-               propertiesByUserIdDeviceIdAndAccessToken[user1.id][device2.id] = {};
-               propertiesByUserIdDeviceIdAndAccessToken[user1.id][device1.id][user1.accessToken] = {
+               propertiesByUserIdDeviceIdAndAccessToken[user1['id']] = {};
+               propertiesByUserIdDeviceIdAndAccessToken[user1['id']][device1['id']] = {};
+               propertiesByUserIdDeviceIdAndAccessToken[user1['id']][device2['id']] = {};
+               propertiesByUserIdDeviceIdAndAccessToken[user1['id']][device1['id']][user1['accessToken']] = {
                   'prop1' : createValue('int', 123),
                   'prop2' : createValue('double', 12.3),
                   'prop3' : createValue('string', 'this is user1Device1Client1 prop 3'),
@@ -889,7 +890,7 @@ describe("REST API", function() {
                   'prop5' : createValue('boolean', true),
                   'user1Device1Client1Prop' : createValue('string', 'user1Device1Client1Prop value')
                };
-               propertiesByUserIdDeviceIdAndAccessToken[user1Client2.id][device1.id][user1Client2.accessToken] = {
+               propertiesByUserIdDeviceIdAndAccessToken[user1Client2['id']][device1['id']][user1Client2['accessToken']] = {
                   'prop1' : createValue('int', 456),
                   'prop2' : createValue('double', 45.6),
                   'prop3' : createValue('string', 'this is user1Device1Client2 prop 3'),
@@ -897,7 +898,7 @@ describe("REST API", function() {
                   'prop5' : createValue('boolean', false),
                   'user1Device1Client2Prop' : createValue('string', 'user1Device1Client2Prop value')
                };
-               propertiesByUserIdDeviceIdAndAccessToken[user1.id][device2.id][user1.accessToken] = {
+               propertiesByUserIdDeviceIdAndAccessToken[user1['id']][device2['id']][user1['accessToken']] = {
                   'prop1' : createValue('int', 1230),
                   'prop2' : createValue('double', 120.3),
                   'prop3' : createValue('string', 'this is user1Device2Client1 prop 3'),
@@ -905,7 +906,7 @@ describe("REST API", function() {
                   'prop5' : createValue('boolean', true),
                   'user1Device2Client1Prop' : createValue('string', 'user1Device2Client1Prop value')
                };
-               propertiesByUserIdDeviceIdAndAccessToken[user1Client2.id][device2.id][user1Client2.accessToken] = {
+               propertiesByUserIdDeviceIdAndAccessToken[user1Client2['id']][device2['id']][user1Client2['accessToken']] = {
                   'prop1' : createValue('int', 4560),
                   'prop2' : createValue('double', 450.6),
                   'prop3' : createValue('string', 'this is user1Device2Client2 prop 3'),
@@ -914,10 +915,10 @@ describe("REST API", function() {
                   'user1Device2Client2Prop' : createValue('string', 'user1Device2Client2Prop value')
                };
 
-               propertiesByUserIdDeviceIdAndAccessToken[user2.id] = {};
-               propertiesByUserIdDeviceIdAndAccessToken[user2.id][device3.id] = {};
-               propertiesByUserIdDeviceIdAndAccessToken[user2.id][device4.id] = {};
-               propertiesByUserIdDeviceIdAndAccessToken[user2.id][device3.id][user2.accessToken] = {
+               propertiesByUserIdDeviceIdAndAccessToken[user2['id']] = {};
+               propertiesByUserIdDeviceIdAndAccessToken[user2['id']][device3['id']] = {};
+               propertiesByUserIdDeviceIdAndAccessToken[user2['id']][device4['id']] = {};
+               propertiesByUserIdDeviceIdAndAccessToken[user2['id']][device3['id']][user2['accessToken']] = {
                   'prop1' : createValue('int', 789),
                   'prop2' : createValue('double', 78.9),
                   'prop3' : createValue('string', 'this is user2Device3Client1 prop 3'),
@@ -925,7 +926,7 @@ describe("REST API", function() {
                   'prop5' : createValue('boolean', true),
                   'user2Device3Client1Prop' : createValue('string', 'user2Device3Client1Prop value')
                };
-               propertiesByUserIdDeviceIdAndAccessToken[user2Client2.id][device3.id][user2Client2.accessToken] = {
+               propertiesByUserIdDeviceIdAndAccessToken[user2Client2['id']][device3['id']][user2Client2['accessToken']] = {
                   'prop1' : createValue('int', 112233),
                   'prop2' : createValue('double', -1.12233),
                   'prop3' : createValue('string', 'this is user2Device3Client2 prop 3'),
@@ -933,7 +934,7 @@ describe("REST API", function() {
                   'prop5' : createValue('boolean', false),
                   'user2Device3Client2Prop' : createValue('string', 'user2Device3Client2Prop value')
                };
-               propertiesByUserIdDeviceIdAndAccessToken[user2.id][device4.id][user2.accessToken] = {
+               propertiesByUserIdDeviceIdAndAccessToken[user2['id']][device4['id']][user2['accessToken']] = {
                   'prop1' : createValue('int', 7890),
                   'prop2' : createValue('double', 780.9),
                   'prop3' : createValue('string', 'this is user2Device4Client1 prop 3'),
@@ -941,7 +942,7 @@ describe("REST API", function() {
                   'prop5' : createValue('boolean', true),
                   'user2Device4Client1Prop' : createValue('string', 'user2Device4Client1Prop value')
                };
-               propertiesByUserIdDeviceIdAndAccessToken[user2Client2.id][device4.id][user2Client2.accessToken] = {
+               propertiesByUserIdDeviceIdAndAccessToken[user2Client2['id']][device4['id']][user2Client2['accessToken']] = {
                   'prop1' : createValue('int', 1122330),
                   'prop2' : createValue('double', -10.12233),
                   'prop3' : createValue('string', 'this is user2Device4Client2 prop 3'),
@@ -950,26 +951,26 @@ describe("REST API", function() {
                   'user2Device4Client2Prop' : createValue('string', 'user2Device4Client2Prop value')
                };
 
-               var createCommand = function(user, device, key, value) {
+               const createCommand = function(user, device, key, value) {
                   commands.push(function(done) {
-                     setProperty(device.id, user.accessToken, key, value, done);
+                     setProperty(device['id'], user['accessToken'], key, value, done);
                   });
                };
-               var createCommandsForUserAndDevice = function(user, device) {
+               const createCommandsForUserAndDevice = function(user, device) {
                   // start by creating a command to delete this device's properties
                   commands.push(function(done) {
-                     deletePropertiesForDevice(device.id, user.accessToken, done);
+                     deletePropertiesForDevice(device['id'], user['accessToken'], done);
                   });
 
                   // now add commands to create the above properties for this user
-                  var props = propertiesByUserIdDeviceIdAndAccessToken[user.id][device.id][user.accessToken];
+                  const props = propertiesByUserIdDeviceIdAndAccessToken[user['id']][device['id']][user['accessToken']];
                   Object.keys(props).forEach(function(key) {
-                     var val = props[key];
+                     const val = props[key];
                      createCommand(user, device, key, val)
                   });
                };
 
-               var commands = [];
+               const commands = [];
                createCommandsForUserAndDevice(user1, device1);
                createCommandsForUserAndDevice(user1, device2);
                createCommandsForUserAndDevice(user1Client2, device1);
@@ -987,7 +988,7 @@ describe("REST API", function() {
                   describe("No Authentication", function() {
                      it("Should fail to get a property with no OAuth2 token specified", function(done) {
                         superagent
-                              .get(ESDR_DEVICES_API_URL + device1.id + "/properties/prop1")
+                              .get(ESDR_DEVICES_API_URL + device1['id'] + "/properties/prop1")
                               .end(function(err, res) {
                                  should.not.exist(err);
                                  should.exist(res);
@@ -1003,7 +1004,7 @@ describe("REST API", function() {
                      describe("Invalid Authentication", function() {
                         it("Should fail to get a property with an invalid OAuth2 token specified", function(done) {
                            superagent
-                                 .get(ESDR_DEVICES_API_URL + device1.id + "/properties/prop1")
+                                 .get(ESDR_DEVICES_API_URL + device1['id'] + "/properties/prop1")
                                  .set(createAuthorizationHeader("bogus"))
                                  .end(function(err, res) {
                                     should.not.exist(err);
@@ -1018,13 +1019,13 @@ describe("REST API", function() {
 
                      describe("Valid Authentication", function() {
                         describe("Success", function() {
-                           var getExistingProperty = function(user, device, key, done) {
-                              getProperty(device.id,
-                                          user.accessToken,
+                           const getExistingProperty = function(user, device, key, done) {
+                              getProperty(device['id'],
+                                          user['accessToken'],
                                           key,
                                           done,
                                           false,
-                                          propertiesByUserIdDeviceIdAndAccessToken[user.id][device.id][user.accessToken][key].value);
+                                          propertiesByUserIdDeviceIdAndAccessToken[user['id']][device['id']][user['accessToken']][key].value);
                            };
 
                            it("Should be able to get prop1 for user 1 device 1 client 1", function(done) {
@@ -1186,7 +1187,7 @@ describe("REST API", function() {
                            it("Should fail to get a property for a non-existent device", function(done) {
                               superagent
                                     .get(ESDR_DEVICES_API_URL + BOGUS_DEVICE_ID + "/properties/foo")
-                                    .set(createAuthorizationHeader(user1.accessToken))
+                                    .set(createAuthorizationHeader(user1['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1198,8 +1199,8 @@ describe("REST API", function() {
                            });
                            it("Should fail to get a property with a valid OAuth2 token, but for the wrong user", function(done) {
                               superagent
-                                    .get(ESDR_DEVICES_API_URL + device1.id + "/properties/prop1")
-                                    .set(createAuthorizationHeader(user2.accessToken))
+                                    .get(ESDR_DEVICES_API_URL + device1['id'] + "/properties/prop1")
+                                    .set(createAuthorizationHeader(user2['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1211,8 +1212,8 @@ describe("REST API", function() {
                            });
                            it("Should fail to get a property with a valid OAuth2 token for the same user, but a different client", function(done) {
                               superagent
-                                    .get(ESDR_DEVICES_API_URL + device1.id + "/properties/user1Device1Client1Prop")
-                                    .set(createAuthorizationHeader(user1Client2.accessToken))
+                                    .get(ESDR_DEVICES_API_URL + device1['id'] + "/properties/user1Device1Client1Prop")
+                                    .set(createAuthorizationHeader(user1Client2['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1224,8 +1225,8 @@ describe("REST API", function() {
                            });
                            it("Should fail to get a non-existent property", function(done) {
                               superagent
-                                    .get(ESDR_DEVICES_API_URL + device1.id + "/properties/no_such_property")
-                                    .set(createAuthorizationHeader(user1.accessToken))
+                                    .get(ESDR_DEVICES_API_URL + device1['id'] + "/properties/no_such_property")
+                                    .set(createAuthorizationHeader(user1['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1237,8 +1238,8 @@ describe("REST API", function() {
                            });
                            it("Should fail to get a property with an invalid key", function(done) {
                               superagent
-                                    .get(ESDR_DEVICES_API_URL + device3.id + "/properties/bad-key")
-                                    .set(createAuthorizationHeader(user2.accessToken))
+                                    .get(ESDR_DEVICES_API_URL + device3['id'] + "/properties/bad-key")
+                                    .set(createAuthorizationHeader(user2['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1250,7 +1251,7 @@ describe("REST API", function() {
                                                                           status : 'error'
                                                                        });
 
-                                       var expectedValidationItems = [{
+                                       const expectedValidationItems = [{
                                           constraintName : 'pattern',
                                           instanceContext : '#/key',
                                           kind : 'StringValidationError'
@@ -1273,7 +1274,7 @@ describe("REST API", function() {
                   describe("No Authentication", function() {
                      it("Should fail to get properties with no OAuth2 token specified", function(done) {
                         superagent
-                              .get(ESDR_DEVICES_API_URL + device1.id + "/properties")
+                              .get(ESDR_DEVICES_API_URL + device1['id'] + "/properties")
                               .end(function(err, res) {
                                  should.not.exist(err);
                                  should.exist(res);
@@ -1289,7 +1290,7 @@ describe("REST API", function() {
                      describe("Invalid Authentication", function() {
                         it("Should fail to get properties with an invalid OAuth2 token specified", function(done) {
                            superagent
-                                 .get(ESDR_DEVICES_API_URL + device1.id + "/properties")
+                                 .get(ESDR_DEVICES_API_URL + device1['id'] + "/properties")
                                  .set(createAuthorizationHeader("bogus"))
                                  .end(function(err, res) {
                                     should.not.exist(err);
@@ -1305,35 +1306,35 @@ describe("REST API", function() {
                      describe("Valid Authentication", function() {
                         describe("Success", function() {
                            it("Should be able to get properties for user 1 device 1 client 1", function(done) {
-                              getPropertiesForDevice(user1.id, device1.id, user1.accessToken, done);
+                              getPropertiesForDevice(user1['id'], device1['id'], user1['accessToken'], done);
                            });
                            it("Should be able to get properties for user 1 device 2 client 1", function(done) {
-                              getPropertiesForDevice(user1.id, device2.id, user1.accessToken, done);
+                              getPropertiesForDevice(user1['id'], device2['id'], user1['accessToken'], done);
                            });
                            it("Should be able to get properties for user 1 device 1 client 2", function(done) {
-                              getPropertiesForDevice(user1Client2.id, device1.id, user1Client2.accessToken, done);
+                              getPropertiesForDevice(user1Client2['id'], device1['id'], user1Client2['accessToken'], done);
                            });
                            it("Should be able to get properties for user 1 device 2 client 2", function(done) {
-                              getPropertiesForDevice(user1Client2.id, device2.id, user1Client2.accessToken, done);
+                              getPropertiesForDevice(user1Client2['id'], device2['id'], user1Client2['accessToken'], done);
                            });
 
                            it("Should be able to get properties for user 2 device 3 client 1", function(done) {
-                              getPropertiesForDevice(user2.id, device3.id, user2.accessToken, done);
+                              getPropertiesForDevice(user2['id'], device3['id'], user2['accessToken'], done);
                            });
                            it("Should be able to get properties for user 2 device 4 client 1", function(done) {
-                              getPropertiesForDevice(user2.id, device4.id, user2.accessToken, done);
+                              getPropertiesForDevice(user2['id'], device4['id'], user2['accessToken'], done);
                            });
                            it("Should be able to get properties for user 2 device 3 client 2", function(done) {
-                              getPropertiesForDevice(user2Client2.id, device3.id, user2Client2.accessToken, done);
+                              getPropertiesForDevice(user2Client2['id'], device3['id'], user2Client2['accessToken'], done);
                            });
                            it("Should be able to get properties for user 2 device 4 client 2", function(done) {
-                              getPropertiesForDevice(user2Client2.id, device4.id, user2Client2.accessToken, done);
+                              getPropertiesForDevice(user2Client2['id'], device4['id'], user2Client2['accessToken'], done);
                            });
 
                            it("Should be able to use query string to select only properties of type string", function(done) {
                               getProperties(
-                                    device1.id,
-                                    user1.accessToken,
+                                    device1['id'],
+                                    user1['accessToken'],
                                     "?where=type=string",
                                     done,
                                     false,
@@ -1345,8 +1346,8 @@ describe("REST API", function() {
                            });
                            it("Should be able to use query string to select only properties of type string or int", function(done) {
                               getProperties(
-                                    device1.id,
-                                    user1.accessToken,
+                                    device1['id'],
+                                    user1['accessToken'],
                                     "?whereOr=type=string,type=int",
                                     done,
                                     false,
@@ -1359,8 +1360,8 @@ describe("REST API", function() {
                            });
                            it("Should be able to use query string to select only specific property keys", function(done) {
                               getProperties(
-                                    device3.id,
-                                    user2.accessToken,
+                                    device3['id'],
+                                    user2['accessToken'],
                                     "?whereOr=key=prop2,key=prop5",
                                     done,
                                     false,
@@ -1372,8 +1373,8 @@ describe("REST API", function() {
                            });
                            it("Should be able to use query string to select only specific property keys or keys of type json", function(done) {
                               getProperties(
-                                    device3.id,
-                                    user2Client2.accessToken,
+                                    device3['id'],
+                                    user2Client2['accessToken'],
                                     "?whereOr=key=prop2,key=prop5,type=json",
                                     done,
                                     false,
@@ -1390,7 +1391,7 @@ describe("REST API", function() {
                            it("Should fail to get properties for a non-existent device", function(done) {
                               superagent
                                     .get(ESDR_DEVICES_API_URL + BOGUS_DEVICE_ID + "/properties")
-                                    .set(createAuthorizationHeader(user1.accessToken))
+                                    .set(createAuthorizationHeader(user1['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1402,8 +1403,8 @@ describe("REST API", function() {
                            });
                            it("Should fail to get properties with a valid OAuth2 token, but for the wrong user", function(done) {
                               superagent
-                                    .get(ESDR_DEVICES_API_URL + device1.id + "/properties")
-                                    .set(createAuthorizationHeader(user2.accessToken))
+                                    .get(ESDR_DEVICES_API_URL + device1['id'] + "/properties")
+                                    .set(createAuthorizationHeader(user2['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1424,7 +1425,7 @@ describe("REST API", function() {
                   describe("No Authentication", function() {
                      it("Should fail to delete properties with no OAuth2 token specified", function(done) {
                         superagent
-                              .del(ESDR_DEVICES_API_URL + device1.id + "/properties")
+                              .del(ESDR_DEVICES_API_URL + device1['id'] + "/properties")
                               .end(function(err, res) {
                                  should.not.exist(err);
                                  should.exist(res);
@@ -1440,7 +1441,7 @@ describe("REST API", function() {
                      describe("Invalid Authentication", function() {
                         it("Should fail to delete properties with an invalid OAuth2 token specified", function(done) {
                            superagent
-                                 .del(ESDR_DEVICES_API_URL + device1.id + "/properties")
+                                 .del(ESDR_DEVICES_API_URL + device1['id'] + "/properties")
                                  .set(createAuthorizationHeader("bogus"))
                                  .end(function(err, res) {
                                     should.not.exist(err);
@@ -1457,21 +1458,21 @@ describe("REST API", function() {
                         describe("Success", function() {
                            it("Should be able to delete properties for user 1 device 1 client 1", function(done) {
                               deletePropertiesForDevice(
-                                    device1.id,
-                                    user1.accessToken,
+                                    device1['id'],
+                                    user1['accessToken'],
                                     done,
-                                    Object.keys(propertiesByUserIdDeviceIdAndAccessToken[user1.id][device1.id][user1.accessToken]).length
+                                    Object.keys(propertiesByUserIdDeviceIdAndAccessToken[user1['id']][device1['id']][user1['accessToken']]).length
                               );
                            });
                            it("Should be able to delete properties again for user 1 device 1 client 1, without error", function(done) {
                               deletePropertiesForDevice(
-                                    device1.id,
-                                    user1.accessToken,
+                                    device1['id'],
+                                    user1['accessToken'],
                                     function() {
                                        // verify there are now no properties for this user
                                        getProperties(
-                                             device1.id,
-                                             user1.accessToken,
+                                             device1['id'],
+                                             user1['accessToken'],
                                              '',
                                              done,
                                              false,
@@ -1484,39 +1485,39 @@ describe("REST API", function() {
                            it("Verify that deleting one user's device properties shouldn't affect any other user's device properties", function(done) {
                               // verify that other user properties are untouched
                               getPropertiesForDevice(
-                                    user1Client2.id,
-                                    device1.id,
-                                    user1Client2.accessToken,
+                                    user1Client2['id'],
+                                    device1['id'],
+                                    user1Client2['accessToken'],
                                     function() {
                                        getPropertiesForDevice(
-                                             user1.id,
-                                             device2.id,
-                                             user1.accessToken,
+                                             user1['id'],
+                                             device2['id'],
+                                             user1['accessToken'],
                                              function() {
                                                 getPropertiesForDevice(
-                                                      user1Client2.id,
-                                                      device2.id,
-                                                      user1Client2.accessToken,
+                                                      user1Client2['id'],
+                                                      device2['id'],
+                                                      user1Client2['accessToken'],
                                                       function() {
                                                          getPropertiesForDevice(
-                                                               user2.id,
-                                                               device3.id,
-                                                               user2.accessToken,
+                                                               user2['id'],
+                                                               device3['id'],
+                                                               user2['accessToken'],
                                                                function() {
                                                                   getPropertiesForDevice(
-                                                                        user2Client2.id,
-                                                                        device3.id,
-                                                                        user2Client2.accessToken,
+                                                                        user2Client2['id'],
+                                                                        device3['id'],
+                                                                        user2Client2['accessToken'],
                                                                         function() {
                                                                            getPropertiesForDevice(
-                                                                                 user2.id,
-                                                                                 device4.id,
-                                                                                 user2.accessToken,
+                                                                                 user2['id'],
+                                                                                 device4['id'],
+                                                                                 user2['accessToken'],
                                                                                  function() {
                                                                                     getPropertiesForDevice(
-                                                                                          user2Client2.id,
-                                                                                          device4.id,
-                                                                                          user2Client2.accessToken,
+                                                                                          user2Client2['id'],
+                                                                                          device4['id'],
+                                                                                          user2Client2['accessToken'],
                                                                                           done
                                                                                     );
                                                                                  }
@@ -1538,7 +1539,7 @@ describe("REST API", function() {
                            it("Should fail to delete properties for a non-existent device", function(done) {
                               superagent
                                     .del(ESDR_DEVICES_API_URL + BOGUS_DEVICE_ID + "/properties")
-                                    .set(createAuthorizationHeader(user1.accessToken))
+                                    .set(createAuthorizationHeader(user1['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1550,8 +1551,8 @@ describe("REST API", function() {
                            });
                            it("Should fail to delete properties with a valid OAuth2 token, but for the wrong user", function(done) {
                               superagent
-                                    .del(ESDR_DEVICES_API_URL + device1.id + "/properties")
-                                    .set(createAuthorizationHeader(user2.accessToken))
+                                    .del(ESDR_DEVICES_API_URL + device1['id'] + "/properties")
+                                    .set(createAuthorizationHeader(user2['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1570,7 +1571,7 @@ describe("REST API", function() {
                   describe("No Authentication", function() {
                      it("Should fail to delete a property with no OAuth2 token specified", function(done) {
                         superagent
-                              .del(ESDR_DEVICES_API_URL + device3.id + "/properties/prop1")
+                              .del(ESDR_DEVICES_API_URL + device3['id'] + "/properties/prop1")
                               .end(function(err, res) {
                                  should.not.exist(err);
                                  should.exist(res);
@@ -1586,7 +1587,7 @@ describe("REST API", function() {
                      describe("Invalid Authentication", function() {
                         it("Should fail to delete a property with an invalid OAuth2 token specified", function(done) {
                            superagent
-                                 .del(ESDR_DEVICES_API_URL + device3.id + "/properties/prop1")
+                                 .del(ESDR_DEVICES_API_URL + device3['id'] + "/properties/prop1")
                                  .set(createAuthorizationHeader("bogus"))
                                  .end(function(err, res) {
                                     should.not.exist(err);
@@ -1601,7 +1602,7 @@ describe("REST API", function() {
 
                      describe("Valid Authentication", function() {
                         describe("Success", function() {
-                           var verifyPropertyIsDeleted = function(deviceId, accessToken, key, done) {
+                           const verifyPropertyIsDeleted = function(deviceId, accessToken, key, done) {
                               superagent
                                     .get(ESDR_DEVICES_API_URL + deviceId + "/properties/" + key)
                                     .set(createAuthorizationHeader(accessToken))
@@ -1621,47 +1622,47 @@ describe("REST API", function() {
                                     });
                            };
                            it("Should not error when asked to delete a non-existent property", function(done) {
-                              deletePropertyForDevice(device3.id, user2.accessToken, 'this_prop_does_not_exist', done, 0);
+                              deletePropertyForDevice(device3['id'], user2['accessToken'], 'this_prop_does_not_exist', done, 0);
                            });
                            it("Should be able to delete prop1 for user 2 device 3 client 1", function(done) {
-                              deletePropertyForDevice(device3.id, user2.accessToken, 'prop1', done, 1);
+                              deletePropertyForDevice(device3['id'], user2['accessToken'], 'prop1', done, 1);
                            });
                            it("The property prop1 for user 2 device 3 client 1 should no longer exist", function(done) {
-                              verifyPropertyIsDeleted(device3.id, user2.accessToken, 'prop1', done);
+                              verifyPropertyIsDeleted(device3['id'], user2['accessToken'], 'prop1', done);
                            });
 
                            it("Should be able to delete prop2 for user 2 device 3 client 1", function(done) {
-                              deletePropertyForDevice(device3.id, user2.accessToken, 'prop2', done, 1);
+                              deletePropertyForDevice(device3['id'], user2['accessToken'], 'prop2', done, 1);
                            });
                            it("The property prop2 for user 2 device 3 client 1 should no longer exist", function(done) {
-                              verifyPropertyIsDeleted(device3.id, user2.accessToken, 'prop2', done);
+                              verifyPropertyIsDeleted(device3['id'], user2['accessToken'], 'prop2', done);
                            });
                            it("Should be able to delete prop3 for user 2 device 3 client 1", function(done) {
-                              deletePropertyForDevice(device3.id, user2.accessToken, 'prop3', done, 1);
+                              deletePropertyForDevice(device3['id'], user2['accessToken'], 'prop3', done, 1);
                            });
                            it("The property prop3 for user 2 device 3 client 1 should no longer exist", function(done) {
-                              verifyPropertyIsDeleted(device3.id, user2.accessToken, 'prop3', done);
+                              verifyPropertyIsDeleted(device3['id'], user2['accessToken'], 'prop3', done);
                            });
                            it("Should be able to delete prop4 for user 2 device 3 client 1", function(done) {
-                              deletePropertyForDevice(device3.id, user2.accessToken, 'prop4', done, 1);
+                              deletePropertyForDevice(device3['id'], user2['accessToken'], 'prop4', done, 1);
                            });
                            it("The property prop4 for user 2 device 3 client 1 should no longer exist", function(done) {
-                              verifyPropertyIsDeleted(device3.id, user2.accessToken, 'prop4', done);
+                              verifyPropertyIsDeleted(device3['id'], user2['accessToken'], 'prop4', done);
                            });
                            it("Should be able to delete prop5 for user 2 device 3 client 1", function(done) {
-                              deletePropertyForDevice(device3.id, user2.accessToken, 'prop5', done, 1);
+                              deletePropertyForDevice(device3['id'], user2['accessToken'], 'prop5', done, 1);
                            });
                            it("The property prop5 for user 2 device 3 client 1 should no longer exist", function(done) {
-                              verifyPropertyIsDeleted(device3.id, user2.accessToken, 'prop5', done);
+                              verifyPropertyIsDeleted(device3['id'], user2['accessToken'], 'prop5', done);
                            });
                            it("Should be able to delete user2Device3Client1Prop for user 2 device 3 client 1", function(done) {
-                              deletePropertyForDevice(device3.id, user2.accessToken, 'user2Device3Client1Prop', done, 1);
+                              deletePropertyForDevice(device3['id'], user2['accessToken'], 'user2Device3Client1Prop', done, 1);
                            });
                            it("The property user2Device3Client1Prop for user 2 device 3 client 1 should no longer exist", function(done) {
-                              verifyPropertyIsDeleted(device3.id, user2.accessToken, 'user2Device3Client1Prop', done);
+                              verifyPropertyIsDeleted(device3['id'], user2['accessToken'], 'user2Device3Client1Prop', done);
                            });
                            it("Verify user 2 device 3 client 1 has no properties", function(done) {
-                              getProperties(device3.id, user2.accessToken, '', done, false, {});
+                              getProperties(device3['id'], user2['accessToken'], '', done, false, {});
                            });
 
                         });   // Success
@@ -1669,7 +1670,7 @@ describe("REST API", function() {
                            it("Should fail to delete a property for a non-existent device", function(done) {
                               superagent
                                     .del(ESDR_DEVICES_API_URL + BOGUS_DEVICE_ID + "/properties/foo")
-                                    .set(createAuthorizationHeader(user1.accessToken))
+                                    .set(createAuthorizationHeader(user1['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1681,8 +1682,8 @@ describe("REST API", function() {
                            });
                            it("Should fail to delete a property with a valid OAuth2 token, but for the wrong user", function(done) {
                               superagent
-                                    .del(ESDR_DEVICES_API_URL + device2.id + "/properties/prop1")
-                                    .set(createAuthorizationHeader(user2.accessToken))
+                                    .del(ESDR_DEVICES_API_URL + device2['id'] + "/properties/prop1")
+                                    .set(createAuthorizationHeader(user2['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1694,8 +1695,8 @@ describe("REST API", function() {
                            });
                            it("Should fail to delete a property with an invalid key", function(done) {
                               superagent
-                                    .del(ESDR_DEVICES_API_URL + device3.id + "/properties/bad-key")
-                                    .set(createAuthorizationHeader(user2.accessToken))
+                                    .del(ESDR_DEVICES_API_URL + device3['id'] + "/properties/bad-key")
+                                    .set(createAuthorizationHeader(user2['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1707,7 +1708,7 @@ describe("REST API", function() {
                                                                           status : 'error'
                                                                        });
 
-                                       var expectedValidationItems = [{
+                                       const expectedValidationItems = [{
                                           constraintName : 'pattern',
                                           instanceContext : '#/key',
                                           kind : 'StringValidationError'
