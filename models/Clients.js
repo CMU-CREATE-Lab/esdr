@@ -1,7 +1,6 @@
 const trimAndCopyPropertyIfNonEmpty = require('../lib/objectUtils').trimAndCopyPropertyIfNonEmpty;
 const bcrypt = require('bcrypt');
-const JaySchema = require('jayschema');
-const jsonValidator = new JaySchema();
+const Ajv = require('ajv');
 const ValidationError = require('../lib/errors').ValidationError;
 const Query2Query = require('query2query');
 const config = require('../config');
@@ -46,7 +45,7 @@ query2query.addField('created', true, true, false, Query2Query.types.DATETIME);
 query2query.addField('modified', true, true, false, Query2Query.types.DATETIME);
 
 const JSON_SCHEMA = {
-   "$schema" : "http://json-schema.org/draft-04/schema#",
+   "$async" : true,
    "title" : "Client",
    "description" : "An ESDR client",
    "type" : "object",
@@ -90,9 +89,10 @@ const JSON_SCHEMA = {
    "required" : ["displayName", "clientName", "clientSecret", "email", "verificationUrl", "resetPasswordUrl"]
 };
 
-module.exports = function(databaseHelper) {
+const ajv = new Ajv({ allErrors : true });
+const ifClientIsValid = ajv.compile(JSON_SCHEMA);
 
-   this.jsonSchema = JSON_SCHEMA;
+module.exports = function(databaseHelper) {
 
    this.initialize = function(callback) {
       databaseHelper.execute(CREATE_TABLE_QUERY, [], function(err) {
@@ -131,32 +131,30 @@ module.exports = function(databaseHelper) {
       }
 
       // now validate
-      jsonValidator.validate(client, JSON_SCHEMA, function(err1) {
-         if (err1) {
-            return callback(new ValidationError(err1));
-         }
+      ifClientIsValid(client)
+            .then(function() {
+               // if validation was successful, then hash the secret
+               bcrypt.hash(client.clientSecret, 8)
+                     .then(hashedSecret => {
+                        // now that we have the hashed secret, try to insert
+                        client.clientSecret = hashedSecret;
+                        // noinspection SqlNoDataSourceInspection
+                        databaseHelper.execute("INSERT INTO Clients SET ?", client, function(err2, result) {
+                           if (err2) {
+                              return callback(err2);
+                           }
 
-         // if validation was successful, then hash the secret
-         bcrypt.hash(client.clientSecret, 8)
-               .then(hashedSecret => {
-                  // now that we have the hashed secret, try to insert
-                  client.clientSecret = hashedSecret;
-                  // noinspection SqlNoDataSourceInspection
-                  databaseHelper.execute("INSERT INTO Clients SET ?", client, function(err2, result) {
-                     if (err2) {
-                        return callback(err2);
-                     }
-
-                     return callback(null, {
-                        insertId : result.insertId,
-                        // include these because they might have been modified by the trimming
-                        displayName : client.displayName,
-                        clientName : client.clientName
-                     });
-                  });
-               })
-               .catch(err => callback(err));
-      });
+                           return callback(null, {
+                              insertId : result.insertId,
+                              // include these because they might have been modified by the trimming
+                              displayName : client.displayName,
+                              clientName : client.clientName
+                           });
+                        });
+                     })
+                     .catch(err => callback(err));
+            })
+            .catch(err => callback(new ValidationError(err)));
    };
 
    this.find = function(authUserId, queryString, callback) {

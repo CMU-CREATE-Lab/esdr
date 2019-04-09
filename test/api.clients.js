@@ -1,33 +1,33 @@
-var should = require('should');
-var flow = require('nimble');
-var httpStatus = require('http-status');
-var superagent = require('superagent-ls');
-var requireNew = require('require-new');
-var wipe = require('./fixture-helpers/wipe');
-var setup = require('./fixture-helpers/setup');
+const should = require('should');
+const flow = require('nimble');
+const httpStatus = require('http-status');
+const superagent = require('superagent-ls');
+const requireNew = require('require-new');
+const wipe = require('./fixture-helpers/wipe');
+const setup = require('./fixture-helpers/setup');
 
-var config = require('../config');
+const config = require('../config');
 
-var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
-var ESDR_CLIENTS_API_URL = ESDR_API_ROOT_URL + "/clients";
+const ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
+const ESDR_CLIENTS_API_URL = ESDR_API_ROOT_URL + "/clients";
 
 describe("REST API", function() {
-   var verifiedUser1 = requireNew('./fixtures/user1.json');
-   var verifiedUser2 = requireNew('./fixtures/user2.json');
-   var client1 = requireNew('./fixtures/client1.json');
-   var client2 = requireNew('./fixtures/client2.json');
-   var client3 = requireNew('./fixtures/client3.json');
-   var clientNeedsTrimming = requireNew('./fixtures/client4-needs-trimming.json');
-   var clientDisplayNameTooShort = requireNew('./fixtures/client5-displayName-too-short.json');
-   var clientDisplayNameTooLong = requireNew('./fixtures/client6-displayName-too-long.json');
-   var clientClientNameTooShort = requireNew('./fixtures/client7-clientName-too-short.json');
-   var clientClientNameTooLong = requireNew('./fixtures/client8-clientName-too-long.json');
-   var clientClientNameFirstCharNotAlphanumeric = requireNew('./fixtures/client9-clientName-first-char-not-alphanumeric.json');
-   var clientClientNameIllegalChars = requireNew('./fixtures/client10-clientName-illegal-chars.json');
-   var clientClientSecretTooShort = requireNew('./fixtures/client11-clientSecret-too-short.json');
-   var clientClientSecretTooLong = requireNew('./fixtures/client12-clientSecret-too-long.json');
-   var clientResetPasswordUrlTooShort = requireNew('./fixtures/client13-reset-password-url-too-short.json');
-   var clientVerificationUrlTooShort = requireNew('./fixtures/client14-verification-url-too-short.json');
+   const verifiedUser1 = requireNew('./fixtures/user1.json');
+   const verifiedUser2 = requireNew('./fixtures/user2.json');
+   const client1 = requireNew('./fixtures/client1.json');
+   const client2 = requireNew('./fixtures/client2.json');
+   const client3 = requireNew('./fixtures/client3.json');
+   const clientNeedsTrimming = requireNew('./fixtures/client4-needs-trimming.json');
+   const clientDisplayNameTooShort = requireNew('./fixtures/client5-displayName-too-short.json');
+   const clientDisplayNameTooLong = requireNew('./fixtures/client6-displayName-too-long.json');
+   const clientClientNameTooShort = requireNew('./fixtures/client7-clientName-too-short.json');
+   const clientClientNameTooLong = requireNew('./fixtures/client8-clientName-too-long.json');
+   const clientClientNameFirstCharNotAlphanumeric = requireNew('./fixtures/client9-clientName-first-char-not-alphanumeric.json');
+   const clientClientNameIllegalChars = requireNew('./fixtures/client10-clientName-illegal-chars.json');
+   const clientClientSecretTooShort = requireNew('./fixtures/client11-clientSecret-too-short.json');
+   const clientClientSecretTooLong = requireNew('./fixtures/client12-clientSecret-too-long.json');
+   const clientResetPasswordUrlTooShort = requireNew('./fixtures/client13-reset-password-url-too-short.json');
+   const clientVerificationUrlTooShort = requireNew('./fixtures/client14-verification-url-too-short.json');
 
    before(function(initDone) {
       // To create a client, we have a bit of a chicken-and-egg scenario.  We need to have an OAuth2 access token to
@@ -62,68 +62,68 @@ describe("REST API", function() {
    describe("Clients", function() {
 
       describe("Create", function() {
-         var creationTests = [
+         const creationTests = [
             {
                description : "Should be able to create a new client",
                client : client1,
                getAccessToken : function() {
-                  return verifiedUser1.accessToken
+                  return verifiedUser1['accessToken']
                },
                expectedHttpStatus : httpStatus.CREATED,
                expectedStatusText : 'success',
                expectedResponseData : {
-                  displayName : client1.displayName,
-                  clientName : client1.clientName
+                  displayName : client1['displayName'],
+                  clientName : client1['clientName']
                }
             },
             {
                description : "Should be able to create a different client",
                client : client2,
                getAccessToken : function() {
-                  return verifiedUser1.accessToken
+                  return verifiedUser1['accessToken']
                },
                expectedHttpStatus : httpStatus.CREATED,
                expectedStatusText : 'success',
                expectedResponseData : {
-                  displayName : client2.displayName,
-                  clientName : client2.clientName
+                  displayName : client2['displayName'],
+                  clientName : client2['clientName']
                }
             },
             {
                description : "Should trim the displayName and clientName when creating a new client",
                client : clientNeedsTrimming,
                getAccessToken : function() {
-                  return verifiedUser2.accessToken
+                  return verifiedUser2['accessToken']
                },
                expectedHttpStatus : httpStatus.CREATED,
                expectedStatusText : 'success',
                expectedResponseData : {
-                  displayName : clientNeedsTrimming.displayName.trim(),
-                  clientName : clientNeedsTrimming.clientName.trim()
+                  displayName : clientNeedsTrimming['displayName'].trim(),
+                  clientName : clientNeedsTrimming['clientName'].trim()
                }
             },
             {
                description : "Should fail to create the same client again",
                client : client1,
                getAccessToken : function() {
-                  return verifiedUser1.accessToken
+                  return verifiedUser1['accessToken']
                },
                expectedHttpStatus : httpStatus.CONFLICT,
                expectedStatusText : 'error',
                expectedResponseData : {
-                  clientName : client1.clientName
+                  clientName : client1['clientName']
                }
             },
             {
                description : "Should fail to create the same client again (by a different user)",
                client : client1,
                getAccessToken : function() {
-                  return verifiedUser2.accessToken
+                  return verifiedUser2['accessToken']
                },
                expectedHttpStatus : httpStatus.CONFLICT,
                expectedStatusText : 'error',
                expectedResponseData : {
-                  clientName : client1.clientName
+                  clientName : client1['clientName']
                }
             },
             {
@@ -159,7 +159,7 @@ describe("REST API", function() {
                            res.body.should.have.property('data');
                            res.body.data.should.have.properties(test.expectedResponseData);
 
-                           if (test.expectedHttpStatus == httpStatus.CREATED) {
+                           if (test.expectedHttpStatus === httpStatus.CREATED) {
                               res.body.data.should.have.property('id');
 
                               // remember the database ID
@@ -175,7 +175,7 @@ describe("REST API", function() {
          it("Creating a client without specifying the email, verificationUrl, or resetPasswordUrl should result in the client getting the defaults", function(done) {
             superagent
                   .post(ESDR_CLIENTS_API_URL)
-                  .set({ Authorization : "Bearer " + verifiedUser2.accessToken })
+                  .set({ Authorization : "Bearer " + verifiedUser2['accessToken'] })
                   .send(client3)
                   .end(function(err, res) {
                      should.not.exist(err);
@@ -190,14 +190,14 @@ describe("REST API", function() {
                      res.body.should.have.property('data');
                      res.body.data.should.have.property('id');
                      res.body.data.should.have.properties({
-                                                             displayName : client3.displayName,
-                                                             clientName : client3.clientName
+                                                             displayName : client3['displayName'],
+                                                             clientName : client3['clientName']
                                                           });
 
                      // now fetch the created client to verify that it got the defaults for unspecified values
                      superagent
-                           .get(ESDR_API_ROOT_URL + "/clients?where=clientName=" + client3.clientName)
-                           .set({ Authorization : "Bearer " + verifiedUser2.accessToken })
+                           .get(ESDR_API_ROOT_URL + "/clients?where=clientName=" + client3['clientName'])
+                           .set({ Authorization : "Bearer " + verifiedUser2['accessToken'] })
                            .end(function(err, res) {
                               should.not.exist(err);
                               should.exist(res);
@@ -225,7 +225,7 @@ describe("REST API", function() {
          it("Should fail to create a new client with missing required values", function(done) {
             superagent
                   .post(ESDR_CLIENTS_API_URL)
-                  .set({ Authorization : "Bearer " + verifiedUser1.accessToken })
+                  .set({ Authorization : "Bearer " + verifiedUser1['accessToken'] })
                   .send({})
                   .end(function(err, res) {
                      should.not.exist(err);
@@ -238,31 +238,45 @@ describe("REST API", function() {
                                                         status : 'error'
                                                      });
                      res.body.should.have.property('data');
-                     res.body.data.should.have.length(2);
-                     res.body.data[0].should.have.properties({
-                                                                instanceContext : '#',
-                                                                constraintName : 'required',
-                                                                constraintValue : global.db.clients.jsonSchema.required
-                                                             });
-                     res.body.data[1].should.have.properties({
-                                                                instanceContext : '#/clientSecret',
-                                                                constraintName : 'type',
-                                                                constraintValue : 'string'
-                                                             });
+                     res.body.data.errors.should.have.length(3);
+                     res.body.data.errors[0].should.have.properties({
+                                                                       "keyword" : "required",
+                                                                       "dataPath" : "",
+                                                                       "schemaPath" : "#/required",
+                                                                       "params" : {
+                                                                          "missingProperty" : "displayName"
+                                                                       }
+                                                                    });
+                     res.body.data.errors[1].should.have.properties({
+                                                                       "keyword" : "required",
+                                                                       "dataPath" : "",
+                                                                       "schemaPath" : "#/required",
+                                                                       "params" : {
+                                                                          "missingProperty" : "clientName"
+                                                                       }
+                                                                    });
+                     res.body.data.errors[2].should.have.properties({
+                                                                       "keyword" : "required",
+                                                                       "dataPath" : "",
+                                                                       "schemaPath" : "#/required",
+                                                                       "params" : {
+                                                                          "missingProperty" : "clientSecret"
+                                                                       }
+                                                                    });
 
                      done();
                   });
          });
 
-         var validationFailureTests = [
+         const validationFailureTests = [
             {
                description : "Should fail to create a new client with a display name that's too short",
                client : clientDisplayNameTooShort,
                getValidationProperties : function() {
                   return {
-                     instanceContext : '#/displayName',
-                     constraintName : 'minLength',
-                     constraintValue : global.db.clients.jsonSchema.properties.displayName.minLength
+                     "keyword" : "minLength",
+                     "dataPath" : ".displayName",
+                     "schemaPath" : "#/properties/displayName/minLength"
                   };
                }
             },
@@ -271,9 +285,9 @@ describe("REST API", function() {
                client : clientDisplayNameTooLong,
                getValidationProperties : function() {
                   return {
-                     instanceContext : '#/displayName',
-                     constraintName : 'maxLength',
-                     constraintValue : global.db.clients.jsonSchema.properties.displayName.maxLength
+                     "keyword" : "maxLength",
+                     "dataPath" : ".displayName",
+                     "schemaPath" : "#/properties/displayName/maxLength"
                   };
                }
             },
@@ -282,9 +296,9 @@ describe("REST API", function() {
                client : clientClientNameTooShort,
                getValidationProperties : function() {
                   return {
-                     instanceContext : '#/clientName',
-                     constraintName : 'minLength',
-                     constraintValue : global.db.clients.jsonSchema.properties.clientName.minLength
+                     "keyword" : "minLength",
+                     "dataPath" : ".clientName",
+                     "schemaPath" : "#/properties/clientName/minLength"
                   };
                }
             },
@@ -293,9 +307,9 @@ describe("REST API", function() {
                client : clientClientNameTooLong,
                getValidationProperties : function() {
                   return {
-                     instanceContext : '#/clientName',
-                     constraintName : 'maxLength',
-                     constraintValue : global.db.clients.jsonSchema.properties.clientName.maxLength
+                     "keyword" : "maxLength",
+                     "dataPath" : ".clientName",
+                     "schemaPath" : "#/properties/clientName/maxLength"
                   };
                }
             },
@@ -304,9 +318,9 @@ describe("REST API", function() {
                client : clientClientNameFirstCharNotAlphanumeric,
                getValidationProperties : function() {
                   return {
-                     instanceContext : '#/clientName',
-                     constraintName : 'pattern',
-                     constraintValue : db.clients.jsonSchema.properties.clientName.pattern
+                     "keyword" : "pattern",
+                     "dataPath" : ".clientName",
+                     "schemaPath" : "#/properties/clientName/pattern"
                   };
                }
             },
@@ -315,9 +329,9 @@ describe("REST API", function() {
                client : clientClientNameIllegalChars,
                getValidationProperties : function() {
                   return {
-                     instanceContext : '#/clientName',
-                     constraintName : 'pattern',
-                     constraintValue : db.clients.jsonSchema.properties.clientName.pattern
+                     "keyword" : "pattern",
+                     "dataPath" : ".clientName",
+                     "schemaPath" : "#/properties/clientName/pattern"
                   };
                }
             },
@@ -326,9 +340,9 @@ describe("REST API", function() {
                client : clientClientSecretTooShort,
                getValidationProperties : function() {
                   return {
-                     instanceContext : '#/clientSecret',
-                     constraintName : 'minLength',
-                     constraintValue : global.db.clients.jsonSchema.properties.clientSecret.minLength
+                     "keyword" : "minLength",
+                     "dataPath" : ".clientSecret",
+                     "schemaPath" : "#/properties/clientSecret/minLength"
                   };
                }
             },
@@ -337,9 +351,9 @@ describe("REST API", function() {
                client : clientClientSecretTooLong,
                getValidationProperties : function() {
                   return {
-                     instanceContext : '#/clientSecret',
-                     constraintName : 'maxLength',
-                     constraintValue : global.db.clients.jsonSchema.properties.clientSecret.maxLength
+                     "keyword" : "maxLength",
+                     "dataPath" : ".clientSecret",
+                     "schemaPath" : "#/properties/clientSecret/maxLength"
                   };
                }
             },
@@ -348,9 +362,9 @@ describe("REST API", function() {
                client : clientResetPasswordUrlTooShort,
                getValidationProperties : function() {
                   return {
-                     instanceContext : '#/resetPasswordUrl',
-                     constraintName : 'minLength',
-                     constraintValue : global.db.clients.jsonSchema.properties.resetPasswordUrl.minLength
+                     "keyword" : "minLength",
+                     "dataPath" : ".resetPasswordUrl",
+                     "schemaPath" : "#/properties/resetPasswordUrl/minLength"
                   };
                }
             },
@@ -359,9 +373,9 @@ describe("REST API", function() {
                client : clientVerificationUrlTooShort,
                getValidationProperties : function() {
                   return {
-                     instanceContext : '#/verificationUrl',
-                     constraintName : 'minLength',
-                     constraintValue : global.db.clients.jsonSchema.properties.verificationUrl.minLength
+                     "keyword" : "minLength",
+                     "dataPath" : ".verificationUrl",
+                     "schemaPath" : "#/properties/verificationUrl/minLength"
                   };
                }
             }
@@ -371,7 +385,7 @@ describe("REST API", function() {
             it(test.description, function(done) {
                superagent
                      .post(ESDR_CLIENTS_API_URL)
-                     .set({ Authorization : "Bearer " + verifiedUser1.accessToken })
+                     .set({ Authorization : "Bearer " + verifiedUser1['accessToken'] })
                      .send(test.client)
                      .end(function(err, res) {
                         should.not.exist(err);
@@ -385,8 +399,8 @@ describe("REST API", function() {
                                                         });
 
                         res.body.should.have.property('data');
-                        res.body.data.should.have.length(1);
-                        res.body.data[0].should.have.properties(test.getValidationProperties());
+                        res.body.data.errors.should.have.length(1);
+                        res.body.data.errors[0].should.have.properties(test.getValidationProperties());
 
                         done();
                      });
@@ -398,7 +412,7 @@ describe("REST API", function() {
       describe("Find", function() {
 
          // define the expected values for each client's isPublic field
-         var expectedIsPublic = {
+         const expectedIsPublic = {
             ESDR : 1,
             test_client_1 : 0,
             test_client_2 : 0,
@@ -433,7 +447,7 @@ describe("REST API", function() {
                      res.body.data.rows.forEach(function(row) {
                         row.should.have.properties('id', 'displayName', 'clientName', 'creatorUserId', 'isPublic', 'created', 'modified');
 
-                        row.should.have.property('isPublic', expectedIsPublic[row.clientName]);
+                        row.should.have.property('isPublic', expectedIsPublic[row['clientName']]);
                         if (row['isPublic']) {
                            row.should.have.properties('email', 'verificationUrl', 'resetPasswordUrl');
                         }
@@ -446,7 +460,7 @@ describe("REST API", function() {
                   });
          });
 
-         var findWithAuthenticationTests = [
+         const findWithAuthenticationTests = [
             {
                description : "Should be able to find clients (with authentication) and see all fields for public clients and clients owned by verifiedUser1",
                user : verifiedUser1
@@ -462,7 +476,7 @@ describe("REST API", function() {
                superagent
                      .get(ESDR_CLIENTS_API_URL)
                      .set({
-                             Authorization : "Bearer " + test.user.accessToken
+                             Authorization : "Bearer " + test.user['accessToken']
                           })
                      .end(function(err, res) {
                         should.not.exist(err);
@@ -488,10 +502,10 @@ describe("REST API", function() {
                         res.body.data.rows.forEach(function(row) {
                            row.should.have.properties('id', 'displayName', 'clientName', 'creatorUserId', 'isPublic', 'created', 'modified');
 
-                           row.should.have.property('isPublic', expectedIsPublic[row.clientName]);
+                           row.should.have.property('isPublic', expectedIsPublic[row['clientName']]);
 
                            // this user should be able to see the details of public clients and clients created by the user
-                           if (row['isPublic'] || test.user.id == row.creatorUserId) {
+                           if (row['isPublic'] || test.user.id === row.creatorUserId) {
                               row.should.have.properties('email', 'verificationUrl', 'resetPasswordUrl');
                            }
                            else {
@@ -506,9 +520,9 @@ describe("REST API", function() {
 
          it("Should select only the clients matching the where clause", function(done) {
             superagent
-                  .get(ESDR_CLIENTS_API_URL + "?whereOr=id=" + client2.id + ",clientName=" + client3.clientName + "&fields=id,clientName,email,creatorUserId&orderBy=-id")
+                  .get(ESDR_CLIENTS_API_URL + "?whereOr=id=" + client2.id + ",clientName=" + client3['clientName'] + "&fields=id,clientName,email,creatorUserId&orderBy=-id")
                   .set({
-                          Authorization : "Bearer " + verifiedUser2.accessToken
+                          Authorization : "Bearer " + verifiedUser2['accessToken']
                        })
                   .end(function(err, res) {
                      should.not.exist(err);
@@ -535,7 +549,7 @@ describe("REST API", function() {
 
                         // make sure this user can see the email field for the client it created, but not for the client
                         // it didn't create.
-                        if (client.creatorUserId == verifiedUser2.id) {
+                        if (client.creatorUserId === verifiedUser2.id) {
                            client.should.have.property('email');
                         }
                         else {
