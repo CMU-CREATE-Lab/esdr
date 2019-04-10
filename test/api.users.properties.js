@@ -1,26 +1,26 @@
-var should = require('should');
-var flow = require('nimble');
-var httpStatus = require('http-status');
-var superagent = require('superagent-ls');
-var requireNew = require('require-new');
-var wipe = require('./fixture-helpers/wipe');
-var setup = require('./fixture-helpers/setup');
-var createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
+const should = require('should');
+const flow = require('nimble');
+const httpStatus = require('http-status');
+const superagent = require('superagent-ls');
+const requireNew = require('require-new');
+const wipe = require('./fixture-helpers/wipe');
+const setup = require('./fixture-helpers/setup');
+const createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
 
-var config = require('../config');
+const config = require('../config');
 
-var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
-var ESDR_USERS_API_URL = ESDR_API_ROOT_URL + "/users/";
-var BOGUS_USER_ID = 99999999999;
+const ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
+const ESDR_USERS_API_URL = ESDR_API_ROOT_URL + "/users/";
+const BOGUS_USER_ID = 99999999999;
 
-var createValue = function(type, value) {
+const createValue = function(type, value) {
    return {
       type : type,
       value : value
    };
 };
 
-var setProperty = function(userId, accessToken, propertyKey, propertyValue, callback, willDebug) {
+const setProperty = function(userId, accessToken, propertyKey, propertyValue, callback, willDebug) {
    superagent
          .put(ESDR_USERS_API_URL + userId + "/properties/" + propertyKey)
          .set(createAuthorizationHeader(accessToken))
@@ -41,7 +41,7 @@ var setProperty = function(userId, accessToken, propertyKey, propertyValue, call
                                             });
             res.body.should.have.property('data');
 
-            var expectedResponse = {};
+            const expectedResponse = {};
             expectedResponse[propertyKey] = propertyValue.value;
             res.body.data.should.have.properties(expectedResponse);
 
@@ -49,7 +49,7 @@ var setProperty = function(userId, accessToken, propertyKey, propertyValue, call
          });
 };
 
-var getProperty = function(userId, accessToken, propertyKey, callback, willDebug, expectedValue) {
+const getProperty = function(userId, accessToken, propertyKey, callback, willDebug, expectedValue) {
    superagent
          .get(ESDR_USERS_API_URL + userId + "/properties/" + propertyKey)
          .set(createAuthorizationHeader(accessToken))
@@ -71,7 +71,7 @@ var getProperty = function(userId, accessToken, propertyKey, callback, willDebug
             res.body.should.have.property('data');
 
             if (typeof expectedValue !== 'undefined') {
-               var expectedResponse = {};
+               const expectedResponse = {};
                expectedResponse[propertyKey] = expectedValue;
                res.body.data.should.have.properties(expectedResponse);
             }
@@ -80,7 +80,7 @@ var getProperty = function(userId, accessToken, propertyKey, callback, willDebug
          });
 };
 
-var getProperties = function(userId, accessToken, queryString, callback, willDebug, expectedResponse) {
+const getProperties = function(userId, accessToken, queryString, callback, willDebug, expectedResponse) {
    superagent
          .get(ESDR_USERS_API_URL + userId + "/properties" + queryString)
          .set(createAuthorizationHeader(accessToken))
@@ -109,7 +109,7 @@ var getProperties = function(userId, accessToken, queryString, callback, willDeb
          });
 };
 
-var deletePropertiesForUser = function(userId, accessToken, callback, expectedNumPropertiesDeleted) {
+const deletePropertiesForUser = function(userId, accessToken, callback, expectedNumPropertiesDeleted) {
    superagent
          .del(ESDR_USERS_API_URL + userId + "/properties")
          .set(createAuthorizationHeader(accessToken))
@@ -134,7 +134,7 @@ var deletePropertiesForUser = function(userId, accessToken, callback, expectedNu
          });
 };
 
-var deletePropertyForUser = function(userId, accessToken, key, callback, expectedNumPropertiesDeleted) {
+const deletePropertyForUser = function(userId, accessToken, key, callback, expectedNumPropertiesDeleted) {
    superagent
          .del(ESDR_USERS_API_URL + userId + "/properties/" + key)
          .set(createAuthorizationHeader(accessToken))
@@ -160,12 +160,12 @@ var deletePropertyForUser = function(userId, accessToken, key, callback, expecte
 };
 
 describe("REST API", function() {
-   var client1 = requireNew('./fixtures/client1.json');
-   var client2 = requireNew('./fixtures/client2.json');
-   var user1 = requireNew('./fixtures/user1.json');
-   var user2 = requireNew('./fixtures/user2.json');
-   var user1Client2 = null;
-   var user2Client2 = null;
+   const client1 = requireNew('./fixtures/client1.json');
+   const client2 = requireNew('./fixtures/client2.json');
+   const user1 = requireNew('./fixtures/user1.json');
+   const user2 = requireNew('./fixtures/user2.json');
+   let user1Client2 = null;
+   let user2Client2 = null;
 
    before(function(initDone) {
       flow.series(
@@ -217,7 +217,7 @@ describe("REST API", function() {
             describe("No Authentication", function() {
                it("Should fail to set a property with no OAuth2 token specified", function(done) {
                   superagent
-                        .put(ESDR_USERS_API_URL + user1.id + "/properties/foo")
+                        .put(ESDR_USERS_API_URL + user1['id'] + "/properties/foo")
                         .send(createValue('int', 42))
                         .end(function(err, res) {
                            should.not.exist(err);
@@ -234,7 +234,7 @@ describe("REST API", function() {
                describe("Invalid Authentication", function() {
                   it("Should fail to set a property with an invalid OAuth2 token specified", function(done) {
                      superagent
-                           .put(ESDR_USERS_API_URL + user1.id + "/properties/foo")
+                           .put(ESDR_USERS_API_URL + user1['id'] + "/properties/foo")
                            .set(createAuthorizationHeader("bogus"))
                            .send(createValue('int', 42))
                            .end(function(err, res) {
@@ -248,8 +248,8 @@ describe("REST API", function() {
                   });
                   it("Should fail to set a property with an OAuth2 token for a different user", function(done) {
                      superagent
-                           .put(ESDR_USERS_API_URL + user1.id + "/properties/foo")
-                           .set(createAuthorizationHeader(user2.accessToken))
+                           .put(ESDR_USERS_API_URL + user1['id'] + "/properties/foo")
+                           .set(createAuthorizationHeader(user2['accessToken']))
                            .send(createValue('int', 42))
                            .end(function(err, res) {
                               should.not.exist(err);
@@ -264,19 +264,19 @@ describe("REST API", function() {
 
                describe("Valid Authentication", function() {
                   describe("Success", function() {
-                     var testSetProperty = function(test) {
+                     const testSetProperty = function(test) {
                         it(test.description, function(done) {
-                           var userId = (typeof test.user === 'function') ? test.user().id : test.user.id;
+                           const userId = (typeof test.user === 'function') ? test.user()['id'] : test.user['id'];
 
                            setProperty(userId,
-                                       test.accessToken,
+                                       test['accessToken'],
                                        test.propertyKey,
                                        test.propertyValue,
                                        function() {
                                           // now try to fetch the property through the API to verify it was set correctly
                                           getProperty(
                                                 userId,
-                                                test.accessToken,
+                                                test['accessToken'],
                                                 test.propertyKey,
                                                 function() {
                                                    if (typeof test.additionalTests === 'function') {
@@ -294,12 +294,12 @@ describe("REST API", function() {
                         });
                      };
 
-                     var createTest = function(description, key, value, type, willDebug) {
+                     const createTest = function(description, key, value, type, willDebug) {
                         return {
                            description : description,
                            user : user1,
                            accessToken : function() {
-                              return user1.accessToken
+                              return user1['accessToken']
                            },
                            propertyKey : key,
                            propertyValue : createValue(type, value),
@@ -307,13 +307,13 @@ describe("REST API", function() {
                         }
                      };
 
-                     var shapeShifterInt = 42;
-                     var shapeShifterDouble = 42.00042;
-                     var shapeShifterString = "please to make englishes";
-                     var shapeShifterJson = { foo : "bar", isTest : true, num : 3.14159 };
-                     var shapeShifterBoolean = true;
+                     const shapeShifterInt = 42;
+                     const shapeShifterDouble = 42.00042;
+                     const shapeShifterString = "please to make englishes";
+                     const shapeShifterJson = { foo : "bar", isTest : true, num : 3.14159 };
+                     const shapeShifterBoolean = true;
 
-                     var shapeshifterTypes = {
+                     const shapeshifterTypes = {
                         int : shapeShifterInt,
                         double : shapeShifterDouble,
                         string : shapeShifterString,
@@ -321,8 +321,8 @@ describe("REST API", function() {
                         boolean : shapeShifterBoolean
                      };
 
-                     var createTypeSwitchTest = function(fromTypeName, toTypeName) {
-                        var propertyValue = {};
+                     const createTypeSwitchTest = function(fromTypeName, toTypeName) {
+                        const propertyValue = {};
                         propertyValue[toTypeName] = shapeshifterTypes[toTypeName];
 
                         return createTest(
@@ -418,7 +418,7 @@ describe("REST API", function() {
                            description : "Should be able to set a property for user1 and client1 (prep for showing properties are private to user+client)",
                            user : user1,
                            accessToken : function() {
-                              return user1.accessToken
+                              return user1['accessToken']
                            },
                            propertyKey : 'this_is_my_property',
                            propertyValue : createValue('string', 'I am user 1 in client 1')
@@ -430,7 +430,7 @@ describe("REST API", function() {
                               return user1Client2;
                            },
                            accessToken : function() {
-                              return user1Client2.accessToken;
+                              return user1Client2['accessToken'];
                            },
                            propertyKey : 'this_is_my_property',
                            propertyValue : createValue('string', 'I am user 1 in client 2')
@@ -441,7 +441,7 @@ describe("REST API", function() {
                               return user2;
                            },
                            accessToken : function() {
-                              return user2.accessToken;
+                              return user2['accessToken'];
                            },
                            propertyKey : 'this_is_my_property',
                            propertyValue : createValue('string', 'I am user 2 in client 1')
@@ -452,17 +452,17 @@ describe("REST API", function() {
                               return user2Client2;
                            },
                            accessToken : function() {
-                              return user2Client2.accessToken;
+                              return user2Client2['accessToken'];
                            },
                            propertyKey : 'this_is_my_property',
                            propertyValue : createValue('string', 'I am user 2 in client 2'),
                            additionalTests : function(done) {
                               // now verify the four properties
-                              var key = 'this_is_my_property';
-                              getProperty(user1.id, user1.accessToken, key, function() {
-                                 getProperty(user1Client2.id, user1Client2.accessToken, key, function() {
-                                    getProperty(user2.id, user2.accessToken, key, function() {
-                                       getProperty(user2Client2.id, user2Client2.accessToken, key, function() {
+                              const key = 'this_is_my_property';
+                              getProperty(user1['id'], user1['accessToken'], key, function() {
+                                 getProperty(user1Client2['id'], user1Client2['accessToken'], key, function() {
+                                    getProperty(user2['id'], user2['accessToken'], key, function() {
+                                       getProperty(user2Client2['id'], user2Client2['accessToken'], key, function() {
                                           done();
                                        }, false, 'I am user 2 in client 2');
                                     }, false, 'I am user 2 in client 1');
@@ -478,7 +478,7 @@ describe("REST API", function() {
                      it("Should fail to set a property for a non-existent user", function(done) {
                         superagent
                               .put(ESDR_USERS_API_URL + BOGUS_USER_ID + "/properties/foo")
-                              .set(createAuthorizationHeader(user1.accessToken))
+                              .set(createAuthorizationHeader(user1['accessToken']))
                               .send(createValue('int', 42))
                               .end(function(err, res) {
                                  should.not.exist(err);
@@ -490,11 +490,11 @@ describe("REST API", function() {
                               });
                      });
 
-                     var testSetPropertyValidation = function(test) {
+                     const testSetPropertyValidation = function(test) {
                         it(test.description, function(done) {
                            superagent
-                                 .put(ESDR_USERS_API_URL + test.user.id + "/properties/" + test.propertyKey)
-                                 .set(createAuthorizationHeader(test.accessToken))
+                                 .put(ESDR_USERS_API_URL + test.user['id'] + "/properties/" + test.propertyKey)
+                                 .set(createAuthorizationHeader(test['accessToken']))
                                  .send(test.propertyValue)
                                  .end(function(err, res) {
                                     should.not.exist(err);
@@ -511,10 +511,10 @@ describe("REST API", function() {
                                                                        status : 'error'
                                                                     });
 
-                                    var expectedValidationItems = test.getExpectedValidationItems();
+                                    const expectedValidationItems = test.getExpectedValidationItems();
                                     res.body.should.have.property('data');
-                                    res.body.data.should.have.length(expectedValidationItems.length);
-                                    res.body.data.forEach(function(validationItem, index) {
+                                    res.body.data.errors.should.have.length(expectedValidationItems.length);
+                                    res.body.data.errors.forEach(function(validationItem, index) {
                                        validationItem.should.have.properties(expectedValidationItems[index]);
                                     });
 
@@ -523,12 +523,12 @@ describe("REST API", function() {
                         });
                      };
 
-                     var createValidationTest = function(description, key, value, type, expectedValidationItems, willDebug) {
+                     const createValidationTest = function(description, key, value, type, expectedValidationItems, willDebug) {
                         return {
                            description : description,
                            user : user1,
                            accessToken : function() {
-                              return user1.accessToken
+                              return user1['accessToken']
                            },
                            propertyKey : key,
                            propertyValue : createValue(type, value),
@@ -539,20 +539,19 @@ describe("REST API", function() {
                         }
                      };
 
-                     var createSimpleValidationTest = function(description, key, value, type, constraintType, testedType, willDebug) {
+                     const createSimpleValidationTest = function(description, key, value, type, constraintType, willDebug) {
                         return createValidationTest(description,
                                                     key,
                                                     value,
                                                     type,
                                                     [
                                                        {
-                                                          instanceContext : '#/value',
-                                                          constraintName : 'type',
-                                                          constraintValue : [
-                                                             constraintType,
-                                                             "null"
-                                                          ],
-                                                          testedValue : testedType
+                                                          "keyword" : "type",
+                                                          "dataPath" : ".value",
+                                                          "schemaPath" : "#/properties/value/type",
+                                                          "params" : {
+                                                             "type" : constraintType + ",null"
+                                                          }
                                                        }
                                                     ],
                                                     willDebug);
@@ -563,178 +562,107 @@ describe("REST API", function() {
                                                    'bad_int',
                                                    3.1415926535,
                                                    'int',
-                                                   'integer',
-                                                   'number'),
+                                                   'integer'),
                         createSimpleValidationTest("Should fail to set an integer property to a string",
                                                    'bad_int',
                                                    '42',
                                                    'int',
-                                                   'integer',
-                                                   'string'),
+                                                   'integer'),
                         createSimpleValidationTest("Should fail to set an integer property to an object",
                                                    'bad_int',
                                                    { foo : "bar", baz : 343 },
                                                    'int',
-                                                   'integer',
-                                                   'object'),
+                                                   'integer'),
                         createSimpleValidationTest("Should fail to set an integer property to a boolean",
                                                    'bad_int',
                                                    true,
                                                    'int',
-                                                   'integer',
-                                                   'boolean'),
-                        createValidationTest("Should fail to set an integer property to an array",
-                                             'bad_int',
-                                             [1, 2, 3],
-                                             'int',
-                                             [
-                                                {
-                                                   instanceContext : '#/value',
-                                                   constraintName : 'type',
-                                                   constraintValue : [
-                                                      "integer",
-                                                      "number",
-                                                      "string",
-                                                      "object",
-                                                      "boolean",
-                                                      "null"
-                                                   ],
-                                                   testedValue : 'array'
-                                                }
-                                             ]),
+                                                   'integer'),
+                        createSimpleValidationTest("Should fail to set an integer property to an array",
+                                                   'bad_int',
+                                                   [1, 2, 3],
+                                                   'int',
+                                                   'integer,number,string,object,boolean'),
                         createSimpleValidationTest("Should fail to set an double property to a string",
                                                    'bad_double',
                                                    '42',
                                                    'double',
-                                                   'number',
-                                                   'string'),
+                                                   'number'),
                         createSimpleValidationTest("Should fail to set an double property to an object",
                                                    'bad_double',
                                                    { foo : "bar", baz : 343 },
                                                    'double',
-                                                   'number',
-                                                   'object'),
+                                                   'number'),
                         createSimpleValidationTest("Should fail to set an double property to a boolean",
                                                    'bad_double',
                                                    true,
                                                    'double',
-                                                   'number',
-                                                   'boolean'),
-                        createValidationTest("Should fail to set an double property to an array",
-                                             'bad_double',
-                                             [1, 2, 3],
-                                             'double',
-                                             [
-                                                {
-                                                   instanceContext : '#/value',
-                                                   constraintName : 'type',
-                                                   constraintValue : [
-                                                      "integer",
-                                                      "number",
-                                                      "string",
-                                                      "object",
-                                                      "boolean",
-                                                      "null"
-                                                   ],
-                                                   testedValue : 'array'
-                                                }
-                                             ]),
+                                                   'number'),
+                        createSimpleValidationTest("Should fail to set an double property to an array",
+                                                   'bad_double',
+                                                   [1, 2, 3],
+                                                   'double',
+                                                   'integer,number,string,object,boolean'),
                         createSimpleValidationTest("Should fail to set a string property to an integer",
                                                    'bad_string',
                                                    42,
                                                    'string',
-                                                   'string',
-                                                   'integer'),
+                                                   'string'),
                         createSimpleValidationTest("Should fail to set a string property to an double",
                                                    'bad_string',
                                                    42.42,
                                                    'string',
-                                                   'string',
-                                                   'number'),
+                                                   'string'),
                         createSimpleValidationTest("Should fail to set a string property to an object",
                                                    'bad_string',
                                                    { foo : "bar", baz : 343 },
                                                    'string',
-                                                   'string',
-                                                   'object'),
+                                                   'string'),
                         createSimpleValidationTest("Should fail to set a string property to a boolean",
                                                    'bad_string',
                                                    true,
                                                    'string',
+                                                   'string'),
+                        createSimpleValidationTest("Should fail to set a string property to an array",
+                                                   'bad_string',
+                                                   [1, 2, 3],
                                                    'string',
-                                                   'boolean'),
-                        createValidationTest("Should fail to set a string property to an array",
-                                             'bad_string',
-                                             [1, 2, 3],
-                                             'string',
-                                             [
-                                                {
-                                                   instanceContext : '#/value',
-                                                   constraintName : 'type',
-                                                   constraintValue : [
-                                                      "integer",
-                                                      "number",
-                                                      "string",
-                                                      "object",
-                                                      "boolean",
-                                                      "null"
-                                                   ],
-                                                   testedValue : 'array'
-                                                }
-                                             ]),
+                                                   'integer,number,string,object,boolean'),
 
                         createSimpleValidationTest("Should fail to set a json property to an integer",
                                                    'bad_json',
                                                    42,
                                                    'json',
-                                                   'object',
-                                                   'integer'),
+                                                   'object'),
                         createSimpleValidationTest("Should fail to set a json property to an double",
                                                    'bad_json',
                                                    42.42,
                                                    'json',
-                                                   'object',
-                                                   'number'),
+                                                   'object'),
                         createSimpleValidationTest("Should fail to set a json property to a string",
                                                    'bad_json',
                                                    '42',
                                                    'json',
-                                                   'object',
-                                                   'string'),
+                                                   'object'),
                         createSimpleValidationTest("Should fail to set a json property to a boolean",
                                                    'bad_json',
                                                    true,
                                                    'json',
-                                                   'object',
-                                                   'boolean'),
-                        createValidationTest("Should fail to set a json property to an array",
-                                             'bad_json',
-                                             [1, 2, 3],
-                                             'json',
-                                             [
-                                                {
-                                                   instanceContext : '#/value',
-                                                   constraintName : 'type',
-                                                   constraintValue : [
-                                                      "integer",
-                                                      "number",
-                                                      "string",
-                                                      "object",
-                                                      "boolean",
-                                                      "null"
-                                                   ],
-                                                   testedValue : 'array'
-                                                }
-                                             ]),
+                                                   'object'),
+                        createSimpleValidationTest("Should fail to set a json property to an array",
+                                                   'bad_json',
+                                                   [1, 2, 3],
+                                                   'json',
+                                                   'integer,number,string,object,boolean'),
                         createValidationTest("Should fail to set a property with an invalid key (has a space)",
                                              'bad key',
                                              42,
                                              'int',
                                              [
                                                 {
-                                                   constraintName : 'pattern',
-                                                   instanceContext : '#/key',
-                                                   kind : 'StringValidationError'
+                                                   "keyword" : "pattern",
+                                                   "dataPath" : ".key",
+                                                   "schemaPath" : "#/properties/key/pattern"
                                                 }
                                              ]),
                         createValidationTest("Should fail to set a property with an invalid key (starts with a number)",
@@ -743,9 +671,9 @@ describe("REST API", function() {
                                              'int',
                                              [
                                                 {
-                                                   constraintName : 'pattern',
-                                                   instanceContext : '#/key',
-                                                   kind : 'StringValidationError'
+                                                   "keyword" : "pattern",
+                                                   "dataPath" : ".key",
+                                                   "schemaPath" : "#/properties/key/pattern"
                                                 }
                                              ]),
                         createValidationTest("Should fail to set a property with an invalid key (starts with an underscore)",
@@ -754,9 +682,9 @@ describe("REST API", function() {
                                              'int',
                                              [
                                                 {
-                                                   constraintName : 'pattern',
-                                                   instanceContext : '#/key',
-                                                   kind : 'StringValidationError'
+                                                   "keyword" : "pattern",
+                                                   "dataPath" : ".key",
+                                                   "schemaPath" : "#/properties/key/pattern"
                                                 }
                                              ]),
                         createValidationTest("Should fail to set a property with an invalid key (too long)",
@@ -765,9 +693,9 @@ describe("REST API", function() {
                                              'int',
                                              [
                                                 {
-                                                   constraintName : 'maxLength',
-                                                   instanceContext : '#/key',
-                                                   kind : 'StringValidationError'
+                                                   "keyword" : "maxLength",
+                                                   "dataPath" : ".key",
+                                                   "schemaPath" : "#/properties/key/maxLength"
                                                 }
                                              ]),
                         createValidationTest("Should fail to set a string property with a value that is too long",
@@ -776,9 +704,9 @@ describe("REST API", function() {
                                              'string',
                                              [
                                                 {
-                                                   constraintName : 'maxLength',
-                                                   instanceContext : '#/value',
-                                                   kind : 'StringValidationError'
+                                                   "keyword" : "maxLength",
+                                                   "dataPath" : ".value",
+                                                   "schemaPath" : "#/properties/value/maxLength"
                                                 }
                                              ])
                      ].forEach(testSetPropertyValidation);
@@ -790,11 +718,12 @@ describe("REST API", function() {
          });   // End Set Property
 
          describe("Get and Delete", function() {
-            var propertiesByUserIdAndAccessToken = {};
+            const propertiesByUserIdAndAccessToken = {};
 
-            var getPropertiesForUser = function(userId, accessToken, done) {
-               var expectedProperties = {};
-               for (var key in propertiesByUserIdAndAccessToken[userId][accessToken]) {
+            const getPropertiesForUser = function(userId, accessToken, done) {
+               const expectedProperties = {};
+               for (const key in propertiesByUserIdAndAccessToken[userId][accessToken]) {
+                  // noinspection JSUnfilteredForInLoop
                   expectedProperties[key] = propertiesByUserIdAndAccessToken[userId][accessToken][key].value;
                }
                getProperties(
@@ -808,8 +737,8 @@ describe("REST API", function() {
             };
 
             before(function(initDone) {
-               propertiesByUserIdAndAccessToken[user1.id] = {};
-               propertiesByUserIdAndAccessToken[user1.id][user1.accessToken] = {
+               propertiesByUserIdAndAccessToken[user1['id']] = {};
+               propertiesByUserIdAndAccessToken[user1['id']][user1['accessToken']] = {
                   'prop1' : createValue('int', 123),
                   'prop2' : createValue('double', 12.3),
                   'prop3' : createValue('string', 'this is user1Client1 prop 3'),
@@ -817,7 +746,7 @@ describe("REST API", function() {
                   'prop5' : createValue('boolean', true),
                   'user1Client1Prop' : createValue('string', 'user1Client1Prop value')
                };
-               propertiesByUserIdAndAccessToken[user1Client2.id][user1Client2.accessToken] = {
+               propertiesByUserIdAndAccessToken[user1Client2['id']][user1Client2['accessToken']] = {
                   'prop1' : createValue('int', 456),
                   'prop2' : createValue('double', 45.6),
                   'prop3' : createValue('string', 'this is user1Client2 prop 3'),
@@ -825,8 +754,8 @@ describe("REST API", function() {
                   'prop5' : createValue('boolean', false),
                   'user1Client2Prop' : createValue('string', 'user1Client2Prop value')
                };
-               propertiesByUserIdAndAccessToken[user2.id] = {};
-               propertiesByUserIdAndAccessToken[user2.id][user2.accessToken] = {
+               propertiesByUserIdAndAccessToken[user2['id']] = {};
+               propertiesByUserIdAndAccessToken[user2['id']][user2['accessToken']] = {
                   'prop1' : createValue('int', 789),
                   'prop2' : createValue('double', 78.9),
                   'prop3' : createValue('string', 'this is user2Client1 prop 3'),
@@ -834,7 +763,7 @@ describe("REST API", function() {
                   'prop5' : createValue('boolean', true),
                   'user2Client1Prop' : createValue('string', 'user2Client1Prop value')
                };
-               propertiesByUserIdAndAccessToken[user2Client2.id][user2Client2.accessToken] = {
+               propertiesByUserIdAndAccessToken[user2Client2['id']][user2Client2['accessToken']] = {
                   'prop1' : createValue('int', 112233),
                   'prop2' : createValue('double', -1.12233),
                   'prop3' : createValue('string', 'this is user2Client2 prop 3'),
@@ -843,26 +772,26 @@ describe("REST API", function() {
                   'user2Client2Prop' : createValue('string', 'user2Client2Prop value')
                };
 
-               var createCommand = function(user, key, value) {
+               const createCommand = function(user, key, value) {
                   commands.push(function(done) {
-                     setProperty(user.id, user.accessToken, key, value, done);
+                     setProperty(user['id'], user['accessToken'], key, value, done);
                   });
                };
-               var createCommandsForUser = function(user) {
+               const createCommandsForUser = function(user) {
                   // start by creating a command to delete this user's properties
                   commands.push(function(done) {
-                     deletePropertiesForUser(user.id, user.accessToken, done);
+                     deletePropertiesForUser(user['id'], user['accessToken'], done);
                   });
 
                   // now add commands to create the above properties for this user
-                  var props = propertiesByUserIdAndAccessToken[user.id][user.accessToken];
+                  const props = propertiesByUserIdAndAccessToken[user['id']][user['accessToken']];
                   Object.keys(props).forEach(function(key) {
-                     var val = props[key];
+                     const val = props[key];
                      createCommand(user, key, val)
                   });
                };
 
-               var commands = [];
+               const commands = [];
                createCommandsForUser(user1);
                createCommandsForUser(user1Client2);
                createCommandsForUser(user2);
@@ -876,7 +805,7 @@ describe("REST API", function() {
                   describe("No Authentication", function() {
                      it("Should fail to get a property with no OAuth2 token specified", function(done) {
                         superagent
-                              .get(ESDR_USERS_API_URL + user1.id + "/properties/prop1")
+                              .get(ESDR_USERS_API_URL + user1['id'] + "/properties/prop1")
                               .end(function(err, res) {
                                  should.not.exist(err);
                                  should.exist(res);
@@ -892,7 +821,7 @@ describe("REST API", function() {
                      describe("Invalid Authentication", function() {
                         it("Should fail to get a property with an invalid OAuth2 token specified", function(done) {
                            superagent
-                                 .get(ESDR_USERS_API_URL + user1.id + "/properties/prop1")
+                                 .get(ESDR_USERS_API_URL + user1['id'] + "/properties/prop1")
                                  .set(createAuthorizationHeader("bogus"))
                                  .end(function(err, res) {
                                     should.not.exist(err);
@@ -906,13 +835,13 @@ describe("REST API", function() {
                      });   // Invalid Authentication
                      describe("Valid Authentication", function() {
                         describe("Success", function() {
-                           var getExistingProperty = function(user, key, done) {
-                              getProperty(user.id,
-                                          user.accessToken,
+                           const getExistingProperty = function(user, key, done) {
+                              getProperty(user['id'],
+                                          user['accessToken'],
                                           key,
                                           done,
                                           false,
-                                          propertiesByUserIdAndAccessToken[user.id][user.accessToken][key].value);
+                                          propertiesByUserIdAndAccessToken[user['id']][user['accessToken']][key].value);
                            };
 
                            it("Should be able to get prop1 for user 1 client 1", function(done) {
@@ -995,7 +924,7 @@ describe("REST API", function() {
                            it("Should fail to get a property for a non-existent user", function(done) {
                               superagent
                                     .get(ESDR_USERS_API_URL + BOGUS_USER_ID + "/properties/foo")
-                                    .set(createAuthorizationHeader(user1.accessToken))
+                                    .set(createAuthorizationHeader(user1['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1007,8 +936,8 @@ describe("REST API", function() {
                            });
                            it("Should fail to get a property with a valid OAuth2 token, but for the wrong user", function(done) {
                               superagent
-                                    .get(ESDR_USERS_API_URL + user1.id + "/properties/prop1")
-                                    .set(createAuthorizationHeader(user2.accessToken))
+                                    .get(ESDR_USERS_API_URL + user1['id'] + "/properties/prop1")
+                                    .set(createAuthorizationHeader(user2['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1020,8 +949,8 @@ describe("REST API", function() {
                            });
                            it("Should fail to get a property with a valid OAuth2 token for the same user, but a different client", function(done) {
                               superagent
-                                    .get(ESDR_USERS_API_URL + user1.id + "/properties/user1Client1Prop")
-                                    .set(createAuthorizationHeader(user1Client2.accessToken))
+                                    .get(ESDR_USERS_API_URL + user1['id'] + "/properties/user1Client1Prop")
+                                    .set(createAuthorizationHeader(user1Client2['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1033,8 +962,8 @@ describe("REST API", function() {
                            });
                            it("Should fail to get a non-existent property", function(done) {
                               superagent
-                                    .get(ESDR_USERS_API_URL + user1.id + "/properties/no_such_property")
-                                    .set(createAuthorizationHeader(user1.accessToken))
+                                    .get(ESDR_USERS_API_URL + user1['id'] + "/properties/no_such_property")
+                                    .set(createAuthorizationHeader(user1['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1046,8 +975,8 @@ describe("REST API", function() {
                            });
                            it("Should fail to get a property with an invalid key", function(done) {
                               superagent
-                                    .get(ESDR_USERS_API_URL + user2.id + "/properties/bad-key")
-                                    .set(createAuthorizationHeader(user2.accessToken))
+                                    .get(ESDR_USERS_API_URL + user2['id'] + "/properties/bad-key")
+                                    .set(createAuthorizationHeader(user2['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1059,14 +988,14 @@ describe("REST API", function() {
                                                                           status : 'error'
                                                                        });
 
-                                       var expectedValidationItems = [{
-                                          constraintName : 'pattern',
-                                          instanceContext : '#/key',
-                                          kind : 'StringValidationError'
+                                       const expectedValidationItems = [{
+                                          "keyword" : "pattern",
+                                          "dataPath" : ".key",
+                                          "schemaPath" : "#/properties/key/pattern"
                                        }];
                                        res.body.should.have.property('data');
-                                       res.body.data.should.have.length(expectedValidationItems.length);
-                                       res.body.data.forEach(function(validationItem, index) {
+                                       res.body.data.errors.should.have.length(expectedValidationItems.length);
+                                       res.body.data.errors.forEach(function(validationItem, index) {
                                           validationItem.should.have.properties(expectedValidationItems[index]);
                                        });
 
@@ -1083,7 +1012,7 @@ describe("REST API", function() {
                   describe("No Authentication", function() {
                      it("Should fail to get properties with no OAuth2 token specified", function(done) {
                         superagent
-                              .get(ESDR_USERS_API_URL + user1.id + "/properties")
+                              .get(ESDR_USERS_API_URL + user1['id'] + "/properties")
                               .end(function(err, res) {
                                  should.not.exist(err);
                                  should.exist(res);
@@ -1098,7 +1027,7 @@ describe("REST API", function() {
                      describe("Invalid Authentication", function() {
                         it("Should fail to get properties with an invalid OAuth2 token specified", function(done) {
                            superagent
-                                 .get(ESDR_USERS_API_URL + user1.id + "/properties")
+                                 .get(ESDR_USERS_API_URL + user1['id'] + "/properties")
                                  .set(createAuthorizationHeader("bogus"))
                                  .end(function(err, res) {
                                     should.not.exist(err);
@@ -1113,21 +1042,21 @@ describe("REST API", function() {
                      describe("Valid Authentication", function() {
                         describe("Success", function() {
                            it("Should be able to get properties for user 1 client 1", function(done) {
-                              getPropertiesForUser(user1.id, user1.accessToken, done);
+                              getPropertiesForUser(user1['id'], user1['accessToken'], done);
                            });
                            it("Should be able to get properties for user 1 client 2", function(done) {
-                              getPropertiesForUser(user1Client2.id, user1Client2.accessToken, done);
+                              getPropertiesForUser(user1Client2['id'], user1Client2['accessToken'], done);
                            });
                            it("Should be able to get properties for user 2 client 1", function(done) {
-                              getPropertiesForUser(user2.id, user2.accessToken, done);
+                              getPropertiesForUser(user2['id'], user2['accessToken'], done);
                            });
                            it("Should be able to get properties for user 2 client 2", function(done) {
-                              getPropertiesForUser(user2Client2.id, user2Client2.accessToken, done);
+                              getPropertiesForUser(user2Client2['id'], user2Client2['accessToken'], done);
                            });
                            it("Should be able to use query string to select only properties of type string", function(done) {
                               getProperties(
-                                    user1.id,
-                                    user1.accessToken,
+                                    user1['id'],
+                                    user1['accessToken'],
                                     "?where=type=string",
                                     done,
                                     false,
@@ -1139,8 +1068,8 @@ describe("REST API", function() {
                            });
                            it("Should be able to use query string to select only properties of type string or int", function(done) {
                               getProperties(
-                                    user1.id,
-                                    user1.accessToken,
+                                    user1['id'],
+                                    user1['accessToken'],
                                     "?whereOr=type=string,type=int",
                                     done,
                                     false,
@@ -1153,8 +1082,8 @@ describe("REST API", function() {
                            });
                            it("Should be able to use query string to select only specific property keys", function(done) {
                               getProperties(
-                                    user2.id,
-                                    user2.accessToken,
+                                    user2['id'],
+                                    user2['accessToken'],
                                     "?whereOr=key=prop2,key=prop5",
                                     done,
                                     false,
@@ -1166,8 +1095,8 @@ describe("REST API", function() {
                            });
                            it("Should be able to use query string to select only specific property keys or keys of type json", function(done) {
                               getProperties(
-                                    user2Client2.id,
-                                    user2Client2.accessToken,
+                                    user2Client2['id'],
+                                    user2Client2['accessToken'],
                                     "?whereOr=key=prop2,key=prop5,type=json",
                                     done,
                                     false,
@@ -1183,7 +1112,7 @@ describe("REST API", function() {
                            it("Should fail to get properties for a non-existent user", function(done) {
                               superagent
                                     .get(ESDR_USERS_API_URL + BOGUS_USER_ID + "/properties")
-                                    .set(createAuthorizationHeader(user1.accessToken))
+                                    .set(createAuthorizationHeader(user1['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1195,8 +1124,8 @@ describe("REST API", function() {
                            });
                            it("Should fail to get properties with a valid OAuth2 token, but for the wrong user", function(done) {
                               superagent
-                                    .get(ESDR_USERS_API_URL + user1.id + "/properties")
-                                    .set(createAuthorizationHeader(user2.accessToken))
+                                    .get(ESDR_USERS_API_URL + user1['id'] + "/properties")
+                                    .set(createAuthorizationHeader(user2['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1217,7 +1146,7 @@ describe("REST API", function() {
                   describe("No Authentication", function() {
                      it("Should fail to delete properties with no OAuth2 token specified", function(done) {
                         superagent
-                              .del(ESDR_USERS_API_URL + user1.id + "/properties")
+                              .del(ESDR_USERS_API_URL + user1['id'] + "/properties")
                               .end(function(err, res) {
                                  should.not.exist(err);
                                  should.exist(res);
@@ -1232,7 +1161,7 @@ describe("REST API", function() {
                      describe("Invalid Authentication", function() {
                         it("Should fail to delete properties with an invalid OAuth2 token specified", function(done) {
                            superagent
-                                 .del(ESDR_USERS_API_URL + user1.id + "/properties")
+                                 .del(ESDR_USERS_API_URL + user1['id'] + "/properties")
                                  .set(createAuthorizationHeader("bogus"))
                                  .end(function(err, res) {
                                     should.not.exist(err);
@@ -1248,21 +1177,21 @@ describe("REST API", function() {
                         describe("Success", function() {
                            it("Should be able to delete properties for user 1 client 1", function(done) {
                               deletePropertiesForUser(
-                                    user1.id,
-                                    user1.accessToken,
+                                    user1['id'],
+                                    user1['accessToken'],
                                     done,
-                                    Object.keys(propertiesByUserIdAndAccessToken[user1.id][user1.accessToken]).length
+                                    Object.keys(propertiesByUserIdAndAccessToken[user1['id']][user1['accessToken']]).length
                               );
                            });
                            it("Should be able to delete properties again for user 1 client 1, without error", function(done) {
                               deletePropertiesForUser(
-                                    user1.id,
-                                    user1.accessToken,
+                                    user1['id'],
+                                    user1['accessToken'],
                                     function() {
                                        // verify there are now no properties for this user
                                        getProperties(
-                                             user1.id,
-                                             user1.accessToken,
+                                             user1['id'],
+                                             user1['accessToken'],
                                              '',
                                              done,
                                              false,
@@ -1275,16 +1204,16 @@ describe("REST API", function() {
                            it("Verify that deleting one user's properties shouldn't affect any other user's properties", function(done) {
                               // verify that other user properties are untouched
                               getPropertiesForUser(
-                                    user1Client2.id,
-                                    user1Client2.accessToken,
+                                    user1Client2['id'],
+                                    user1Client2['accessToken'],
                                     function() {
                                        getPropertiesForUser(
-                                             user2.id,
-                                             user2.accessToken,
+                                             user2['id'],
+                                             user2['accessToken'],
                                              function() {
                                                 getPropertiesForUser(
-                                                      user2Client2.id,
-                                                      user2Client2.accessToken,
+                                                      user2Client2['id'],
+                                                      user2Client2['accessToken'],
                                                       done
                                                 );
                                              }
@@ -1298,7 +1227,7 @@ describe("REST API", function() {
                            it("Should fail to delete properties for a non-existent user", function(done) {
                               superagent
                                     .del(ESDR_USERS_API_URL + BOGUS_USER_ID + "/properties")
-                                    .set(createAuthorizationHeader(user1.accessToken))
+                                    .set(createAuthorizationHeader(user1['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1310,8 +1239,8 @@ describe("REST API", function() {
                            });
                            it("Should fail to delete properties with a valid OAuth2 token, but for the wrong user", function(done) {
                               superagent
-                                    .del(ESDR_USERS_API_URL + user1.id + "/properties")
-                                    .set(createAuthorizationHeader(user2.accessToken))
+                                    .del(ESDR_USERS_API_URL + user1['id'] + "/properties")
+                                    .set(createAuthorizationHeader(user2['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1330,7 +1259,7 @@ describe("REST API", function() {
                   describe("No Authentication", function() {
                      it("Should fail to delete a property with no OAuth2 token specified", function(done) {
                         superagent
-                              .del(ESDR_USERS_API_URL + user2.id + "/properties/prop1")
+                              .del(ESDR_USERS_API_URL + user2['id'] + "/properties/prop1")
                               .end(function(err, res) {
                                  should.not.exist(err);
                                  should.exist(res);
@@ -1345,7 +1274,7 @@ describe("REST API", function() {
                      describe("Invalid Authentication", function() {
                         it("Should fail to delete a property with an invalid OAuth2 token specified", function(done) {
                            superagent
-                                 .del(ESDR_USERS_API_URL + user2.id + "/properties/prop1")
+                                 .del(ESDR_USERS_API_URL + user2['id'] + "/properties/prop1")
                                  .set(createAuthorizationHeader("bogus"))
                                  .end(function(err, res) {
                                     should.not.exist(err);
@@ -1359,7 +1288,7 @@ describe("REST API", function() {
                      });   // Invalid Authentication
                      describe("Valid Authentication", function() {
                         describe("Success", function() {
-                           var verifyPropertyIsDeleted = function(userId, accessToken, key, done) {
+                           const verifyPropertyIsDeleted = function(userId, accessToken, key, done) {
                               superagent
                                     .get(ESDR_USERS_API_URL + userId + "/properties/" + key)
                                     .set(createAuthorizationHeader(accessToken))
@@ -1379,53 +1308,53 @@ describe("REST API", function() {
                                     });
                            };
                            it("Should not error when asked to delete a non-existent property", function(done) {
-                              deletePropertyForUser(user2.id, user2.accessToken, 'this_prop_does_not_exist', done, 0);
+                              deletePropertyForUser(user2['id'], user2['accessToken'], 'this_prop_does_not_exist', done, 0);
                            });
                            it("Should be able to delete prop1 for user 2 client 1", function(done) {
-                              deletePropertyForUser(user2.id, user2.accessToken, 'prop1', done, 1);
+                              deletePropertyForUser(user2['id'], user2['accessToken'], 'prop1', done, 1);
                            });
                            it("The property prop1 for user 2 client 1 should no longer exist", function(done) {
-                              verifyPropertyIsDeleted(user2.id, user2.accessToken, 'prop1', done);
+                              verifyPropertyIsDeleted(user2['id'], user2['accessToken'], 'prop1', done);
                            });
                            it("Should be able to delete prop2 for user 2 client 1", function(done) {
-                              deletePropertyForUser(user2.id, user2.accessToken, 'prop2', done, 1);
+                              deletePropertyForUser(user2['id'], user2['accessToken'], 'prop2', done, 1);
                            });
                            it("The property prop2 for user 2 client 1 should no longer exist", function(done) {
-                              verifyPropertyIsDeleted(user2.id, user2.accessToken, 'prop2', done);
+                              verifyPropertyIsDeleted(user2['id'], user2['accessToken'], 'prop2', done);
                            });
                            it("Should be able to delete prop3 for user 2 client 1", function(done) {
-                              deletePropertyForUser(user2.id, user2.accessToken, 'prop3', done, 1);
+                              deletePropertyForUser(user2['id'], user2['accessToken'], 'prop3', done, 1);
                            });
                            it("The property prop3 for user 2 client 1 should no longer exist", function(done) {
-                              verifyPropertyIsDeleted(user2.id, user2.accessToken, 'prop3', done);
+                              verifyPropertyIsDeleted(user2['id'], user2['accessToken'], 'prop3', done);
                            });
                            it("Should be able to delete prop4 for user 2 client 1", function(done) {
-                              deletePropertyForUser(user2.id, user2.accessToken, 'prop4', done, 1);
+                              deletePropertyForUser(user2['id'], user2['accessToken'], 'prop4', done, 1);
                            });
                            it("The property prop4 for user 2 client 1 should no longer exist", function(done) {
-                              verifyPropertyIsDeleted(user2.id, user2.accessToken, 'prop4', done);
+                              verifyPropertyIsDeleted(user2['id'], user2['accessToken'], 'prop4', done);
                            });
                            it("Should be able to delete prop5 for user 2 client 1", function(done) {
-                              deletePropertyForUser(user2.id, user2.accessToken, 'prop5', done, 1);
+                              deletePropertyForUser(user2['id'], user2['accessToken'], 'prop5', done, 1);
                            });
                            it("The property prop5 for user 2 client 1 should no longer exist", function(done) {
-                              verifyPropertyIsDeleted(user2.id, user2.accessToken, 'prop5', done);
+                              verifyPropertyIsDeleted(user2['id'], user2['accessToken'], 'prop5', done);
                            });
                            it("Should be able to delete user2Client1Prop for user 2 client 1", function(done) {
-                              deletePropertyForUser(user2.id, user2.accessToken, 'user2Client1Prop', done, 1);
+                              deletePropertyForUser(user2['id'], user2['accessToken'], 'user2Client1Prop', done, 1);
                            });
                            it("The property user2Client1Prop for user 2 client 1 should no longer exist", function(done) {
-                              verifyPropertyIsDeleted(user2.id, user2.accessToken, 'user2Client1Prop', done);
+                              verifyPropertyIsDeleted(user2['id'], user2['accessToken'], 'user2Client1Prop', done);
                            });
                            it("Verify user 2 client 1 has no properties", function(done) {
-                              getProperties(user2.id, user2.accessToken, '', done, false, {});
+                              getProperties(user2['id'], user2['accessToken'], '', done, false, {});
                            });
                         });   // Success
                         describe("Failure", function() {
                            it("Should fail to delete a property for a non-existent user", function(done) {
                               superagent
                                     .del(ESDR_USERS_API_URL + BOGUS_USER_ID + "/properties/foo")
-                                    .set(createAuthorizationHeader(user1.accessToken))
+                                    .set(createAuthorizationHeader(user1['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1437,8 +1366,8 @@ describe("REST API", function() {
                            });
                            it("Should fail to delete a property with a valid OAuth2 token, but for the wrong user", function(done) {
                               superagent
-                                    .del(ESDR_USERS_API_URL + user1Client2.id + "/properties/prop1")
-                                    .set(createAuthorizationHeader(user2.accessToken))
+                                    .del(ESDR_USERS_API_URL + user1Client2['id'] + "/properties/prop1")
+                                    .set(createAuthorizationHeader(user2['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1450,8 +1379,8 @@ describe("REST API", function() {
                            });
                            it("Should fail to delete a property with an invalid key", function(done) {
                               superagent
-                                    .del(ESDR_USERS_API_URL + user2.id + "/properties/bad-key")
-                                    .set(createAuthorizationHeader(user2.accessToken))
+                                    .del(ESDR_USERS_API_URL + user2['id'] + "/properties/bad-key")
+                                    .set(createAuthorizationHeader(user2['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1463,14 +1392,14 @@ describe("REST API", function() {
                                                                           status : 'error'
                                                                        });
 
-                                       var expectedValidationItems = [{
-                                          constraintName : 'pattern',
-                                          instanceContext : '#/key',
-                                          kind : 'StringValidationError'
+                                       const expectedValidationItems = [{
+                                          "keyword" : "pattern",
+                                          "dataPath" : ".key",
+                                          "schemaPath" : "#/properties/key/pattern"
                                        }];
                                        res.body.should.have.property('data');
-                                       res.body.data.should.have.length(expectedValidationItems.length);
-                                       res.body.data.forEach(function(validationItem, index) {
+                                       res.body.data.errors.should.have.length(expectedValidationItems.length);
+                                       res.body.data.errors.forEach(function(validationItem, index) {
                                           validationItem.should.have.properties(expectedValidationItems[index]);
                                        });
 

@@ -244,7 +244,7 @@ describe("REST API", function() {
       );
    });
 
-   describe.only("Devices", function() {
+   describe("Devices", function() {
       describe("DeviceProperties", function() {
          describe("Set Property", function() {
 
@@ -583,8 +583,8 @@ describe("REST API", function() {
 
                                     const expectedValidationItems = test.getExpectedValidationItems();
                                     res.body.should.have.property('data');
-                                    res.body.data.should.have.length(expectedValidationItems.length);
-                                    res.body.data.forEach(function(validationItem, index) {
+                                    res.body.data.errors.should.have.length(expectedValidationItems.length);
+                                    res.body.data.errors.forEach(function(validationItem, index) {
                                        validationItem.should.have.properties(expectedValidationItems[index]);
                                     });
 
@@ -609,20 +609,19 @@ describe("REST API", function() {
                         }
                      };
 
-                     const createSimpleValidationTest = function(description, key, value, type, constraintType, testedType, willDebug) {
+                     const createSimpleValidationTest = function(description, key, value, type, constraintType, willDebug) {
                         return createValidationTest(description,
                                                     key,
                                                     value,
                                                     type,
                                                     [
                                                        {
-                                                          instanceContext : '#/value',
-                                                          constraintName : 'type',
-                                                          constraintValue : [
-                                                             constraintType,
-                                                             "null"
-                                                          ],
-                                                          testedValue : testedType
+                                                          "keyword" : "type",
+                                                          "dataPath" : ".value",
+                                                          "schemaPath" : "#/properties/value/type",
+                                                          "params" : {
+                                                             "type" : constraintType + ",null"
+                                                          }
                                                        }
                                                     ],
                                                     willDebug);
@@ -633,178 +632,107 @@ describe("REST API", function() {
                                                    'bad_int',
                                                    3.1415926535,
                                                    'int',
-                                                   'integer',
-                                                   'number'),
+                                                   'integer'),
                         createSimpleValidationTest("Should fail to set an integer property to a string",
                                                    'bad_int',
                                                    '42',
                                                    'int',
-                                                   'integer',
-                                                   'string'),
+                                                   'integer'),
                         createSimpleValidationTest("Should fail to set an integer property to an object",
                                                    'bad_int',
                                                    { foo : "bar", baz : 343 },
                                                    'int',
-                                                   'integer',
-                                                   'object'),
+                                                   'integer'),
                         createSimpleValidationTest("Should fail to set an integer property to a boolean",
                                                    'bad_int',
                                                    true,
                                                    'int',
-                                                   'integer',
-                                                   'boolean'),
-                        createValidationTest("Should fail to set an integer property to an array",
-                                             'bad_int',
-                                             [1, 2, 3],
-                                             'int',
-                                             [
-                                                {
-                                                   instanceContext : '#/value',
-                                                   constraintName : 'type',
-                                                   constraintValue : [
-                                                      "integer",
-                                                      "number",
-                                                      "string",
-                                                      "object",
-                                                      "boolean",
-                                                      "null"
-                                                   ],
-                                                   testedValue : 'array'
-                                                }
-                                             ]),
+                                                   'integer'),
+                        createSimpleValidationTest("Should fail to set an integer property to an array",
+                                                   'bad_int',
+                                                   [1, 2, 3],
+                                                   'int',
+                                                   'integer,number,string,object,boolean'),
                         createSimpleValidationTest("Should fail to set an double property to a string",
                                                    'bad_double',
                                                    '42',
                                                    'double',
-                                                   'number',
-                                                   'string'),
+                                                   'number'),
                         createSimpleValidationTest("Should fail to set an double property to an object",
                                                    'bad_double',
                                                    { foo : "bar", baz : 343 },
                                                    'double',
-                                                   'number',
-                                                   'object'),
+                                                   'number'),
                         createSimpleValidationTest("Should fail to set an double property to a boolean",
                                                    'bad_double',
                                                    true,
                                                    'double',
-                                                   'number',
-                                                   'boolean'),
-                        createValidationTest("Should fail to set an double property to an array",
-                                             'bad_double',
-                                             [1, 2, 3],
-                                             'double',
-                                             [
-                                                {
-                                                   instanceContext : '#/value',
-                                                   constraintName : 'type',
-                                                   constraintValue : [
-                                                      "integer",
-                                                      "number",
-                                                      "string",
-                                                      "object",
-                                                      "boolean",
-                                                      "null"
-                                                   ],
-                                                   testedValue : 'array'
-                                                }
-                                             ]),
+                                                   'number'),
+                        createSimpleValidationTest("Should fail to set an double property to an array",
+                                                   'bad_double',
+                                                   [1, 2, 3],
+                                                   'double',
+                                                   'integer,number,string,object,boolean'),
                         createSimpleValidationTest("Should fail to set a string property to an integer",
                                                    'bad_string',
                                                    42,
                                                    'string',
-                                                   'string',
-                                                   'integer'),
+                                                   'string'),
                         createSimpleValidationTest("Should fail to set a string property to an double",
                                                    'bad_string',
                                                    42.42,
                                                    'string',
-                                                   'string',
-                                                   'number'),
+                                                   'string'),
                         createSimpleValidationTest("Should fail to set a string property to an object",
                                                    'bad_string',
                                                    { foo : "bar", baz : 343 },
                                                    'string',
-                                                   'string',
-                                                   'object'),
+                                                   'string'),
                         createSimpleValidationTest("Should fail to set a string property to a boolean",
                                                    'bad_string',
                                                    true,
                                                    'string',
+                                                   'string'),
+                        createSimpleValidationTest("Should fail to set a string property to an array",
+                                                   'bad_string',
+                                                   [1, 2, 3],
                                                    'string',
-                                                   'boolean'),
-                        createValidationTest("Should fail to set a string property to an array",
-                                             'bad_string',
-                                             [1, 2, 3],
-                                             'string',
-                                             [
-                                                {
-                                                   instanceContext : '#/value',
-                                                   constraintName : 'type',
-                                                   constraintValue : [
-                                                      "integer",
-                                                      "number",
-                                                      "string",
-                                                      "object",
-                                                      "boolean",
-                                                      "null"
-                                                   ],
-                                                   testedValue : 'array'
-                                                }
-                                             ]),
+                                                   'integer,number,string,object,boolean'),
 
                         createSimpleValidationTest("Should fail to set a json property to an integer",
                                                    'bad_json',
                                                    42,
                                                    'json',
-                                                   'object',
-                                                   'integer'),
+                                                   'object'),
                         createSimpleValidationTest("Should fail to set a json property to an double",
                                                    'bad_json',
                                                    42.42,
                                                    'json',
-                                                   'object',
-                                                   'number'),
+                                                   'object'),
                         createSimpleValidationTest("Should fail to set a json property to a string",
                                                    'bad_json',
                                                    '42',
                                                    'json',
-                                                   'object',
-                                                   'string'),
+                                                   'object'),
                         createSimpleValidationTest("Should fail to set a json property to a boolean",
                                                    'bad_json',
                                                    true,
                                                    'json',
-                                                   'object',
-                                                   'boolean'),
-                        createValidationTest("Should fail to set a json property to an array",
-                                             'bad_json',
-                                             [1, 2, 3],
-                                             'json',
-                                             [
-                                                {
-                                                   instanceContext : '#/value',
-                                                   constraintName : 'type',
-                                                   constraintValue : [
-                                                      "integer",
-                                                      "number",
-                                                      "string",
-                                                      "object",
-                                                      "boolean",
-                                                      "null"
-                                                   ],
-                                                   testedValue : 'array'
-                                                }
-                                             ]),
+                                                   'object'),
+                        createSimpleValidationTest("Should fail to set a json property to an array",
+                                                   'bad_json',
+                                                   [1, 2, 3],
+                                                   'json',
+                                                   'integer,number,string,object,boolean'),
                         createValidationTest("Should fail to set a property with an invalid key (has a space)",
                                              'bad key',
                                              42,
                                              'int',
                                              [
                                                 {
-                                                   constraintName : 'pattern',
-                                                   instanceContext : '#/key',
-                                                   kind : 'StringValidationError'
+                                                   "keyword" : "pattern",
+                                                   "dataPath" : ".key",
+                                                   "schemaPath" : "#/properties/key/pattern"
                                                 }
                                              ]),
                         createValidationTest("Should fail to set a property with an invalid key (starts with a number)",
@@ -813,9 +741,9 @@ describe("REST API", function() {
                                              'int',
                                              [
                                                 {
-                                                   constraintName : 'pattern',
-                                                   instanceContext : '#/key',
-                                                   kind : 'StringValidationError'
+                                                   "keyword" : "pattern",
+                                                   "dataPath" : ".key",
+                                                   "schemaPath" : "#/properties/key/pattern"
                                                 }
                                              ]),
                         createValidationTest("Should fail to set a property with an invalid key (starts with an underscore)",
@@ -824,9 +752,9 @@ describe("REST API", function() {
                                              'int',
                                              [
                                                 {
-                                                   constraintName : 'pattern',
-                                                   instanceContext : '#/key',
-                                                   kind : 'StringValidationError'
+                                                   "keyword" : "pattern",
+                                                   "dataPath" : ".key",
+                                                   "schemaPath" : "#/properties/key/pattern"
                                                 }
                                              ]),
                         createValidationTest("Should fail to set a property with an invalid key (too long)",
@@ -835,9 +763,9 @@ describe("REST API", function() {
                                              'int',
                                              [
                                                 {
-                                                   constraintName : 'maxLength',
-                                                   instanceContext : '#/key',
-                                                   kind : 'StringValidationError'
+                                                   "keyword" : "maxLength",
+                                                   "dataPath" : ".key",
+                                                   "schemaPath" : "#/properties/key/maxLength"
                                                 }
                                              ]),
                         createValidationTest("Should fail to set a string property with a value that is too long",
@@ -846,9 +774,9 @@ describe("REST API", function() {
                                              'string',
                                              [
                                                 {
-                                                   constraintName : 'maxLength',
-                                                   instanceContext : '#/value',
-                                                   kind : 'StringValidationError'
+                                                   "keyword" : "maxLength",
+                                                   "dataPath" : ".value",
+                                                   "schemaPath" : "#/properties/value/maxLength"
                                                 }
                                              ])
                      ].forEach(testSetPropertyValidation);
@@ -1252,13 +1180,13 @@ describe("REST API", function() {
                                                                        });
 
                                        const expectedValidationItems = [{
-                                          constraintName : 'pattern',
-                                          instanceContext : '#/key',
-                                          kind : 'StringValidationError'
+                                          "keyword" : "pattern",
+                                          "dataPath" : ".key",
+                                          "schemaPath" : "#/properties/key/pattern"
                                        }];
                                        res.body.should.have.property('data');
-                                       res.body.data.should.have.length(expectedValidationItems.length);
-                                       res.body.data.forEach(function(validationItem, index) {
+                                       res.body.data.errors.should.have.length(expectedValidationItems.length);
+                                       res.body.data.errors.forEach(function(validationItem, index) {
                                           validationItem.should.have.properties(expectedValidationItems[index]);
                                        });
 
@@ -1709,13 +1637,13 @@ describe("REST API", function() {
                                                                        });
 
                                        const expectedValidationItems = [{
-                                          constraintName : 'pattern',
-                                          instanceContext : '#/key',
-                                          kind : 'StringValidationError'
+                                          "keyword" : "pattern",
+                                          "dataPath" : ".key",
+                                          "schemaPath" : "#/properties/key/pattern"
                                        }];
                                        res.body.should.have.property('data');
-                                       res.body.data.should.have.length(expectedValidationItems.length);
-                                       res.body.data.forEach(function(validationItem, index) {
+                                       res.body.data.errors.should.have.length(expectedValidationItems.length);
+                                       res.body.data.errors.forEach(function(validationItem, index) {
                                           validationItem.should.have.properties(expectedValidationItems[index]);
                                        });
 

@@ -1,5 +1,3 @@
-const JaySchema = require('jayschema');
-const jsonValidator = new JaySchema();
 const ValidationError = require('../lib/errors').ValidationError;
 const Query2Query = require('query2query');
 const Properties = require('./Properties');
@@ -50,51 +48,49 @@ module.exports = function(databaseHelper) {
    };
 
    this.getProperty = function(clientId, deviceId, propertyKey, callback) {
-      jsonValidator.validate({ key : propertyKey }, Properties.JSON_SCHEMA_PROPERTY_KEY, function(err) {
-         if (err) {
-            return callback(new ValidationError(err));
-         }
-
-         databaseHelper.findOne("SELECT " +
-                                "   propertyKey, " +
-                                "   valueType, " +
-                                "   valueInt, " +
-                                "   valueDouble, " +
-                                "   valueString, " +
-                                "   valueJson, " +
-                                "   valueBoolean " +
-                                "FROM DeviceProperties WHERE " +
-                                "   clientId=? AND " +
-                                "   deviceId=? AND " +
-                                "   propertyKey=?",
-                                [clientId, deviceId, propertyKey],
-                                function(err, record) {
-                                   if (err) {
-                                      log.error("Error trying to find property [" + propertyKey + "] for device [" + deviceId + "] and client [" + clientId + "]: " + err);
-                                      return callback(err);
-                                   }
-
-                                   if (record) {
-                                      const propertyToReturn = {};
-
-                                      propertyToReturn[propertyKey] = record[Properties.DATA_TYPE_TO_FIELD_NAME_MAP[record.valueType]];
-
-                                      // value conversions, if appropriate
-                                      if (propertyToReturn[propertyKey] != null) {
-                                         if (record.valueType === 'json') {
-                                            propertyToReturn[propertyKey] = JSON.parse(propertyToReturn[propertyKey]);
+      Properties.ifPropertyKeyIsValid({ key : propertyKey })
+            .then(function() {
+               databaseHelper.findOne("SELECT " +
+                                      "   propertyKey, " +
+                                      "   valueType, " +
+                                      "   valueInt, " +
+                                      "   valueDouble, " +
+                                      "   valueString, " +
+                                      "   valueJson, " +
+                                      "   valueBoolean " +
+                                      "FROM DeviceProperties WHERE " +
+                                      "   clientId=? AND " +
+                                      "   deviceId=? AND " +
+                                      "   propertyKey=?",
+                                      [clientId, deviceId, propertyKey],
+                                      function(err, record) {
+                                         if (err) {
+                                            log.error("Error trying to find property [" + propertyKey + "] for device [" + deviceId + "] and client [" + clientId + "]: " + err);
+                                            return callback(err);
                                          }
-                                         else if (record.valueType === 'boolean') {
-                                            propertyToReturn[propertyKey] = !!propertyToReturn[propertyKey];
+
+                                         if (record) {
+                                            const propertyToReturn = {};
+
+                                            propertyToReturn[propertyKey] = record[Properties.DATA_TYPE_TO_FIELD_NAME_MAP[record.valueType]];
+
+                                            // value conversions, if appropriate
+                                            if (propertyToReturn[propertyKey] != null) {
+                                               if (record.valueType === 'json') {
+                                                  propertyToReturn[propertyKey] = JSON.parse(propertyToReturn[propertyKey]);
+                                               }
+                                               else if (record.valueType === 'boolean') {
+                                                  propertyToReturn[propertyKey] = !!propertyToReturn[propertyKey];
+                                               }
+                                            }
+
+                                            return callback(null, propertyToReturn);
                                          }
-                                      }
 
-                                      return callback(null, propertyToReturn);
-                                   }
-
-                                   return callback(null, null);
-                                });
-      });
+                                         return callback(null, null);
+                                      });
+            })
+            .catch(err => callback(new ValidationError(err)));
    };
 
    this.find = function(clientId, deviceId, queryString, callback) {
@@ -156,70 +152,63 @@ module.exports = function(databaseHelper) {
 
    this.setProperty = function(clientId, deviceId, propertyKey, propertyValue, callback) {
       // first make sure that the property key is valid
-      jsonValidator.validate({ key : propertyKey }, Properties.JSON_SCHEMA_PROPERTY_KEY, function(err) {
-         if (err) {
-            return callback(new ValidationError(err));
-         }
+      Properties.ifPropertyKeyIsValid({ key : propertyKey })
+            .then(function() {
+               // Now verify that the property value at least has the expected fields and the right sort of field values.
+               // We'll worry later whether the value actually matches the stated type
+               Properties.ifPropertyValueIsValid(propertyValue)
+                     .then(function() {
+                        // Now, depending on the stated type, validate the value against the type
+                        if (!(propertyValue.type in Properties.typeValidators)) {
+                           return callback(new ValidationError("Unexpected property value type: " + propertyValue.type));
+                        }
+                        const ifTypeIsValid = Properties.typeValidators[propertyValue.type];
+                        ifTypeIsValid(propertyValue)
+                              .then(function() {
+                                 // We can now be sure that the property value has both 'type' and 'value' fields, and that the value
+                                 // is of the stated type.  Now create the object we'll use to insert/update...
 
-         // Now verify that the property value at least has the expected fields and the right sort of field values.
-         // We'll worry later whether the value actually matches the stated type
-         jsonValidator.validate(propertyValue, Properties.JSON_SCHEMA_PROPERTY_VALUE, function(err) {
-            if (err) {
-               return callback(new ValidationError(err));
-            }
+                                 const property = {
+                                    propertyKey : propertyKey
+                                 };
 
-            // Now, depending on the stated type, validate the value against the type
-            const typeValidationSchema = Properties.TYPE_VALIDATION_JSON_SCHEMAS[propertyValue.type];
-            if (typeValidationSchema == null) {
-               return callback(new ValidationError("Unexpected property value type: " + propertyValue.type));
-            }
+                                 // stuff the deviceId and clientId into the property, and set the value type, preparing for insert/update
+                                 property['deviceId'] = deviceId;
+                                 property['clientId'] = clientId;
+                                 property['valueType'] = propertyValue.type;
+                                 property[Properties.DATA_TYPE_TO_FIELD_NAME_MAP[propertyValue.type]] = propertyValue.value;
 
-            jsonValidator.validate(propertyValue, typeValidationSchema, function(err) {
-               if (err) {
-                  return callback(new ValidationError(err));
-               }
+                                 // stringify the JSON for storing in the DB
+                                 if (property['valueJson'] != null) {
+                                    property['valueJson'] = JSON.stringify(property['valueJson']);
+                                 }
 
-               // We can now be sure that the property value has both 'type' and 'value' fields, and that the value
-               // is of the stated type.  Now create the object we'll use to insert/update...
+                                 // now try to insert
+                                 // noinspection SqlNoDataSourceInspection
+                                 databaseHelper.execute("INSERT INTO DeviceProperties SET ? " +
+                                                        "ON DUPLICATE KEY UPDATE " +
+                                                        "valueType=VALUES(valueType)," +
+                                                        "valueInt=VALUES(valueInt)," +
+                                                        "valueDouble=VALUES(valueDouble)," +
+                                                        "valueString=VALUES(valueString)," +
+                                                        "valueJson=VALUES(valueJson)," +
+                                                        "valueBoolean=VALUES(valueBoolean)",
+                                                        property,
+                                                        function(err) {
+                                                           if (err) {
+                                                              return callback(err);
+                                                           }
 
-               const property = {
-                  propertyKey : propertyKey
-               };
-
-               // stuff the deviceId and clientId into the property, and set the value type, preparing for insert/update
-               property['deviceId'] = deviceId;
-               property['clientId'] = clientId;
-               property['valueType'] = propertyValue.type;
-               property[Properties.DATA_TYPE_TO_FIELD_NAME_MAP[propertyValue.type]] = propertyValue.value;
-
-               // stringify the JSON for storing in the DB
-               if (property['valueJson'] != null) {
-                  property['valueJson'] = JSON.stringify(property['valueJson']);
-               }
-
-               // now try to insert
-               // noinspection SqlNoDataSourceInspection
-               databaseHelper.execute("INSERT INTO DeviceProperties SET ? " +
-                                      "ON DUPLICATE KEY UPDATE " +
-                                      "valueType=VALUES(valueType)," +
-                                      "valueInt=VALUES(valueInt)," +
-                                      "valueDouble=VALUES(valueDouble)," +
-                                      "valueString=VALUES(valueString)," +
-                                      "valueJson=VALUES(valueJson)," +
-                                      "valueBoolean=VALUES(valueBoolean)",
-                                      property,
-                                      function(err) {
-                                         if (err) {
-                                            return callback(err);
-                                         }
-
-                                         const propertyToReturn = {};
-                                         propertyToReturn[propertyKey] = propertyValue.value;
-                                         callback(null, propertyToReturn);
-                                      });
-            });
-         });
-      });
+                                                           const propertyToReturn = {};
+                                                           propertyToReturn[propertyKey] = propertyValue.value;
+                                                           callback(null, propertyToReturn);
+                                                        });
+                              })
+                              .catch(err => callback(new ValidationError(err)));
+                     })
+                     .catch(err => callback(new ValidationError(err)));
+            })
+            .catch(err => callback(new ValidationError(err)));
    };
 
    this.deleteAll = function(clientId, deviceId, callback) {
@@ -237,23 +226,22 @@ module.exports = function(databaseHelper) {
    };
 
    this.deleteProperty = function(clientId, deviceId, propertyKey, callback) {
-      jsonValidator.validate({ key : propertyKey }, Properties.JSON_SCHEMA_PROPERTY_KEY, function(err) {
-         if (err) {
-            return callback(new ValidationError(err));
-         }
+      Properties.ifPropertyKeyIsValid({ key : propertyKey })
+            .then(function() {
+               // noinspection SqlNoDataSourceInspection,SqlDialectInspection
+               databaseHelper.execute("DELETE FROM DeviceProperties WHERE clientId=? AND deviceId=? AND propertyKey=?",
+                                      [clientId, deviceId, propertyKey],
+                                      function(err, deleteResult) {
+                                         if (err) {
+                                            log.error("Error trying to delete property [" + propertyKey + "] for device [" + deviceId + "] and client [" + clientId + "]: " + err);
+                                            return callback(err);
+                                         }
 
-         // noinspection SqlNoDataSourceInspection,SqlDialectInspection
-         databaseHelper.execute("DELETE FROM DeviceProperties WHERE clientId=? AND deviceId=? AND propertyKey=?",
-                                [clientId, deviceId, propertyKey],
-                                function(err, deleteResult) {
-                                   if (err) {
-                                      log.error("Error trying to delete property [" + propertyKey + "] for device [" + deviceId + "] and client [" + clientId + "]: " + err);
-                                      return callback(err);
-                                   }
+                                         return callback(null, { propertiesDeleted : deleteResult.affectedRows });
+                                      });
 
-                                   return callback(null, { propertiesDeleted : deleteResult.affectedRows });
-                                });
-      });
+            })
+            .catch(err => callback(new ValidationError(err)));
    };
 
 };

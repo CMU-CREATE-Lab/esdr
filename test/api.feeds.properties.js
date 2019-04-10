@@ -1,26 +1,26 @@
-var should = require('should');
-var flow = require('nimble');
-var httpStatus = require('http-status');
-var superagent = require('superagent-ls');
-var requireNew = require('require-new');
-var wipe = require('./fixture-helpers/wipe');
-var setup = require('./fixture-helpers/setup');
-var createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
+const should = require('should');
+const flow = require('nimble');
+const httpStatus = require('http-status');
+const superagent = require('superagent-ls');
+const requireNew = require('require-new');
+const wipe = require('./fixture-helpers/wipe');
+const setup = require('./fixture-helpers/setup');
+const createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
 
-var config = require('../config');
+const config = require('../config');
 
-var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
-var ESDR_FEEDS_API_URL = ESDR_API_ROOT_URL + "/feeds/";
-var BOGUS_FEED_ID = 1;
+const ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
+const ESDR_FEEDS_API_URL = ESDR_API_ROOT_URL + "/feeds/";
+const BOGUS_FEED_ID = 1;
 
-var createValue = function(type, value) {
+const createValue = function(type, value) {
    return {
       type : type,
       value : value
    };
 };
 
-var setProperty = function(feedId, accessToken, propertyKey, propertyValue, callback, willDebug) {
+const setProperty = function(feedId, accessToken, propertyKey, propertyValue, callback, willDebug) {
    superagent
          .put(ESDR_FEEDS_API_URL + feedId + "/properties/" + propertyKey)
          .set(createAuthorizationHeader(accessToken))
@@ -41,7 +41,7 @@ var setProperty = function(feedId, accessToken, propertyKey, propertyValue, call
                                             });
             res.body.should.have.property('data');
 
-            var expectedResponse = {};
+            const expectedResponse = {};
             expectedResponse[propertyKey] = propertyValue.value;
             res.body.data.should.have.properties(expectedResponse);
 
@@ -49,7 +49,7 @@ var setProperty = function(feedId, accessToken, propertyKey, propertyValue, call
          });
 };
 
-var getProperty = function(feedId, accessToken, propertyKey, callback, willDebug, expectedValue) {
+const getProperty = function(feedId, accessToken, propertyKey, callback, willDebug, expectedValue) {
    superagent
          .get(ESDR_FEEDS_API_URL + feedId + "/properties/" + propertyKey)
          .set(createAuthorizationHeader(accessToken))
@@ -71,7 +71,7 @@ var getProperty = function(feedId, accessToken, propertyKey, callback, willDebug
             res.body.should.have.property('data');
 
             if (typeof expectedValue !== 'undefined') {
-               var expectedResponse = {};
+               const expectedResponse = {};
                expectedResponse[propertyKey] = expectedValue;
                res.body.data.should.have.properties(expectedResponse);
             }
@@ -80,7 +80,7 @@ var getProperty = function(feedId, accessToken, propertyKey, callback, willDebug
          });
 };
 
-var getProperties = function(feedId, accessToken, queryString, callback, willDebug, expectedResponse) {
+const getProperties = function(feedId, accessToken, queryString, callback, willDebug, expectedResponse) {
    superagent
          .get(ESDR_FEEDS_API_URL + feedId + "/properties" + queryString)
          .set(createAuthorizationHeader(accessToken))
@@ -109,7 +109,7 @@ var getProperties = function(feedId, accessToken, queryString, callback, willDeb
          });
 };
 
-var deletePropertiesForFeed = function(feedId, accessToken, callback, expectedNumPropertiesDeleted) {
+const deletePropertiesForFeed = function(feedId, accessToken, callback, expectedNumPropertiesDeleted) {
    superagent
          .del(ESDR_FEEDS_API_URL + feedId + "/properties")
          .set(createAuthorizationHeader(accessToken))
@@ -134,7 +134,7 @@ var deletePropertiesForFeed = function(feedId, accessToken, callback, expectedNu
          });
 };
 
-var deletePropertyForFeed = function(feedId, accessToken, key, callback, expectedNumPropertiesDeleted) {
+const deletePropertyForFeed = function(feedId, accessToken, key, callback, expectedNumPropertiesDeleted) {
    superagent
          .del(ESDR_FEEDS_API_URL + feedId + "/properties/" + key)
          .set(createAuthorizationHeader(accessToken))
@@ -160,21 +160,20 @@ var deletePropertyForFeed = function(feedId, accessToken, key, callback, expecte
 };
 
 describe("REST API", function() {
-   var client1 = requireNew('./fixtures/client1.json');
-   var client2 = requireNew('./fixtures/client2.json');
-   var user1 = requireNew('./fixtures/user1.json');
-   var user2 = requireNew('./fixtures/user2.json');
-   var user1Client2 = null;
-   var user2Client2 = null;
-   var product1 = requireNew('./fixtures/product1.json');
-   var product2 = requireNew('./fixtures/product2.json');
-   var device1 = requireNew('./fixtures/device1.json');
-   var device2 = requireNew('./fixtures/device2.json');
-   var device3 = requireNew('./fixtures/device3.json');
-   var feed1 = requireNew('./fixtures/feed1.json');                        // public,  user 1, product 1, device 1
-   var feed2 = requireNew('./fixtures/feed2.json');                        // private, user 1, product 1, device 1
-   var feed3 = requireNew('./fixtures/feed3.json');                        // public,  user 2, product 2, device 2
-   var feed4 = requireNew('./fixtures/feed4.json');                        // private, user 2, product 2, device 2
+   const client1 = requireNew('./fixtures/client1.json');
+   const client2 = requireNew('./fixtures/client2.json');
+   const user1 = requireNew('./fixtures/user1.json');
+   const user2 = requireNew('./fixtures/user2.json');
+   let user1Client2 = null;
+   let user2Client2 = null;
+   const product1 = requireNew('./fixtures/product1.json');
+   const product2 = requireNew('./fixtures/product2.json');
+   const device1 = requireNew('./fixtures/device1.json');
+   const device2 = requireNew('./fixtures/device2.json');
+   const feed1 = requireNew('./fixtures/feed1.json');                        // public,  user 1, product 1, device 1
+   const feed2 = requireNew('./fixtures/feed2.json');                        // private, user 1, product 1, device 1
+   const feed3 = requireNew('./fixtures/feed3.json');                        // public,  user 2, product 2, device 2
+   const feed4 = requireNew('./fixtures/feed4.json');                        // private, user 2, product 2, device 2
 
    before(function(initDone) {
       flow.series(
@@ -215,49 +214,49 @@ describe("REST API", function() {
                   setup.authenticateUserWithClient(user2Client2, client2, done);
                },
                function(done) {
-                  product1.creatorUserId = user1.id;
+                  product1.creatorUserId = user1['id'];
                   setup.createProduct(product1, done);
                },
                function(done) {
-                  product2.creatorUserId = user2.id;
+                  product2.creatorUserId = user2['id'];
                   setup.createProduct(product2, done);
                },
                function(done) {
-                  device1.userId = user1.id;
-                  device1.productId = product1.id;
+                  device1.userId = user1['id'];
+                  device1.productId = product1['id'];
                   setup.createDevice(device1, done);
                },
                function(done) {
-                  device2.userId = user2.id;
-                  device2.productId = product2.id;
+                  device2.userId = user2['id'];
+                  device2.productId = product2['id'];
                   setup.createDevice(device2, done);
                },
                function(done) {
-                  feed1.userId = user1.id;
-                  feed1.deviceId = device1.id;
-                  feed1.productId = product1.id;
-                  feed1.channelSpecs = product1.defaultChannelSpecs;
+                  feed1.userId = user1['id'];
+                  feed1.deviceId = device1['id'];
+                  feed1.productId = product1['id'];
+                  feed1.channelSpecs = product1['defaultChannelSpecs'];
                   setup.createFeed(feed1, done);
                },
                function(done) {
-                  feed2.userId = user1.id;
-                  feed2.deviceId = device1.id;
-                  feed2.productId = product1.id;
-                  feed2.channelSpecs = product1.defaultChannelSpecs;
+                  feed2.userId = user1['id'];
+                  feed2.deviceId = device1['id'];
+                  feed2.productId = product1['id'];
+                  feed2.channelSpecs = product1['defaultChannelSpecs'];
                   setup.createFeed(feed2, done);
                },
                function(done) {
-                  feed3.userId = user2.id;
-                  feed3.deviceId = device2.id;
-                  feed3.productId = product2.id;
-                  feed3.channelSpecs = product2.defaultChannelSpecs;
+                  feed3.userId = user2['id'];
+                  feed3.deviceId = device2['id'];
+                  feed3.productId = product2['id'];
+                  feed3.channelSpecs = product2['defaultChannelSpecs'];
                   setup.createFeed(feed3, done);
                },
                function(done) {
-                  feed4.userId = user2.id;
-                  feed4.deviceId = device2.id;
-                  feed4.productId = product2.id;
-                  feed4.channelSpecs = product2.defaultChannelSpecs;
+                  feed4.userId = user2['id'];
+                  feed4.deviceId = device2['id'];
+                  feed4.productId = product2['id'];
+                  feed4.channelSpecs = product2['defaultChannelSpecs'];
                   setup.createFeed(feed4, done);
                }
             ],
@@ -272,7 +271,7 @@ describe("REST API", function() {
             describe("No Authentication", function() {
                it("Should fail to set a property with no OAuth2 token specified", function(done) {
                   superagent
-                        .put(ESDR_FEEDS_API_URL + feed1.id + "/properties/foo")
+                        .put(ESDR_FEEDS_API_URL + feed1['id'] + "/properties/foo")
                         .send(createValue('int', 42))
                         .end(function(err, res) {
                            should.not.exist(err);
@@ -289,7 +288,7 @@ describe("REST API", function() {
                describe("Invalid Authentication", function() {
                   it("Should fail to set a property with an invalid OAuth2 token specified", function(done) {
                      superagent
-                           .put(ESDR_FEEDS_API_URL + feed1.id + "/properties/foo")
+                           .put(ESDR_FEEDS_API_URL + feed1['id'] + "/properties/foo")
                            .set(createAuthorizationHeader("bogus"))
                            .send(createValue('int', 42))
                            .end(function(err, res) {
@@ -303,8 +302,8 @@ describe("REST API", function() {
                   });
                   it("Should fail to set a property with an OAuth2 token for a different user", function(done) {
                      superagent
-                           .put(ESDR_FEEDS_API_URL + feed1.id + "/properties/foo")
-                           .set(createAuthorizationHeader(user2.accessToken))
+                           .put(ESDR_FEEDS_API_URL + feed1['id'] + "/properties/foo")
+                           .set(createAuthorizationHeader(user2['accessToken']))
                            .send(createValue('int', 42))
                            .end(function(err, res) {
                               should.not.exist(err);
@@ -318,19 +317,19 @@ describe("REST API", function() {
                });   // Invalid Authentication
                describe("Valid Authentication", function() {
                   describe("Success", function() {
-                     var testSetProperty = function(test) {
+                     const testSetProperty = function(test) {
                         it(test.description, function(done) {
-                           var feedId = (typeof test.feed === 'function') ? test.feed().id : test.feed.id;
+                           const feedId = (typeof test.feed === 'function') ? test.feed()['id'] : test.feed['id'];
 
                            setProperty(feedId,
-                                       test.accessToken,
+                                       test['accessToken'],
                                        test.propertyKey,
                                        test.propertyValue,
                                        function() {
                                           // now try to fetch the property through the API to verify it was set correctly
                                           getProperty(
                                                 feedId,
-                                                test.accessToken,
+                                                test['accessToken'],
                                                 test.propertyKey,
                                                 function() {
                                                    if (typeof test.additionalTests === 'function') {
@@ -348,12 +347,12 @@ describe("REST API", function() {
                         });
                      };
 
-                     var createTest = function(description, key, value, type, willDebug) {
+                     const createTest = function(description, key, value, type, willDebug) {
                         return {
                            description : description,
                            feed : feed1,
                            accessToken : function() {
-                              return user1.accessToken
+                              return user1['accessToken']
                            },
                            propertyKey : key,
                            propertyValue : createValue(type, value),
@@ -361,13 +360,13 @@ describe("REST API", function() {
                         }
                      };
 
-                     var shapeShifterInt = 42;
-                     var shapeShifterDouble = 42.00042;
-                     var shapeShifterString = "please to make englishes";
-                     var shapeShifterJson = { foo : "bar", isTest : true, num : 3.14159 };
-                     var shapeShifterBoolean = true;
+                     const shapeShifterInt = 42;
+                     const shapeShifterDouble = 42.00042;
+                     const shapeShifterString = "please to make englishes";
+                     const shapeShifterJson = { foo : "bar", isTest : true, num : 3.14159 };
+                     const shapeShifterBoolean = true;
 
-                     var shapeshifterTypes = {
+                     const shapeshifterTypes = {
                         int : shapeShifterInt,
                         double : shapeShifterDouble,
                         string : shapeShifterString,
@@ -375,8 +374,8 @@ describe("REST API", function() {
                         boolean : shapeShifterBoolean
                      };
 
-                     var createTypeSwitchTest = function(fromTypeName, toTypeName) {
-                        var propertyValue = {};
+                     const createTypeSwitchTest = function(fromTypeName, toTypeName) {
+                        const propertyValue = {};
                         propertyValue[toTypeName] = shapeshifterTypes[toTypeName];
 
                         return createTest(
@@ -472,7 +471,7 @@ describe("REST API", function() {
                            description : "Should be able to set a property for feed 1 owned by user 1 and client 1 (prep for showing properties are private to feed+user+client)",
                            feed : feed1,
                            accessToken : function() {
-                              return user1.accessToken
+                              return user1['accessToken']
                            },
                            propertyKey : 'this_is_my_property',
                            propertyValue : createValue('string', 'feed 1 user 1 client 1')
@@ -481,7 +480,7 @@ describe("REST API", function() {
                            description : "Should be able to set a property for feed 2 owned by user 1 and client 1",
                            feed : feed2,
                            accessToken : function() {
-                              return user1.accessToken
+                              return user1['accessToken']
                            },
                            propertyKey : 'this_is_my_property',
                            propertyValue : createValue('string', 'feed 2 user 1 client 1')
@@ -490,7 +489,7 @@ describe("REST API", function() {
                            description : "Should be able to set a property for feed 1 owned by user 1 and client 2",
                            feed : feed1,
                            accessToken : function() {
-                              return user1Client2.accessToken
+                              return user1Client2['accessToken']
                            },
                            propertyKey : 'this_is_my_property',
                            propertyValue : createValue('string', 'feed 1 user 1 client 2')
@@ -499,7 +498,7 @@ describe("REST API", function() {
                            description : "Should be able to set a property for feed 2 owned by user 1 and client 2",
                            feed : feed2,
                            accessToken : function() {
-                              return user1Client2.accessToken
+                              return user1Client2['accessToken']
                            },
                            propertyKey : 'this_is_my_property',
                            propertyValue : createValue('string', 'feed 2 user 1 client 2')
@@ -509,7 +508,7 @@ describe("REST API", function() {
                            description : "Should be able to set a property for feed 3 owned by user 2 and client 1",
                            feed : feed3,
                            accessToken : function() {
-                              return user2.accessToken
+                              return user2['accessToken']
                            },
                            propertyKey : 'this_is_my_property',
                            propertyValue : createValue('string', 'feed 3 user 2 client 1')
@@ -518,7 +517,7 @@ describe("REST API", function() {
                            description : "Should be able to set a property for feed 4 owned by user 2 and client 1",
                            feed : feed4,
                            accessToken : function() {
-                              return user2.accessToken
+                              return user2['accessToken']
                            },
                            propertyKey : 'this_is_my_property',
                            propertyValue : createValue('string', 'feed 4 user 2 client 1')
@@ -527,7 +526,7 @@ describe("REST API", function() {
                            description : "Should be able to set a property for feed 3 owned by user 2 and client 2",
                            feed : feed3,
                            accessToken : function() {
-                              return user2Client2.accessToken
+                              return user2Client2['accessToken']
                            },
                            propertyKey : 'this_is_my_property',
                            propertyValue : createValue('string', 'feed 3 user 2 client 2')
@@ -536,21 +535,21 @@ describe("REST API", function() {
                            description : "Should be able to set a property for feed 4 owned by user 2 and client 2",
                            feed : feed4,
                            accessToken : function() {
-                              return user2Client2.accessToken
+                              return user2Client2['accessToken']
                            },
                            propertyKey : 'this_is_my_property',
                            propertyValue : createValue('string', 'feed 4 user 2 client 2'),
                            additionalTests : function(done) {
                               // now verify the properties
-                              var key = 'this_is_my_property';
-                              getProperty(feed1.id, user1.accessToken, key, function() {
-                                 getProperty(feed2.id, user1.accessToken, key, function() {
-                                    getProperty(feed1.id, user1Client2.accessToken, key, function() {
-                                       getProperty(feed2.id, user1Client2.accessToken, key, function() {
-                                          getProperty(feed3.id, user2.accessToken, key, function() {
-                                             getProperty(feed4.id, user2.accessToken, key, function() {
-                                                getProperty(feed3.id, user2Client2.accessToken, key, function() {
-                                                   getProperty(feed4.id, user2Client2.accessToken, key, function() {
+                              const key = 'this_is_my_property';
+                              getProperty(feed1['id'], user1['accessToken'], key, function() {
+                                 getProperty(feed2['id'], user1['accessToken'], key, function() {
+                                    getProperty(feed1['id'], user1Client2['accessToken'], key, function() {
+                                       getProperty(feed2['id'], user1Client2['accessToken'], key, function() {
+                                          getProperty(feed3['id'], user2['accessToken'], key, function() {
+                                             getProperty(feed4['id'], user2['accessToken'], key, function() {
+                                                getProperty(feed3['id'], user2Client2['accessToken'], key, function() {
+                                                   getProperty(feed4['id'], user2Client2['accessToken'], key, function() {
                                                       done();
                                                    }, false, 'feed 4 user 2 client 2');
                                                 }, false, 'feed 3 user 2 client 2');
@@ -569,7 +568,7 @@ describe("REST API", function() {
                      it("Should fail to set a property for a non-existent feed", function(done) {
                         superagent
                               .put(ESDR_FEEDS_API_URL + BOGUS_FEED_ID + "/properties/foo")
-                              .set(createAuthorizationHeader(user1.accessToken))
+                              .set(createAuthorizationHeader(user1['accessToken']))
                               .send(createValue('int', 42))
                               .end(function(err, res) {
                                  should.not.exist(err);
@@ -581,11 +580,11 @@ describe("REST API", function() {
                               });
                      });
 
-                     var testSetPropertyValidation = function(test) {
+                     const testSetPropertyValidation = function(test) {
                         it(test.description, function(done) {
                            superagent
-                                 .put(ESDR_FEEDS_API_URL + test.feed.id + "/properties/" + test.propertyKey)
-                                 .set(createAuthorizationHeader(test.accessToken))
+                                 .put(ESDR_FEEDS_API_URL + test.feed['id'] + "/properties/" + test.propertyKey)
+                                 .set(createAuthorizationHeader(test['accessToken']))
                                  .send(test.propertyValue)
                                  .end(function(err, res) {
                                     should.not.exist(err);
@@ -602,10 +601,10 @@ describe("REST API", function() {
                                                                        status : 'error'
                                                                     });
 
-                                    var expectedValidationItems = test.getExpectedValidationItems();
+                                    const expectedValidationItems = test.getExpectedValidationItems();
                                     res.body.should.have.property('data');
-                                    res.body.data.should.have.length(expectedValidationItems.length);
-                                    res.body.data.forEach(function(validationItem, index) {
+                                    res.body.data.errors.should.have.length(expectedValidationItems.length);
+                                    res.body.data.errors.forEach(function(validationItem, index) {
                                        validationItem.should.have.properties(expectedValidationItems[index]);
                                     });
 
@@ -614,12 +613,12 @@ describe("REST API", function() {
                         });
                      };
 
-                     var createValidationTest = function(description, key, value, type, expectedValidationItems, willDebug) {
+                     const createValidationTest = function(description, key, value, type, expectedValidationItems, willDebug) {
                         return {
                            description : description,
                            feed : feed1,
                            accessToken : function() {
-                              return user1.accessToken
+                              return user1['accessToken']
                            },
                            propertyKey : key,
                            propertyValue : createValue(type, value),
@@ -630,20 +629,19 @@ describe("REST API", function() {
                         }
                      };
 
-                     var createSimpleValidationTest = function(description, key, value, type, constraintType, testedType, willDebug) {
+                     const createSimpleValidationTest = function(description, key, value, type, constraintType, willDebug) {
                         return createValidationTest(description,
                                                     key,
                                                     value,
                                                     type,
                                                     [
                                                        {
-                                                          instanceContext : '#/value',
-                                                          constraintName : 'type',
-                                                          constraintValue : [
-                                                             constraintType,
-                                                             "null"
-                                                          ],
-                                                          testedValue : testedType
+                                                          "keyword" : "type",
+                                                          "dataPath" : ".value",
+                                                          "schemaPath" : "#/properties/value/type",
+                                                          "params" : {
+                                                             "type" : constraintType + ",null"
+                                                          }
                                                        }
                                                     ],
                                                     willDebug);
@@ -654,178 +652,107 @@ describe("REST API", function() {
                                                    'bad_int',
                                                    3.1415926535,
                                                    'int',
-                                                   'integer',
-                                                   'number'),
+                                                   'integer'),
                         createSimpleValidationTest("Should fail to set an integer property to a string",
                                                    'bad_int',
                                                    '42',
                                                    'int',
-                                                   'integer',
-                                                   'string'),
+                                                   'integer'),
                         createSimpleValidationTest("Should fail to set an integer property to an object",
                                                    'bad_int',
                                                    { foo : "bar", baz : 343 },
                                                    'int',
-                                                   'integer',
-                                                   'object'),
+                                                   'integer'),
                         createSimpleValidationTest("Should fail to set an integer property to a boolean",
                                                    'bad_int',
                                                    true,
                                                    'int',
-                                                   'integer',
-                                                   'boolean'),
-                        createValidationTest("Should fail to set an integer property to an array",
-                                             'bad_int',
-                                             [1, 2, 3],
-                                             'int',
-                                             [
-                                                {
-                                                   instanceContext : '#/value',
-                                                   constraintName : 'type',
-                                                   constraintValue : [
-                                                      "integer",
-                                                      "number",
-                                                      "string",
-                                                      "object",
-                                                      "boolean",
-                                                      "null"
-                                                   ],
-                                                   testedValue : 'array'
-                                                }
-                                             ]),
+                                                   'integer'),
+                        createSimpleValidationTest("Should fail to set an integer property to an array",
+                                                   'bad_int',
+                                                   [1, 2, 3],
+                                                   'int',
+                                                   'integer,number,string,object,boolean'),
                         createSimpleValidationTest("Should fail to set an double property to a string",
                                                    'bad_double',
                                                    '42',
                                                    'double',
-                                                   'number',
-                                                   'string'),
+                                                   'number'),
                         createSimpleValidationTest("Should fail to set an double property to an object",
                                                    'bad_double',
                                                    { foo : "bar", baz : 343 },
                                                    'double',
-                                                   'number',
-                                                   'object'),
+                                                   'number'),
                         createSimpleValidationTest("Should fail to set an double property to a boolean",
                                                    'bad_double',
                                                    true,
                                                    'double',
-                                                   'number',
-                                                   'boolean'),
-                        createValidationTest("Should fail to set an double property to an array",
-                                             'bad_double',
-                                             [1, 2, 3],
-                                             'double',
-                                             [
-                                                {
-                                                   instanceContext : '#/value',
-                                                   constraintName : 'type',
-                                                   constraintValue : [
-                                                      "integer",
-                                                      "number",
-                                                      "string",
-                                                      "object",
-                                                      "boolean",
-                                                      "null"
-                                                   ],
-                                                   testedValue : 'array'
-                                                }
-                                             ]),
+                                                   'number'),
+                        createSimpleValidationTest("Should fail to set an double property to an array",
+                                                   'bad_double',
+                                                   [1, 2, 3],
+                                                   'double',
+                                                   'integer,number,string,object,boolean'),
                         createSimpleValidationTest("Should fail to set a string property to an integer",
                                                    'bad_string',
                                                    42,
                                                    'string',
-                                                   'string',
-                                                   'integer'),
+                                                   'string'),
                         createSimpleValidationTest("Should fail to set a string property to an double",
                                                    'bad_string',
                                                    42.42,
                                                    'string',
-                                                   'string',
-                                                   'number'),
+                                                   'string'),
                         createSimpleValidationTest("Should fail to set a string property to an object",
                                                    'bad_string',
                                                    { foo : "bar", baz : 343 },
                                                    'string',
-                                                   'string',
-                                                   'object'),
+                                                   'string'),
                         createSimpleValidationTest("Should fail to set a string property to a boolean",
                                                    'bad_string',
                                                    true,
                                                    'string',
+                                                   'string'),
+                        createSimpleValidationTest("Should fail to set a string property to an array",
+                                                   'bad_string',
+                                                   [1, 2, 3],
                                                    'string',
-                                                   'boolean'),
-                        createValidationTest("Should fail to set a string property to an array",
-                                             'bad_string',
-                                             [1, 2, 3],
-                                             'string',
-                                             [
-                                                {
-                                                   instanceContext : '#/value',
-                                                   constraintName : 'type',
-                                                   constraintValue : [
-                                                      "integer",
-                                                      "number",
-                                                      "string",
-                                                      "object",
-                                                      "boolean",
-                                                      "null"
-                                                   ],
-                                                   testedValue : 'array'
-                                                }
-                                             ]),
+                                                   'integer,number,string,object,boolean'),
 
                         createSimpleValidationTest("Should fail to set a json property to an integer",
                                                    'bad_json',
                                                    42,
                                                    'json',
-                                                   'object',
-                                                   'integer'),
+                                                   'object'),
                         createSimpleValidationTest("Should fail to set a json property to an double",
                                                    'bad_json',
                                                    42.42,
                                                    'json',
-                                                   'object',
-                                                   'number'),
+                                                   'object'),
                         createSimpleValidationTest("Should fail to set a json property to a string",
                                                    'bad_json',
                                                    '42',
                                                    'json',
-                                                   'object',
-                                                   'string'),
+                                                   'object'),
                         createSimpleValidationTest("Should fail to set a json property to a boolean",
                                                    'bad_json',
                                                    true,
                                                    'json',
-                                                   'object',
-                                                   'boolean'),
-                        createValidationTest("Should fail to set a json property to an array",
-                                             'bad_json',
-                                             [1, 2, 3],
-                                             'json',
-                                             [
-                                                {
-                                                   instanceContext : '#/value',
-                                                   constraintName : 'type',
-                                                   constraintValue : [
-                                                      "integer",
-                                                      "number",
-                                                      "string",
-                                                      "object",
-                                                      "boolean",
-                                                      "null"
-                                                   ],
-                                                   testedValue : 'array'
-                                                }
-                                             ]),
+                                                   'object'),
+                        createSimpleValidationTest("Should fail to set a json property to an array",
+                                                   'bad_json',
+                                                   [1, 2, 3],
+                                                   'json',
+                                                   'integer,number,string,object,boolean'),
                         createValidationTest("Should fail to set a property with an invalid key (has a space)",
                                              'bad key',
                                              42,
                                              'int',
                                              [
                                                 {
-                                                   constraintName : 'pattern',
-                                                   instanceContext : '#/key',
-                                                   kind : 'StringValidationError'
+                                                   "keyword" : "pattern",
+                                                   "dataPath" : ".key",
+                                                   "schemaPath" : "#/properties/key/pattern"
                                                 }
                                              ]),
                         createValidationTest("Should fail to set a property with an invalid key (starts with a number)",
@@ -834,9 +761,9 @@ describe("REST API", function() {
                                              'int',
                                              [
                                                 {
-                                                   constraintName : 'pattern',
-                                                   instanceContext : '#/key',
-                                                   kind : 'StringValidationError'
+                                                   "keyword" : "pattern",
+                                                   "dataPath" : ".key",
+                                                   "schemaPath" : "#/properties/key/pattern"
                                                 }
                                              ]),
                         createValidationTest("Should fail to set a property with an invalid key (starts with an underscore)",
@@ -845,9 +772,9 @@ describe("REST API", function() {
                                              'int',
                                              [
                                                 {
-                                                   constraintName : 'pattern',
-                                                   instanceContext : '#/key',
-                                                   kind : 'StringValidationError'
+                                                   "keyword" : "pattern",
+                                                   "dataPath" : ".key",
+                                                   "schemaPath" : "#/properties/key/pattern"
                                                 }
                                              ]),
                         createValidationTest("Should fail to set a property with an invalid key (too long)",
@@ -856,9 +783,9 @@ describe("REST API", function() {
                                              'int',
                                              [
                                                 {
-                                                   constraintName : 'maxLength',
-                                                   instanceContext : '#/key',
-                                                   kind : 'StringValidationError'
+                                                   "keyword" : "maxLength",
+                                                   "dataPath" : ".key",
+                                                   "schemaPath" : "#/properties/key/maxLength"
                                                 }
                                              ]),
                         createValidationTest("Should fail to set a string property with a value that is too long",
@@ -867,9 +794,9 @@ describe("REST API", function() {
                                              'string',
                                              [
                                                 {
-                                                   constraintName : 'maxLength',
-                                                   instanceContext : '#/value',
-                                                   kind : 'StringValidationError'
+                                                   "keyword" : "maxLength",
+                                                   "dataPath" : ".value",
+                                                   "schemaPath" : "#/properties/value/maxLength"
                                                 }
                                              ])
                      ].forEach(testSetPropertyValidation);
@@ -881,11 +808,12 @@ describe("REST API", function() {
 
          describe("Get and Delete", function() {
 
-            var propertiesByUserIdFeedIdAndAccessToken = {};
+            const propertiesByUserIdFeedIdAndAccessToken = {};
 
-            var getPropertiesForFeed = function(userId, feedId, accessToken, done) {
-               var expectedProperties = {};
-               for (var key in propertiesByUserIdFeedIdAndAccessToken[userId][feedId][accessToken]) {
+            const getPropertiesForFeed = function(userId, feedId, accessToken, done) {
+               const expectedProperties = {};
+               for (const key in propertiesByUserIdFeedIdAndAccessToken[userId][feedId][accessToken]) {
+                  // noinspection JSUnfilteredForInLoop
                   expectedProperties[key] = propertiesByUserIdFeedIdAndAccessToken[userId][feedId][accessToken][key].value;
                }
                getProperties(
@@ -899,10 +827,10 @@ describe("REST API", function() {
             };
 
             before(function(initDone) {
-               propertiesByUserIdFeedIdAndAccessToken[user1.id] = {};
-               propertiesByUserIdFeedIdAndAccessToken[user1.id][feed1.id] = {};
-               propertiesByUserIdFeedIdAndAccessToken[user1.id][feed2.id] = {};
-               propertiesByUserIdFeedIdAndAccessToken[user1.id][feed1.id][user1.accessToken] = {
+               propertiesByUserIdFeedIdAndAccessToken[user1['id']] = {};
+               propertiesByUserIdFeedIdAndAccessToken[user1['id']][feed1['id']] = {};
+               propertiesByUserIdFeedIdAndAccessToken[user1['id']][feed2['id']] = {};
+               propertiesByUserIdFeedIdAndAccessToken[user1['id']][feed1['id']][user1['accessToken']] = {
                   'prop1' : createValue('int', 123),
                   'prop2' : createValue('double', 12.3),
                   'prop3' : createValue('string', 'this is user1Feed1Client1 prop 3'),
@@ -910,7 +838,7 @@ describe("REST API", function() {
                   'prop5' : createValue('boolean', true),
                   'user1Feed1Client1Prop' : createValue('string', 'user1Feed1Client1Prop value')
                };
-               propertiesByUserIdFeedIdAndAccessToken[user1Client2.id][feed1.id][user1Client2.accessToken] = {
+               propertiesByUserIdFeedIdAndAccessToken[user1Client2['id']][feed1['id']][user1Client2['accessToken']] = {
                   'prop1' : createValue('int', 456),
                   'prop2' : createValue('double', 45.6),
                   'prop3' : createValue('string', 'this is user1Feed1Client2 prop 3'),
@@ -918,7 +846,7 @@ describe("REST API", function() {
                   'prop5' : createValue('boolean', false),
                   'user1Feed1Client2Prop' : createValue('string', 'user1Feed1Client2Prop value')
                };
-               propertiesByUserIdFeedIdAndAccessToken[user1.id][feed2.id][user1.accessToken] = {
+               propertiesByUserIdFeedIdAndAccessToken[user1['id']][feed2['id']][user1['accessToken']] = {
                   'prop1' : createValue('int', 1230),
                   'prop2' : createValue('double', 120.3),
                   'prop3' : createValue('string', 'this is user1Feed2Client1 prop 3'),
@@ -926,7 +854,7 @@ describe("REST API", function() {
                   'prop5' : createValue('boolean', true),
                   'user1Feed2Client1Prop' : createValue('string', 'user1Feed2Client1Prop value')
                };
-               propertiesByUserIdFeedIdAndAccessToken[user1Client2.id][feed2.id][user1Client2.accessToken] = {
+               propertiesByUserIdFeedIdAndAccessToken[user1Client2['id']][feed2['id']][user1Client2['accessToken']] = {
                   'prop1' : createValue('int', 4560),
                   'prop2' : createValue('double', 450.6),
                   'prop3' : createValue('string', 'this is user1Feed2Client2 prop 3'),
@@ -935,10 +863,10 @@ describe("REST API", function() {
                   'user1Feed2Client2Prop' : createValue('string', 'user1Feed2Client2Prop value')
                };
 
-               propertiesByUserIdFeedIdAndAccessToken[user2.id] = {};
-               propertiesByUserIdFeedIdAndAccessToken[user2.id][feed3.id] = {};
-               propertiesByUserIdFeedIdAndAccessToken[user2.id][feed4.id] = {};
-               propertiesByUserIdFeedIdAndAccessToken[user2.id][feed3.id][user2.accessToken] = {
+               propertiesByUserIdFeedIdAndAccessToken[user2['id']] = {};
+               propertiesByUserIdFeedIdAndAccessToken[user2['id']][feed3['id']] = {};
+               propertiesByUserIdFeedIdAndAccessToken[user2['id']][feed4['id']] = {};
+               propertiesByUserIdFeedIdAndAccessToken[user2['id']][feed3['id']][user2['accessToken']] = {
                   'prop1' : createValue('int', 789),
                   'prop2' : createValue('double', 78.9),
                   'prop3' : createValue('string', 'this is user2Feed3Client1 prop 3'),
@@ -946,7 +874,7 @@ describe("REST API", function() {
                   'prop5' : createValue('boolean', true),
                   'user2Feed3Client1Prop' : createValue('string', 'user2Feed3Client1Prop value')
                };
-               propertiesByUserIdFeedIdAndAccessToken[user2Client2.id][feed3.id][user2Client2.accessToken] = {
+               propertiesByUserIdFeedIdAndAccessToken[user2Client2['id']][feed3['id']][user2Client2['accessToken']] = {
                   'prop1' : createValue('int', 112233),
                   'prop2' : createValue('double', -1.12233),
                   'prop3' : createValue('string', 'this is user2Feed3Client2 prop 3'),
@@ -954,7 +882,7 @@ describe("REST API", function() {
                   'prop5' : createValue('boolean', false),
                   'user2Feed3Client2Prop' : createValue('string', 'user2Feed3Client2Prop value')
                };
-               propertiesByUserIdFeedIdAndAccessToken[user2.id][feed4.id][user2.accessToken] = {
+               propertiesByUserIdFeedIdAndAccessToken[user2['id']][feed4['id']][user2['accessToken']] = {
                   'prop1' : createValue('int', 7890),
                   'prop2' : createValue('double', 780.9),
                   'prop3' : createValue('string', 'this is user2Feed4Client1 prop 3'),
@@ -962,7 +890,7 @@ describe("REST API", function() {
                   'prop5' : createValue('boolean', true),
                   'user2Feed4Client1Prop' : createValue('string', 'user2Feed4Client1Prop value')
                };
-               propertiesByUserIdFeedIdAndAccessToken[user2Client2.id][feed4.id][user2Client2.accessToken] = {
+               propertiesByUserIdFeedIdAndAccessToken[user2Client2['id']][feed4['id']][user2Client2['accessToken']] = {
                   'prop1' : createValue('int', 1122330),
                   'prop2' : createValue('double', -10.12233),
                   'prop3' : createValue('string', 'this is user2Feed4Client2 prop 3'),
@@ -971,26 +899,26 @@ describe("REST API", function() {
                   'user2Feed4Client2Prop' : createValue('string', 'user2Feed4Client2Prop value')
                };
 
-               var createCommand = function(user, feed, key, value) {
+               const createCommand = function(user, feed, key, value) {
                   commands.push(function(done) {
-                     setProperty(feed.id, user.accessToken, key, value, done);
+                     setProperty(feed['id'], user['accessToken'], key, value, done);
                   });
                };
-               var createCommandsForUserAndFeed = function(user, feed) {
+               const createCommandsForUserAndFeed = function(user, feed) {
                   // start by creating a command to delete this feed's properties
                   commands.push(function(done) {
-                     deletePropertiesForFeed(feed.id, user.accessToken, done);
+                     deletePropertiesForFeed(feed['id'], user['accessToken'], done);
                   });
 
                   // now add commands to create the above properties for this user
-                  var props = propertiesByUserIdFeedIdAndAccessToken[user.id][feed.id][user.accessToken];
+                  const props = propertiesByUserIdFeedIdAndAccessToken[user['id']][feed['id']][user['accessToken']];
                   Object.keys(props).forEach(function(key) {
-                     var val = props[key];
+                     const val = props[key];
                      createCommand(user, feed, key, val)
                   });
                };
 
-               var commands = [];
+               const commands = [];
                createCommandsForUserAndFeed(user1, feed1);
                createCommandsForUserAndFeed(user1, feed2);
                createCommandsForUserAndFeed(user1Client2, feed1);
@@ -1008,7 +936,7 @@ describe("REST API", function() {
                   describe("No Authentication", function() {
                      it("Should fail to get a property with no OAuth2 token specified", function(done) {
                         superagent
-                              .get(ESDR_FEEDS_API_URL + feed1.id + "/properties/prop1")
+                              .get(ESDR_FEEDS_API_URL + feed1['id'] + "/properties/prop1")
                               .end(function(err, res) {
                                  should.not.exist(err);
                                  should.exist(res);
@@ -1024,7 +952,7 @@ describe("REST API", function() {
                      describe("Invalid Authentication", function() {
                         it("Should fail to get a property with an invalid OAuth2 token specified", function(done) {
                            superagent
-                                 .get(ESDR_FEEDS_API_URL + feed1.id + "/properties/prop1")
+                                 .get(ESDR_FEEDS_API_URL + feed1['id'] + "/properties/prop1")
                                  .set(createAuthorizationHeader("bogus"))
                                  .end(function(err, res) {
                                     should.not.exist(err);
@@ -1039,13 +967,13 @@ describe("REST API", function() {
 
                      describe("Valid Authentication", function() {
                         describe("Success", function() {
-                           var getExistingProperty = function(user, feed, key, done) {
-                              getProperty(feed.id,
-                                          user.accessToken,
+                           const getExistingProperty = function(user, feed, key, done) {
+                              getProperty(feed['id'],
+                                          user['accessToken'],
                                           key,
                                           done,
                                           false,
-                                          propertiesByUserIdFeedIdAndAccessToken[user.id][feed.id][user.accessToken][key].value);
+                                          propertiesByUserIdFeedIdAndAccessToken[user['id']][feed['id']][user['accessToken']][key].value);
                            };
 
                            it("Should be able to get prop1 for user 1 feed 1 client 1", function(done) {
@@ -1207,7 +1135,7 @@ describe("REST API", function() {
                            it("Should fail to get a property for a non-existent feed", function(done) {
                               superagent
                                     .get(ESDR_FEEDS_API_URL + BOGUS_FEED_ID + "/properties/foo")
-                                    .set(createAuthorizationHeader(user1.accessToken))
+                                    .set(createAuthorizationHeader(user1['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1219,8 +1147,8 @@ describe("REST API", function() {
                            });
                            it("Should fail to get a property with a valid OAuth2 token, but for the wrong user", function(done) {
                               superagent
-                                    .get(ESDR_FEEDS_API_URL + feed1.id + "/properties/prop1")
-                                    .set(createAuthorizationHeader(user2.accessToken))
+                                    .get(ESDR_FEEDS_API_URL + feed1['id'] + "/properties/prop1")
+                                    .set(createAuthorizationHeader(user2['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1232,8 +1160,8 @@ describe("REST API", function() {
                            });
                            it("Should fail to get a property with a valid OAuth2 token for the same user, but a different client", function(done) {
                               superagent
-                                    .get(ESDR_FEEDS_API_URL + feed1.id + "/properties/user1Feed1Client1Prop")
-                                    .set(createAuthorizationHeader(user1Client2.accessToken))
+                                    .get(ESDR_FEEDS_API_URL + feed1['id'] + "/properties/user1Feed1Client1Prop")
+                                    .set(createAuthorizationHeader(user1Client2['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1245,8 +1173,8 @@ describe("REST API", function() {
                            });
                            it("Should fail to get a non-existent property", function(done) {
                               superagent
-                                    .get(ESDR_FEEDS_API_URL + feed1.id + "/properties/no_such_property")
-                                    .set(createAuthorizationHeader(user1.accessToken))
+                                    .get(ESDR_FEEDS_API_URL + feed1['id'] + "/properties/no_such_property")
+                                    .set(createAuthorizationHeader(user1['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1258,8 +1186,8 @@ describe("REST API", function() {
                            });
                            it("Should fail to get a property with an invalid key", function(done) {
                               superagent
-                                    .get(ESDR_FEEDS_API_URL + feed3.id + "/properties/bad-key")
-                                    .set(createAuthorizationHeader(user2.accessToken))
+                                    .get(ESDR_FEEDS_API_URL + feed3['id'] + "/properties/bad-key")
+                                    .set(createAuthorizationHeader(user2['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1271,14 +1199,14 @@ describe("REST API", function() {
                                                                           status : 'error'
                                                                        });
 
-                                       var expectedValidationItems = [{
-                                          constraintName : 'pattern',
-                                          instanceContext : '#/key',
-                                          kind : 'StringValidationError'
+                                       const expectedValidationItems = [{
+                                          "keyword" : "pattern",
+                                          "dataPath" : ".key",
+                                          "schemaPath" : "#/properties/key/pattern"
                                        }];
                                        res.body.should.have.property('data');
-                                       res.body.data.should.have.length(expectedValidationItems.length);
-                                       res.body.data.forEach(function(validationItem, index) {
+                                       res.body.data.errors.should.have.length(expectedValidationItems.length);
+                                       res.body.data.errors.forEach(function(validationItem, index) {
                                           validationItem.should.have.properties(expectedValidationItems[index]);
                                        });
 
@@ -1294,7 +1222,7 @@ describe("REST API", function() {
                   describe("No Authentication", function() {
                      it("Should fail to get properties with no OAuth2 token specified", function(done) {
                         superagent
-                              .get(ESDR_FEEDS_API_URL + feed1.id + "/properties")
+                              .get(ESDR_FEEDS_API_URL + feed1['id'] + "/properties")
                               .end(function(err, res) {
                                  should.not.exist(err);
                                  should.exist(res);
@@ -1310,7 +1238,7 @@ describe("REST API", function() {
                      describe("Invalid Authentication", function() {
                         it("Should fail to get properties with an invalid OAuth2 token specified", function(done) {
                            superagent
-                                 .get(ESDR_FEEDS_API_URL + feed1.id + "/properties")
+                                 .get(ESDR_FEEDS_API_URL + feed1['id'] + "/properties")
                                  .set(createAuthorizationHeader("bogus"))
                                  .end(function(err, res) {
                                     should.not.exist(err);
@@ -1326,35 +1254,35 @@ describe("REST API", function() {
                      describe("Valid Authentication", function() {
                         describe("Success", function() {
                            it("Should be able to get properties for user 1 feed 1 client 1", function(done) {
-                              getPropertiesForFeed(user1.id, feed1.id, user1.accessToken, done);
+                              getPropertiesForFeed(user1['id'], feed1['id'], user1['accessToken'], done);
                            });
                            it("Should be able to get properties for user 1 feed 2 client 1", function(done) {
-                              getPropertiesForFeed(user1.id, feed2.id, user1.accessToken, done);
+                              getPropertiesForFeed(user1['id'], feed2['id'], user1['accessToken'], done);
                            });
                            it("Should be able to get properties for user 1 feed 1 client 2", function(done) {
-                              getPropertiesForFeed(user1Client2.id, feed1.id, user1Client2.accessToken, done);
+                              getPropertiesForFeed(user1Client2['id'], feed1['id'], user1Client2['accessToken'], done);
                            });
                            it("Should be able to get properties for user 1 feed 2 client 2", function(done) {
-                              getPropertiesForFeed(user1Client2.id, feed2.id, user1Client2.accessToken, done);
+                              getPropertiesForFeed(user1Client2['id'], feed2['id'], user1Client2['accessToken'], done);
                            });
 
                            it("Should be able to get properties for user 2 feed 3 client 1", function(done) {
-                              getPropertiesForFeed(user2.id, feed3.id, user2.accessToken, done);
+                              getPropertiesForFeed(user2['id'], feed3['id'], user2['accessToken'], done);
                            });
                            it("Should be able to get properties for user 2 feed 4 client 1", function(done) {
-                              getPropertiesForFeed(user2.id, feed4.id, user2.accessToken, done);
+                              getPropertiesForFeed(user2['id'], feed4['id'], user2['accessToken'], done);
                            });
                            it("Should be able to get properties for user 2 feed 3 client 2", function(done) {
-                              getPropertiesForFeed(user2Client2.id, feed3.id, user2Client2.accessToken, done);
+                              getPropertiesForFeed(user2Client2['id'], feed3['id'], user2Client2['accessToken'], done);
                            });
                            it("Should be able to get properties for user 2 feed 4 client 2", function(done) {
-                              getPropertiesForFeed(user2Client2.id, feed4.id, user2Client2.accessToken, done);
+                              getPropertiesForFeed(user2Client2['id'], feed4['id'], user2Client2['accessToken'], done);
                            });
 
                            it("Should be able to use query string to select only properties of type string", function(done) {
                               getProperties(
-                                    feed1.id,
-                                    user1.accessToken,
+                                    feed1['id'],
+                                    user1['accessToken'],
                                     "?where=type=string",
                                     done,
                                     false,
@@ -1366,8 +1294,8 @@ describe("REST API", function() {
                            });
                            it("Should be able to use query string to select only properties of type string or int", function(done) {
                               getProperties(
-                                    feed1.id,
-                                    user1.accessToken,
+                                    feed1['id'],
+                                    user1['accessToken'],
                                     "?whereOr=type=string,type=int",
                                     done,
                                     false,
@@ -1380,8 +1308,8 @@ describe("REST API", function() {
                            });
                            it("Should be able to use query string to select only specific property keys", function(done) {
                               getProperties(
-                                    feed3.id,
-                                    user2.accessToken,
+                                    feed3['id'],
+                                    user2['accessToken'],
                                     "?whereOr=key=prop2,key=prop5",
                                     done,
                                     false,
@@ -1393,8 +1321,8 @@ describe("REST API", function() {
                            });
                            it("Should be able to use query string to select only specific property keys or keys of type json", function(done) {
                               getProperties(
-                                    feed3.id,
-                                    user2Client2.accessToken,
+                                    feed3['id'],
+                                    user2Client2['accessToken'],
                                     "?whereOr=key=prop2,key=prop5,type=json",
                                     done,
                                     false,
@@ -1411,7 +1339,7 @@ describe("REST API", function() {
                            it("Should fail to get properties for a non-existent feed", function(done) {
                               superagent
                                     .get(ESDR_FEEDS_API_URL + BOGUS_FEED_ID + "/properties")
-                                    .set(createAuthorizationHeader(user1.accessToken))
+                                    .set(createAuthorizationHeader(user1['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1423,8 +1351,8 @@ describe("REST API", function() {
                            });
                            it("Should fail to get properties with a valid OAuth2 token, but for the wrong user", function(done) {
                               superagent
-                                    .get(ESDR_FEEDS_API_URL + feed1.id + "/properties")
-                                    .set(createAuthorizationHeader(user2.accessToken))
+                                    .get(ESDR_FEEDS_API_URL + feed1['id'] + "/properties")
+                                    .set(createAuthorizationHeader(user2['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1445,7 +1373,7 @@ describe("REST API", function() {
                   describe("No Authentication", function() {
                      it("Should fail to delete properties with no OAuth2 token specified", function(done) {
                         superagent
-                              .del(ESDR_FEEDS_API_URL + feed1.id + "/properties")
+                              .del(ESDR_FEEDS_API_URL + feed1['id'] + "/properties")
                               .end(function(err, res) {
                                  should.not.exist(err);
                                  should.exist(res);
@@ -1461,7 +1389,7 @@ describe("REST API", function() {
                      describe("Invalid Authentication", function() {
                         it("Should fail to delete properties with an invalid OAuth2 token specified", function(done) {
                            superagent
-                                 .del(ESDR_FEEDS_API_URL + feed1.id + "/properties")
+                                 .del(ESDR_FEEDS_API_URL + feed1['id'] + "/properties")
                                  .set(createAuthorizationHeader("bogus"))
                                  .end(function(err, res) {
                                     should.not.exist(err);
@@ -1478,21 +1406,21 @@ describe("REST API", function() {
                         describe("Success", function() {
                            it("Should be able to delete properties for user 1 feed 1 client 1", function(done) {
                               deletePropertiesForFeed(
-                                    feed1.id,
-                                    user1.accessToken,
+                                    feed1['id'],
+                                    user1['accessToken'],
                                     done,
-                                    Object.keys(propertiesByUserIdFeedIdAndAccessToken[user1.id][feed1.id][user1.accessToken]).length
+                                    Object.keys(propertiesByUserIdFeedIdAndAccessToken[user1['id']][feed1['id']][user1['accessToken']]).length
                               );
                            });
                            it("Should be able to delete properties again for user 1 feed 1 client 1, without error", function(done) {
                               deletePropertiesForFeed(
-                                    feed1.id,
-                                    user1.accessToken,
+                                    feed1['id'],
+                                    user1['accessToken'],
                                     function() {
                                        // verify there are now no properties for this user
                                        getProperties(
-                                             feed1.id,
-                                             user1.accessToken,
+                                             feed1['id'],
+                                             user1['accessToken'],
                                              '',
                                              done,
                                              false,
@@ -1505,39 +1433,39 @@ describe("REST API", function() {
                            it("Verify that deleting one user's feed properties shouldn't affect any other user's feed properties", function(done) {
                               // verify that other user properties are untouched
                               getPropertiesForFeed(
-                                    user1Client2.id,
-                                    feed1.id,
-                                    user1Client2.accessToken,
+                                    user1Client2['id'],
+                                    feed1['id'],
+                                    user1Client2['accessToken'],
                                     function() {
                                        getPropertiesForFeed(
-                                             user1.id,
-                                             feed2.id,
-                                             user1.accessToken,
+                                             user1['id'],
+                                             feed2['id'],
+                                             user1['accessToken'],
                                              function() {
                                                 getPropertiesForFeed(
-                                                      user1Client2.id,
-                                                      feed2.id,
-                                                      user1Client2.accessToken,
+                                                      user1Client2['id'],
+                                                      feed2['id'],
+                                                      user1Client2['accessToken'],
                                                       function() {
                                                          getPropertiesForFeed(
-                                                               user2.id,
-                                                               feed3.id,
-                                                               user2.accessToken,
+                                                               user2['id'],
+                                                               feed3['id'],
+                                                               user2['accessToken'],
                                                                function() {
                                                                   getPropertiesForFeed(
-                                                                        user2Client2.id,
-                                                                        feed3.id,
-                                                                        user2Client2.accessToken,
+                                                                        user2Client2['id'],
+                                                                        feed3['id'],
+                                                                        user2Client2['accessToken'],
                                                                         function() {
                                                                            getPropertiesForFeed(
-                                                                                 user2.id,
-                                                                                 feed4.id,
-                                                                                 user2.accessToken,
+                                                                                 user2['id'],
+                                                                                 feed4['id'],
+                                                                                 user2['accessToken'],
                                                                                  function() {
                                                                                     getPropertiesForFeed(
-                                                                                          user2Client2.id,
-                                                                                          feed4.id,
-                                                                                          user2Client2.accessToken,
+                                                                                          user2Client2['id'],
+                                                                                          feed4['id'],
+                                                                                          user2Client2['accessToken'],
                                                                                           done
                                                                                     );
                                                                                  }
@@ -1559,7 +1487,7 @@ describe("REST API", function() {
                            it("Should fail to delete properties for a non-existent feed", function(done) {
                               superagent
                                     .del(ESDR_FEEDS_API_URL + BOGUS_FEED_ID + "/properties")
-                                    .set(createAuthorizationHeader(user1.accessToken))
+                                    .set(createAuthorizationHeader(user1['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1571,8 +1499,8 @@ describe("REST API", function() {
                            });
                            it("Should fail to delete properties with a valid OAuth2 token, but for the wrong user", function(done) {
                               superagent
-                                    .del(ESDR_FEEDS_API_URL + feed1.id + "/properties")
-                                    .set(createAuthorizationHeader(user2.accessToken))
+                                    .del(ESDR_FEEDS_API_URL + feed1['id'] + "/properties")
+                                    .set(createAuthorizationHeader(user2['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1591,7 +1519,7 @@ describe("REST API", function() {
                   describe("No Authentication", function() {
                      it("Should fail to delete a property with no OAuth2 token specified", function(done) {
                         superagent
-                              .del(ESDR_FEEDS_API_URL + feed3.id + "/properties/prop1")
+                              .del(ESDR_FEEDS_API_URL + feed3['id'] + "/properties/prop1")
                               .end(function(err, res) {
                                  should.not.exist(err);
                                  should.exist(res);
@@ -1607,7 +1535,7 @@ describe("REST API", function() {
                      describe("Invalid Authentication", function() {
                         it("Should fail to delete a property with an invalid OAuth2 token specified", function(done) {
                            superagent
-                                 .del(ESDR_FEEDS_API_URL + feed3.id + "/properties/prop1")
+                                 .del(ESDR_FEEDS_API_URL + feed3['id'] + "/properties/prop1")
                                  .set(createAuthorizationHeader("bogus"))
                                  .end(function(err, res) {
                                     should.not.exist(err);
@@ -1622,7 +1550,7 @@ describe("REST API", function() {
 
                      describe("Valid Authentication", function() {
                         describe("Success", function() {
-                           var verifyPropertyIsDeleted = function(feedId, accessToken, key, done) {
+                           const verifyPropertyIsDeleted = function(feedId, accessToken, key, done) {
                               superagent
                                     .get(ESDR_FEEDS_API_URL + feedId + "/properties/" + key)
                                     .set(createAuthorizationHeader(accessToken))
@@ -1642,47 +1570,47 @@ describe("REST API", function() {
                                     });
                            };
                            it("Should not error when asked to delete a non-existent property", function(done) {
-                              deletePropertyForFeed(feed3.id, user2.accessToken, 'this_prop_does_not_exist', done, 0);
+                              deletePropertyForFeed(feed3['id'], user2['accessToken'], 'this_prop_does_not_exist', done, 0);
                            });
                            it("Should be able to delete prop1 for user 2 feed 3 client 1", function(done) {
-                              deletePropertyForFeed(feed3.id, user2.accessToken, 'prop1', done, 1);
+                              deletePropertyForFeed(feed3['id'], user2['accessToken'], 'prop1', done, 1);
                            });
                            it("The property prop1 for user 2 feed 3 client 1 should no longer exist", function(done) {
-                              verifyPropertyIsDeleted(feed3.id, user2.accessToken, 'prop1', done);
+                              verifyPropertyIsDeleted(feed3['id'], user2['accessToken'], 'prop1', done);
                            });
 
                            it("Should be able to delete prop2 for user 2 feed 3 client 1", function(done) {
-                              deletePropertyForFeed(feed3.id, user2.accessToken, 'prop2', done, 1);
+                              deletePropertyForFeed(feed3['id'], user2['accessToken'], 'prop2', done, 1);
                            });
                            it("The property prop2 for user 2 feed 3 client 1 should no longer exist", function(done) {
-                              verifyPropertyIsDeleted(feed3.id, user2.accessToken, 'prop2', done);
+                              verifyPropertyIsDeleted(feed3['id'], user2['accessToken'], 'prop2', done);
                            });
                            it("Should be able to delete prop3 for user 2 feed 3 client 1", function(done) {
-                              deletePropertyForFeed(feed3.id, user2.accessToken, 'prop3', done, 1);
+                              deletePropertyForFeed(feed3['id'], user2['accessToken'], 'prop3', done, 1);
                            });
                            it("The property prop3 for user 2 feed 3 client 1 should no longer exist", function(done) {
-                              verifyPropertyIsDeleted(feed3.id, user2.accessToken, 'prop3', done);
+                              verifyPropertyIsDeleted(feed3['id'], user2['accessToken'], 'prop3', done);
                            });
                            it("Should be able to delete prop4 for user 2 feed 3 client 1", function(done) {
-                              deletePropertyForFeed(feed3.id, user2.accessToken, 'prop4', done, 1);
+                              deletePropertyForFeed(feed3['id'], user2['accessToken'], 'prop4', done, 1);
                            });
                            it("The property prop4 for user 2 feed 3 client 1 should no longer exist", function(done) {
-                              verifyPropertyIsDeleted(feed3.id, user2.accessToken, 'prop4', done);
+                              verifyPropertyIsDeleted(feed3['id'], user2['accessToken'], 'prop4', done);
                            });
                            it("Should be able to delete prop5 for user 2 feed 3 client 1", function(done) {
-                              deletePropertyForFeed(feed3.id, user2.accessToken, 'prop5', done, 1);
+                              deletePropertyForFeed(feed3['id'], user2['accessToken'], 'prop5', done, 1);
                            });
                            it("The property prop5 for user 2 feed 3 client 1 should no longer exist", function(done) {
-                              verifyPropertyIsDeleted(feed3.id, user2.accessToken, 'prop5', done);
+                              verifyPropertyIsDeleted(feed3['id'], user2['accessToken'], 'prop5', done);
                            });
                            it("Should be able to delete user2Feed3Client1Prop for user 2 feed 3 client 1", function(done) {
-                              deletePropertyForFeed(feed3.id, user2.accessToken, 'user2Feed3Client1Prop', done, 1);
+                              deletePropertyForFeed(feed3['id'], user2['accessToken'], 'user2Feed3Client1Prop', done, 1);
                            });
                            it("The property user2Feed3Client1Prop for user 2 feed 3 client 1 should no longer exist", function(done) {
-                              verifyPropertyIsDeleted(feed3.id, user2.accessToken, 'user2Feed3Client1Prop', done);
+                              verifyPropertyIsDeleted(feed3['id'], user2['accessToken'], 'user2Feed3Client1Prop', done);
                            });
                            it("Verify user 2 feed 3 client 1 has no properties", function(done) {
-                              getProperties(feed3.id, user2.accessToken, '', done, false, {});
+                              getProperties(feed3['id'], user2['accessToken'], '', done, false, {});
                            });
 
                         });   // Success
@@ -1690,7 +1618,7 @@ describe("REST API", function() {
                            it("Should fail to delete a property for a non-existent feed", function(done) {
                               superagent
                                     .del(ESDR_FEEDS_API_URL + BOGUS_FEED_ID + "/properties/foo")
-                                    .set(createAuthorizationHeader(user1.accessToken))
+                                    .set(createAuthorizationHeader(user1['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1702,8 +1630,8 @@ describe("REST API", function() {
                            });
                            it("Should fail to delete a property with a valid OAuth2 token, but for the wrong user", function(done) {
                               superagent
-                                    .del(ESDR_FEEDS_API_URL + feed2.id + "/properties/prop1")
-                                    .set(createAuthorizationHeader(user2.accessToken))
+                                    .del(ESDR_FEEDS_API_URL + feed2['id'] + "/properties/prop1")
+                                    .set(createAuthorizationHeader(user2['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1715,8 +1643,8 @@ describe("REST API", function() {
                            });
                            it("Should fail to delete a property with an invalid key", function(done) {
                               superagent
-                                    .del(ESDR_FEEDS_API_URL + feed3.id + "/properties/bad-key")
-                                    .set(createAuthorizationHeader(user2.accessToken))
+                                    .del(ESDR_FEEDS_API_URL + feed3['id'] + "/properties/bad-key")
+                                    .set(createAuthorizationHeader(user2['accessToken']))
                                     .end(function(err, res) {
                                        should.not.exist(err);
                                        should.exist(res);
@@ -1728,14 +1656,14 @@ describe("REST API", function() {
                                                                           status : 'error'
                                                                        });
 
-                                       var expectedValidationItems = [{
-                                          constraintName : 'pattern',
-                                          instanceContext : '#/key',
-                                          kind : 'StringValidationError'
+                                       const expectedValidationItems = [{
+                                          "keyword" : "pattern",
+                                          "dataPath" : ".key",
+                                          "schemaPath" : "#/properties/key/pattern"
                                        }];
                                        res.body.should.have.property('data');
-                                       res.body.data.should.have.length(expectedValidationItems.length);
-                                       res.body.data.forEach(function(validationItem, index) {
+                                       res.body.data.errors.should.have.length(expectedValidationItems.length);
+                                       res.body.data.errors.forEach(function(validationItem, index) {
                                           validationItem.should.have.properties(expectedValidationItems[index]);
                                        });
 
