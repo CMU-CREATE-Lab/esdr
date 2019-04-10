@@ -1,37 +1,39 @@
-var trimAndCopyPropertyIfNonEmpty = require('../lib/objectUtils').trimAndCopyPropertyIfNonEmpty;
-var JaySchema = require('jayschema');
-var jsonValidator = new JaySchema();
-var ValidationError = require('../lib/errors').ValidationError;
-var Query2Query = require('query2query');
-var util = require('util');
-var JSendClientError = require('jsend-utils').JSendClientError;
-var httpStatus = require('http-status');
-var flow = require('nimble');
-var log = require('log4js').getLogger('esdr:models:devices');
+const trimAndCopyPropertyIfNonEmpty = require('../lib/objectUtils').trimAndCopyPropertyIfNonEmpty;
+const copyPropertyIfDefinedAndNonNull = require('../lib/objectUtils').copyPropertyIfDefinedAndNonNull;
+const Ajv = require('ajv');
+const ValidationError = require('../lib/errors').ValidationError;
+const Query2Query = require('query2query');
+const JSendClientError = require('jsend-utils').JSendClientError;
+const JSendServerError = require('jsend-utils').JSendServerError;
+const httpStatus = require('http-status');
+const flow = require('nimble');
+const TypeUtils = require('data-type-utils');
+const log = require('log4js').getLogger('esdr:models:devices');
 
-var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Devices` ( " +
-                         "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
-                         "`name` varchar(255) DEFAULT NULL, " +
-                         "`serialNumber` varchar(255) NOT NULL, " +
-                         "`productId` bigint(20) NOT NULL, " +
-                         "`userId` bigint(20) NOT NULL, " +
-                         "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
-                         "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
-                         "PRIMARY KEY (`id`), " +
-                         "UNIQUE KEY `serialNumber_productId_userId_index` (`serialNumber`,`productId`,`userId`), " +
-                         "KEY `name` (`name`), " +
-                         "KEY `serialNumber` (`serialNumber`), " +
-                         "KEY `productId` (`productId`), " +
-                         "KEY `userId` (`userId`), " +
-                         "KEY `created` (`created`), " +
-                         "KEY `modified` (`modified`), " +
-                         "CONSTRAINT `devices_productId_fk_1` FOREIGN KEY (`productId`) REFERENCES `Products` (`id`), " +
-                         "CONSTRAINT `devices_userId_fk_1` FOREIGN KEY (`userId`) REFERENCES `Users` (`id`) " +
-                         ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
+// noinspection SqlNoDataSourceInspection
+const CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Devices` ( " +
+                           "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
+                           "`name` varchar(255) DEFAULT NULL, " +
+                           "`serialNumber` varchar(255) NOT NULL, " +
+                           "`productId` bigint(20) NOT NULL, " +
+                           "`userId` bigint(20) NOT NULL, " +
+                           "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
+                           "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
+                           "PRIMARY KEY (`id`), " +
+                           "UNIQUE KEY `serialNumber_productId_userId_index` (`serialNumber`,`productId`,`userId`), " +
+                           "KEY `name` (`name`), " +
+                           "KEY `serialNumber` (`serialNumber`), " +
+                           "KEY `productId` (`productId`), " +
+                           "KEY `userId` (`userId`), " +
+                           "KEY `created` (`created`), " +
+                           "KEY `modified` (`modified`), " +
+                           "CONSTRAINT `devices_productId_fk_1` FOREIGN KEY (`productId`) REFERENCES `Products` (`id`), " +
+                           "CONSTRAINT `devices_userId_fk_1` FOREIGN KEY (`userId`) REFERENCES `Users` (`id`) " +
+                           ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
 
-var MAX_FOUND_DEVICES = 1000;
+const MAX_FOUND_DEVICES = 1000;
 
-var query2query = new Query2Query();
+const query2query = new Query2Query();
 query2query.addField('id', true, true, false, Query2Query.types.INTEGER);
 query2query.addField('name', true, true, true);
 query2query.addField('serialNumber', true, true, false);
@@ -40,8 +42,8 @@ query2query.addField('userId', false, false, false, Query2Query.types.INTEGER);
 query2query.addField('created', true, true, false, Query2Query.types.DATETIME);
 query2query.addField('modified', true, true, false, Query2Query.types.DATETIME);
 
-var JSON_SCHEMA = {
-   "$schema" : "http://json-schema.org/draft-04/schema#",
+const JSON_SCHEMA = {
+   "$async" : true,
    "title" : "Device",
    "description" : "An ESDR device",
    "type" : "object",
@@ -61,11 +63,10 @@ var JSON_SCHEMA = {
    "required" : ["serialNumber"]
 };
 
+const ajv = new Ajv({ allErrors : true });
+const ifDeviceIsValid = ajv.compile(JSON_SCHEMA);
+
 module.exports = function(databaseHelper) {
-   var self = this;
-
-   this.jsonSchema = JSON_SCHEMA;
-
    this.initialize = function(callback) {
       databaseHelper.execute(CREATE_TABLE_QUERY, [], function(err) {
          if (err) {
@@ -79,33 +80,43 @@ module.exports = function(databaseHelper) {
 
    this.create = function(deviceDetails, productId, userId, callback) {
       // first build a copy and trim some fields
-      var device = {
+      const device = {
          productId : productId,
          userId : userId
       };
-      trimAndCopyPropertyIfNonEmpty(deviceDetails, device, "name");
-      trimAndCopyPropertyIfNonEmpty(deviceDetails, device, "serialNumber");
+
+      if (TypeUtils.isString(deviceDetails['name'])) {
+         trimAndCopyPropertyIfNonEmpty(deviceDetails, device, "name");
+      }
+      else {
+         copyPropertyIfDefinedAndNonNull(deviceDetails, device, "name");
+      }
+      if (TypeUtils.isString(deviceDetails['serialNumber'])) {
+         trimAndCopyPropertyIfNonEmpty(deviceDetails, device, "serialNumber");
+      }
+      else {
+         copyPropertyIfDefinedAndNonNull(deviceDetails, device, "serialNumber");
+      }
 
       // now validate
-      jsonValidator.validate(device, JSON_SCHEMA, function(err1) {
-         if (err1) {
-            return callback(new ValidationError(err1));
-         }
+      ifDeviceIsValid(device)
+            .then(function() {
+               // now that we have the hashed secret, try to insert
+               // noinspection SqlNoDataSourceInspection
+               databaseHelper.execute("INSERT INTO Devices SET ?", device, function(err2, result) {
+                  if (err2) {
+                     return callback(err2);
+                  }
 
-         // now that we have the hashed secret, try to insert
-         databaseHelper.execute("INSERT INTO Devices SET ?", device, function(err2, result) {
-            if (err2) {
-               return callback(err2);
-            }
-
-            return callback(null, {
-               insertId : result.insertId,
-               // include these because they might have been modified by the trimming
-               name : device.name,
-               serialNumber : device.serialNumber
-            });
-         });
-      });
+                  return callback(null, {
+                     insertId : result.insertId,
+                     // include these because they might have been modified by the trimming
+                     name : device.name,
+                     serialNumber : device.serialNumber
+                  });
+               });
+            })
+            .catch(err => callback(new ValidationError(err)));
    };
 
    this.deleteDevice = function(deviceId, userId, callback) {
@@ -114,16 +125,16 @@ module.exports = function(databaseHelper) {
       // transaction, try to find the device, manually check whether the device is owned by the user, and proceed with
       // the delete accordingly.
 
-      var connection = null;
-      var error = null;
-      var hasError = function() {
+      let connection = null;
+      let error = null;
+      const hasError = function() {
          return error != null;
       };
-      var isExistingDevice = false;
-      var isDeviceOwnedByUser = false;
-      var associatedFeeds = null;
-      var deleteResult = null;
-      var hasAssociatedFeeds = function() {
+      let isExistingDevice = false;
+      let isDeviceOwnedByUser = false;
+      let associatedFeeds = null;
+      let deleteResult = null;
+      const hasAssociatedFeeds = function() {
          return associatedFeeds != null && associatedFeeds.length > 0;
       };
 
@@ -163,6 +174,7 @@ module.exports = function(databaseHelper) {
                function(done) {
                   if (!hasError()) {
                      log.debug("delete device [user " + userId + ", device " + deviceId + "]: 3) Find the device");
+                     // noinspection SqlDialectInspection,SqlNoDataSourceInspection
                      connection.query("SELECT userId FROM Devices WHERE id=?",
                                       [deviceId],
                                       function(err, rows) {
@@ -171,7 +183,7 @@ module.exports = function(databaseHelper) {
                                          }
                                          else {
                                             // set flags for whether the device exists and is owned by the requesting user
-                                            isExistingDevice = (rows && rows.length == 1);
+                                            isExistingDevice = (rows && rows.length === 1);
                                             if (isExistingDevice) {
                                                isDeviceOwnedByUser = rows[0].userId === userId;
                                             }
@@ -188,6 +200,7 @@ module.exports = function(databaseHelper) {
                function(done) {
                   if (!hasError() && isExistingDevice && isDeviceOwnedByUser) {
                      log.debug("delete device [user " + userId + ", device " + deviceId + "]: 4) See whether the device has associated feeds");
+                     // noinspection SqlDialectInspection,SqlNoDataSourceInspection
                      connection.query("SELECT id FROM Feeds WHERE deviceId=? ORDER BY id",
                                       [deviceId],
                                       function(err, rows) {
@@ -217,6 +230,7 @@ module.exports = function(databaseHelper) {
                function(done) {
                   if (!hasError() && isExistingDevice && isDeviceOwnedByUser && !hasAssociatedFeeds()) {
                      log.debug("delete device [user " + userId + ", device " + deviceId + "]: 5) Delete the device properties (if any), then the device");
+                     // noinspection SqlDialectInspection,SqlNoDataSourceInspection
                      connection.query("DELETE FROM DeviceProperties where deviceId = ?",
                                       [deviceId],
                                       function(err) {
@@ -224,6 +238,7 @@ module.exports = function(databaseHelper) {
                                             error = err;
                                          }
                                          else {
+                                            // noinspection SqlDialectInspection,SqlNoDataSourceInspection
                                             connection.query("DELETE FROM Devices where id = ? AND userId = ?",
                                                              [deviceId, userId],
                                                              function(err) {
@@ -323,7 +338,7 @@ module.exports = function(databaseHelper) {
             return callback(err);
          }
 
-         var sql = "SELECT " + queryParts.select + ",userId FROM Devices WHERE id=?";
+         const sql = "SELECT " + queryParts.select + ",userId FROM Devices WHERE id=?";
          databaseHelper.findOne(sql,
                                 [deviceId],
                                 function(err, device) {
@@ -333,7 +348,7 @@ module.exports = function(databaseHelper) {
 
                                    if (device) {
                                       // return an error if the user doesn't own this device
-                                      if (device.userId != authUserId) {
+                                      if (device.userId !== authUserId) {
                                          return callback(new JSendClientError("Access denied", null, httpStatus.FORBIDDEN));
                                       }
 
@@ -381,13 +396,13 @@ module.exports = function(databaseHelper) {
 
                            // We need to be really careful about security here!  Restrict the WHERE clause to allow returning
                            // only devices owned by the authenticated user.
-                           var whereClause = "WHERE (userId = " + userId + ")";
+                           let whereClause = "WHERE (userId = " + userId + ")";
                            if (queryParts.whereExpressions.length > 0) {
                               whereClause += " AND (" + queryParts.where + ")";
                            }
 
                            // build the restricted SQL query
-                           var restrictedSql = [
+                           const restrictedSql = [
                               queryParts.selectClause,
                               "FROM Devices",
                               whereClause,

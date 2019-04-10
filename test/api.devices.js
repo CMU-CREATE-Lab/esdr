@@ -1,31 +1,35 @@
-var should = require('should');
-var flow = require('nimble');
-var httpStatus = require('http-status');
-var superagent = require('superagent-ls');
-var requireNew = require('require-new');
-var wipe = require('./fixture-helpers/wipe');
-var setup = require('./fixture-helpers/setup');
-var createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
+const should = require('should');
+const flow = require('nimble');
+const httpStatus = require('http-status');
+const superagent = require('superagent-ls');
+const requireNew = require('require-new');
+const wipe = require('./fixture-helpers/wipe');
+const setup = require('./fixture-helpers/setup');
+const createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
 
-var config = require('../config');
+const config = require('../config');
 
-var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
-var ESDR_PRODUCTS_API_URL = ESDR_API_ROOT_URL + "/products";
-var ESDR_DEVICES_API_URL = ESDR_API_ROOT_URL + "/devices";
+const ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
+const ESDR_PRODUCTS_API_URL = ESDR_API_ROOT_URL + "/products";
+const ESDR_DEVICES_API_URL = ESDR_API_ROOT_URL + "/devices";
 
 describe("REST API", function() {
-   var user1 = requireNew('./fixtures/user1.json');
-   var user2 = requireNew('./fixtures/user2.json');
-   var product1 = requireNew('./fixtures/product1.json');
-   var product2 = requireNew('./fixtures/product2.json');
-   var device1User1 = requireNew('./fixtures/device1.json');
-   var device1User2 = requireNew('./fixtures/device1.json');
-   var device2User1 = requireNew('./fixtures/device2.json');
-   var device3User1 = requireNew('./fixtures/device3.json');
-   var device4User2 = requireNew('./fixtures/device4.json');
-   var device1User1Product2 = requireNew('./fixtures/device1.json');
-   var deviceMissingRequiredFields = requireNew('./fixtures/device6-missing-required-fields.json');
-   var deviceInvalidSerialNumber = requireNew('./fixtures/device7-invalid-serial-number.json');
+   const user1 = requireNew('./fixtures/user1.json');
+   const user2 = requireNew('./fixtures/user2.json');
+   const product1 = requireNew('./fixtures/product1.json');
+   const product2 = requireNew('./fixtures/product2.json');
+   const device1User1 = requireNew('./fixtures/device1.json');
+   const device1User2 = requireNew('./fixtures/device1.json');
+   const device2User1 = requireNew('./fixtures/device2.json');
+   const device3User1 = requireNew('./fixtures/device3.json');
+   const device4User2 = requireNew('./fixtures/device4.json');
+   const device1User1Product2 = requireNew('./fixtures/device1.json');
+   const deviceMissingRequiredFields = requireNew('./fixtures/device6-missing-required-fields.json');
+   const deviceInvalidSerialNumber = requireNew('./fixtures/device7-invalid-serial-number.json');
+   const deviceInvalidSerialNumberTooLong = requireNew('./fixtures/device8-invalid-serial-number-too-long.json');
+   const deviceInvalidSerialNumberTooShort = requireNew('./fixtures/device9-invalid-serial-number-too-short.json');
+   const deviceInvalidSerialNumberIsNull = requireNew('./fixtures/device10-invalid-serial-number-is-null.json');
+   const deviceInvalidSerialNumberIsNumber = requireNew('./fixtures/device11-invalid-serial-number-is-number.json');
 
    before(function(initDone) {
       flow.series(
@@ -50,11 +54,11 @@ describe("REST API", function() {
                   setup.authenticateUser(user2, done);
                },
                function(done) {
-                  product1.creatorUserId = user1.id;
+                  product1.creatorUserId = user1['id'];
                   setup.createProduct(product1, done);
                },
                function(done) {
-                  product2.creatorUserId = user1.id;
+                  product2.creatorUserId = user1['id'];
                   setup.createProduct(product2, done);
                }
             ],
@@ -65,11 +69,11 @@ describe("REST API", function() {
    describe("Devices", function() {
 
       describe("Create", function() {
-         var creationTests = [
+         const creationTests = [
             {
                description : "Should be able to create a new device (user 1)",
                accessToken : function() {
-                  return user1.accessToken
+                  return user1['accessToken']
                },
                product : product1,
                device : device1User1,
@@ -78,13 +82,13 @@ describe("REST API", function() {
                expectedStatusText : 'success',
                expectedResponseData : {
                   name : device1User1.name,
-                  serialNumber : device1User1.serialNumber,
+                  serialNumber : device1User1['serialNumber'],
                }
             },
             {
                description : "Should be able to create the same device for the same product for a different user (user 2)",
                accessToken : function() {
-                  return user2.accessToken
+                  return user2['accessToken']
                },
                product : product1,
                device : device1User2,
@@ -93,13 +97,13 @@ describe("REST API", function() {
                expectedStatusText : 'success',
                expectedResponseData : {
                   name : device1User2.name,
-                  serialNumber : device1User2.serialNumber,
+                  serialNumber : device1User2['serialNumber'],
                }
             },
             {
                description : "Should fail to create the same device for the same product for the same user again (user 1)",
                accessToken : function() {
-                  return user1.accessToken
+                  return user1['accessToken']
                },
                product : product1,
                device : device1User1,
@@ -107,13 +111,13 @@ describe("REST API", function() {
                expectedHttpStatus : httpStatus.CONFLICT,
                expectedStatusText : 'error',
                expectedResponseData : {
-                  serialNumber : device1User1.serialNumber,
+                  serialNumber : device1User1['serialNumber'],
                }
             },
             {
                description : "Should fail to create a new device for a bogus product",
                accessToken : function() {
-                  return user1.accessToken
+                  return user1['accessToken']
                },
                product : { name : "bogus" },
                device : device1User1,
@@ -137,7 +141,7 @@ describe("REST API", function() {
             {
                description : "Should be able to create a second device for user 1",
                accessToken : function() {
-                  return user1.accessToken
+                  return user1['accessToken']
                },
                product : product1,
                device : device2User1,
@@ -145,13 +149,13 @@ describe("REST API", function() {
                expectedHttpStatus : httpStatus.CREATED,
                expectedStatusText : 'success',
                expectedResponseData : {
-                  serialNumber : device2User1.serialNumber,
+                  serialNumber : device2User1['serialNumber'],
                }
             },
             {
                description : "Should be able to create a third device for user 1",
                accessToken : function() {
-                  return user1.accessToken
+                  return user1['accessToken']
                },
                product : product1,
                device : device3User1,
@@ -159,13 +163,13 @@ describe("REST API", function() {
                expectedHttpStatus : httpStatus.CREATED,
                expectedStatusText : 'success',
                expectedResponseData : {
-                  serialNumber : device3User1.serialNumber,
+                  serialNumber : device3User1['serialNumber'],
                }
             },
             {
                description : "Should be able to create a second device for user 2",
                accessToken : function() {
-                  return user2.accessToken
+                  return user2['accessToken']
                },
                product : product1,
                device : device4User2,
@@ -173,13 +177,13 @@ describe("REST API", function() {
                expectedHttpStatus : httpStatus.CREATED,
                expectedStatusText : 'success',
                expectedResponseData : {
-                  serialNumber : device4User2.serialNumber,
+                  serialNumber : device4User2['serialNumber'],
                }
             },
             {
                description : "Should be able to create a device with the same serial number as a different device owned by the user, but for a different product",
                accessToken : function() {
-                  return user1.accessToken
+                  return user1['accessToken']
                },
                product : product2,
                device : device1User1Product2,
@@ -187,7 +191,7 @@ describe("REST API", function() {
                expectedHttpStatus : httpStatus.CREATED,
                expectedStatusText : 'success',
                expectedResponseData : {
-                  serialNumber : device1User1Product2.serialNumber,
+                  serialNumber : device1User1Product2['serialNumber'],
                }
             }
          ];
@@ -196,7 +200,7 @@ describe("REST API", function() {
             it(test.description, function(done) {
                superagent
                      .post(ESDR_PRODUCTS_API_URL + "/" + test.product.name + "/devices")
-                     .set(createAuthorizationHeader(test.accessToken))
+                     .set(createAuthorizationHeader(test['accessToken']))
                      .send(test.device)
                      .end(function(err, res) {
                         should.not.exist(err);
@@ -213,12 +217,12 @@ describe("REST API", function() {
                            res.body.should.have.property('data');
                            res.body.data.should.have.properties(test.expectedResponseData);
 
-                           if (test.expectedHttpStatus == httpStatus.CREATED) {
+                           if (test.expectedHttpStatus === httpStatus.CREATED) {
                               res.body.data.should.have.property('id');
 
                               // remember the database ID and userId
-                              test.device.id = res.body.data.id;
-                              test.device.userId = test.user.id;
+                              test.device['id'] = res.body.data['id'];
+                              test.device.userId = test.user['id'];
                            }
                         }
 
@@ -227,11 +231,11 @@ describe("REST API", function() {
             });
          });
 
-         var creationValidationTests = [
+         const creationValidationTests = [
             {
                description : "Should fail to create a new device if required fields are missing",
                accessToken : function() {
-                  return user1.accessToken
+                  return user1['accessToken']
                },
                product : product1,
                device : deviceMissingRequiredFields,
@@ -239,10 +243,10 @@ describe("REST API", function() {
                getExpectedValidationItems : function() {
                   return [
                      {
-                        instanceContext : '#',
-                        constraintName : 'required',
-                        constraintValue : global.db.devices.jsonSchema.required,
-                        kind : 'ObjectValidationError'
+                        keyword : 'required',
+                        dataPath : '',
+                        schemaPath : '#/required',
+                        params : { missingProperty : 'serialNumber' }
                      }
                   ];
                }
@@ -250,7 +254,7 @@ describe("REST API", function() {
             {
                description : "Should fail to create a new device if serial number is invalid",
                accessToken : function() {
-                  return user1.accessToken
+                  return user1['accessToken']
                },
                product : product1,
                device : deviceInvalidSerialNumber,
@@ -258,10 +262,84 @@ describe("REST API", function() {
                getExpectedValidationItems : function() {
                   return [
                      {
-                        instanceContext : '#/serialNumber',
-                        constraintName : 'pattern',
-                        testedValue : deviceInvalidSerialNumber.serialNumber,
-                        kind : 'StringValidationError'
+                        keyword : 'pattern',
+                        dataPath : '.serialNumber',
+                        schemaPath : '#/properties/serialNumber/pattern'
+                     }
+                  ];
+               }
+            },
+            {
+               description : "Should fail to create a new device if serial number is null",
+               accessToken : function() {
+                  return user1['accessToken']
+               },
+               product : product1,
+               device : deviceInvalidSerialNumberIsNull,
+               user : user1,
+               getExpectedValidationItems : function() {
+                  return [
+                     {
+                        keyword : 'required',
+                        dataPath : '',
+                        schemaPath : '#/required',
+                        params : { missingProperty : 'serialNumber' }
+                     }
+                  ];
+               }
+            },
+            {
+               description : "Should fail to create a new device if serial number is too short",
+               accessToken : function() {
+                  return user1['accessToken']
+               },
+               product : product1,
+               device : deviceInvalidSerialNumberTooShort,
+               user : user1,
+               getExpectedValidationItems : function() {
+                  return [
+                     {
+                        keyword : 'required',
+                        dataPath : '',
+                        schemaPath : '#/required',
+                        params : { missingProperty : 'serialNumber' }
+                     }
+                  ];
+               }
+            },
+            {
+               description : "Should fail to create a new device if serial number is too long",
+               accessToken : function() {
+                  return user1['accessToken']
+               },
+               product : product1,
+               device : deviceInvalidSerialNumberTooLong,
+               user : user1,
+               getExpectedValidationItems : function() {
+                  return [
+                     {
+                        keyword : 'maxLength',
+                        dataPath : '.serialNumber',
+                        schemaPath : '#/properties/serialNumber/maxLength'
+                     }
+                  ];
+               }
+            },
+            {
+               description : "Should fail to create a new device if serial number is a number instead of a string",
+               accessToken : function() {
+                  return user1['accessToken']
+               },
+               product : product1,
+               device : deviceInvalidSerialNumberIsNumber,
+               user : user1,
+               getExpectedValidationItems : function() {
+                  return [
+                     {
+                        keyword : 'type',
+                        dataPath : '.serialNumber',
+                        schemaPath : '#/properties/serialNumber/type',
+                        params : { type : 'string' }
                      }
                   ];
                }
@@ -272,7 +350,7 @@ describe("REST API", function() {
             it(test.description, function(done) {
                superagent
                      .post(ESDR_PRODUCTS_API_URL + "/" + test.product.name + "/devices")
-                     .set(createAuthorizationHeader(test.accessToken))
+                     .set(createAuthorizationHeader(test['accessToken']))
                      .send(test.device)
                      .end(function(err, res) {
                         should.not.exist(err);
@@ -285,10 +363,10 @@ describe("REST API", function() {
                                                            status : 'error'
                                                         });
 
-                        var expectedValidationItems = test.getExpectedValidationItems();
+                        const expectedValidationItems = test.getExpectedValidationItems();
                         res.body.should.have.property('data');
-                        res.body.data.should.have.length(expectedValidationItems.length);
-                        res.body.data.forEach(function(validationItem, index) {
+                        res.body.data.errors.should.have.length(expectedValidationItems.length);
+                        res.body.data.errors.forEach(function(validationItem, index) {
                            validationItem.should.have.properties(expectedValidationItems[index]);
                         });
 
@@ -300,11 +378,11 @@ describe("REST API", function() {
       });   // End Create
 
       describe("Find", function() {
-         var executeFindTest = function(test) {
+         const executeFindTest = function(test) {
             it(test.description, function(done) {
                superagent
                      .get(typeof test.url === 'function' ? test.url() : test.url)
-                     .set(createAuthorizationHeader(test.accessToken))
+                     .set(createAuthorizationHeader(test['accessToken']))
                      .end(function(err, res) {
                         should.not.exist(err);
                         should.exist(res);
@@ -323,7 +401,7 @@ describe("REST API", function() {
 
                            if (!test.hasEmptyData) {
                               res.body.should.have.property('data');
-                              var expectedResponseData = test.getExpectedResponseData();
+                              const expectedResponseData = test.getExpectedResponseData();
                               if ('rows' in expectedResponseData && 'totalCount' in expectedResponseData) {
                                  res.body.data.should.have.property('totalCount', expectedResponseData.totalCount);
                                  res.body.data.rows.forEach(function(item, index) {
@@ -364,17 +442,17 @@ describe("REST API", function() {
             [
                {
                   description : "Should be able to find a device by product name and serial number by the user who owns it (user 1)",
-                  url : ESDR_PRODUCTS_API_URL + "/" + product1.name + "/devices/" + device1User1.serialNumber,
+                  url : ESDR_PRODUCTS_API_URL + "/" + product1.name + "/devices/" + device1User1['serialNumber'],
                   accessToken : function() {
-                     return user1.accessToken
+                     return user1['accessToken']
                   },
                   getExpectedResponseData : function() {
                      return {
-                        id : device1User1.id,
+                        id : device1User1['id'],
                         name : device1User1.name,
-                        serialNumber : device1User1.serialNumber,
-                        productId : product1.id,
-                        userId : user1.id
+                        serialNumber : device1User1['serialNumber'],
+                        productId : product1['id'],
+                        userId : user1['id']
                      }
                   },
                   additionalExpectedDataProperties : ['created', 'modified']
@@ -382,18 +460,18 @@ describe("REST API", function() {
                {
                   description : "Should be able to find a device by product ID and serial number by the user who owns it (user 1)",
                   url : function() {
-                     return ESDR_PRODUCTS_API_URL + "/" + product1.id + "/devices/" + device1User1.serialNumber;
+                     return ESDR_PRODUCTS_API_URL + "/" + product1['id'] + "/devices/" + device1User1['serialNumber'];
                   },
                   accessToken : function() {
-                     return user1.accessToken
+                     return user1['accessToken']
                   },
                   getExpectedResponseData : function() {
                      return {
-                        id : device1User1.id,
+                        id : device1User1['id'],
                         name : device1User1.name,
-                        serialNumber : device1User1.serialNumber,
-                        productId : product1.id,
-                        userId : user1.id
+                        serialNumber : device1User1['serialNumber'],
+                        productId : product1['id'],
+                        userId : user1['id']
                      }
                   },
                   additionalExpectedDataProperties : ['created', 'modified']
@@ -401,10 +479,10 @@ describe("REST API", function() {
                {
                   description : "Should fail to find a device by product ID and device serial number for a product that doesn't exist",
                   url : function() {
-                     return ESDR_PRODUCTS_API_URL + "/" + 1 + "/devices/" + device1User1.serialNumber;
+                     return ESDR_PRODUCTS_API_URL + "/" + 1 + "/devices/" + device1User1['serialNumber'];
                   },
                   accessToken : function() {
-                     return user1.accessToken
+                     return user1['accessToken']
                   },
                   expectedHttpStatus : httpStatus.NOT_FOUND,
                   expectedStatusText : 'error',
@@ -413,10 +491,10 @@ describe("REST API", function() {
                {
                   description : "Should fail to find a device by product name and device serial number for a product that doesn't exist",
                   url : function() {
-                     return ESDR_PRODUCTS_API_URL + "/" + 'bogus_product' + "/devices/" + device1User1.serialNumber;
+                     return ESDR_PRODUCTS_API_URL + "/" + 'bogus_product' + "/devices/" + device1User1['serialNumber'];
                   },
                   accessToken : function() {
-                     return user1.accessToken
+                     return user1['accessToken']
                   },
                   expectedHttpStatus : httpStatus.NOT_FOUND,
                   expectedStatusText : 'error',
@@ -425,10 +503,10 @@ describe("REST API", function() {
                {
                   description : "Should fail to find a device by product name and device serial number by a user who doesn't own it",
                   url : function() {
-                     return ESDR_PRODUCTS_API_URL + "/" + product2.name + "/devices/" + device1User1Product2.serialNumber;
+                     return ESDR_PRODUCTS_API_URL + "/" + product2.name + "/devices/" + device1User1Product2['serialNumber'];
                   },
                   accessToken : function() {
-                     return user2.accessToken
+                     return user2['accessToken']
                   },
                   expectedHttpStatus : httpStatus.NOT_FOUND,
                   expectedStatusText : 'error',
@@ -437,10 +515,10 @@ describe("REST API", function() {
                {
                   description : "Should fail to find a device by product ID and device serial number by a user who doesn't own it",
                   url : function() {
-                     return ESDR_PRODUCTS_API_URL + "/" + product2.id + "/devices/" + device1User1Product2.serialNumber;
+                     return ESDR_PRODUCTS_API_URL + "/" + product2['id'] + "/devices/" + device1User1Product2['serialNumber'];
                   },
                   accessToken : function() {
-                     return user2.accessToken
+                     return user2['accessToken']
                   },
                   expectedHttpStatus : httpStatus.NOT_FOUND,
                   expectedStatusText : 'error',
@@ -449,10 +527,10 @@ describe("REST API", function() {
                {
                   description : "Should fail to find a device by product ID and device serial number if the serial number is unknown",
                   url : function() {
-                     return ESDR_PRODUCTS_API_URL + "/" + product2.id + "/devices/" + "bogus";
+                     return ESDR_PRODUCTS_API_URL + "/" + product2['id'] + "/devices/" + "bogus";
                   },
                   accessToken : function() {
-                     return user2.accessToken
+                     return user2['accessToken']
                   },
                   expectedHttpStatus : httpStatus.NOT_FOUND,
                   expectedStatusText : 'error',
@@ -464,7 +542,7 @@ describe("REST API", function() {
                      return ESDR_PRODUCTS_API_URL + "/" + product2.name + "/devices/" + "bogus";
                   },
                   accessToken : function() {
-                     return user2.accessToken
+                     return user2['accessToken']
                   },
                   expectedHttpStatus : httpStatus.NOT_FOUND,
                   expectedStatusText : 'error',
@@ -479,18 +557,18 @@ describe("REST API", function() {
                {
                   description : "Should be able to find a device by ID by the user who owns it",
                   url : function() {
-                     return ESDR_DEVICES_API_URL + "/" + device1User1.id;
+                     return ESDR_DEVICES_API_URL + "/" + device1User1['id'];
                   },
                   accessToken : function() {
-                     return user1.accessToken
+                     return user1['accessToken']
                   },
                   getExpectedResponseData : function() {
                      return {
-                        id : device1User1.id,
+                        id : device1User1['id'],
                         name : device1User1.name,
-                        serialNumber : device1User1.serialNumber,
-                        productId : product1.id,
-                        userId : user1.id
+                        serialNumber : device1User1['serialNumber'],
+                        productId : product1['id'],
+                        userId : user1['id']
                      }
                   },
                   additionalExpectedDataProperties : ['created', 'modified']
@@ -501,7 +579,7 @@ describe("REST API", function() {
                      return ESDR_DEVICES_API_URL + "/" + 1;
                   },
                   accessToken : function() {
-                     return user2.accessToken
+                     return user2['accessToken']
                   },
                   expectedHttpStatus : httpStatus.NOT_FOUND,
                   expectedStatusText : 'error',
@@ -510,10 +588,10 @@ describe("REST API", function() {
                {
                   description : "Should fail to find a device by ID by a user who doesn't own it",
                   url : function() {
-                     return ESDR_DEVICES_API_URL + "/" + device1User1.id;
+                     return ESDR_DEVICES_API_URL + "/" + device1User1['id'];
                   },
                   accessToken : function() {
-                     return user2.accessToken
+                     return user2['accessToken']
                   },
                   expectedHttpStatus : httpStatus.FORBIDDEN,
                   expectedStatusText : 'error',
@@ -522,10 +600,10 @@ describe("REST API", function() {
                {
                   description : "Should be able to find all devices for a particular product owned by the auth'd user (user 1)",
                   url : function() {
-                     return ESDR_DEVICES_API_URL + "?where=productId=" + product1.id;
+                     return ESDR_DEVICES_API_URL + "?where=productId=" + product1['id'];
                   },
                   accessToken : function() {
-                     return user1.accessToken
+                     return user1['accessToken']
                   },
                   getExpectedResponseData : function() {
                      return {
@@ -534,25 +612,25 @@ describe("REST API", function() {
                         limit : 100,
                         rows : [
                            {
-                              id : device1User1.id,
+                              id : device1User1['id'],
                               name : device1User1.name,
-                              serialNumber : device1User1.serialNumber,
-                              productId : product1.id,
-                              userId : user1.id
+                              serialNumber : device1User1['serialNumber'],
+                              productId : product1['id'],
+                              userId : user1['id']
                            },
                            {
-                              id : device2User1.id,
+                              id : device2User1['id'],
                               name : null,
-                              serialNumber : device2User1.serialNumber,
-                              productId : product1.id,
-                              userId : user1.id
+                              serialNumber : device2User1['serialNumber'],
+                              productId : product1['id'],
+                              userId : user1['id']
                            },
                            {
-                              id : device3User1.id,
+                              id : device3User1['id'],
                               name : null,
-                              serialNumber : device3User1.serialNumber,
-                              productId : product1.id,
-                              userId : user1.id
+                              serialNumber : device3User1['serialNumber'],
+                              productId : product1['id'],
+                              userId : user1['id']
                            }
                         ]
                      }
@@ -562,10 +640,10 @@ describe("REST API", function() {
                {
                   description : "Should be able to find devices (owned by a single user) having the same serial number, but for different products",
                   url : function() {
-                     return ESDR_DEVICES_API_URL + "?where=serialNumber=" + device1User1.serialNumber;
+                     return ESDR_DEVICES_API_URL + "?where=serialNumber=" + device1User1['serialNumber'];
                   },
                   accessToken : function() {
-                     return user1.accessToken
+                     return user1['accessToken']
                   },
                   getExpectedResponseData : function() {
                      return {
@@ -574,18 +652,18 @@ describe("REST API", function() {
                         limit : 100,
                         rows : [
                            {
-                              id : device1User1.id,
+                              id : device1User1['id'],
                               name : device1User1.name,
-                              serialNumber : device1User1.serialNumber,
-                              productId : product1.id,
-                              userId : user1.id
+                              serialNumber : device1User1['serialNumber'],
+                              productId : product1['id'],
+                              userId : user1['id']
                            },
                            {
-                              id : device1User1Product2.id,
+                              id : device1User1Product2['id'],
                               name : device1User1Product2.name,
-                              serialNumber : device1User1Product2.serialNumber,
-                              productId : product2.id,
-                              userId : user1.id
+                              serialNumber : device1User1Product2['serialNumber'],
+                              productId : product2['id'],
+                              userId : user1['id']
                            }
                         ]
                      }
@@ -595,10 +673,10 @@ describe("REST API", function() {
                {
                   description : "Should be able to find all devices for a particular product owned by the auth'd user (user 2)",
                   url : function() {
-                     return ESDR_DEVICES_API_URL + "?fields=id,serialNumber,userId,productId&where=productId=" + product1.id;
+                     return ESDR_DEVICES_API_URL + "?fields=id,serialNumber,userId,productId&where=productId=" + product1['id'];
                   },
                   accessToken : function() {
-                     return user2.accessToken
+                     return user2['accessToken']
                   },
                   getExpectedResponseData : function() {
                      return {
@@ -607,16 +685,16 @@ describe("REST API", function() {
                         limit : 100,
                         rows : [
                            {
-                              id : device1User2.id,
-                              serialNumber : device1User2.serialNumber,
-                              productId : product1.id,
-                              userId : user2.id
+                              id : device1User2['id'],
+                              serialNumber : device1User2['serialNumber'],
+                              productId : product1['id'],
+                              userId : user2['id']
                            },
                            {
-                              id : device4User2.id,
-                              serialNumber : device4User2.serialNumber,
-                              productId : product1.id,
-                              userId : user2.id
+                              id : device4User2['id'],
+                              serialNumber : device4User2['serialNumber'],
+                              productId : product1['id'],
+                              userId : user2['id']
                            }
                         ]
                      }
@@ -626,10 +704,10 @@ describe("REST API", function() {
                {
                   description : "Should fail to find any devices for a particular product if the auth'd user (user 2) has no devices for that product",
                   url : function() {
-                     return ESDR_DEVICES_API_URL + "?where=productId=" + product2.id;
+                     return ESDR_DEVICES_API_URL + "?where=productId=" + product2['id'];
                   },
                   accessToken : function() {
-                     return user2.accessToken
+                     return user2['accessToken']
                   },
                   getExpectedResponseData : function() {
                      return {
@@ -643,7 +721,7 @@ describe("REST API", function() {
                {
                   description : "Should fail to find any devices for a particular product if auth is invalid",
                   url : function() {
-                     return ESDR_DEVICES_API_URL + "?where=productId=" + product2.id;
+                     return ESDR_DEVICES_API_URL + "?where=productId=" + product2['id'];
                   },
                   accessToken : "bogus",
                   expectedHttpStatus : httpStatus.UNAUTHORIZED,
