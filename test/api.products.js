@@ -1,25 +1,25 @@
-var should = require('should');
-var flow = require('nimble');
-var httpStatus = require('http-status');
-var superagent = require('superagent-ls');
-var requireNew = require('require-new');
-var wipe = require('./fixture-helpers/wipe');
-var setup = require('./fixture-helpers/setup');
-var createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
+const should = require('should');
+const flow = require('nimble');
+const httpStatus = require('http-status');
+const superagent = require('superagent-ls');
+const requireNew = require('require-new');
+const wipe = require('./fixture-helpers/wipe');
+const setup = require('./fixture-helpers/setup');
+const createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
 
-var config = require('../config');
+const config = require('../config');
 
-var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
-var ESDR_PRODUCTS_API_URL = ESDR_API_ROOT_URL + "/products";
+const ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
+const ESDR_PRODUCTS_API_URL = ESDR_API_ROOT_URL + "/products";
 
 describe("REST API", function() {
-   var user1 = requireNew('./fixtures/user1.json');
-   var user2 = requireNew('./fixtures/user2.json');
-   var product1 = requireNew('./fixtures/product1.json');
-   var product2 = requireNew('./fixtures/product2.json');
-   var product3 = requireNew('./fixtures/product3.json');
-   var productMissingRequiredFields = requireNew('./fixtures/product6-missing-required-fields.json');
-   var productFieldsWithMinLengthAreTooShort = requireNew('./fixtures/product7-fields-with-minLength-too-short.json');
+   const user1 = requireNew('./fixtures/user1.json');
+   const user2 = requireNew('./fixtures/user2.json');
+   const product1 = requireNew('./fixtures/product1.json');
+   const product2 = requireNew('./fixtures/product2.json');
+   const product3 = requireNew('./fixtures/product3.json');
+   const productMissingRequiredFields = requireNew('./fixtures/product6-missing-required-fields.json');
+   const productFieldsWithMinLengthAreTooShort = requireNew('./fixtures/product7-fields-with-minLength-too-short.json');
 
    before(function(initDone) {
       flow.series(
@@ -51,31 +51,31 @@ describe("REST API", function() {
    describe("Products", function() {
 
       describe("Create", function() {
-         var creationTests = [
+         const creationTests = [
             {
                description : "Should be able to create a new product (with authentication)",
                accessToken : function() {
-                  return user1.accessToken
+                  return user1['accessToken']
                },
                product : product1,
                user : user1,
                expectedHttpStatus : httpStatus.CREATED,
                expectedStatusText : 'success',
                expectedResponseData : {
-                  name : product1.name
+                  name : product1['name']
                }
             },
             {
                description : "Should be able to create another new product, owned by a different user",
                accessToken : function() {
-                  return user2.accessToken
+                  return user2['accessToken']
                },
                product : product2,
                user : user2,
                expectedHttpStatus : httpStatus.CREATED,
                expectedStatusText : 'success',
                expectedResponseData : {
-                  name : product2.name
+                  name : product2['name']
                }
             },
             {
@@ -89,22 +89,22 @@ describe("REST API", function() {
             {
                description : "Should fail to create a new product if the name is already in use",
                accessToken : function() {
-                  return user2.accessToken
+                  return user2['accessToken']
                },
                product : product1,
                expectedHttpStatus : httpStatus.CONFLICT,
                expectedStatusText : 'error',
                expectedResponseData : {
-                  name : product1.name
+                  name : product1['name']
                }
             }
          ];
 
          creationTests.forEach(function(test) {
-            it(test.description, function(done) {
+            it(test['description'], function(done) {
                superagent
                      .post(ESDR_PRODUCTS_API_URL)
-                     .set(createAuthorizationHeader(test.accessToken))
+                     .set(createAuthorizationHeader(test['accessToken']))
                      .send(test.product)
                      .end(function(err, res) {
                         should.not.exist(err);
@@ -121,12 +121,12 @@ describe("REST API", function() {
                            res.body.should.have.property('data');
                            res.body.data.should.have.properties(test.expectedResponseData);
 
-                           if (test.expectedHttpStatus == httpStatus.CREATED) {
+                           if (test.expectedHttpStatus === httpStatus.CREATED) {
                               res.body.data.should.have.property('id');
 
                               // remember the database ID and creatorUserId
-                              test.product.id = res.body.data.id;
-                              test.product.creatorUserId = test.user.id;
+                              test.product['id'] = res.body.data['id'];
+                              test.product['creatorUserId'] = test.user['id'];
                            }
                         }
 
@@ -149,21 +149,38 @@ describe("REST API", function() {
                   });
          });
 
-         var creationValidationTests = [
+         const creationValidationTests = [
             {
                description : "Should fail to create a new product if the required fields are missing",
                accessToken : function() {
-                  return user1.accessToken
+                  return user1['accessToken']
                },
                product : productMissingRequiredFields,
                getExpectedValidationItems : function() {
                   return [
                      {
-                        instanceContext : '#',
-                        constraintName : 'required',
-                        constraintValue : global.db.products.jsonSchema.required,
-                        desc : 'missing: name,prettyName,defaultChannelSpecs',
-                        kind : 'ObjectValidationError'
+                        "keyword" : "required",
+                        "dataPath" : "",
+                        "schemaPath" : "#/required",
+                        "params" : {
+                           "missingProperty" : "name"
+                        }
+                     },
+                     {
+                        "keyword" : "required",
+                        "dataPath" : "",
+                        "schemaPath" : "#/required",
+                        "params" : {
+                           "missingProperty" : "prettyName"
+                        }
+                     },
+                     {
+                        "keyword" : "required",
+                        "dataPath" : "",
+                        "schemaPath" : "#/required",
+                        "params" : {
+                           "missingProperty" : "defaultChannelSpecs"
+                        }
                      }
                   ];
                }
@@ -171,28 +188,25 @@ describe("REST API", function() {
             {
                description : "Should fail to create a new product if the fields with minLength are too short",
                accessToken : function() {
-                  return user1.accessToken
+                  return user1['accessToken']
                },
                product : productFieldsWithMinLengthAreTooShort,
                getExpectedValidationItems : function() {
                   return [
                      {
-                        instanceContext : '#/name',
-                        constraintName : 'minLength',
-                        constraintValue : global.db.products.jsonSchema.properties.name.minLength,
-                        testedValue : productFieldsWithMinLengthAreTooShort.name.length
+                        "keyword" : "minLength",
+                        "dataPath" : ".name",
+                        "schemaPath" : "#/properties/name/minLength"
                      },
                      {
-                        instanceContext : '#/prettyName',
-                        constraintName : 'minLength',
-                        constraintValue : global.db.products.jsonSchema.properties.prettyName.minLength,
-                        testedValue : productFieldsWithMinLengthAreTooShort.prettyName.length
+                        "keyword" : "minLength",
+                        "dataPath" : ".prettyName",
+                        "schemaPath" : "#/properties/prettyName/minLength"
                      },
                      {
-                        instanceContext : '#/defaultChannelSpecs',
-                        constraintName : 'minLength',
-                        constraintValue : global.db.products.jsonSchema.properties.defaultChannelSpecs.minLength,
-                        testedValue : 1
+                        "keyword" : "minLength",
+                        "dataPath" : ".defaultChannelSpecs",
+                        "schemaPath" : "#/properties/defaultChannelSpecs/minLength"
                      }
                   ];
                }
@@ -200,15 +214,18 @@ describe("REST API", function() {
          ];
 
          creationValidationTests.forEach(function(test) {
-            it(test.description, function(done) {
+            it(test['description'], function(done) {
                superagent
                      .post(ESDR_PRODUCTS_API_URL)
-                     .set(createAuthorizationHeader(test.accessToken))
+                     .set(createAuthorizationHeader(test['accessToken']))
                      .send(test.product)
                      .end(function(err, res) {
                         should.not.exist(err);
                         should.exist(res);
 
+                        if (test.debug) {
+                           console.log(JSON.stringify(res.body, null, 3));
+                        }
                         res.should.have.property('status', httpStatus.UNPROCESSABLE_ENTITY);
                         res.should.have.property('body');
                         res.body.should.have.properties({
@@ -216,10 +233,10 @@ describe("REST API", function() {
                                                            status : 'error'
                                                         });
 
-                        var expectedValidationItems = test.getExpectedValidationItems();
+                        const expectedValidationItems = test.getExpectedValidationItems();
                         res.body.should.have.property('data');
-                        res.body.data.should.have.length(expectedValidationItems.length);
-                        res.body.data.forEach(function(validationItem, index) {
+                        res.body.data.errors.should.have.length(expectedValidationItems.length);
+                        res.body.data.errors.forEach(function(validationItem, index) {
                            validationItem.should.have.properties(expectedValidationItems[index]);
                         });
 
@@ -232,31 +249,31 @@ describe("REST API", function() {
 
       describe("Find", function() {
 
-         var findTests = [
+         const findTests = [
             {
                description : "Should be able to get a product by name (with no access token provided)",
-               urlSuffix : "/" + product1.name,
+               urlSuffix : "/" + product1['name'],
                getExpectedResponseData : function() {
                   return {
-                     id : product1.id,
-                     name : product1.name,
-                     prettyName : product1.prettyName,
-                     vendor : product1.vendor,
-                     description : product1.description,
-                     creatorUserId : product1.creatorUserId,
-                     defaultChannelSpecs : product1.defaultChannelSpecs
+                     id : product1['id'],
+                     name : product1['name'],
+                     prettyName : product1['prettyName'],
+                     vendor : product1['vendor'],
+                     description : product1['description'],
+                     creatorUserId : product1['creatorUserId'],
+                     defaultChannelSpecs : product1['defaultChannelSpecs']
                   }
                },
                additionalExpectedDataProperties : ['created', 'modified']
             },
             {
                description : "Should be able to get a product by name and specify which fields to return",
-               urlSuffix : "/" + product1.name + "?fields=id,name,defaultChannelSpecs",
+               urlSuffix : "/" + product1['name'] + "?fields=id,name,defaultChannelSpecs",
                getExpectedResponseData : function() {
                   return {
-                     id : product1.id,
-                     name : product1.name,
-                     defaultChannelSpecs : product1.defaultChannelSpecs
+                     id : product1['id'],
+                     name : product1['name'],
+                     defaultChannelSpecs : product1['defaultChannelSpecs']
                   }
                },
                expectedMissingProperties : ['prettyName', 'vendor', 'description', 'creatorUserId']
@@ -264,13 +281,13 @@ describe("REST API", function() {
             {
                description : "Should be able to get a product by id and specify which fields to return",
                urlSuffix : function() {
-                  return "/" + product1.id + "?fields=id,name,defaultChannelSpecs"
+                  return "/" + product1['id'] + "?fields=id,name,defaultChannelSpecs"
                },
                getExpectedResponseData : function() {
                   return {
-                     id : product1.id,
-                     name : product1.name,
-                     defaultChannelSpecs : product1.defaultChannelSpecs
+                     id : product1['id'],
+                     name : product1['name'],
+                     defaultChannelSpecs : product1['defaultChannelSpecs']
                   }
                },
                expectedMissingProperties : ['prettyName', 'vendor', 'description', 'creatorUserId']
@@ -292,22 +309,22 @@ describe("REST API", function() {
                      limit : 100,
                      rows : [
                         {
-                           id : product1.id,
-                           name : product1.name,
-                           prettyName : product1.prettyName,
-                           vendor : product1.vendor,
-                           description : product1.description,
-                           creatorUserId : product1.creatorUserId,
-                           defaultChannelSpecs : product1.defaultChannelSpecs
+                           id : product1['id'],
+                           name : product1['name'],
+                           prettyName : product1['prettyName'],
+                           vendor : product1['vendor'],
+                           description : product1['description'],
+                           creatorUserId : product1['creatorUserId'],
+                           defaultChannelSpecs : product1['defaultChannelSpecs']
                         },
                         {
-                           id : product2.id,
-                           name : product2.name,
-                           prettyName : product2.prettyName,
-                           vendor : product2.vendor,
-                           description : product2.description,
-                           creatorUserId : product2.creatorUserId,
-                           defaultChannelSpecs : product2.defaultChannelSpecs
+                           id : product2['id'],
+                           name : product2['name'],
+                           prettyName : product2['prettyName'],
+                           vendor : product2['vendor'],
+                           description : product2['description'],
+                           creatorUserId : product2['creatorUserId'],
+                           defaultChannelSpecs : product2['defaultChannelSpecs']
                         }
                      ]
                   }
@@ -316,7 +333,7 @@ describe("REST API", function() {
             },
             {
                description : "Should be able to find products by name",
-               urlSuffix : "?where=name=" + product1.name + "&fields=id,name,created",
+               urlSuffix : "?where=name=" + product1['name'] + "&fields=id,name,created",
                getExpectedResponseData : function() {
                   return {
                      totalCount : 1,
@@ -324,8 +341,8 @@ describe("REST API", function() {
                      limit : 100,
                      rows : [
                         {
-                           id : product1.id,
-                           name : product1.name
+                           id : product1['id'],
+                           name : product1['name']
                         }
                      ]
                   }
@@ -343,12 +360,12 @@ describe("REST API", function() {
                      limit : 100,
                      rows : [
                         {
-                           id : product2.id,
-                           name : product2.name
+                           id : product2['id'],
+                           name : product2['name']
                         },
                         {
-                           id : product1.id,
-                           name : product1.name
+                           id : product1['id'],
+                           name : product1['name']
                         }
                      ]
                   }
@@ -358,8 +375,8 @@ describe("REST API", function() {
          ];
 
          findTests.forEach(function(test) {
-            it(test.description, function(done) {
-               var urlSuffix = (typeof test.urlSuffix === 'function') ? test.urlSuffix() : test.urlSuffix;
+            it(test['description'], function(done) {
+               const urlSuffix = (typeof test.urlSuffix === 'function') ? test.urlSuffix() : test.urlSuffix;
                superagent
                      .get(ESDR_PRODUCTS_API_URL + urlSuffix)
                      .end(function(err, res) {
@@ -376,7 +393,7 @@ describe("REST API", function() {
 
                            if (!test.hasEmptyData) {
                               res.body.should.have.property('data');
-                              var expectedResponseData = test.getExpectedResponseData();
+                              const expectedResponseData = test.getExpectedResponseData();
                               if ('rows' in expectedResponseData && 'totalCount' in expectedResponseData) {
                                  res.body.data.should.have.property('totalCount', expectedResponseData.totalCount);
                                  res.body.data.rows.forEach(function(product, index) {

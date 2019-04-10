@@ -1,6 +1,5 @@
 const trimAndCopyPropertyIfNonEmpty = require('../lib/objectUtils').trimAndCopyPropertyIfNonEmpty;
-const JaySchema = require('jayschema');
-const jsonValidator = new JaySchema();
+const Ajv = require('ajv');
 const ValidationError = require('../lib/errors').ValidationError;
 const Query2Query = require('query2query');
 const log = require('log4js').getLogger('esdr:models:products');
@@ -41,7 +40,7 @@ query2query.addField('created', true, true, false, Query2Query.types.DATETIME);
 query2query.addField('modified', true, true, false, Query2Query.types.DATETIME);
 
 const JSON_SCHEMA = {
-   "$schema" : "http://json-schema.org/draft-04/schema#",
+   "$async" : true,
    "title" : "Product",
    "description" : "An ESDR product",
    "type" : "object",
@@ -75,6 +74,9 @@ const JSON_SCHEMA = {
    "required" : ["name", "prettyName", "defaultChannelSpecs"]
 };
 
+const ajv = new Ajv({ allErrors : true });
+const ifProductIsValid = ajv.compile(JSON_SCHEMA);
+
 module.exports = function(databaseHelper) {
 
    this.jsonSchema = JSON_SCHEMA;
@@ -104,24 +106,22 @@ module.exports = function(databaseHelper) {
       }
 
       // now validate
-      jsonValidator.validate(product, JSON_SCHEMA, function(err1) {
-         if (err1) {
-            return callback(new ValidationError(err1));
-         }
+      ifProductIsValid(product)
+            .then(function() {
+               // now that we have the hashed secret, try to insert
+               databaseHelper.execute("INSERT INTO Products SET ?", product, function(err2, result) {
+                  if (err2) {
+                     return callback(err2);
+                  }
 
-         // now that we have the hashed secret, try to insert
-         databaseHelper.execute("INSERT INTO Products SET ?", product, function(err2, result) {
-            if (err2) {
-               return callback(err2);
-            }
-
-            return callback(null, {
-               insertId : result.insertId,
-               // include these because they might have been modified by the trimming
-               name : product.name
-            });
-         });
-      });
+                  return callback(null, {
+                     insertId : result.insertId,
+                     // include these because they might have been modified by the trimming
+                     name : product.name
+                  });
+               });
+            })
+            .catch(err => callback(new ValidationError(err)));
    };
 
    /**
