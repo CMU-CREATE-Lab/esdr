@@ -4,8 +4,8 @@ const Properties = require('./Properties');
 
 const log = require('log4js').getLogger('esdr:models:deviceproperties');
 
-// noinspection SqlNoDataSourceInspection
-const CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `DeviceProperties` ( " +
+// language=MySQL
+const CREATE_TABLE_QUERY = "CREATE TABLE IF NOT EXISTS `DeviceProperties` ( " +
                            "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
                            "`deviceId` bigint(20) NOT NULL, " +
                            "`clientId` bigint(20) NOT NULL, " +
@@ -50,18 +50,20 @@ module.exports = function(databaseHelper) {
    this.getProperty = function(clientId, deviceId, propertyKey, callback) {
       Properties.ifPropertyKeyIsValid({ key : propertyKey })
             .then(function() {
-               databaseHelper.findOne("SELECT " +
-                                      "   propertyKey, " +
-                                      "   valueType, " +
-                                      "   valueInt, " +
-                                      "   valueDouble, " +
-                                      "   valueString, " +
-                                      "   valueJson, " +
-                                      "   valueBoolean " +
-                                      "FROM DeviceProperties WHERE " +
-                                      "   clientId=? AND " +
-                                      "   deviceId=? AND " +
-                                      "   propertyKey=?",
+               // language=MySQL
+               const sql = "SELECT " +
+                           "   propertyKey, " +
+                           "   valueType, " +
+                           "   valueInt, " +
+                           "   valueDouble, " +
+                           "   valueString, " +
+                           "   valueJson, " +
+                           "   valueBoolean " +
+                           "FROM DeviceProperties WHERE " +
+                           "   clientId=? AND " +
+                           "   deviceId=? AND " +
+                           "   propertyKey=?";
+               databaseHelper.findOne(sql,
                                       [clientId, deviceId, propertyKey],
                                       function(err, record) {
                                          if (err) {
@@ -184,7 +186,7 @@ module.exports = function(databaseHelper) {
                                  }
 
                                  // now try to insert
-                                 // noinspection SqlNoDataSourceInspection
+                                 // language=MySQL
                                  databaseHelper.execute("INSERT INTO DeviceProperties SET ? " +
                                                         "ON DUPLICATE KEY UPDATE " +
                                                         "valueType=VALUES(valueType)," +
@@ -212,7 +214,6 @@ module.exports = function(databaseHelper) {
    };
 
    this.deleteAll = function(clientId, deviceId, callback) {
-      // noinspection SqlNoDataSourceInspection,SqlDialectInspection
       databaseHelper.execute("DELETE FROM DeviceProperties WHERE clientId=? AND deviceId=?",
                              [clientId, deviceId],
                              function(err, deleteResult) {
@@ -228,7 +229,7 @@ module.exports = function(databaseHelper) {
    this.deleteProperty = function(clientId, deviceId, propertyKey, callback) {
       Properties.ifPropertyKeyIsValid({ key : propertyKey })
             .then(function() {
-               // noinspection SqlNoDataSourceInspection,SqlDialectInspection
+               // language=MySQL
                databaseHelper.execute("DELETE FROM DeviceProperties WHERE clientId=? AND deviceId=? AND propertyKey=?",
                                       [clientId, deviceId, propertyKey],
                                       function(err, deleteResult) {

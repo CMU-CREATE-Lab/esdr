@@ -1,34 +1,35 @@
-var trimAndCopyPropertyIfNonEmpty = require('../lib/objectUtils').trimAndCopyPropertyIfNonEmpty;
-var JaySchema = require('jayschema');
-var jsonValidator = new JaySchema();
-var ValidationError = require('../lib/errors').ValidationError;
-var Query2Query = require('query2query');
-var log = require('log4js').getLogger('esdr:models:products');
-var isPositiveIntString = require('../lib/typeUtils').isPositiveIntString;
+const trimAndCopyPropertyIfNonEmpty = require('../lib/objectUtils').trimAndCopyPropertyIfNonEmpty;
+const JaySchema = require('jayschema');
+const jsonValidator = new JaySchema();
+const ValidationError = require('../lib/errors').ValidationError;
+const Query2Query = require('query2query');
+const log = require('log4js').getLogger('esdr:models:products');
+const isPositiveIntString = require('../lib/typeUtils').isPositiveIntString;
 
-var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Products` ( " +
-                         "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
-                         "`name` varchar(255) NOT NULL, " +
-                         "`prettyName` varchar(255) NOT NULL, " +
-                         "`vendor` varchar(255) DEFAULT NULL, " +
-                         "`description` varchar(512) DEFAULT NULL, " +
-                         "`creatorUserId` bigint(20) DEFAULT NULL, " +
-                         "`defaultChannelSpecs` text NOT NULL, " +
-                         "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
-                         "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
-                         "PRIMARY KEY (`id`), " +
-                         "UNIQUE KEY `unique_name` (`name`), " +
-                         "KEY `prettyName` (`prettyName`), " +
-                         "KEY `vendor` (`vendor`), " +
-                         "KEY `creatorUserId` (`creatorUserId`), " +
-                         "KEY `created` (`created`), " +
-                         "KEY `modified` (`modified`), " +
-                         "CONSTRAINT `products_creatorUserId_fk_1` FOREIGN KEY (`creatorUserId`) REFERENCES `Users` (`id`) " +
-                         ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
+// language=MySQL
+const CREATE_TABLE_QUERY = "CREATE TABLE IF NOT EXISTS `Products` ( " +
+                           "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
+                           "`name` varchar(255) NOT NULL, " +
+                           "`prettyName` varchar(255) NOT NULL, " +
+                           "`vendor` varchar(255) DEFAULT NULL, " +
+                           "`description` varchar(512) DEFAULT NULL, " +
+                           "`creatorUserId` bigint(20) DEFAULT NULL, " +
+                           "`defaultChannelSpecs` text NOT NULL, " +
+                           "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
+                           "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
+                           "PRIMARY KEY (`id`), " +
+                           "UNIQUE KEY `unique_name` (`name`), " +
+                           "KEY `prettyName` (`prettyName`), " +
+                           "KEY `vendor` (`vendor`), " +
+                           "KEY `creatorUserId` (`creatorUserId`), " +
+                           "KEY `created` (`created`), " +
+                           "KEY `modified` (`modified`), " +
+                           "CONSTRAINT `products_creatorUserId_fk_1` FOREIGN KEY (`creatorUserId`) REFERENCES `Users` (`id`) " +
+                           ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
 
-var MAX_FOUND_PRODUCTS = 1000;
+const MAX_FOUND_PRODUCTS = 1000;
 
-var query2query = new Query2Query();
+const query2query = new Query2Query();
 query2query.addField('id', true, true, false, Query2Query.types.INTEGER);
 query2query.addField('name', true, true, false);
 query2query.addField('prettyName', true, true, false);
@@ -39,7 +40,7 @@ query2query.addField('defaultChannelSpecs', false, false, false);
 query2query.addField('created', true, true, false, Query2Query.types.DATETIME);
 query2query.addField('modified', true, true, false, Query2Query.types.DATETIME);
 
-var JSON_SCHEMA = {
+const JSON_SCHEMA = {
    "$schema" : "http://json-schema.org/draft-04/schema#",
    "title" : "Product",
    "description" : "An ESDR product",
@@ -91,7 +92,7 @@ module.exports = function(databaseHelper) {
 
    this.create = function(productDetails, creatorUserId, callback) {
       // first build a copy and trim some fields
-      var product = {
+      const product = {
          creatorUserId : creatorUserId
       };
       trimAndCopyPropertyIfNonEmpty(productDetails, product, "name");
@@ -159,10 +160,11 @@ module.exports = function(databaseHelper) {
     * @param {function} callback function with signature <code>callback(err, product)</code>
     */
    this.findByNameOrId = function(productNameOrId, fieldsToSelect, callback) {
-      var isId = isPositiveIntString('' + productNameOrId);
+      const isId = isPositiveIntString('' + productNameOrId);
       if (isId) {
          this.findById(parseInt(productNameOrId), fieldsToSelect, callback)
-      } else {
+      }
+      else {
          this.findByName(productNameOrId, fieldsToSelect, callback)
       }
    };
@@ -174,7 +176,7 @@ module.exports = function(databaseHelper) {
                               return callback(err);
                            }
 
-                           var sql = queryParts.sql("Products");
+                           const sql = queryParts.sql("Products");
                            log.debug("Products.find(): " + sql + (queryParts.whereValues.length > 0 ? " [where values: " + queryParts.whereValues + "]" : ""));
 
                            // use findWithLimit so we can also get a count of the total number of records that would have been returned
@@ -194,13 +196,13 @@ module.exports = function(databaseHelper) {
                         MAX_FOUND_PRODUCTS);
    };
 
-   var findProduct = function(fieldsToSelect, whereField, whereValue, callback) {
-      query2query.parse({fields : fieldsToSelect}, function(err, queryParts) {
+   const findProduct = function(fieldsToSelect, whereField, whereValue, callback) {
+      query2query.parse({ fields : fieldsToSelect }, function(err, queryParts) {
          if (err) {
             return callback(err);
          }
 
-         var sql = queryParts.selectClause + " FROM Products WHERE " + whereField + "=?";
+         const sql = queryParts.selectClause + " FROM Products WHERE " + whereField + "=?";
          databaseHelper.findOne(sql, [whereValue], function(err, product) {
             if (err) {
                log.error("Error trying to find product with " + whereField + " [" + whereValue + "]: " + err);
