@@ -4,8 +4,8 @@ const Properties = require('./Properties');
 
 const log = require('log4js').getLogger('esdr:models:feedproperties');
 
-// noinspection SqlNoDataSourceInspection
-const CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `FeedProperties` ( " +
+// language=MySQL
+const CREATE_TABLE_QUERY = "CREATE TABLE IF NOT EXISTS `FeedProperties` ( " +
                            "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
                            "`feedId` bigint(20) NOT NULL, " +
                            "`clientId` bigint(20) NOT NULL, " +
@@ -50,18 +50,20 @@ module.exports = function(databaseHelper) {
    this.getProperty = function(clientId, feedId, propertyKey, callback) {
       Properties.ifPropertyKeyIsValid({ key : propertyKey })
             .then(function() {
-               databaseHelper.findOne("SELECT " +
-                                      "   propertyKey, " +
-                                      "   valueType, " +
-                                      "   valueInt, " +
-                                      "   valueDouble, " +
-                                      "   valueString, " +
-                                      "   valueJson, " +
-                                      "   valueBoolean " +
-                                      "FROM FeedProperties WHERE " +
-                                      "   clientId=? AND " +
-                                      "   feedId=? AND " +
-                                      "   propertyKey=?",
+               // language=MySQL
+               const sql = "SELECT " +
+                           "   propertyKey, " +
+                           "   valueType, " +
+                           "   valueInt, " +
+                           "   valueDouble, " +
+                           "   valueString, " +
+                           "   valueJson, " +
+                           "   valueBoolean " +
+                           "FROM FeedProperties WHERE " +
+                           "   clientId=? AND " +
+                           "   feedId=? AND " +
+                           "   propertyKey=?";
+               databaseHelper.findOne(sql,
                                       [clientId, feedId, propertyKey],
                                       function(err, record) {
                                          if (err) {
@@ -186,7 +188,7 @@ module.exports = function(databaseHelper) {
                                  }
 
                                  // now try to insert
-                                 // noinspection SqlNoDataSourceInspection
+                                 // language=MySQL
                                  databaseHelper.execute("INSERT INTO FeedProperties SET ? " +
                                                         "ON DUPLICATE KEY UPDATE " +
                                                         "valueType=VALUES(valueType)," +
@@ -214,8 +216,9 @@ module.exports = function(databaseHelper) {
    };
 
    this.deleteAll = function(clientId, feedId, callback) {
-      // noinspection SqlDialectInspection,SqlNoDataSourceInspection
-      databaseHelper.execute("DELETE FROM FeedProperties WHERE clientId=? AND feedId=?",
+      // language=MySQL
+      const sql = "DELETE FROM FeedProperties WHERE clientId=? AND feedId=?";
+      databaseHelper.execute(sql,
                              [clientId, feedId],
                              function(err, deleteResult) {
                                 if (err) {
@@ -230,8 +233,9 @@ module.exports = function(databaseHelper) {
    this.deleteProperty = function(clientId, feedId, propertyKey, callback) {
       Properties.ifPropertyKeyIsValid({ key : propertyKey })
             .then(function() {
-               // noinspection SqlDialectInspection,SqlNoDataSourceInspection
-               databaseHelper.execute("DELETE FROM FeedProperties WHERE clientId=? AND feedId=? AND propertyKey=?",
+               // language=MySQL
+               const sql = "DELETE FROM FeedProperties WHERE clientId=? AND feedId=? AND propertyKey=?";
+               databaseHelper.execute(sql,
                                       [clientId, feedId, propertyKey],
                                       function(err, deleteResult) {
                                          if (err) {

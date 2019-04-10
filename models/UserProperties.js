@@ -4,8 +4,8 @@ const Properties = require('./Properties');
 
 const log = require('log4js').getLogger('esdr:models:userproperties');
 
-// noinspection SqlNoDataSourceInspection
-const CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `UserProperties` ( " +
+// language=MySQL
+const CREATE_TABLE_QUERY = "CREATE TABLE IF NOT EXISTS `UserProperties` ( " +
                            "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
                            "`userId` bigint(20) NOT NULL, " +
                            "`clientId` bigint(20) NOT NULL, " +
@@ -50,18 +50,20 @@ module.exports = function(databaseHelper) {
    this.getProperty = function(clientId, userId, propertyKey, callback) {
       Properties.ifPropertyKeyIsValid({ key : propertyKey })
             .then(function() {
-               databaseHelper.findOne("SELECT " +
-                                      "   propertyKey, " +
-                                      "   valueType, " +
-                                      "   valueInt, " +
-                                      "   valueDouble, " +
-                                      "   valueString, " +
-                                      "   valueJson, " +
-                                      "   valueBoolean " +
-                                      "FROM UserProperties WHERE " +
-                                      "   clientId=? AND " +
-                                      "   userId=? AND " +
-                                      "   propertyKey=?",
+               // language=MySQL
+               const sql = "SELECT " +
+                           "   propertyKey, " +
+                           "   valueType, " +
+                           "   valueInt, " +
+                           "   valueDouble, " +
+                           "   valueString, " +
+                           "   valueJson, " +
+                           "   valueBoolean " +
+                           "FROM UserProperties WHERE " +
+                           "   clientId=? AND " +
+                           "   userId=? AND " +
+                           "   propertyKey=?";
+               databaseHelper.findOne(sql,
                                       [clientId, userId, propertyKey],
                                       function(err, record) {
                                          if (err) {
@@ -184,7 +186,7 @@ module.exports = function(databaseHelper) {
                                  }
 
                                  // now try to insert
-                                 // noinspection SqlNoDataSourceInspection
+                                 // language=MySQL
                                  databaseHelper.execute("INSERT INTO UserProperties SET ? " +
                                                         "ON DUPLICATE KEY UPDATE " +
                                                         "valueType=VALUES(valueType)," +
@@ -212,8 +214,9 @@ module.exports = function(databaseHelper) {
    };
 
    this.deleteAll = function(clientId, userId, callback) {
-      // noinspection SqlDialectInspection,SqlNoDataSourceInspection
-      databaseHelper.execute("DELETE FROM UserProperties WHERE clientId=? AND userId=?",
+      // language=MySQL
+      const sql = 'DELETE FROM UserProperties WHERE clientId=? AND userId=?';
+      databaseHelper.execute(sql,
                              [clientId, userId],
                              function(err, deleteResult) {
                                 if (err) {
@@ -229,8 +232,9 @@ module.exports = function(databaseHelper) {
       Properties.ifPropertyKeyIsValid({ key : propertyKey })
             .then(function() {
 
-               // noinspection SqlNoDataSourceInspection,SqlDialectInspection
-               databaseHelper.execute("DELETE FROM UserProperties WHERE clientId=? AND userId=? AND propertyKey=?",
+               // language=MySQL
+               const sql = 'DELETE FROM UserProperties WHERE clientId=? AND userId=? AND propertyKey=?';
+               databaseHelper.execute(sql,
                                       [clientId, userId, propertyKey],
                                       function(err, deleteResult) {
                                          if (err) {

@@ -10,8 +10,8 @@ const flow = require('nimble');
 const TypeUtils = require('data-type-utils');
 const log = require('log4js').getLogger('esdr:models:devices');
 
-// noinspection SqlNoDataSourceInspection
-const CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Devices` ( " +
+// language=MySQL
+const CREATE_TABLE_QUERY = "CREATE TABLE IF NOT EXISTS `Devices` ( " +
                            "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
                            "`name` varchar(255) DEFAULT NULL, " +
                            "`serialNumber` varchar(255) NOT NULL, " +
@@ -102,8 +102,7 @@ module.exports = function(databaseHelper) {
       ifDeviceIsValid(device)
             .then(function() {
                // now that we have the hashed secret, try to insert
-               // noinspection SqlNoDataSourceInspection
-               databaseHelper.execute("INSERT INTO Devices SET ?", device, function(err2, result) {
+               databaseHelper.execute('INSERT INTO Devices SET ?', device, function(err2, result) {
                   if (err2) {
                      return callback(err2);
                   }
@@ -174,7 +173,7 @@ module.exports = function(databaseHelper) {
                function(done) {
                   if (!hasError()) {
                      log.debug("delete device [user " + userId + ", device " + deviceId + "]: 3) Find the device");
-                     // noinspection SqlDialectInspection,SqlNoDataSourceInspection
+                     // language=MySQL
                      connection.query("SELECT userId FROM Devices WHERE id=?",
                                       [deviceId],
                                       function(err, rows) {
@@ -200,7 +199,7 @@ module.exports = function(databaseHelper) {
                function(done) {
                   if (!hasError() && isExistingDevice && isDeviceOwnedByUser) {
                      log.debug("delete device [user " + userId + ", device " + deviceId + "]: 4) See whether the device has associated feeds");
-                     // noinspection SqlDialectInspection,SqlNoDataSourceInspection
+                     // language=MySQL
                      connection.query("SELECT id FROM Feeds WHERE deviceId=? ORDER BY id",
                                       [deviceId],
                                       function(err, rows) {
@@ -230,7 +229,7 @@ module.exports = function(databaseHelper) {
                function(done) {
                   if (!hasError() && isExistingDevice && isDeviceOwnedByUser && !hasAssociatedFeeds()) {
                      log.debug("delete device [user " + userId + ", device " + deviceId + "]: 5) Delete the device properties (if any), then the device");
-                     // noinspection SqlDialectInspection,SqlNoDataSourceInspection
+                     // language=MySQL
                      connection.query("DELETE FROM DeviceProperties where deviceId = ?",
                                       [deviceId],
                                       function(err) {
@@ -238,7 +237,7 @@ module.exports = function(databaseHelper) {
                                             error = err;
                                          }
                                          else {
-                                            // noinspection SqlDialectInspection,SqlNoDataSourceInspection
+                                            // language=MySQL
                                             connection.query("DELETE FROM Devices where id = ? AND userId = ?",
                                                              [deviceId, userId],
                                                              function(err) {
@@ -338,6 +337,7 @@ module.exports = function(databaseHelper) {
             return callback(err);
          }
 
+         // language=MySQL
          const sql = "SELECT " + queryParts.select + ",userId FROM Devices WHERE id=?";
          databaseHelper.findOne(sql,
                                 [deviceId],

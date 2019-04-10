@@ -6,8 +6,8 @@ const Query2Query = require('query2query');
 const config = require('../config');
 const log = require('log4js').getLogger('esdr:models:clients');
 
-// noinspection SqlNoDataSourceInspection
-const CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Clients` ( " +
+// language=MySQL
+const CREATE_TABLE_QUERY = "CREATE TABLE IF NOT EXISTS `Clients` ( " +
                            "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
                            "`displayName` varchar(255) NOT NULL, " +
                            "`clientName` varchar(255) NOT NULL, " +
@@ -138,7 +138,6 @@ module.exports = function(databaseHelper) {
                      .then(hashedSecret => {
                         // now that we have the hashed secret, try to insert
                         client.clientSecret = hashedSecret;
-                        // noinspection SqlNoDataSourceInspection
                         databaseHelper.execute("INSERT INTO Clients SET ?", client, function(err2, result) {
                            if (err2) {
                               return callback(err2);
@@ -229,7 +228,7 @@ module.exports = function(databaseHelper) {
     * @param {function} callback function with signature <code>callback(err, client)</code>
     */
    this.findByNameAndSecret = function(clientName, clearTextSecret, callback) {
-      // noinspection SqlNoDataSourceInspection,SqlDialectInspection
+      // language=MySQL
       findClient("SELECT * FROM Clients WHERE clientName=?", [clientName], function(err, client) {
          if (err) {
             return callback(err);

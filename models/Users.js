@@ -6,8 +6,8 @@ const ValidationError = require('../lib/errors').ValidationError;
 const Query2Query = require('query2query');
 const log = require('log4js').getLogger('esdr:models:users');
 
-// noinspection SqlNoDataSourceInspection
-const CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Users` ( " +
+// language=MySQL
+const CREATE_TABLE_QUERY = "CREATE TABLE IF NOT EXISTS `Users` ( " +
                            "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
                            "`email` varchar(255) NOT NULL, " +
                            "`password` varchar(255) NOT NULL, " +
@@ -121,7 +121,6 @@ module.exports = function(databaseHelper) {
                      .then(hashedPassword => {
                         // now that we have the hashed password, try to insert
                         user.password = hashedPassword;
-                        // noinspection SqlNoDataSourceInspection
                         databaseHelper.execute("INSERT INTO Users SET ?", user, function(err3, result) {
                            if (err3) {
                               return callback(err3);
@@ -153,7 +152,7 @@ module.exports = function(databaseHelper) {
     * @param {function} callback function with signature <code>callback(err, user)</code>
     */
    this.findById = function(userId, callback) {
-      // noinspection SqlDialectInspection,SqlNoDataSourceInspection
+      // language=MySQL
       findUser("SELECT * FROM Users WHERE id=?", [userId], callback);
    };
 
@@ -166,7 +165,7 @@ module.exports = function(databaseHelper) {
     * @param {function} callback function with signature <code>callback(err, user)</code>
     */
    this.findByEmail = function(email, callback) {
-      // noinspection SqlDialectInspection,SqlNoDataSourceInspection
+      // language=MySQL
       findUser("SELECT * FROM Users WHERE email=?", [email], callback);
    };
 
@@ -181,6 +180,7 @@ module.exports = function(databaseHelper) {
     * @param {function} callback function with signature <code>callback(err, isVerified)</code>
     */
    this.verify = function(token, callback) {
+      // language=MySQL
       databaseHelper.findOne("SELECT id, isVerified " +
                              "FROM Users " +
                              "WHERE verificationToken=?",
@@ -244,6 +244,7 @@ module.exports = function(databaseHelper) {
             .then(function() {
                // generate a token expiring in 1 hour and try to update the user with the given email
                const token = generateToken();
+               // language=MySQL
                databaseHelper.execute("UPDATE Users " +
                                       "SET " +
                                       "resetPasswordToken=?," +
@@ -270,6 +271,7 @@ module.exports = function(databaseHelper) {
                bcrypt.hash(newPassword, 8)
                      .then(hashedPassword => {
                         // now that we have the hashed password, try to update
+                        // language=MySQL
                         databaseHelper.execute("UPDATE Users " +
                                                "SET " +
                                                "password=?," +
