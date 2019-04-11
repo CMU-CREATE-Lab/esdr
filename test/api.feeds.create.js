@@ -1,36 +1,36 @@
-var should = require('should');
-var flow = require('nimble');
-var httpStatus = require('http-status');
-var superagent = require('superagent-ls');
-var requireNew = require('require-new');
-var wipe = require('./fixture-helpers/wipe');
-var setup = require('./fixture-helpers/setup');
-var createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
+const should = require('should');
+const flow = require('nimble');
+const httpStatus = require('http-status');
+const superagent = require('superagent-ls');
+const requireNew = require('require-new');
+const wipe = require('./fixture-helpers/wipe');
+const setup = require('./fixture-helpers/setup');
+const createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
 
-var config = require('../config');
+const config = require('../config');
 
-var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
-var ESDR_DEVICES_API_URL = ESDR_API_ROOT_URL + "/devices";
-var ESDR_FEEDS_API_URL = ESDR_API_ROOT_URL + "/feeds";
+const ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
+const ESDR_DEVICES_API_URL = ESDR_API_ROOT_URL + "/devices";
+const ESDR_FEEDS_API_URL = ESDR_API_ROOT_URL + "/feeds";
 
 describe("REST API", function() {
-   var user1 = requireNew('./fixtures/user1.json');
-   var user2 = requireNew('./fixtures/user2.json');
-   var product1 = requireNew('./fixtures/product1.json');
-   var product2 = requireNew('./fixtures/product2.json');
-   var device1User1 = requireNew('./fixtures/device1.json');
-   var device2User1 = requireNew('./fixtures/device2.json');
-   var device2User2 = requireNew('./fixtures/device3.json');
-   var feed1 = requireNew('./fixtures/feed1.json');
-   var feed2 = requireNew('./fixtures/feed2.json');
-   var feed3 = requireNew('./fixtures/feed3.json');
-   var feed4 = requireNew('./fixtures/feed4.json');
-   var feed5 = requireNew('./fixtures/feed5.json');
-   var feed6 = requireNew('./fixtures/feed6.json');
-   var feedCustomChannelSpecs = requireNew('./fixtures/feed-custom-channelSpecs.json');
-   var feedNullChannelSpecs = requireNew('./fixtures/feed-null-channelSpecs.json');
-   var feedMissingRequiredFields = requireNew('./fixtures/feed-missing-required-fields.json');
-   var feedInvalidFields = requireNew('./fixtures/feed-invalid-fields.json');
+   const user1 = requireNew('./fixtures/user1.json');
+   const user2 = requireNew('./fixtures/user2.json');
+   const product1 = requireNew('./fixtures/product1.json');
+   const product2 = requireNew('./fixtures/product2.json');
+   const device1User1 = requireNew('./fixtures/device1.json');
+   const device2User1 = requireNew('./fixtures/device2.json');
+   const device2User2 = requireNew('./fixtures/device3.json');
+   const feed1 = requireNew('./fixtures/feed1.json');
+   const feed2 = requireNew('./fixtures/feed2.json');
+   const feed3 = requireNew('./fixtures/feed3.json');
+   const feed4 = requireNew('./fixtures/feed4.json');
+   const feed5 = requireNew('./fixtures/feed5.json');
+   const feed6 = requireNew('./fixtures/feed6.json');
+   const feedCustomChannelSpecs = requireNew('./fixtures/feed-custom-channelSpecs.json');
+   const feedNullChannelSpecs = requireNew('./fixtures/feed-null-channelSpecs.json');
+   const feedMissingRequiredFields = requireNew('./fixtures/feed-missing-required-fields.json');
+   const feedInvalidFields = requireNew('./fixtures/feed-invalid-fields.json');
 
    before(function(initDone) {
       flow.series(
@@ -55,26 +55,26 @@ describe("REST API", function() {
                   setup.authenticateUser(user2, done);
                },
                function(done) {
-                  product1.creatorUserId = user1.id;
+                  product1.creatorUserId = user1['id'];
                   setup.createProduct(product1, done);
                },
                function(done) {
-                  product2.creatorUserId = user1.id;
+                  product2.creatorUserId = user1['id'];
                   setup.createProduct(product2, done);
                },
                function(done) {
-                  device1User1.userId = user1.id;
-                  device1User1.productId = product1.id;
+                  device1User1.userId = user1['id'];
+                  device1User1.productId = product1['id'];
                   setup.createDevice(device1User1, done);
                },
                function(done) {
-                  device2User1.userId = user1.id;
-                  device2User1.productId = product2.id;
+                  device2User1.userId = user1['id'];
+                  device2User1.productId = product2['id'];
                   setup.createDevice(device2User1, done);
                },
                function(done) {
-                  device2User2.userId = user2.id;
-                  device2User2.productId = product1.id;
+                  device2User2.userId = user2['id'];
+                  device2User2.productId = product1['id'];
                   setup.createDevice(device2User2, done);
                }
             ],
@@ -84,11 +84,11 @@ describe("REST API", function() {
 
    describe("Feeds", function() {
       describe("Create", function() {
-         var creationTests = [
+         const creationTests = [
             {
                description : "Should be able to create a new (public) feed",
                accessToken : function() {
-                  return user1.accessToken
+                  return user1['accessToken']
                },
                device : device1User1,
                feed : feed1,
@@ -98,8 +98,8 @@ describe("REST API", function() {
                additionalTests : function(originalErr, originalRes, done) {
                   // verify that the feed got the product's defaultChannelSpecs...
                   superagent
-                        .get(ESDR_FEEDS_API_URL + "/" + feed1.id + "?fields=channelSpecs")
-                        .set(createAuthorizationHeader(user1.accessToken))
+                        .get(ESDR_FEEDS_API_URL + "/" + feed1['id'] + "?fields=channelSpecs")
+                        .set(createAuthorizationHeader(user1['accessToken']))
                         .end(function(err, res) {
                            should.not.exist(err);
                            should.exist(res);
@@ -111,7 +111,7 @@ describe("REST API", function() {
                                                               status : "success"
                                                            });
                            res.body.should.have.property('data');
-                           res.body.data.should.have.property('channelSpecs', JSON.parse(product1.defaultChannelSpecs));
+                           res.body.data.should.have.property('channelSpecs', JSON.parse(product1['defaultChannelSpecs']));
 
                            done();
                         });
@@ -120,7 +120,7 @@ describe("REST API", function() {
             {
                description : "Should be able to create an additional feed (private) for a device",
                accessToken : function() {
-                  return user1.accessToken
+                  return user1['accessToken']
                },
                device : device1User1,
                feed : feed2,
@@ -131,7 +131,7 @@ describe("REST API", function() {
             {
                description : "Should be able to create a new (public) feed for a different device and product",
                accessToken : function() {
-                  return user1.accessToken
+                  return user1['accessToken']
                },
                device : device2User1,
                feed : feed3,
@@ -142,7 +142,7 @@ describe("REST API", function() {
             {
                description : "Should be able to create an additional feed (private) for a different device and product",
                accessToken : function() {
-                  return user1.accessToken
+                  return user1['accessToken']
                },
                device : device2User1,
                feed : feed4,
@@ -153,7 +153,7 @@ describe("REST API", function() {
             {
                description : "Should be able to create a new (public) feed, for a different user",
                accessToken : function() {
-                  return user2.accessToken
+                  return user2['accessToken']
                },
                device : device2User2,
                feed : feed5,
@@ -164,7 +164,7 @@ describe("REST API", function() {
             {
                description : "Should be able to create a new (private) feed, for a different user",
                accessToken : function() {
-                  return user2.accessToken
+                  return user2['accessToken']
                },
                device : device2User2,
                feed : feed6,
@@ -175,7 +175,7 @@ describe("REST API", function() {
             {
                description : "Should be able to create a new feed with a null channelSpecs (will use Product's defaultChannelSpecs)",
                accessToken : function() {
-                  return user1.accessToken
+                  return user1['accessToken']
                },
                device : device1User1,
                feed : feedNullChannelSpecs,
@@ -185,8 +185,8 @@ describe("REST API", function() {
                additionalTests : function(originalErr, originalRes, done) {
                   // verify that the feed got the product's defaultChannelSpecs...
                   superagent
-                        .get(ESDR_FEEDS_API_URL + "/" + feedNullChannelSpecs.id + "?fields=channelSpecs")
-                        .set(createAuthorizationHeader(user1.accessToken))
+                        .get(ESDR_FEEDS_API_URL + "/" + feedNullChannelSpecs['id'] + "?fields=channelSpecs")
+                        .set(createAuthorizationHeader(user1['accessToken']))
                         .end(function(err, res) {
                            should.not.exist(err);
                            should.exist(res);
@@ -198,7 +198,7 @@ describe("REST API", function() {
                                                               status : "success"
                                                            });
                            res.body.should.have.property('data');
-                           res.body.data.should.have.property('channelSpecs', JSON.parse(product1.defaultChannelSpecs));
+                           res.body.data.should.have.property('channelSpecs', JSON.parse(product1['defaultChannelSpecs']));
 
                            done();
                         });
@@ -207,7 +207,7 @@ describe("REST API", function() {
             {
                description : "Should be able to create a new feed with a custom channelSpecs (different from the Product's defaultChannelSpecs)",
                accessToken : function() {
-                  return user1.accessToken
+                  return user1['accessToken']
                },
                device : device1User1,
                feed : feedCustomChannelSpecs,
@@ -216,8 +216,8 @@ describe("REST API", function() {
                expectedStatusText : 'success',
                additionalTests : function(originalErr, originalRes, done) {
                   superagent
-                        .get(ESDR_FEEDS_API_URL + "/" + feedCustomChannelSpecs.id + "?fields=channelSpecs")
-                        .set(createAuthorizationHeader(user1.accessToken))
+                        .get(ESDR_FEEDS_API_URL + "/" + feedCustomChannelSpecs['id'] + "?fields=channelSpecs")
+                        .set(createAuthorizationHeader(user1['accessToken']))
                         .end(function(err, res) {
                            should.not.exist(err);
                            should.exist(res);
@@ -229,7 +229,7 @@ describe("REST API", function() {
                                                               status : "success"
                                                            });
                            res.body.should.have.property('data');
-                           res.body.data.should.have.property('channelSpecs', feedCustomChannelSpecs.channelSpecs);
+                           res.body.data.should.have.property('channelSpecs', feedCustomChannelSpecs['channelSpecs']);
 
                            done();
                         });
@@ -238,7 +238,7 @@ describe("REST API", function() {
             {
                description : "Should fail to create a new feed for a bogus device",
                accessToken : function() {
-                  return user1.accessToken
+                  return user1['accessToken']
                },
                device : { id : -1 },
                feed : feed1,
@@ -250,7 +250,7 @@ describe("REST API", function() {
             {
                description : "Should fail to create a new feed for a device owned by a different user",
                accessToken : function() {
-                  return user2.accessToken
+                  return user2['accessToken']
                },
                device : device1User1,
                feed : feed2,
@@ -276,8 +276,8 @@ describe("REST API", function() {
          creationTests.forEach(function(test) {
             it(test.description, function(done) {
                superagent
-                     .post(ESDR_DEVICES_API_URL + "/" + test.device.id + "/feeds")
-                     .set(createAuthorizationHeader(test.accessToken))
+                     .post(ESDR_DEVICES_API_URL + "/" + test.device['id'] + "/feeds")
+                     .set(createAuthorizationHeader(test['accessToken']))
                      .send(test.feed)
                      .end(function(err, res) {
                         should.not.exist(err);
@@ -307,10 +307,10 @@ describe("REST API", function() {
                               res.body.data.should.have.property('apiKeyReadOnly');
 
                               // remember the database ID, productId, deviceId, and userId
-                              test.feed.id = res.body.data.id;
+                              test.feed['id'] = res.body.data['id'];
                               test.feed.productId = test.device.productId;
-                              test.feed.deviceId = test.device.id;
-                              test.feed.userId = test.user.id;
+                              test.feed.deviceId = test.device['id'];
+                              test.feed.userId = test.user['id'];
                               test.feed.apiKey = res.body.data.apiKey;
                               test.feed.apiKeyReadOnly = res.body.data.apiKeyReadOnly;
                            }
@@ -326,21 +326,31 @@ describe("REST API", function() {
             });
          });
 
-         var creationValidationTests = [
+         const creationValidationTests = [
             {
                description : "Should fail to create a feed if required fields are missing",
                accessToken : function() {
-                  return user1.accessToken
+                  return user1['accessToken']
                },
                device : device1User1,
                feed : feedMissingRequiredFields,
                getExpectedValidationItems : function() {
                   return [
                      {
-                        instanceContext : '#',
-                        constraintName : 'required',
-                        constraintValue : global.db.feeds.jsonSchema.required,
-                        kind : 'ObjectValidationError'
+                        "keyword" : "required",
+                        "dataPath" : "",
+                        "schemaPath" : "#/required",
+                        "params" : {
+                           "missingProperty" : "name"
+                        }
+                     },
+                     {
+                        "keyword" : "required",
+                        "dataPath" : "",
+                        "schemaPath" : "#/required",
+                        "params" : {
+                           "missingProperty" : "exposure"
+                        }
                      }
                   ];
                }
@@ -348,17 +358,27 @@ describe("REST API", function() {
             {
                description : "Should fail to create a new feed if the feed is null",
                accessToken : function() {
-                  return user1.accessToken
+                  return user1['accessToken']
                },
                device : device1User1,
                feed : null,
                getExpectedValidationItems : function() {
                   return [
                      {
-                        instanceContext : '#',
-                        constraintName : 'required',
-                        constraintValue : global.db.feeds.jsonSchema.required,
-                        kind : 'ObjectValidationError'
+                        "keyword" : "required",
+                        "dataPath" : "",
+                        "schemaPath" : "#/required",
+                        "params" : {
+                           "missingProperty" : "name"
+                        }
+                     },
+                     {
+                        "keyword" : "required",
+                        "dataPath" : "",
+                        "schemaPath" : "#/required",
+                        "params" : {
+                           "missingProperty" : "exposure"
+                        }
                      }
                   ];
                }
@@ -366,33 +386,34 @@ describe("REST API", function() {
             {
                description : "Should fail to create a feed if fields are invalid",
                accessToken : function() {
-                  return user1.accessToken
+                  return user1['accessToken']
                },
                device : device1User1,
                feed : feedInvalidFields,
                getExpectedValidationItems : function() {
                   return [
                      {
-                        instanceContext : '#/name',
-                        constraintName : 'maxLength',
-                        constraintValue : global.db.feeds.jsonSchema.properties.name.maxLength,
-                        kind : 'StringValidationError'
+                        "keyword" : "maxLength",
+                        "dataPath" : ".name",
+                        "schemaPath" : "#/properties/name/maxLength"
                      },
                      {
-                        instanceContext : '#/exposure',
-                        constraintName : 'enum',
-                        constraintValue : global.db.feeds.jsonSchema.properties.exposure.enum
+                        "keyword" : "enum",
+                        "dataPath" : ".exposure",
+                        "schemaPath" : "#/properties/exposure/enum"
                      },
                      {
-                        instanceContext : '#/latitude',
-                        constraintName : 'type',
-                        constraintValue : global.db.feeds.jsonSchema.properties.latitude.type
+                        "keyword" : "type",
+                        "dataPath" : ".latitude",
+                        "schemaPath" : "#/properties/latitude/type",
+                        "params" : {
+                           "type" : "number"
+                        }
                      },
                      {
-                        instanceContext : '#/longitude',
-                        constraintName : 'maximum',
-                        constraintValue : global.db.feeds.jsonSchema.properties.longitude.maximum,
-                        kind : 'NumericValidationError'
+                        "keyword" : "maximum",
+                        "dataPath" : ".longitude",
+                        "schemaPath" : "#/properties/longitude/maximum"
                      }
                   ];
                }
@@ -402,8 +423,8 @@ describe("REST API", function() {
          creationValidationTests.forEach(function(test) {
             it(test.description, function(done) {
                superagent
-                     .post(ESDR_DEVICES_API_URL + "/" + test.device.id + "/feeds")
-                     .set(createAuthorizationHeader(test.accessToken))
+                     .post(ESDR_DEVICES_API_URL + "/" + test.device['id'] + "/feeds")
+                     .set(createAuthorizationHeader(test['accessToken']))
                      .send(test.feed)
                      .end(function(err, res) {
                         should.not.exist(err);
@@ -416,10 +437,10 @@ describe("REST API", function() {
                                                            status : 'error'
                                                         });
 
-                        var expectedValidationItems = test.getExpectedValidationItems();
+                        const expectedValidationItems = test.getExpectedValidationItems();
                         res.body.should.have.property('data');
-                        res.body.data.should.have.length(expectedValidationItems.length);
-                        res.body.data.forEach(function(validationItem, index) {
+                        res.body.data.errors.should.have.length(expectedValidationItems.length);
+                        res.body.data.errors.forEach(function(validationItem, index) {
                            validationItem.should.have.properties(expectedValidationItems[index]);
                         });
 
