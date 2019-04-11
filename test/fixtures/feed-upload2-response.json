@@ -1,54 +1,54 @@
 {
-   "code": 200,
-   "status": "success",
-   "data": {
-      "channelBounds": {
-         "channels": {
-            "battery_voltage": {
-               "minTimeSecs": 1380276279.1,
-               "maxTimeSecs": 1382054188,
-               "minValue": 3.84,
-               "maxValue": 3.85
+   "code" : 200,
+   "status" : "success",
+   "data" : {
+      "channelBounds" : {
+         "channels" : {
+            "battery_voltage" : {
+               "minTimeSecs" : 1380276279.1,
+               "maxTimeSecs" : 1382054188,
+               "minValue" : 3.84,
+               "maxValue" : 3.85
             },
-            "conductivity": {
-               "minTimeSecs": 1380276279.1,
-               "maxTimeSecs": 1382054188,
-               "minValue": 464,
-               "maxValue": 624
+            "conductivity" : {
+               "minTimeSecs" : 1380276279.1,
+               "maxTimeSecs" : 1382054188,
+               "minValue" : 464,
+               "maxValue" : 624
             },
-            "temperature": {
-               "minTimeSecs": 1380276279.1,
-               "maxTimeSecs": 1382054188,
-               "minValue": 17.7,
-               "maxValue": 22.2
+            "temperature" : {
+               "minTimeSecs" : 1380276279.1,
+               "maxTimeSecs" : 1382054188,
+               "minValue" : 17.7,
+               "maxValue" : 22.2
             }
          },
-         "minTimeSecs": 1380276279.1,
-         "maxTimeSecs": 1382054188
+         "minTimeSecs" : 1380276279.1,
+         "maxTimeSecs" : 1382054188
       },
-      "importedBounds": {
-         "channels": {
-            "battery_voltage": {
-               "minTimeSecs": 1381238902.42,
-               "maxTimeSecs": 1382054188,
-               "minValue": 3.84,
-               "maxValue": 3.84
+      "importedBounds" : {
+         "channels" : {
+            "battery_voltage" : {
+               "minTimeSecs" : 1381238902.42,
+               "maxTimeSecs" : 1382054188,
+               "minValue" : 3.84,
+               "maxValue" : 3.84
             },
-            "conductivity": {
-               "minTimeSecs": 1381238902.42,
-               "maxTimeSecs": 1382054188,
-               "minValue": 478,
-               "maxValue": 624
+            "conductivity" : {
+               "minTimeSecs" : 1381238902.42,
+               "maxTimeSecs" : 1382054188,
+               "minValue" : 478,
+               "maxValue" : 624
             },
-            "temperature": {
-               "minTimeSecs": 1381238902.42,
-               "maxTimeSecs": 1382054188,
-               "minValue": 17.7,
-               "maxValue": 20.8
+            "temperature" : {
+               "minTimeSecs" : 1381238902.42,
+               "maxTimeSecs" : 1382054188,
+               "minValue" : 17.7,
+               "maxValue" : 20.8
             }
          },
-         "minTimeSecs": 1381238902.42,
-         "maxTimeSecs": 1382054188
+         "minTimeSecs" : 1381238902.42,
+         "maxTimeSecs" : 1382054188
       }
    }
 }
