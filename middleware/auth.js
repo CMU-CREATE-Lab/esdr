@@ -53,37 +53,37 @@ module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {
                                                     password : password
                                                  })
                                            .end(function(err, res) {
-                                                   if (err) {
-                                                      log.error("   ESDR oauth failed for user [" + email + "]: " + err);
-                                                      return done(err, false);
-                                                   }
+                                              if (err) {
+                                                 log.error("   ESDR oauth failed for user [" + email + "]: " + err);
+                                                 return done(err, false);
+                                              }
 
-                                                   try {
-                                                      if (res.statusCode === httpStatus.OK) {
-                                                         const tokenResponse = res.body;
-                                                         const user = {
-                                                            id : tokenResponse.userId,
-                                                            lastLogin : new Date(),
-                                                            accessToken : tokenResponse.access_token,
-                                                            refreshToken : tokenResponse.refresh_token,
-                                                            accessTokenExpiration : new Date(new Date().getTime() + (tokenResponse.expires_in * 1000))
-                                                         };
-                                                         return done(null, user);
-                                                      }
-                                                      else if (res.statusCode === httpStatus.UNAUTHORIZED ||
-                                                               res.statusCode === httpStatus.FORBIDDEN) {
-                                                         return done(null, false);
-                                                      }
-                                                      else {
-                                                         log.error("LocalStrategy: ESDR oauth for user [" + email + "] failed due to unknown error.  HTTP status [" + res.statusCode + "]");
-                                                         return done(null, false);
-                                                      }
-                                                   }
-                                                   catch (e) {
-                                                      log.error("LocalStrategy: Unexpected exception while trying to authenticate user [" + email + "] with ESDR: " + e);
-                                                      return done(null, false);
-                                                   }
-                                                });
+                                              try {
+                                                 if (res.statusCode === httpStatus.OK) {
+                                                    const tokenResponse = res.body;
+                                                    const user = {
+                                                       id : tokenResponse.userId,
+                                                       lastLogin : new Date(),
+                                                       accessToken : tokenResponse.access_token,
+                                                       refreshToken : tokenResponse.refresh_token,
+                                                       accessTokenExpiration : new Date(new Date().getTime() + (tokenResponse.expires_in * 1000))
+                                                    };
+                                                    return done(null, user);
+                                                 }
+                                                 else if (res.statusCode === httpStatus.UNAUTHORIZED ||
+                                                          res.statusCode === httpStatus.FORBIDDEN) {
+                                                    return done(null, false);
+                                                 }
+                                                 else {
+                                                    log.error("LocalStrategy: ESDR oauth for user [" + email + "] failed due to unknown error.  HTTP status [" + res.statusCode + "]");
+                                                    return done(null, false);
+                                                 }
+                                              }
+                                              catch (e) {
+                                                 log.error("LocalStrategy: Unexpected exception while trying to authenticate user [" + email + "] with ESDR: " + e);
+                                                 return done(null, false);
+                                              }
+                                           });
                                   }
    ));
 

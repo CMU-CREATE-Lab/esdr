@@ -1,6 +1,6 @@
-var Query2Query = require('query2query');
+const Query2Query = require('query2query');
 
-var query2query = new Query2Query();
+const query2query = new Query2Query();
 query2query.addField('id', true, true, false, Query2Query.types.INTEGER);
 query2query.addField('name', true, true, false);
 query2query.addField('deviceId', true, true, false, Query2Query.types.INTEGER);

@@ -230,7 +230,8 @@ module.exports = function(databaseHelper) {
       Properties.ifPropertyKeyIsValid({ key : propertyKey })
             .then(function() {
                // language=MySQL
-               databaseHelper.execute("DELETE FROM DeviceProperties WHERE clientId=? AND deviceId=? AND propertyKey=?",
+               const sql = "DELETE FROM DeviceProperties WHERE clientId=? AND deviceId=? AND propertyKey=?";
+               databaseHelper.execute(sql,
                                       [clientId, deviceId, propertyKey],
                                       function(err, deleteResult) {
                                          if (err) {

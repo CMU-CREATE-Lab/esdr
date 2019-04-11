@@ -1,32 +1,32 @@
-var flow = require('nimble');
-var config = require('../config');
-var createRandomHexToken = require('../lib/token').createRandomHexToken;
-var log = require('log4js').getLogger('esdr:models:tokens');
+const flow = require('nimble');
+const config = require('../config');
+const createRandomHexToken = require('../lib/token').createRandomHexToken;
+const log = require('log4js').getLogger('esdr:models:tokens');
 
-var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Tokens` ( " +
-                         "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
-                         "`userId` bigint(20) NOT NULL, " +
-                         "`clientId` bigint(20) NOT NULL, " +
-                         "`accessToken` varchar(64) NOT NULL, " +
-                         "`refreshToken` varchar(64) NOT NULL, " +
-                         "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
-                         "PRIMARY KEY (`id`), " +
-                         "UNIQUE KEY `unique_accessToken` (`accessToken`), " +
-                         "UNIQUE KEY `unique_refreshToken` (`refreshToken`), " +
-                         "UNIQUE KEY `userId_clientId_index` (`userId`,`clientId`), " +
-                         "KEY `userId` (`userId`), " +
-                         "KEY `clientId` (`clientId`), " +
-                         "CONSTRAINT `refreshtokens_ibfk_1` FOREIGN KEY (`userId`) REFERENCES `Users` (`id`), " +
-                         "CONSTRAINT `refreshtokens_ibfk_2` FOREIGN KEY (`clientId`) REFERENCES `Clients` (`id`) " +
-                         ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
+// language=MySQL
+const CREATE_TABLE_QUERY = "CREATE TABLE IF NOT EXISTS `Tokens` ( " +
+                           "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
+                           "`userId` bigint(20) NOT NULL, " +
+                           "`clientId` bigint(20) NOT NULL, " +
+                           "`accessToken` varchar(64) NOT NULL, " +
+                           "`refreshToken` varchar(64) NOT NULL, " +
+                           "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
+                           "PRIMARY KEY (`id`), " +
+                           "UNIQUE KEY `unique_accessToken` (`accessToken`), " +
+                           "UNIQUE KEY `unique_refreshToken` (`refreshToken`), " +
+                           "UNIQUE KEY `userId_clientId_index` (`userId`,`clientId`), " +
+                           "KEY `userId` (`userId`), " +
+                           "KEY `clientId` (`clientId`), " +
+                           "CONSTRAINT `refreshtokens_ibfk_1` FOREIGN KEY (`userId`) REFERENCES `Users` (`id`), " +
+                           "CONSTRAINT `refreshtokens_ibfk_2` FOREIGN KEY (`clientId`) REFERENCES `Clients` (`id`) " +
+                           ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
 
-var isTokenExpired = function(tokenRecord) {
+const isTokenExpired = function(tokenRecord) {
+   // noinspection JSCheckFunctionSignatures
    return Math.round((Date.now() - new Date(tokenRecord.created).getTime()) / 1000) > config.get("security:tokenLifeSecs")
 };
 
 module.exports = function(databaseHelper) {
-
-   var self = this;
 
    this.initialize = function(callback) {
       databaseHelper.execute(CREATE_TABLE_QUERY, [], function(err) {
@@ -39,7 +39,7 @@ module.exports = function(databaseHelper) {
       });
    };
 
-   var generateTokens = function() {
+   const generateTokens = function() {
       return {
          access : createRandomHexToken(32),
          refresh : createRandomHexToken(32)
@@ -49,12 +49,12 @@ module.exports = function(databaseHelper) {
    this.create = function(userId, clientId, callback) {
       log.debug("creating tokens for user [" + userId + "] and client [" + clientId + "]");
 
-      var connection = null;
-      var error = null;
-      var hasError = function() {
+      let connection = null;
+      let error = null;
+      const hasError = function() {
          return error != null;
       };
-      var tokens = null;
+      let tokens = null;
 
       flow.series(
             [
@@ -92,7 +92,8 @@ module.exports = function(databaseHelper) {
                function(done) {
                   if (!hasError()) {
                      log.debug("create(): 3) Looking for existing unexpired tokens");
-                     connection.query("SELECT * FROM Tokens WHERE userId=? AND clientId=?",
+                     connection.query(// language=MySQL
+                                      "SELECT * FROM Tokens WHERE userId=? AND clientId=?",
                                       [userId, clientId],
                                       function(err, rows) {
                                          if (err) {
@@ -102,14 +103,15 @@ module.exports = function(databaseHelper) {
                                          else {
                                             if (rows && rows.length > 0) {
                                                // existing token record found, so now see whether it's expired
-                                               var tokenRecord = rows[0];
+                                               const tokenRecord = rows[0];
                                                if (isTokenExpired(tokenRecord)) {
                                                   // token expired, so create new and update
                                                   log.debug("create(): 4) Token is expired, so creating new and updating record");
                                                   tokens = generateTokens();
-                                                  connection.query("UPDATE Tokens SET accessToken=?, refreshToken=?, created=now() WHERE id=?",
+                                                  connection.query(// language=MySQL
+                                                                   "UPDATE Tokens SET accessToken=?, refreshToken=?, created=now() WHERE id=?",
                                                                    [tokens.access, tokens.refresh, tokenRecord.id],
-                                                                   function(err, result) {
+                                                                   function(err) {
                                                                       if (err) {
                                                                          error = err;
                                                                       }
@@ -124,9 +126,10 @@ module.exports = function(databaseHelper) {
                                                      access : tokenRecord.accessToken,
                                                      refresh : tokenRecord.refreshToken,
                                                   };
+                                                  // language=MySQL
                                                   connection.query("UPDATE Tokens SET created=now() WHERE id=?",
                                                                    [tokenRecord.id],
-                                                                   function(err, result) {
+                                                                   function(err) {
                                                                       if (err) {
                                                                          error = err;
                                                                       }
@@ -138,9 +141,10 @@ module.exports = function(databaseHelper) {
                                                // no existing tokens found, so create new and insert
                                                log.debug("create(): 4) No token found, so creating new and inserting");
                                                tokens = generateTokens();
-                                               connection.query("INSERT INTO Tokens (userId, clientId, accessToken, refreshToken) VALUES (?,?,?,?)",
+                                               connection.query(// language=MySQL
+                                                                "INSERT INTO Tokens (userId, clientId, accessToken, refreshToken) VALUES (?,?,?,?)",
                                                                 [userId, clientId, tokens.access, tokens.refresh],
-                                                                function(err, result) {
+                                                                function(err) {
                                                                    if (err) {
                                                                       error = err;
                                                                    }
@@ -194,10 +198,12 @@ module.exports = function(databaseHelper) {
    };
 
    this.findAccessTokenForUserAndClient = function(userId, clientId, callback) {
+      // language=MySQL
       databaseHelper.findOne("SELECT accessToken FROM Tokens WHERE userId=? AND clientId=?", [userId, clientId], callback);
    };
 
    this.remove = function(userId, clientId, callback) {
+      // language=MySQL
       databaseHelper.execute("DELETE FROM Tokens WHERE userId=? AND clientId=?",
                              [userId, clientId],
                              function(err) {
@@ -212,13 +218,13 @@ module.exports = function(databaseHelper) {
 
    this.refreshToken = function(clientId, refreshToken, callback) {
 
-      var connection = null;
-      var error = null;
-      var hasError = function() {
+      let connection = null;
+      let error = null;
+      const hasError = function() {
          return error != null;
       };
-      var userId = null;
-      var newTokens = null;
+      let userId = null;
+      let newTokens = null;
 
       log.debug("Refreshing access token with this refresh token: " + refreshToken);
       flow.series(
@@ -257,7 +263,8 @@ module.exports = function(databaseHelper) {
                function(done) {
                   if (!hasError()) {
                      log.debug("refreshToken(): 3) Find the refresh token for the client");
-                     connection.query("SELECT userId FROM Tokens WHERE refreshToken=? AND clientId=?",
+                     connection.query(// language=MySQL
+                                      "SELECT userId FROM Tokens WHERE refreshToken=? AND clientId=?",
                                       [refreshToken, clientId],
                                       function(err, rows) {
                                          if (err) {
@@ -282,9 +289,10 @@ module.exports = function(databaseHelper) {
                   if (!hasError() && userId) {
                      log.debug("refreshToken(): 4) delete old tokens and generate new");
 
-                     connection.query("DELETE FROM Tokens WHERE refreshToken=?",
+                     connection.query(// language=MySQL
+                                      "DELETE FROM Tokens WHERE refreshToken=?",
                                       [refreshToken],
-                                      function(err, result) {
+                                      function(err) {
                                          if (err) {
                                             error = err;
                                             done();
@@ -294,9 +302,10 @@ module.exports = function(databaseHelper) {
                                             // so DELETE above won't have been committed in the context that self.create will operate in,
                                             // so it would just return the existing tokens.
                                             newTokens = generateTokens();
-                                            connection.query("INSERT INTO Tokens (userId, clientId, accessToken, refreshToken) VALUES (?,?,?,?)",
+                                            connection.query(// language=MySQL
+                                                             "INSERT INTO Tokens (userId, clientId, accessToken, refreshToken) VALUES (?,?,?,?)",
                                                              [userId, clientId, newTokens.access, newTokens.refresh],
-                                                             function(err, result) {
+                                                             function(err) {
                                                                 if (err) {
                                                                    error = err;
                                                                 }
@@ -360,26 +369,29 @@ module.exports = function(databaseHelper) {
     */
    this.validateAccessToken = function(accessToken, callback) {
 
-      databaseHelper.findOne('SELECT * FROM Tokens where accessToken=?', [accessToken], function(err, tokenRecord) {
-         if (err) {
-            return callback(err);
-         }
+      databaseHelper.findOne(// language=MySQL
+                             'SELECT * FROM Tokens where accessToken=?',
+                             [accessToken],
+                             function(err, tokenRecord) {
+                                if (err) {
+                                   return callback(err);
+                                }
 
-         // if not null, then check expiration
-         if (tokenRecord) {
-            if (isTokenExpired(tokenRecord)) {
-               log.debug("validateAccessToken(): token expired!");
-               return callback(null, null, 'Token expired');
-            }
-            else {
-               log.debug("validateAccessToken(): token found!");
-               return callback(null, tokenRecord);
-            }
-         }
-         else {
-            log.debug("validateAccessToken(): token not found!");
-            callback(null, null);
-         }
-      });
+                                // if not null, then check expiration
+                                if (tokenRecord) {
+                                   if (isTokenExpired(tokenRecord)) {
+                                      log.debug("validateAccessToken(): token expired!");
+                                      return callback(null, null, 'Token expired');
+                                   }
+                                   else {
+                                      log.debug("validateAccessToken(): token found!");
+                                      return callback(null, tokenRecord);
+                                   }
+                                }
+                                else {
+                                   log.debug("validateAccessToken(): token not found!");
+                                   callback(null, null);
+                                }
+                             });
    };
 };
