@@ -1,13 +1,13 @@
-var should = require('should');
-var flow = require('nimble');
-var httpStatus = require('http-status');
-var superagent = require('superagent-ls');
-var requireNew = require('require-new');
-var wipe = require('./fixture-helpers/wipe');
-var setup = require('./fixture-helpers/setup');
-var createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
+const should = require('should');
+const flow = require('nimble');
+const httpStatus = require('http-status');
+const superagent = require('superagent-ls');
+const requireNew = require('require-new');
+const wipe = require('./fixture-helpers/wipe');
+const setup = require('./fixture-helpers/setup');
+const createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
 
-var config = require('../config');
+const config = require('../config');
 
 const ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
 const ESDR_MIRROR_REGISTRATIONS_API_URL = ESDR_API_ROOT_URL + "/mirrors/";
@@ -19,15 +19,15 @@ const REALM4 = "realm4";
 const VALID_BUT_UNKNOWN_MIRROR_TOKEN = "abcde01234abcde01234abcde01234abcde01234abcde01234abcde01234abcd";
 
 describe("REST API", function() {
-   var client1 = requireNew('./fixtures/client1.json');
-   var client2 = requireNew('./fixtures/client2.json');
-   var user1 = requireNew('./fixtures/user1.json');
-   var user2 = requireNew('./fixtures/user2.json');
-   var user3 = requireNew('./fixtures/user3.json');
-   var user4 = requireNew('./fixtures/user4.json');
-   var product1 = requireNew('./fixtures/product1.json');
-   var product2 = requireNew('./fixtures/product2.json');
-   var successfulMirrorRegistrations = [];
+   const client1 = requireNew('./fixtures/client1.json');
+   const client2 = requireNew('./fixtures/client2.json');
+   const user1 = requireNew('./fixtures/user1.json');
+   const user2 = requireNew('./fixtures/user2.json');
+   const user3 = requireNew('./fixtures/user3.json');
+   const user4 = requireNew('./fixtures/user4.json');
+   const product1 = requireNew('./fixtures/product1.json');
+   const product2 = requireNew('./fixtures/product2.json');
+   const successfulMirrorRegistrations = [];
 
    before(function(initDone) {
       flow.series(
@@ -78,11 +78,11 @@ describe("REST API", function() {
                   setup.authenticateUserWithClient(user2, client1, done);
                },
                function(done) {
-                  product1.creatorUserId = user1.id;
+                  product1.creatorUserId = user1['id'];
                   setup.createProduct(product1, done);
                },
                function(done) {
-                  product2.creatorUserId = user2.id;
+                  product2.creatorUserId = user2['id'];
                   setup.createProduct(product2, done);
                }
             ],
@@ -97,7 +97,7 @@ describe("REST API", function() {
             describe("No Authentication", function() {
                it("Should fail to create a mirror registration with no Authorization header specified", function(done) {
                   superagent
-                        .post(ESDR_MIRROR_REGISTRATIONS_API_URL + REALM1 + "/registrations/products/" + product1.name)
+                        .post(ESDR_MIRROR_REGISTRATIONS_API_URL + REALM1 + "/registrations/products/" + product1['name'])
                         .end(function(err, res) {
                            should.not.exist(err);
                            should.exist(res);
@@ -112,7 +112,7 @@ describe("REST API", function() {
             describe("Invalid Authentication", function() {
                it("Should fail to create a mirror registration with invalid Authorization Bearer header specified", function(done) {
                   superagent
-                        .post(ESDR_MIRROR_REGISTRATIONS_API_URL + REALM1 + "/registrations/products/" + product1.name)
+                        .post(ESDR_MIRROR_REGISTRATIONS_API_URL + REALM1 + "/registrations/products/" + product1['name'])
                         .set(createAuthorizationHeader("bogus"))
                         .end(function(err, res) {
                            should.not.exist(err);
@@ -125,7 +125,7 @@ describe("REST API", function() {
                });
                it("Should fail to create a mirror registration with invalid Authorization Basic header specified", function(done) {
                   superagent
-                        .post(ESDR_MIRROR_REGISTRATIONS_API_URL + REALM1 + "/registrations/products/" + product1.name)
+                        .post(ESDR_MIRROR_REGISTRATIONS_API_URL + REALM1 + "/registrations/products/" + product1['name'])
                         .auth('bogus', 'sugob')
                         .end(function(err, res) {
                            should.not.exist(err);
@@ -140,10 +140,10 @@ describe("REST API", function() {
 
             describe("Valid Authentication", function() {
                describe("Success", function() {
-                  var createMirrorRegistrationWithOAuth2ExpectingSuccess = function(realm, user, productNameOrId, callback) {
+                  const createMirrorRegistrationWithOAuth2ExpectingSuccess = function(realm, user, productNameOrId, callback) {
                      superagent
                            .post(ESDR_MIRROR_REGISTRATIONS_API_URL + realm + "/registrations/products/" + productNameOrId)
-                           .set(createAuthorizationHeader(user.accessToken))
+                           .set(createAuthorizationHeader(user['accessToken']))
                            .end(function(err, res) {
                               should.not.exist(err);
                               should.exist(res);
@@ -166,10 +166,10 @@ describe("REST API", function() {
                            });
                   };
 
-                  var createMirrorRegistrationWithBasicAuthExpectingSuccess = function(realm, user, productNameOrId, callback) {
+                  const createMirrorRegistrationWithBasicAuthExpectingSuccess = function(realm, user, productNameOrId, callback) {
                      superagent
                            .post(ESDR_MIRROR_REGISTRATIONS_API_URL + realm + "/registrations/products/" + productNameOrId)
-                           .auth(user.email, user.password)
+                           .auth(user['email'], user['password'])
                            .end(function(err, res) {
                               should.not.exist(err);
                               should.exist(res);
@@ -193,62 +193,62 @@ describe("REST API", function() {
                   };
 
                   it("Should be able to create mirror registration realm1/user1/product1 with product referenced by name with OAuth2 authentication", function(done) {
-                     createMirrorRegistrationWithOAuth2ExpectingSuccess(REALM1, user1, product1.name, done);
+                     createMirrorRegistrationWithOAuth2ExpectingSuccess(REALM1, user1, product1['name'], done);
                   });
                   it("Should be able to create mirror registration realm2/user1/product1 with product referenced by name with OAuth2 authentication", function(done) {
-                     createMirrorRegistrationWithOAuth2ExpectingSuccess(REALM2, user1, product1.name, done);
+                     createMirrorRegistrationWithOAuth2ExpectingSuccess(REALM2, user1, product1['name'], done);
                   });
                   it("Should be able to create mirror registration realm1/user1/product2 with product referenced by id with OAuth2 authentication", function(done) {
-                     createMirrorRegistrationWithOAuth2ExpectingSuccess(REALM1, user1, product2.id, done);
+                     createMirrorRegistrationWithOAuth2ExpectingSuccess(REALM1, user1, product2['id'], done);
                   });
                   it("Should be able to create mirror registration realm2/user1/product2 with product referenced by id with OAuth2 authentication", function(done) {
-                     createMirrorRegistrationWithOAuth2ExpectingSuccess(REALM2, user1, product2.id, done);
+                     createMirrorRegistrationWithOAuth2ExpectingSuccess(REALM2, user1, product2['id'], done);
                   });
                   it("Should be able to create mirror registration realm1/user2/product1 with product referenced by name with OAuth2 authentication", function(done) {
-                     createMirrorRegistrationWithOAuth2ExpectingSuccess(REALM1, user2, product1.name, done);
+                     createMirrorRegistrationWithOAuth2ExpectingSuccess(REALM1, user2, product1['name'], done);
                   });
                   it("Should be able to create mirror registration realm2/user2/product1 with product referenced by name with OAuth2 authentication", function(done) {
-                     createMirrorRegistrationWithOAuth2ExpectingSuccess(REALM2, user2, product1.name, done);
+                     createMirrorRegistrationWithOAuth2ExpectingSuccess(REALM2, user2, product1['name'], done);
                   });
                   it("Should be able to create mirror registration realm1/user2/product2 with product referenced by id with OAuth2 authentication", function(done) {
-                     createMirrorRegistrationWithOAuth2ExpectingSuccess(REALM1, user2, product2.id, done);
+                     createMirrorRegistrationWithOAuth2ExpectingSuccess(REALM1, user2, product2['id'], done);
                   });
                   it("Should be able to create mirror registration realm2/user2/product2 with product referenced by id with OAuth2 authentication", function(done) {
-                     createMirrorRegistrationWithOAuth2ExpectingSuccess(REALM2, user2, product2.id, done);
+                     createMirrorRegistrationWithOAuth2ExpectingSuccess(REALM2, user2, product2['id'], done);
                   });
 
                   it("Should be able to create mirror registration realm3/user3/product1 with product referenced by name with HTTP Basic authentication", function(done) {
-                     createMirrorRegistrationWithBasicAuthExpectingSuccess(REALM3, user3, product1.name, done);
+                     createMirrorRegistrationWithBasicAuthExpectingSuccess(REALM3, user3, product1['name'], done);
                   });
                   it("Should be able to create mirror registration realm4/user3/product1 with product referenced by name with HTTP Basic authentication", function(done) {
-                     createMirrorRegistrationWithBasicAuthExpectingSuccess(REALM4, user3, product1.name, done);
+                     createMirrorRegistrationWithBasicAuthExpectingSuccess(REALM4, user3, product1['name'], done);
                   });
                   it("Should be able to create mirror registration realm3/user3/product2 with product referenced by id with HTTP Basic authentication", function(done) {
-                     createMirrorRegistrationWithBasicAuthExpectingSuccess(REALM3, user3, product2.id, done);
+                     createMirrorRegistrationWithBasicAuthExpectingSuccess(REALM3, user3, product2['id'], done);
                   });
                   it("Should be able to create mirror registration realm4/user3/product2 with product referenced by id with HTTP Basic authentication", function(done) {
-                     createMirrorRegistrationWithBasicAuthExpectingSuccess(REALM4, user3, product2.id, done);
+                     createMirrorRegistrationWithBasicAuthExpectingSuccess(REALM4, user3, product2['id'], done);
                   });
                   it("Should be able to create mirror registration realm3/user4/product1 with product referenced by name with HTTP Basic authentication", function(done) {
-                     createMirrorRegistrationWithBasicAuthExpectingSuccess(REALM3, user4, product1.name, done);
+                     createMirrorRegistrationWithBasicAuthExpectingSuccess(REALM3, user4, product1['name'], done);
                   });
                   it("Should be able to create mirror registration realm4/user4/product1 with product referenced by name with HTTP Basic authentication", function(done) {
-                     createMirrorRegistrationWithBasicAuthExpectingSuccess(REALM4, user4, product1.name, done);
+                     createMirrorRegistrationWithBasicAuthExpectingSuccess(REALM4, user4, product1['name'], done);
                   });
                   it("Should be able to create mirror registration realm3/user4/product2 with product referenced by id with HTTP Basic authentication", function(done) {
-                     createMirrorRegistrationWithBasicAuthExpectingSuccess(REALM3, user4, product2.id, done);
+                     createMirrorRegistrationWithBasicAuthExpectingSuccess(REALM3, user4, product2['id'], done);
                   });
                   it("Should be able to create mirror registration realm4/user4/product2 with product referenced by id with HTTP Basic authentication", function(done) {
-                     createMirrorRegistrationWithBasicAuthExpectingSuccess(REALM4, user4, product2.id, done);
+                     createMirrorRegistrationWithBasicAuthExpectingSuccess(REALM4, user4, product2['id'], done);
                   });
                });   // Success
 
                describe("Failure", function() {
                   describe("Duplicate", function() {
-                     var createMirrorRegistrationWithOAuth2ExpectingDuplicate = function(realm, user, productNameOrId, productId, done) {
+                     const createMirrorRegistrationWithOAuth2ExpectingDuplicate = function(realm, user, productNameOrId, productId, done) {
                         superagent
                               .post(ESDR_MIRROR_REGISTRATIONS_API_URL + realm + "/registrations/products/" + productNameOrId)
-                              .set(createAuthorizationHeader(user.accessToken))
+                              .set(createAuthorizationHeader(user['accessToken']))
                               .end(function(err, res) {
                                  should.not.exist(err);
                                  should.exist(res);
@@ -261,7 +261,7 @@ describe("REST API", function() {
                                                                  });
                                  res.body.should.have.property('data', {
                                     realm : realm,
-                                    userId : user.id,
+                                    userId : user['id'],
                                     productId : productId
                                  });
 
@@ -269,10 +269,10 @@ describe("REST API", function() {
                               });
                      };
 
-                     var createMirrorRegistrationWithBasicAuthExpectingDuplicate = function(realm, user, productNameOrId, productId, done) {
+                     const createMirrorRegistrationWithBasicAuthExpectingDuplicate = function(realm, user, productNameOrId, productId, done) {
                         superagent
                               .post(ESDR_MIRROR_REGISTRATIONS_API_URL + realm + "/registrations/products/" + productNameOrId)
-                              .auth(user.email, user.password)
+                              .auth(user['email'], user['password'])
                               .end(function(err, res) {
                                  should.not.exist(err);
                                  should.exist(res);
@@ -285,7 +285,7 @@ describe("REST API", function() {
                                                                  });
                                  res.body.should.have.property('data', {
                                     realm : realm,
-                                    userId : user.id,
+                                    userId : user['id'],
                                     productId : productId
                                  });
 
@@ -294,62 +294,62 @@ describe("REST API", function() {
                      };
 
                      it("Should fail to create mirror registration realm1/user1/product1 with product referenced by name with OAuth2 authentication", function(done) {
-                        createMirrorRegistrationWithOAuth2ExpectingDuplicate(REALM1, user1, product1.name, product1.id, done);
+                        createMirrorRegistrationWithOAuth2ExpectingDuplicate(REALM1, user1, product1['name'], product1['id'], done);
                      });
                      it("Should fail to create mirror registration realm2/user1/product1 with product referenced by name with OAuth2 authentication", function(done) {
-                        createMirrorRegistrationWithOAuth2ExpectingDuplicate(REALM2, user1, product1.name, product1.id, done);
+                        createMirrorRegistrationWithOAuth2ExpectingDuplicate(REALM2, user1, product1['name'], product1['id'], done);
                      });
                      it("Should fail to create mirror registration realm1/user1/product2 with product referenced by id with OAuth2 authentication", function(done) {
-                        createMirrorRegistrationWithOAuth2ExpectingDuplicate(REALM1, user1, product2.id, product2.id, done);
+                        createMirrorRegistrationWithOAuth2ExpectingDuplicate(REALM1, user1, product2['id'], product2['id'], done);
                      });
                      it("Should fail to create mirror registration realm2/user1/product2 with product referenced by id with OAuth2 authentication", function(done) {
-                        createMirrorRegistrationWithOAuth2ExpectingDuplicate(REALM2, user1, product2.id, product2.id, done);
+                        createMirrorRegistrationWithOAuth2ExpectingDuplicate(REALM2, user1, product2['id'], product2['id'], done);
                      });
                      it("Should fail to create mirror registration realm1/user2/product1 with product referenced by name with OAuth2 authentication", function(done) {
-                        createMirrorRegistrationWithOAuth2ExpectingDuplicate(REALM1, user2, product1.name, product1.id, done);
+                        createMirrorRegistrationWithOAuth2ExpectingDuplicate(REALM1, user2, product1['name'], product1['id'], done);
                      });
                      it("Should fail to create mirror registration realm2/user2/product1 with product referenced by name with OAuth2 authentication", function(done) {
-                        createMirrorRegistrationWithOAuth2ExpectingDuplicate(REALM2, user2, product1.name, product1.id, done);
+                        createMirrorRegistrationWithOAuth2ExpectingDuplicate(REALM2, user2, product1['name'], product1['id'], done);
                      });
                      it("Should fail to create mirror registration realm1/user2/product2 with product referenced by id with OAuth2 authentication", function(done) {
-                        createMirrorRegistrationWithOAuth2ExpectingDuplicate(REALM1, user2, product2.id, product2.id, done);
+                        createMirrorRegistrationWithOAuth2ExpectingDuplicate(REALM1, user2, product2['id'], product2['id'], done);
                      });
                      it("Should fail to create mirror registration realm2/user2/product2 with product referenced by id with OAuth2 authentication", function(done) {
-                        createMirrorRegistrationWithOAuth2ExpectingDuplicate(REALM2, user2, product2.id, product2.id, done);
+                        createMirrorRegistrationWithOAuth2ExpectingDuplicate(REALM2, user2, product2['id'], product2['id'], done);
                      });
 
                      it("Should fail to create mirror registration realm3/user3/product1 with product referenced by name with HTTP Basic authentication", function(done) {
-                        createMirrorRegistrationWithBasicAuthExpectingDuplicate(REALM3, user3, product1.name, product1.id, done);
+                        createMirrorRegistrationWithBasicAuthExpectingDuplicate(REALM3, user3, product1['name'], product1['id'], done);
                      });
                      it("Should fail to create mirror registration realm4/user3/product1 with product referenced by name with HTTP Basic authentication", function(done) {
-                        createMirrorRegistrationWithBasicAuthExpectingDuplicate(REALM4, user3, product1.name, product1.id, done);
+                        createMirrorRegistrationWithBasicAuthExpectingDuplicate(REALM4, user3, product1['name'], product1['id'], done);
                      });
                      it("Should fail to create mirror registration realm3/user3/product2 with product referenced by id with HTTP Basic authentication", function(done) {
-                        createMirrorRegistrationWithBasicAuthExpectingDuplicate(REALM3, user3, product2.id, product2.id, done);
+                        createMirrorRegistrationWithBasicAuthExpectingDuplicate(REALM3, user3, product2['id'], product2['id'], done);
                      });
                      it("Should fail to create mirror registration realm4/user3/product2 with product referenced by id with HTTP Basic authentication", function(done) {
-                        createMirrorRegistrationWithBasicAuthExpectingDuplicate(REALM4, user3, product2.id, product2.id, done);
+                        createMirrorRegistrationWithBasicAuthExpectingDuplicate(REALM4, user3, product2['id'], product2['id'], done);
                      });
                      it("Should fail to create mirror registration realm3/user4/product1 with product referenced by name with HTTP Basic authentication", function(done) {
-                        createMirrorRegistrationWithBasicAuthExpectingDuplicate(REALM3, user4, product1.name, product1.id, done);
+                        createMirrorRegistrationWithBasicAuthExpectingDuplicate(REALM3, user4, product1['name'], product1['id'], done);
                      });
                      it("Should fail to create mirror registration realm4/user4/product1 with product referenced by name with HTTP Basic authentication", function(done) {
-                        createMirrorRegistrationWithBasicAuthExpectingDuplicate(REALM4, user4, product1.name, product1.id, done);
+                        createMirrorRegistrationWithBasicAuthExpectingDuplicate(REALM4, user4, product1['name'], product1['id'], done);
                      });
                      it("Should fail to create mirror registration realm3/user4/product2 with product referenced by id with HTTP Basic authentication", function(done) {
-                        createMirrorRegistrationWithBasicAuthExpectingDuplicate(REALM3, user4, product2.id, product2.id, done);
+                        createMirrorRegistrationWithBasicAuthExpectingDuplicate(REALM3, user4, product2['id'], product2['id'], done);
                      });
                      it("Should fail to create mirror registration realm4/user4/product2 with product referenced by id with HTTP Basic authentication", function(done) {
-                        createMirrorRegistrationWithBasicAuthExpectingDuplicate(REALM4, user4, product2.id, product2.id, done);
+                        createMirrorRegistrationWithBasicAuthExpectingDuplicate(REALM4, user4, product2['id'], product2['id'], done);
                      });
 
                   });   // Duplicate
 
                   describe("Invalid Realm", function() {
-                     var createMirrorRegistrationWithInvalidRealm = function(realm, expectedValidationErrorProperties, done) {
+                     const createMirrorRegistrationWithInvalidRealm = function(realm, expectedValidationErrorProperties, done) {
                         superagent
-                              .post(ESDR_MIRROR_REGISTRATIONS_API_URL + realm + "/registrations/products/" + product1.id)
-                              .auth(user1.email, user1.password)
+                              .post(ESDR_MIRROR_REGISTRATIONS_API_URL + realm + "/registrations/products/" + product1['id'])
+                              .auth(user1['email'], user1['password'])
                               .end(function(err, res) {
                                  should.not.exist(err);
                                  should.exist(res);
@@ -361,8 +361,8 @@ describe("REST API", function() {
                                                                     status : 'error'
                                                                  });
                                  res.body.should.have.property('data');
-                                 res.body.data.should.have.length(1);
-                                 res.body.data[0].should.have.properties(expectedValidationErrorProperties);
+                                 res.body.data.errors.should.have.length(1);
+                                 res.body.data.errors[0].should.have.properties(expectedValidationErrorProperties);
 
                                  done();
                               });
@@ -371,77 +371,73 @@ describe("REST API", function() {
                      it("Should fail to create mirror registration with invalid realm (too short)", function(done) {
                         createMirrorRegistrationWithInvalidRealm("X",
                                                                  {
-                                                                    "instanceContext" : "#/realm",
-                                                                    "constraintName" : "minLength",
-                                                                    "constraintValue" : 2,
-                                                                    "testedValue" : 1,
-                                                                    "kind" : "StringValidationError"
+                                                                    "keyword" : "minLength",
+                                                                    "dataPath" : ".realm",
+                                                                    "schemaPath" : "#/properties/realm/minLength"
                                                                  },
                                                                  done);
                      });
                      it("Should fail to create mirror registration with invalid realm (too long)", function(done) {
                         createMirrorRegistrationWithInvalidRealm("realm012345678901234567890123456789012345678901234567890123456789",
                                                                  {
-                                                                    "instanceContext" : "#/realm",
-                                                                    "constraintName" : "maxLength",
-                                                                    "constraintValue" : 64,
-                                                                    "testedValue" : 65,
-                                                                    "kind" : "StringValidationError"
+                                                                    "keyword" : "maxLength",
+                                                                    "dataPath" : ".realm",
+                                                                    "schemaPath" : "#/properties/realm/maxLength"
                                                                  },
                                                                  done);
                      });
                      it("Should fail to create mirror registration with invalid realm (must start with alphanumeric, not .)", function(done) {
                         createMirrorRegistrationWithInvalidRealm(".realm",
                                                                  {
-                                                                    "instanceContext" : "#/realm",
-                                                                    "constraintName" : "pattern",
-                                                                    "kind" : "StringValidationError"
+                                                                    "keyword" : "pattern",
+                                                                    "dataPath" : ".realm",
+                                                                    "schemaPath" : "#/properties/realm/pattern"
                                                                  },
                                                                  done);
                      });
                      it("Should fail to create mirror registration with invalid realm (must start with alphanumeric, not -)", function(done) {
                         createMirrorRegistrationWithInvalidRealm("-realm",
                                                                  {
-                                                                    "instanceContext" : "#/realm",
-                                                                    "constraintName" : "pattern",
-                                                                    "kind" : "StringValidationError"
+                                                                    "keyword" : "pattern",
+                                                                    "dataPath" : ".realm",
+                                                                    "schemaPath" : "#/properties/realm/pattern"
                                                                  },
                                                                  done);
                      });
                      it("Should fail to create mirror registration with invalid realm (must start with alphanumeric, not _)", function(done) {
                         createMirrorRegistrationWithInvalidRealm("_realm",
                                                                  {
-                                                                    "instanceContext" : "#/realm",
-                                                                    "constraintName" : "pattern",
-                                                                    "kind" : "StringValidationError"
+                                                                    "keyword" : "pattern",
+                                                                    "dataPath" : ".realm",
+                                                                    "schemaPath" : "#/properties/realm/pattern"
                                                                  },
                                                                  done);
                      });
                      it("Should fail to create mirror registration with invalid realm (limited to alphanumeric, underscore, hyphen, and period)", function(done) {
                         createMirrorRegistrationWithInvalidRealm("rea$lm",
                                                                  {
-                                                                    "instanceContext" : "#/realm",
-                                                                    "constraintName" : "pattern",
-                                                                    "kind" : "StringValidationError"
+                                                                    "keyword" : "pattern",
+                                                                    "dataPath" : ".realm",
+                                                                    "schemaPath" : "#/properties/realm/pattern"
                                                                  },
                                                                  done);
                      });
                      it("Should fail to create mirror registration with invalid realm (limited to alphanumeric, underscore, hyphen, and period)", function(done) {
                         createMirrorRegistrationWithInvalidRealm("my cool realm",
                                                                  {
-                                                                    "instanceContext" : "#/realm",
-                                                                    "constraintName" : "pattern",
-                                                                    "kind" : "StringValidationError"
+                                                                    "keyword" : "pattern",
+                                                                    "dataPath" : ".realm",
+                                                                    "schemaPath" : "#/properties/realm/pattern"
                                                                  },
                                                                  done);
                      });
                   });   // Invalid Realm
 
                   describe("Invalid Product", function() {
-                     var createMirrorRegistrationWithInvalidProduct = function(productNameOrId, done) {
+                     const createMirrorRegistrationWithInvalidProduct = function(productNameOrId, done) {
                         superagent
                               .post(ESDR_MIRROR_REGISTRATIONS_API_URL + REALM1 + "/registrations/products/" + productNameOrId)
-                              .auth(user1.email, user1.password)
+                              .auth(user1['email'], user1['password'])
                               .end(function(err, res) {
                                  should.not.exist(err);
                                  should.exist(res);
@@ -474,7 +470,7 @@ describe("REST API", function() {
                describe("No Authentication", function() {
                   it("Should fail to find a mirror registration with no Authorization header specified", function(done) {
                      superagent
-                           .get(ESDR_MIRROR_REGISTRATIONS_API_URL + REALM1 + "/registrations/products/" + product1.id)
+                           .get(ESDR_MIRROR_REGISTRATIONS_API_URL + REALM1 + "/registrations/products/" + product1['id'])
                            .end(function(err, res) {
                               should.not.exist(err);
                               should.exist(res);
@@ -488,7 +484,7 @@ describe("REST API", function() {
                describe("Invalid Authentication", function() {
                   it("Should fail to find a mirror registration with invalid Authorization Bearer header specified", function(done) {
                      superagent
-                           .get(ESDR_MIRROR_REGISTRATIONS_API_URL + REALM1 + "/registrations/products/" + product1.name)
+                           .get(ESDR_MIRROR_REGISTRATIONS_API_URL + REALM1 + "/registrations/products/" + product1['name'])
                            .set(createAuthorizationHeader("bogus"))
                            .end(function(err, res) {
                               should.not.exist(err);
@@ -501,7 +497,7 @@ describe("REST API", function() {
                   });
                   it("Should fail to find a mirror registration with invalid Authorization Basic header specified", function(done) {
                      superagent
-                           .get(ESDR_MIRROR_REGISTRATIONS_API_URL + REALM1 + "/registrations/products/" + product1.name)
+                           .get(ESDR_MIRROR_REGISTRATIONS_API_URL + REALM1 + "/registrations/products/" + product1['name'])
                            .auth('bogus', 'sugob')
                            .end(function(err, res) {
                               should.not.exist(err);
@@ -515,10 +511,10 @@ describe("REST API", function() {
                });   // Invalid Authentication
                describe("Valid Authentication", function() {
                   describe("Success", function() {
-                     var findMirrorRegistrationWithOAuth2ExpectingSuccess = function(realm, user, product, nameOrId, expectedMirrorToken, done, willDebug) {
+                     const findMirrorRegistrationWithOAuth2ExpectingSuccess = function(realm, user, product, nameOrId, expectedMirrorToken, done, willDebug) {
                         superagent
                               .get(ESDR_MIRROR_REGISTRATIONS_API_URL + realm + "/registrations/products/" + product[nameOrId])
-                              .set(createAuthorizationHeader(user.accessToken))
+                              .set(createAuthorizationHeader(user['accessToken']))
                               .end(function(err, res) {
                                  should.not.exist(err);
                                  should.exist(res);
@@ -535,18 +531,18 @@ describe("REST API", function() {
                                  res.body.should.have.property('data');
                                  res.body.data.should.have.properties({
                                                                          realm : realm,
-                                                                         userId : user.id,
-                                                                         productId : product.id,
+                                                                         userId : user['id'],
+                                                                         productId : product['id'],
                                                                          mirrorToken : expectedMirrorToken
                                                                       });
 
                                  done();
                               });
                      };
-                     var findMirrorRegistrationWithBasicAuthExpectingSuccess = function(realm, user, product, nameOrId, expectedMirrorToken, done, willDebug) {
+                     const findMirrorRegistrationWithBasicAuthExpectingSuccess = function(realm, user, product, nameOrId, expectedMirrorToken, done, willDebug) {
                         superagent
                               .get(ESDR_MIRROR_REGISTRATIONS_API_URL + realm + "/registrations/products/" + product[nameOrId])
-                              .auth(user.email, user.password)
+                              .auth(user['email'], user['password'])
                               .end(function(err, res) {
                                  should.not.exist(err);
                                  should.exist(res);
@@ -563,8 +559,8 @@ describe("REST API", function() {
                                  res.body.should.have.property('data');
                                  res.body.data.should.have.properties({
                                                                          realm : realm,
-                                                                         userId : user.id,
-                                                                         productId : product.id,
+                                                                         userId : user['id'],
+                                                                         productId : product['id'],
                                                                          mirrorToken : expectedMirrorToken
                                                                       });
 
@@ -706,8 +702,8 @@ describe("REST API", function() {
 
                      it("Should be able to filter returned fields", function(done) {
                         superagent
-                              .get(ESDR_MIRROR_REGISTRATIONS_API_URL + REALM1 + "/registrations/products/" + product1.id + "?fields=realm,userId,mirrorToken,lastMirrorAttemptSecs,lastMirrorSuccessSecs,lastMirroredMaxTimeSecs")
-                              .auth(user1.email, user1.password)
+                              .get(ESDR_MIRROR_REGISTRATIONS_API_URL + REALM1 + "/registrations/products/" + product1['id'] + "?fields=realm,userId,mirrorToken,lastMirrorAttemptSecs,lastMirrorSuccessSecs,lastMirroredMaxTimeSecs")
+                              .auth(user1['email'], user1['password'])
                               .end(function(err, res) {
                                  should.not.exist(err);
                                  should.exist(res);
@@ -721,7 +717,7 @@ describe("REST API", function() {
                                  res.body.should.have.property('data');
                                  res.body.data.should.have.properties({
                                                                          realm : REALM1,
-                                                                         userId : user1.id,
+                                                                         userId : user1['id'],
                                                                          mirrorToken : successfulMirrorRegistrations[0].mirrorToken,
                                                                       });
                                  res.body.data.should.have.property('lastMirrorAttemptSecs');
@@ -741,10 +737,10 @@ describe("REST API", function() {
 
                   });   // Success
                   describe("Failure", function() {
-                     var findMirrorRegistrationExpectingFailure = function(realm, user, product, nameOrId, done, willDebug) {
+                     const findMirrorRegistrationExpectingFailure = function(realm, user, product, nameOrId, done, willDebug) {
                         superagent
                               .get(ESDR_MIRROR_REGISTRATIONS_API_URL + realm + "/registrations/products/" + product[nameOrId])
-                              .set(createAuthorizationHeader(user.accessToken))
+                              .set(createAuthorizationHeader(user['accessToken']))
                               .end(function(err, res) {
                                  should.not.exist(err);
                                  should.exist(res);
@@ -798,7 +794,7 @@ describe("REST API", function() {
 
             describe("By Realm and Mirror Token", function() {
                describe("Success", function() {
-                  var findMirrorRegistrationByRealmAndToken = function(realm, user, product, mirrorToken, done, willDebug) {
+                  const findMirrorRegistrationByRealmAndToken = function(realm, user, product, mirrorToken, done, willDebug) {
                      superagent
                            .get(ESDR_MIRROR_REGISTRATIONS_API_URL + realm + "/registrations/" + mirrorToken)
                            .end(function(err, res) {
@@ -817,8 +813,8 @@ describe("REST API", function() {
                               res.body.should.have.property('data');
                               res.body.data.should.have.properties({
                                                                       realm : realm,
-                                                                      userId : user.id,
-                                                                      productId : product.id,
+                                                                      userId : user['id'],
+                                                                      productId : product['id'],
                                                                       mirrorToken : mirrorToken
                                                                    });
 
@@ -958,7 +954,7 @@ describe("REST API", function() {
                               res.body.should.have.property('data');
                               res.body.data.should.have.properties({
                                                                       realm : REALM1,
-                                                                      userId : user1.id,
+                                                                      userId : user1['id'],
                                                                       mirrorToken : successfulMirrorRegistrations[0].mirrorToken,
                                                                    });
                               res.body.data.should.have.property('lastMirrorAttemptSecs');
@@ -978,7 +974,7 @@ describe("REST API", function() {
                });   // Success
 
                describe("Failure", function() {
-                  var findMirrorRegistration = function(realm, mirrorToken, done, willDebug) {
+                  const findMirrorRegistration = function(realm, mirrorToken, done, willDebug) {
                      superagent
                            .get(ESDR_MIRROR_REGISTRATIONS_API_URL + realm + "/registrations/" + mirrorToken)
                            .end(function(err, res) {
@@ -999,7 +995,7 @@ describe("REST API", function() {
                               done();
                            });
                   };
-                  var findMirrorRegistrationWithValidationError = function(realm, mirrorToken, done, willDebug) {
+                  const findMirrorRegistrationWithValidationError = function(realm, mirrorToken, done, willDebug) {
                      superagent
                            .get(ESDR_MIRROR_REGISTRATIONS_API_URL + realm + "/registrations/" + mirrorToken)
                            .end(function(err, res) {
@@ -1056,7 +1052,7 @@ describe("REST API", function() {
 
          describe("Delete", function() {
             describe("Failure", function() {
-               var deleteFailedDueToValidationError = function(realm, mirrorToken, expectedDataItems, done) {
+               const deleteFailedDueToValidationError = function(realm, mirrorToken, expectedDataItems, done) {
                   superagent
                         .del(ESDR_MIRROR_REGISTRATIONS_API_URL + realm + "/registrations/" + mirrorToken)
                         .end(function(err, res) {
@@ -1072,9 +1068,9 @@ describe("REST API", function() {
 
                            if (expectedDataItems) {
                               res.body.should.have.property('data');
-                              res.body.data.should.have.length(expectedDataItems.length);
+                              res.body.data.errors.should.have.length(expectedDataItems.length);
                               expectedDataItems.forEach(function(dataItem, index) {
-                                 res.body.data[index].should.have.properties(dataItem);
+                                 res.body.data.errors[index].should.have.properties(dataItem);
                               });
                            }
 
@@ -1086,11 +1082,9 @@ describe("REST API", function() {
                                                    VALID_BUT_UNKNOWN_MIRROR_TOKEN,
                                                    [
                                                       {
-                                                         "instanceContext" : "#/realm",
-                                                         "constraintName" : "minLength",
-                                                         "constraintValue" : 2,
-                                                         "testedValue" : 1,
-                                                         "kind" : "StringValidationError"
+                                                         "keyword" : "minLength",
+                                                         "dataPath" : ".realm",
+                                                         "schemaPath" : "#/properties/realm/minLength"
                                                       }
                                                    ],
                                                    done);
@@ -1100,11 +1094,9 @@ describe("REST API", function() {
                                                    VALID_BUT_UNKNOWN_MIRROR_TOKEN,
                                                    [
                                                       {
-                                                         "instanceContext" : "#/realm",
-                                                         "constraintName" : "maxLength",
-                                                         "constraintValue" : 64,
-                                                         "testedValue" : 65,
-                                                         "kind" : "StringValidationError"
+                                                         "keyword" : "maxLength",
+                                                         "dataPath" : ".realm",
+                                                         "schemaPath" : "#/properties/realm/maxLength"
                                                       }
                                                    ],
                                                    done);
@@ -1114,9 +1106,9 @@ describe("REST API", function() {
                                                    VALID_BUT_UNKNOWN_MIRROR_TOKEN,
                                                    [
                                                       {
-                                                         "instanceContext" : "#/realm",
-                                                         "constraintName" : "pattern",
-                                                         "kind" : "StringValidationError"
+                                                         "keyword" : "pattern",
+                                                         "dataPath" : ".realm",
+                                                         "schemaPath" : "#/properties/realm/pattern"
                                                       }
                                                    ],
                                                    done);
@@ -1124,7 +1116,7 @@ describe("REST API", function() {
             });   // Failure
 
             describe("Success", function() {
-               var doDelete = function(realm, mirrorToken, expectedRegistrationsDeleted, done) {
+               const doDelete = function(realm, mirrorToken, expectedRegistrationsDeleted, done) {
                   superagent
                         .del(ESDR_MIRROR_REGISTRATIONS_API_URL + realm + "/registrations/" + mirrorToken)
                         .end(function(err, res) {
@@ -1230,8 +1222,8 @@ describe("REST API", function() {
                });
                it("Should fail to find previously deleted registration referenced by realm and product using OAuth2 authentication", function(done) {
                   superagent
-                        .get(ESDR_MIRROR_REGISTRATIONS_API_URL + REALM1 + "/registrations/products/" + product1.id)
-                        .set(createAuthorizationHeader(user1.accessToken))
+                        .get(ESDR_MIRROR_REGISTRATIONS_API_URL + REALM1 + "/registrations/products/" + product1['id'])
+                        .set(createAuthorizationHeader(user1['accessToken']))
                         .end(function(err, res) {
                            should.not.exist(err);
                            should.exist(res);
@@ -1249,8 +1241,8 @@ describe("REST API", function() {
                });
                it("Should fail to find previously deleted registration referenced by realm and product using Basic Auth authentication", function(done) {
                   superagent
-                        .get(ESDR_MIRROR_REGISTRATIONS_API_URL + REALM1 + "/registrations/products/" + product1.id)
-                        .auth(user1.email, user1.password)
+                        .get(ESDR_MIRROR_REGISTRATIONS_API_URL + REALM1 + "/registrations/products/" + product1['id'])
+                        .auth(user1['email'], user1['password'])
                         .end(function(err, res) {
                            should.not.exist(err);
                            should.exist(res);

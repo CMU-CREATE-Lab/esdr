@@ -1,45 +1,45 @@
-var JaySchema = require('jayschema');
-var jsonValidator = new JaySchema();
-var createRandomHexToken = require('../lib/token').createRandomHexToken;
-var ValidationError = require('../lib/errors').ValidationError;
-var Query2Query = require('query2query');
-var log = require('log4js').getLogger('esdr:models:mirrorregistrations');
+const Ajv = require('ajv');
+const createRandomHexToken = require('../lib/token').createRandomHexToken;
+const ValidationError = require('../lib/errors').ValidationError;
+const Query2Query = require('query2query');
+const log = require('log4js').getLogger('esdr:models:mirrorregistrations');
 
-var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `MirrorRegistrations` ( " +
-                         "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
-                         "`realm` varchar(64) NOT NULL, " +
-                         "`userId` bigint(20) NOT NULL, " +
-                         "`productId` bigint(20) DEFAULT NULL, " +
-                         "`deviceId` bigint(20) DEFAULT NULL, " +
-                         "`feedId` bigint(20) DEFAULT NULL, " +
-                         "`mirrorToken` varchar(64) NOT NULL, " +
-                         "`lastMirrorAttemptSecs` double DEFAULT NULL, " +
-                         "`lastMirrorSuccessSecs` double DEFAULT NULL, " +
-                         "`lastMirroredMaxTimeSecs` double DEFAULT NULL, " +
-                         "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
-                         "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
-                         "PRIMARY KEY (`id`), " +
-                         "UNIQUE KEY `unique_mirrorToken` (`mirrorToken`), " +
-                         "UNIQUE KEY `unique_realm_userId_productId` (`realm`,`userId`,`productId`), " +
-                         "UNIQUE KEY `unique_realm_userId_deviceId_feedId` (`realm`,`userId`,`deviceId`), " +
-                         "UNIQUE KEY `unique_realm_userId_feedId` (`realm`,`userId`,`feedId`), " +
-                         "KEY `realm` (`realm`), " +
-                         "KEY `userId` (`userId`), " +
-                         "KEY `productId` (`productId`), " +
-                         "KEY `deviceId` (`deviceId`), " +
-                         "KEY `feedId` (`feedId`), " +
-                         "KEY `lastMirrorAttemptSecs` (`lastMirrorAttemptSecs`), " +
-                         "KEY `lastMirrorSuccessSecs` (`lastMirrorSuccessSecs`), " +
-                         "KEY `lastMirroredMaxTimeSecs` (`lastMirroredMaxTimeSecs`), " +
-                         "KEY `created` (`created`), " +
-                         "KEY `modified` (`modified`), " +
-                         "CONSTRAINT `mirror_registrations_productId_fk_1` FOREIGN KEY (`productId`) REFERENCES `Products` (`id`), " +
-                         "CONSTRAINT `mirror_registrations_deviceId_fk_1` FOREIGN KEY (`deviceId`) REFERENCES `Devices` (`id`), " +
-                         "CONSTRAINT `mirror_registrations_feedId_fk_1` FOREIGN KEY (`feedId`) REFERENCES `Feeds` (`id`), " +
-                         "CONSTRAINT `mirror_registrations_userId_fk_1` FOREIGN KEY (`userId`) REFERENCES `Users` (`id`) " +
-                         ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
+// language=MySQL
+const CREATE_TABLE_QUERY = "CREATE TABLE IF NOT EXISTS `MirrorRegistrations` ( " +
+                           "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
+                           "`realm` varchar(64) NOT NULL, " +
+                           "`userId` bigint(20) NOT NULL, " +
+                           "`productId` bigint(20) DEFAULT NULL, " +
+                           "`deviceId` bigint(20) DEFAULT NULL, " +
+                           "`feedId` bigint(20) DEFAULT NULL, " +
+                           "`mirrorToken` varchar(64) NOT NULL, " +
+                           "`lastMirrorAttemptSecs` double DEFAULT NULL, " +
+                           "`lastMirrorSuccessSecs` double DEFAULT NULL, " +
+                           "`lastMirroredMaxTimeSecs` double DEFAULT NULL, " +
+                           "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
+                           "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
+                           "PRIMARY KEY (`id`), " +
+                           "UNIQUE KEY `unique_mirrorToken` (`mirrorToken`), " +
+                           "UNIQUE KEY `unique_realm_userId_productId` (`realm`,`userId`,`productId`), " +
+                           "UNIQUE KEY `unique_realm_userId_deviceId_feedId` (`realm`,`userId`,`deviceId`), " +
+                           "UNIQUE KEY `unique_realm_userId_feedId` (`realm`,`userId`,`feedId`), " +
+                           "KEY `realm` (`realm`), " +
+                           "KEY `userId` (`userId`), " +
+                           "KEY `productId` (`productId`), " +
+                           "KEY `deviceId` (`deviceId`), " +
+                           "KEY `feedId` (`feedId`), " +
+                           "KEY `lastMirrorAttemptSecs` (`lastMirrorAttemptSecs`), " +
+                           "KEY `lastMirrorSuccessSecs` (`lastMirrorSuccessSecs`), " +
+                           "KEY `lastMirroredMaxTimeSecs` (`lastMirroredMaxTimeSecs`), " +
+                           "KEY `created` (`created`), " +
+                           "KEY `modified` (`modified`), " +
+                           "CONSTRAINT `mirror_registrations_productId_fk_1` FOREIGN KEY (`productId`) REFERENCES `Products` (`id`), " +
+                           "CONSTRAINT `mirror_registrations_deviceId_fk_1` FOREIGN KEY (`deviceId`) REFERENCES `Devices` (`id`), " +
+                           "CONSTRAINT `mirror_registrations_feedId_fk_1` FOREIGN KEY (`feedId`) REFERENCES `Feeds` (`id`), " +
+                           "CONSTRAINT `mirror_registrations_userId_fk_1` FOREIGN KEY (`userId`) REFERENCES `Users` (`id`) " +
+                           ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
 
-var query2query = new Query2Query();
+const query2query = new Query2Query();
 query2query.addField('id', false, false, false, Query2Query.types.INTEGER);
 query2query.addField('realm', false, false, false);
 query2query.addField('userId', false, false, false, Query2Query.types.INTEGER);
@@ -53,8 +53,8 @@ query2query.addField('lastMirroredMaxTimeSecs', false, false, false, Query2Query
 query2query.addField('created', false, false, false, Query2Query.types.DATETIME);
 query2query.addField('modified', false, false, false, Query2Query.types.DATETIME);
 
-var REALM_JSON_SCHEMA = {
-   "$schema" : "http://json-schema.org/draft-04/schema#",
+const REALM_JSON_SCHEMA = {
+   "$async" : true,
    "title" : "MirrorRegistrationRealm",
    "description" : "A data mirror registration realm",
    "type" : "object",
@@ -68,6 +68,13 @@ var REALM_JSON_SCHEMA = {
    },
    "required" : ["realm"]
 };
+
+const ajv = new Ajv({ allErrors : true });
+const ifRealmIsValid = ajv.compile(REALM_JSON_SCHEMA);
+
+// ifRealmIsValid(registration)
+//       .then(function() {})
+//       .catch(err => callback(new ValidationError(err)));
 
 module.exports = function(databaseHelper) {
 
@@ -84,61 +91,55 @@ module.exports = function(databaseHelper) {
 
    // Assumes the entity type and id has already be validated!
    this.createForProduct = function(realm, userId, productId, callback) {
-      var registration = {
+      const registration = {
          realm : realm
       };
 
-      jsonValidator.validate(registration, REALM_JSON_SCHEMA, function(err) {
-         if (err) {
-            log.error(err);
-            return callback(new ValidationError(err));
-         }
+      ifRealmIsValid(registration)
+            .then(function() {
+               registration.userId = userId;
+               registration.productId = productId;
+               registration.mirrorToken = createRandomHexToken(32).toLowerCase();   // create token, force lowercase
 
-         registration.userId = userId;
-         registration.productId = productId;
-         registration.mirrorToken = createRandomHexToken(32).toLowerCase();   // create token, force lowercase
+               databaseHelper.execute("INSERT INTO MirrorRegistrations SET ?",
+                                      registration,
+                                      function(err, result) {
+                                         if (err) {
+                                            return callback(err);
+                                         }
 
-         databaseHelper.execute("INSERT INTO MirrorRegistrations SET ?",
-                                registration,
-                                function(err, result) {
-                                   if (err) {
-                                      return callback(err);
-                                   }
-
-                                   return callback(null, {
-                                      id : result.insertId,
-                                      mirrorToken : registration.mirrorToken
-                                   });
-                                });
-      });
+                                         return callback(null, {
+                                            id : result.insertId,
+                                            mirrorToken : registration.mirrorToken
+                                         });
+                                      });
+            })
+            .catch(err => callback(new ValidationError(err)));
    };
 
    this.deleteRegistration = function(realm, mirrorToken, callback) {
       // force to be a string and lowercase
       mirrorToken = ("" + (mirrorToken || "")).toLowerCase();
 
-      jsonValidator.validate({
-                                realm : realm,
-                                mirrorToken : mirrorToken
-                             },
-                             REALM_JSON_SCHEMA,
-                             function(err) {
-                                if (err) {
-                                   return callback(new ValidationError(err));
-                                }
+      ifRealmIsValid({
+                        realm : realm,
+                        mirrorToken : mirrorToken
+                     })
+            .then(function() {
+               // language=MySQL
+               const sql = "DELETE FROM MirrorRegistrations WHERE realm=? AND mirrorToken=?";
+               databaseHelper.execute(sql,
+                                      [realm, mirrorToken],
+                                      function(err, deleteResult) {
+                                         if (err) {
+                                            log.error("Error trying to delete mirror registration with realm [" + realm + "] and mirror token [" + mirrorToken + "]: " + err);
+                                            return callback(err);
+                                         }
 
-                                databaseHelper.execute("DELETE FROM MirrorRegistrations WHERE realm=? AND mirrorToken=?",
-                                                       [realm, mirrorToken],
-                                                       function(err, deleteResult) {
-                                                          if (err) {
-                                                             log.error("Error trying to delete mirror registration with realm [" + realm + "] and mirror token [" + mirrorToken + "]: " + err);
-                                                             return callback(err);
-                                                          }
-
-                                                          return callback(null, { registrationsDeleted : deleteResult.affectedRows });
-                                                       });
-                             });
-
+                                         return callback(null, { registrationsDeleted : deleteResult.affectedRows });
+                                      });
+            })
+            .catch(err => callback(new ValidationError(err)));
    };
 
    /**
@@ -151,21 +152,17 @@ module.exports = function(databaseHelper) {
     * @param {function} callback function with signature <code>callback(err, mirrorRegistration)</code>
     */
    this.findByRealmAndMirrorToken = function(realm, mirrorToken, callback) {
-      jsonValidator.validate({
-                                realm : realm,
-                                mirrorToken : mirrorToken
-                             },
-                             REALM_JSON_SCHEMA,
-                             function(err) {
-                                if (err) {
-                                   log.error(err);
-                                   return callback(new ValidationError(err));
-                                }
-
-                                findOne("SELECT * FROM MirrorRegistrations WHERE realm=? AND mirrorToken=?",
-                                        [realm, mirrorToken],
-                                        callback);
-                             });
+      ifRealmIsValid({
+                        realm : realm,
+                        mirrorToken : mirrorToken
+                     })
+            .then(function() {
+               // language=MySQL
+               findOne("SELECT * FROM MirrorRegistrations WHERE realm=? AND mirrorToken=?",
+                       [realm, mirrorToken],
+                       callback);
+            })
+            .catch(err => callback(new ValidationError(err)));
    };
 
    /**
@@ -179,16 +176,14 @@ module.exports = function(databaseHelper) {
     * @param {function} callback function with signature <code>callback(err, mirrorRegistration)</code>
     */
    this.findByRealmUserAndProduct = function(realm, userId, productId, callback) {
-      jsonValidator.validate({ realm : realm }, REALM_JSON_SCHEMA, function(err) {
-         if (err) {
-            log.error(err);
-            return callback(new ValidationError(err));
-         }
-
-         findOne("SELECT * FROM MirrorRegistrations WHERE realm=? AND userId=? AND productId=?",
-                 [realm, userId, productId],
-                 callback);
-      });
+      ifRealmIsValid({ realm : realm })
+            .then(function() {
+               // language=MySQL
+               findOne("SELECT * FROM MirrorRegistrations WHERE realm=? AND userId=? AND productId=?",
+                       [realm, userId, productId],
+                       callback);
+            })
+            .catch(err => callback(new ValidationError(err)));
    };
 
    this.filterFields = function(mirrorRegistration, fieldsToSelect, callback) {
@@ -197,7 +192,7 @@ module.exports = function(databaseHelper) {
             return callback(err);
          }
 
-         var filteredRegistration = {};
+         const filteredRegistration = {};
          queryParts.selectFields.forEach(function(fieldName) {
             if (fieldName in mirrorRegistration) {
                filteredRegistration[fieldName] = mirrorRegistration[fieldName];
@@ -208,7 +203,7 @@ module.exports = function(databaseHelper) {
       });
    };
 
-   var findOne = function(query, params, callback) {
+   const findOne = function(query, params, callback) {
       databaseHelper.findOne(query, params, function(err, user) {
          if (err) {
             log.error("Error trying to find mirror registration: " + err);
