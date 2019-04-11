@@ -6,7 +6,7 @@ const log = require('log4js').getLogger('esdr:routes:api:feeds');
 const JSendError = require('jsend-utils').JSendError;
 const ValidationError = require('../../lib/errors').ValidationError;
 const isPositiveIntString = require('../../lib/typeUtils').isPositiveIntString;
-const isString = require('../../lib/typeUtils').isString;
+const isString = require('data-type-utils').isString;
 const isFeedApiKey = require('../../lib/typeUtils').isFeedApiKey;
 
 module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
