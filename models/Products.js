@@ -79,8 +79,6 @@ const ifProductIsValid = ajv.compile(JSON_SCHEMA);
 
 module.exports = function(databaseHelper) {
 
-   this.jsonSchema = JSON_SCHEMA;
-
    this.initialize = function(callback) {
       databaseHelper.execute(CREATE_TABLE_QUERY, [], function(err) {
          if (err) {
