@@ -36,5 +36,6 @@
     <orderEntry type="library" name="@types/qs" level="application" />
     <orderEntry type="library" name="@types/serve-favicon" level="application" />
     <orderEntry type="library" name="@types/superagent" level="application" />
+    <orderEntry type="library" name="@types/express-serve-static-core" level="application" />
   </component>
 </module>
