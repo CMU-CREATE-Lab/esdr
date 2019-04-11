@@ -4,26 +4,26 @@ if (!require('run-mode').isTest()) {
    process.exit(1);
 }
 
-var mysql = require('mysql');
-var flow = require('nimble');
-var bcrypt = require('bcrypt');
-var DatabaseHelper = require("../../models/DatabaseHelper");
-var config = require('../../config');
+const mysql = require('mysql');
+const flow = require('nimble');
+const bcrypt = require('bcrypt');
+const DatabaseHelper = require("../../models/DatabaseHelper");
+const config = require('../../config');
 
-var log4js = require('log4js');
+const log4js = require('log4js');
 log4js.configure('log4js-config-test.json');
-var log = log4js.getLogger('esdr:test:fixture-helpers:database');
+const log = log4js.getLogger('esdr:test:fixture-helpers:database');
 
-var databaseHelper = new DatabaseHelper(mysql.createPool({
-                                                            connectionLimit : config.get("database:pool:connectionLimit"),
-                                                            host : config.get("database:host"),
-                                                            port : config.get("database:port"),
-                                                            database : config.get("database:database"),
-                                                            user : config.get("database:username"),
-                                                            password : config.get("database:password")
-                                                         }));
+const databaseHelper = new DatabaseHelper(mysql.createPool({
+                                                              connectionLimit : config.get("database:pool:connectionLimit"),
+                                                              host : config.get("database:host"),
+                                                              port : config.get("database:port"),
+                                                              database : config.get("database:database"),
+                                                              user : config.get("database:username"),
+                                                              password : config.get("database:password")
+                                                           }));
 
-var createDeleteAllRowsFromTableFunction = function(tableName, sql) {
+const createDeleteAllRowsFromTableFunction = function(tableName, sql) {
    sql = sql || "DELETE FROM " + tableName;
    return function(done) {
       log.trace("Wiping table: " + tableName);
@@ -31,7 +31,7 @@ var createDeleteAllRowsFromTableFunction = function(tableName, sql) {
    };
 };
 
-var wipeTableCommands = [];
+const wipeTableCommands = [];
 wipeTableCommands.push(createDeleteAllRowsFromTableFunction("MirrorRegistrations"));
 wipeTableCommands.push(createDeleteAllRowsFromTableFunction("Multifeeds"));
 wipeTableCommands.push(createDeleteAllRowsFromTableFunction("FeedProperties"));
@@ -55,7 +55,7 @@ module.exports.wipeAllTables = wipeAllTables;
 
 module.exports.insertClient = function(client, callback) {
    // remember the plain-text clientSecret so we can set it back
-   var plainTextClientSecret = client.clientSecret;
+   const plainTextClientSecret = client.clientSecret;
 
    // encrypt the clientSecret for storage in the DB
    client.clientSecret = bcrypt.hashSync(plainTextClientSecret, 8);
@@ -69,7 +69,7 @@ module.exports.insertClient = function(client, callback) {
 
 module.exports.insertUser = function(user, callback) {
    // remember the plain-text password so we can set it back
-   var plainTextPassword = user.password;
+   const plainTextPassword = user.password;
 
    // encrypt the password for storage in the DB
    user.password = bcrypt.hashSync(plainTextPassword, 8);
@@ -106,6 +106,6 @@ module.exports.insertMultifeed = function(feed, callback) {
 
 module.exports.expireAccessToken = function(accessToken, callback) {
    // set the new creation date such that the token will have expired 24 hours ago
-   var newCreatedDate = new Date(Date.now() - (86400 + config.get("security:tokenLifeSecs")) * 1000);
+   const newCreatedDate = new Date(Date.now() - (86400 + config.get("security:tokenLifeSecs")) * 1000);
    databaseHelper.execute("UPDATE Tokens SET created=? WHERE accessToken=?", [newCreatedDate, accessToken], callback);
 };
