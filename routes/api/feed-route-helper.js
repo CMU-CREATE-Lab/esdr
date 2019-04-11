@@ -1,5 +1,4 @@
-var httpStatus = require('http-status');
-var log = require('log4js').getLogger('esdr:routes:api:feed-route-helper');
+const httpStatus = require('http-status');
 
 module.exports = function(FeedModel) {
 

@@ -1,11 +1,11 @@
-var config = require('../../config');
-var express = require('express');
-var router = express.Router();
-var passport = require('passport');
-var Mailer = require('../../lib/mailer');
-var ValidationError = require('../../lib/errors').ValidationError;
-var httpStatus = require('http-status');
-var log = require('log4js').getLogger('esdr:routes:api:password-reset');
+const config = require('../../config');
+const express = require('express');
+const router = express.Router();
+const passport = require('passport');
+const Mailer = require('../../lib/mailer');
+const ValidationError = require('../../lib/errors').ValidationError;
+const httpStatus = require('http-status');
+const log = require('log4js').getLogger('esdr:routes:api:password-reset');
 
 module.exports = function(UserModel) {
 
@@ -24,27 +24,27 @@ module.exports = function(UserModel) {
     */
    router.post('/',
                function(req, res, next) {
-                  var userEmail = req.body.email;
+                  const userEmail = req.body.email;
 
                   if (userEmail) {
 
-                     var sendPasswordResetEmail = function(client) {
+                     const sendPasswordResetEmail = function(client) {
                         log.debug("Received POST to send password reset email for user [" + userEmail + "]");
 
                         // try to create the reset password token
                         UserModel.createResetPasswordToken(userEmail, function(err, token) {
                            if (err) {
                               if (err instanceof ValidationError) {
-                                 return res.jsendClientValidationError("Invalid email address.", {email : userEmail});  // HTTP 422 Unprocessable Entity
+                                 return res.jsendClientValidationError("Invalid email address.", { email : userEmail });  // HTTP 422 Unprocessable Entity
                               }
-                              var message = "Error while trying create a reset password token request";
+                              const message = "Error while trying create a reset password token request";
                               log.error(message + ": " + err);
                               return res.jsendServerError(message);
                            }
 
                            if (token) {
 
-                              var obj = {
+                              const obj = {
                                  email : userEmail
                               };
                               // See whether we should return the reset password token.  In most cases, we simply want to
@@ -60,7 +60,7 @@ module.exports = function(UserModel) {
                               return res.jsendSuccess(obj, httpStatus.CREATED);  // HTTP 201 Created
                            }
 
-                           return res.jsendClientError("Unknown or invalid email address", {email : userEmail}, httpStatus.BAD_REQUEST);
+                           return res.jsendClientError("Unknown or invalid email address", { email : userEmail }, httpStatus.BAD_REQUEST);
                         });
 
                      };
@@ -70,7 +70,7 @@ module.exports = function(UserModel) {
                         // try to authenticate the client
                         passport.authenticate('basic', function(err, client) {
                            if (err) {
-                              var message = "Error while authenticating the client";
+                              const message = "Error while authenticating the client";
                               log.error(message + ": " + err);
                               return res.jsendServerError(message);
                            }
@@ -95,8 +95,8 @@ module.exports = function(UserModel) {
 
    router.put('/',
               function(req, res) {
-                 var password = req.body.password;
-                 var token = req.body.token;
+                 const password = req.body.password;
+                 const token = req.body.token;
 
                  if (password) {
                     if (token) {
@@ -105,7 +105,7 @@ module.exports = function(UserModel) {
                              if (err instanceof ValidationError) {
                                 return res.jsendClientValidationError("Validation failure", err.data);  // HTTP 422 Unprocessable Entity
                              }
-                             var message = "Error while trying set the new password";
+                             const message = "Error while trying set the new password";
                              log.error(message + ": " + err);
                              return res.jsendServerError(message);
                           }

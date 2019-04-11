@@ -1,11 +1,11 @@
-var express = require('express');
-var router = express.Router();
-var passport = require('passport');
-var ValidationError = require('../../lib/errors').ValidationError;
-var DuplicateRecordError = require('../../lib/errors').DuplicateRecordError;
-var httpStatus = require('http-status');
-var flow = require('nimble');
-var log = require('log4js').getLogger('esdr:routes:api:multifeeds');
+const express = require('express');
+const router = express.Router();
+const passport = require('passport');
+const ValidationError = require('../../lib/errors').ValidationError;
+const DuplicateRecordError = require('../../lib/errors').DuplicateRecordError;
+const httpStatus = require('http-status');
+const flow = require('nimble');
+const log = require('log4js').getLogger('esdr:routes:api:multifeeds');
 
 module.exports = function(FeedModel, MultifeedModel) {
 
@@ -47,7 +47,7 @@ module.exports = function(FeedModel, MultifeedModel) {
    router.post('/',
                passport.authenticate('bearer', { session : false }),
                function(req, res, next) {
-                  var multifeed = req.body;
+                  const multifeed = req.body;
                   MultifeedModel.create(multifeed, req.user.id, function(err, result) {
                      if (err) {
                         if (err instanceof ValidationError) {
@@ -63,7 +63,7 @@ module.exports = function(FeedModel, MultifeedModel) {
                            return res.jsendPassThrough(err.data);
                         }
 
-                        var message = "Error while trying to create multifeed [" + multifeed.name + "]";
+                        const message = "Error while trying to create multifeed [" + multifeed.name + "]";
                         log.error(message + ": " + err);
                         return res.jsendServerError(message);
                      }
@@ -80,7 +80,7 @@ module.exports = function(FeedModel, MultifeedModel) {
    // Returns info about the specified multifeed
    router.get('/:multifeedNameOrId',
               function(req, res, next) {
-                 var multifeedNameOrId = req.params.multifeedNameOrId;
+                 const multifeedNameOrId = req.params.multifeedNameOrId;
                  log.debug("Received GET for multifeed [" + multifeedNameOrId + "]");
 
                  findMultifeedByNameOrId(res, multifeedNameOrId, req.query.fields, function(multifeed) {
@@ -99,9 +99,9 @@ module.exports = function(FeedModel, MultifeedModel) {
    // Returns the multi-tile for the specified multifeed at the specified level and offset
    router.get('/:multifeedNameOrId/tiles/:level.:offset',
               function(req, res, next) {
-                 var multifeedNameOrId = req.params.multifeedNameOrId;
-                 var level = req.params.level;
-                 var offset = req.params.offset;
+                 const multifeedNameOrId = req.params.multifeedNameOrId;
+                 const level = req.params.level;
+                 const offset = req.params.offset;
                  log.debug("Received GET for tiles at level.offset [" + level + "." + offset + "] for multifeed [" + multifeedNameOrId + "]");
 
                  findMultifeedByNameOrId(res, multifeedNameOrId, 'querySpec', function(multifeed) {
@@ -110,13 +110,13 @@ module.exports = function(FeedModel, MultifeedModel) {
 
                     // build functions to find the feeds described by each item in the querySpec.  We'll execute them
                     // in parallel, combining the results which we'll then use to build the call to the datastore.
-                    var queryFunctions = [];
-                    var feedsAndChannels = [];
-                    var errors = [];
+                    const queryFunctions = [];
+                    const feedsAndChannels = [];
+                    const errors = [];
                     multifeed.querySpec.forEach(function(specItem) {
                        queryFunctions.push(
                              function(done) {
-                                var sqlWhere = {
+                                const sqlWhere = {
                                    where : "((isPublic=1) AND (" + specItem.feeds.where + "))",
                                    values : specItem.feeds.values
                                 };
@@ -149,7 +149,7 @@ module.exports = function(FeedModel, MultifeedModel) {
                                   function() {
                                      if (errors.length > 0) {
                                         // just report the first error
-                                        var err = errors[0];
+                                        const err = errors[0];
 
                                         // See if the error contains a JSend data object.  If so, pass it on through.
                                         if (typeof err.data !== 'undefined' &&
@@ -162,7 +162,7 @@ module.exports = function(FeedModel, MultifeedModel) {
                                      else {
                                         FeedModel.getTiles(feedsAndChannels, level, offset, function(err, eventEmitter) {
                                            if (err) {
-                                              if (err.data && err.data.code == httpStatus.UNPROCESSABLE_ENTITY) {
+                                              if (err.data && err.data.code === httpStatus.UNPROCESSABLE_ENTITY) {
                                                  return res.jsendPassThrough(err.data)
                                               }
 
@@ -200,7 +200,7 @@ module.exports = function(FeedModel, MultifeedModel) {
    // with orderBy and/or windowed with limit and offset.
    router.get('/:multifeedNameOrId/feeds',
               function(req, res, next) {
-                 var multifeedNameOrId = req.params.multifeedNameOrId;
+                 const multifeedNameOrId = req.params.multifeedNameOrId;
                  log.debug("Received GET for feeds contained in multifeed [" + multifeedNameOrId + "]");
 
                  findMultifeedByNameOrId(res, multifeedNameOrId, 'querySpec', function(multifeed) {
@@ -208,13 +208,13 @@ module.exports = function(FeedModel, MultifeedModel) {
                     multifeed.querySpec = JSON.parse(multifeed.querySpec);
 
                     // build the WHERE clause for the query
-                    var whereParts = [];
-                    var values = [];
+                    const whereParts = [];
+                    let values = [];
                     multifeed.querySpec.forEach(function(specItem) {
                        whereParts.push("(" + specItem.feeds.where + ")");
                        values = values.concat(specItem.feeds.values);
                     });
-                    var sqlWhere = {
+                    const sqlWhere = {
                        where : "((isPublic=1) AND (" + whereParts.join(' OR ') + "))",
                        values : values
                     };
@@ -234,8 +234,8 @@ module.exports = function(FeedModel, MultifeedModel) {
                                                    return res.jsendServerError("Failed to get feeds", null);
                                                 }
 
-                                                var willInflateChannelSpecs = (selectedFields.indexOf('channelSpecs') >= 0);
-                                                var willInflateChannelBounds = (selectedFields.indexOf('channelBounds') >= 0);
+                                                const willInflateChannelSpecs = (selectedFields.indexOf('channelSpecs') >= 0);
+                                                const willInflateChannelBounds = (selectedFields.indexOf('channelBounds') >= 0);
 
                                                 if (willInflateChannelSpecs || willInflateChannelBounds) {
                                                    result.rows.forEach(function(feed) {
@@ -254,10 +254,10 @@ module.exports = function(FeedModel, MultifeedModel) {
               }
    );
 
-   var findMultifeedByNameOrId = function(res, multifeedNameOrId, fieldsToSelect, successCallback) {
+   const findMultifeedByNameOrId = function(res, multifeedNameOrId, fieldsToSelect, successCallback) {
       MultifeedModel.findByNameOrId(multifeedNameOrId, fieldsToSelect, function(err, multifeed) {
          if (err) {
-            var message = "Error while trying to find multifeed [" + multifeedNameOrId + "]";
+            const message = "Error while trying to find multifeed [" + multifeedNameOrId + "]";
             log.error(message + ": " + err);
             return res.jsendServerError(message);
          }

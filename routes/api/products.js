@@ -1,11 +1,10 @@
-var express = require('express');
-var router = express.Router();
-var passport = require('passport');
-var ValidationError = require('../../lib/errors').ValidationError;
-var DuplicateRecordError = require('../../lib/errors').DuplicateRecordError;
-var httpStatus = require('http-status');
-var log = require('log4js').getLogger('esdr:routes:api:products');
-var isPositiveIntString = require('../../lib/typeUtils').isPositiveIntString;
+const express = require('express');
+const router = express.Router();
+const passport = require('passport');
+const ValidationError = require('../../lib/errors').ValidationError;
+const DuplicateRecordError = require('../../lib/errors').DuplicateRecordError;
+const httpStatus = require('http-status');
+const log = require('log4js').getLogger('esdr:routes:api:products');
 
 module.exports = function(ProductModel, DeviceModel) {
 
@@ -13,8 +12,8 @@ module.exports = function(ProductModel, DeviceModel) {
    router.post('/',
                passport.authenticate('bearer', { session : false }),
                function(req, res, next) {
-                  var userId = req.user.id;
-                  var newProduct = req.body;
+                  const userId = req.user.id;
+                  const newProduct = req.body;
                   log.debug("Received POST from user ID [" + userId + "] to create product [" + (newProduct && newProduct.name ? newProduct.name : null) + "]");
                   ProductModel.create(newProduct,
                                       userId,
@@ -25,10 +24,10 @@ module.exports = function(ProductModel, DeviceModel) {
                                             }
                                             if (err instanceof DuplicateRecordError) {
                                                log.debug("Product name [" + newProduct.name + "] already in use!");
-                                               return res.jsendClientError("Product name already in use.", {name : newProduct.name}, httpStatus.CONFLICT);  // HTTP 409 Conflict
+                                               return res.jsendClientError("Product name already in use.", { name : newProduct.name }, httpStatus.CONFLICT);  // HTTP 409 Conflict
                                             }
 
-                                            var message = "Error while trying to create product [" + newProduct.name + "]";
+                                            const message = "Error while trying to create product [" + newProduct.name + "]";
                                             log.error(message + ": " + err);
                                             return res.jsendServerError(message);
                                          }
@@ -73,7 +72,7 @@ module.exports = function(ProductModel, DeviceModel) {
    // get details for a specific product
    router.get('/:productNameOrId',
               function(req, res, next) {
-                 var productNameOrId = req.params.productNameOrId;
+                 const productNameOrId = req.params.productNameOrId;
                  log.debug("Received GET for product [" + productNameOrId + "]");
 
                  findProductByNameOrId(res, productNameOrId, req.query.fields, function(product) {
@@ -89,12 +88,12 @@ module.exports = function(ProductModel, DeviceModel) {
    router.post('/:productNameOrId/devices',
                passport.authenticate('bearer', { session : false }),
                function(req, res, next) {
-                  var productNameOrId = req.params.productNameOrId;
+                  const productNameOrId = req.params.productNameOrId;
                   log.debug("Received POST to create a new device for product [" + productNameOrId + "]");
 
                   findProductByNameOrId(res, productNameOrId, 'id', function(product) {
                      log.debug("Found product [" + productNameOrId + "], will now create the device...");
-                     var newDevice = req.body;
+                     const newDevice = req.body;
                      DeviceModel.create(newDevice, product.id, req.user.id, function(err, result) {
                         if (err) {
                            if (err instanceof ValidationError) {
@@ -102,10 +101,10 @@ module.exports = function(ProductModel, DeviceModel) {
                            }
                            if (err instanceof DuplicateRecordError) {
                               log.debug("Serial number [" + newDevice.serialNumber + "] for product [" + productNameOrId + "] already in use!");
-                              return res.jsendClientError("Serial number already in use.", {serialNumber : newDevice.serialNumber}, httpStatus.CONFLICT);  // HTTP 409 Conflict
+                              return res.jsendClientError("Serial number already in use.", { serialNumber : newDevice.serialNumber }, httpStatus.CONFLICT);  // HTTP 409 Conflict
                            }
 
-                           var message = "Error while trying to create device [" + newDevice.serialNumber + "]";
+                           const message = "Error while trying to create device [" + newDevice.serialNumber + "]";
                            log.error(message + ": " + err);
                            return res.jsendServerError(message);
                         }
@@ -125,8 +124,8 @@ module.exports = function(ProductModel, DeviceModel) {
    router.get('/:productNameOrId/devices/:serialNumber',
               passport.authenticate('bearer', { session : false }),
               function(req, res, next) {
-                 var productNameOrId = req.params.productNameOrId;
-                 var serialNumber = req.params.serialNumber;
+                 const productNameOrId = req.params.productNameOrId;
+                 const serialNumber = req.params.serialNumber;
                  log.debug("Received GET for product [" + productNameOrId + "] and device [" + serialNumber + "] for user [" + req.user.id + "]");
 
                  findProductByNameOrId(res, productNameOrId, 'id', function(product) {
@@ -134,7 +133,7 @@ module.exports = function(ProductModel, DeviceModel) {
                     // we know the product is valid, so now look for matching devices
                     DeviceModel.findByProductIdAndSerialNumberForUser(product.id, serialNumber, req.user.id, req.query.fields, function(err, device) {
                        if (err) {
-                          var message = "Error while trying to find device with serial number [" + serialNumber + "] for product [" + productNameOrId + "]";
+                          const message = "Error while trying to find device with serial number [" + serialNumber + "] for product [" + productNameOrId + "]";
                           log.error(message + ": " + err);
                           return res.jsendServerError(message);
                        }
@@ -149,10 +148,10 @@ module.exports = function(ProductModel, DeviceModel) {
                  });
               });
 
-   var findProductByNameOrId = function(res, productNameOrId, fieldsToSelect, successCallback) {
+   const findProductByNameOrId = function(res, productNameOrId, fieldsToSelect, successCallback) {
       ProductModel.findByNameOrId(productNameOrId, fieldsToSelect, function(err, product) {
          if (err) {
-            var message = "Error while trying to find product [" + productNameOrId + "]";
+            const message = "Error while trying to find product [" + productNameOrId + "]";
             log.error(message + ": " + err);
             return res.jsendServerError(message);
          }

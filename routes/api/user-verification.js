@@ -1,11 +1,10 @@
-var config = require('../../config');
-var express = require('express');
-var router = express.Router();
-var passport = require('passport');
-var Mailer = require('../../lib/mailer');
-var ValidationError = require('../../lib/errors').ValidationError;
-var httpStatus = require('http-status');
-var log = require('log4js').getLogger('esdr:routes:api:user-verification');
+const config = require('../../config');
+const express = require('express');
+const router = express.Router();
+const passport = require('passport');
+const Mailer = require('../../lib/mailer');
+const httpStatus = require('http-status');
+const log = require('log4js').getLogger('esdr:routes:api:user-verification');
 
 module.exports = function(UserModel) {
 
@@ -24,21 +23,21 @@ module.exports = function(UserModel) {
     */
    router.post('/',
                function(req, res, next) {
-                  var userEmail = req.body.email;
+                  const userEmail = req.body.email;
 
                   if (userEmail) {
-                     var sendVerifcationEmail = function(client) {
+                     const sendVerifcationEmail = function(client) {
                         log.debug("Received POST to resend verification email for user [" + userEmail + "]");
 
                         UserModel.findByEmail(userEmail, function(err, user) {
                            if (err) {
-                              var message = "Error while trying to find user [" + userEmail + "] to resend verification token";
+                              const message = "Error while trying to find user [" + userEmail + "] to resend verification token";
                               log.error(message + ": " + err);
                               return res.jsendServerError(message);
                            }
 
                            if (user) {
-                              var obj = {
+                              const obj = {
                                  email : user.email,
                                  isVerified : !!user.isVerified,
                                  verified : user.verified
@@ -57,7 +56,7 @@ module.exports = function(UserModel) {
                               return res.jsendSuccess(obj, user.isVerified ? httpStatus.OK : httpStatus.CREATED);
                            }
 
-                           return res.jsendClientError("Unknown or invalid email address", {email : userEmail}, httpStatus.BAD_REQUEST);
+                           return res.jsendClientError("Unknown or invalid email address", { email : userEmail }, httpStatus.BAD_REQUEST);
                         });
                      };
 
@@ -66,7 +65,7 @@ module.exports = function(UserModel) {
                         // try to authenticate the client
                         passport.authenticate('basic', function(err, client) {
                            if (err) {
-                              var message = "Error while authenticating the client";
+                              const message = "Error while authenticating the client";
                               log.error(message + ": " + err);
                               return res.jsendServerError(message);
                            }
@@ -95,12 +94,12 @@ module.exports = function(UserModel) {
     */
    router.put('/',
               function(req, res) {
-                 var verificationToken = req.body.token;
+                 const verificationToken = req.body.token;
                  log.debug("Received PUT to verify token [" + verificationToken + "]");
                  if (verificationToken) {
                     UserModel.verify(verificationToken, function(err, result) {
                        if (err) {
-                          var message = "Error while trying to verify user with verification token [" + verificationToken + "]";
+                          const message = "Error while trying to verify user with verification token [" + verificationToken + "]";
                           log.error(message + ": " + err);
                           return res.jsendServerError(message);
                        }

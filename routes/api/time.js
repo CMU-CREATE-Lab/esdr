@@ -1,16 +1,16 @@
-var express = require('express');
-var router = express.Router();
-var httpStatus = require('http-status');
+const express = require('express');
+const router = express.Router();
+const httpStatus = require('http-status');
 
-var NUM_CHECKSUM_BYTES = 4;
+const NUM_CHECKSUM_BYTES = 4;
 
-var computeChecksum = function(number) {
+const computeChecksum = function(number) {
    // compute a checksum by summing the 4 bytes and then using only the lowest 8 bits
-   var b = Buffer.alloc(4);
+   const b = Buffer.alloc(4);
    b.writeInt32BE(number, 0);
 
-   var sum = 0;
-   for (var i = 0; i < NUM_CHECKSUM_BYTES; i++) {
+   let sum = 0;
+   for (let i = 0; i < NUM_CHECKSUM_BYTES; i++) {
       sum += b.readUInt8(i);
    }
 
@@ -18,9 +18,9 @@ var computeChecksum = function(number) {
 };
 
 router.get('/unix-time-seconds', function(req, res) {
-   var unixTimeSecs = Math.round(Date.now() / 1000);
+   const unixTimeSecs = Math.round(Date.now() / 1000);
 
-   var time = {
+   const time = {
       unixTimeSecs : unixTimeSecs,
       checksum : computeChecksum(unixTimeSecs)
    };
@@ -31,7 +31,7 @@ router.get('/unix-time-seconds', function(req, res) {
    res.header('Pragma', 'no-cache');
 
    // determine response format
-   if (req.query && req.query.format == "text") {
+   if (req.query && req.query.format === "text") {
       res.set('Content-Type', 'text/plain');
       res.send("unixTimeSecs=" + time.unixTimeSecs + ",checksum=" + time.checksum);
    }

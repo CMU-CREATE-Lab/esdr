@@ -1,10 +1,9 @@
-var express = require('express');
-var router = express.Router();
-var passport = require('passport');
-var httpStatus = require('http-status');
-var computeTimeToRefreshAccessToken = require('../middleware/accessToken').computeTimeToRefreshAccessToken;
-var log = require('log4js').getLogger('esdr:routes:login');
-var config = require('../config');
+const express = require('express');
+const router = express.Router();
+const passport = require('passport');
+const httpStatus = require('http-status');
+const computeTimeToRefreshAccessToken = require('../middleware/accessToken').computeTimeToRefreshAccessToken;
+const config = require('../config');
 
 router.get('/', function(req, res) {
    res.render('login',

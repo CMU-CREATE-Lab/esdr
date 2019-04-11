@@ -1,8 +1,8 @@
-var express = require('express');
-var router = express.Router();
-var passport = require('passport');
-var httpStatus = require('http-status');
-var log = require('log4js').getLogger('esdr:routes:api:feed');
+const express = require('express');
+const router = express.Router();
+const passport = require('passport');
+const httpStatus = require('http-status');
+const log = require('log4js').getLogger('esdr:routes:api:feed');
 
 module.exports = function(FeedModel, feedRouteHelper, authHelper) {
 
@@ -13,8 +13,8 @@ module.exports = function(FeedModel, feedRouteHelper, authHelper) {
    router.put('/',
               passport.authenticate('feed-apikey', { session : false }),
               function(req, res, next) {
-                 var feed = req.authInfo.feed;
-                 var isReadOnly = req.authInfo.isReadOnly;
+                 const feed = req.authInfo.feed;
+                 const isReadOnly = req.authInfo.isReadOnly;
 
                  // Deny access if user authenticated with the read-only API key
                  if (isReadOnly) {
