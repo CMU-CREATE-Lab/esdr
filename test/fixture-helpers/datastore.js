@@ -4,17 +4,17 @@ if (!require('run-mode').isTest()) {
    process.exit(1);
 }
 
-var fs = require('fs');
-var deleteDir = require('rimraf');
-var config = require('../../config');
+const fs = require('fs');
+const deleteDir = require('rimraf');
+const config = require('../../config');
 
-var log4js = require('log4js');
+const log4js = require('log4js');
 log4js.configure('log4js-config-test.json');
-var log = log4js.getLogger('esdr:test:fixture-helpers:datastore');
+const log = log4js.getLogger('esdr:test:fixture-helpers:datastore');
 
-var DATASTORE_DATA_DIRECTORY = config.get("datastore:dataDirectory");
+const DATASTORE_DATA_DIRECTORY = config.get("datastore:dataDirectory");
 
-module.exports.erase = function(callback){
+module.exports.erase = function(callback) {
    // delete the data directory, so we're sure we're always starting fresh
    deleteDir(DATASTORE_DATA_DIRECTORY, function(err) {
       if (err) {

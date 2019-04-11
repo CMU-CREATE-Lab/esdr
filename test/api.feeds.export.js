@@ -1,78 +1,78 @@
-var should = require('should');
-var flow = require('nimble');
-var httpStatus = require('http-status');
-var superagent = require('superagent-ls');
-var requireNew = require('require-new');
-var wipe = require('./fixture-helpers/wipe');
-var setup = require('./fixture-helpers/setup');
-var createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
+const should = require('should');
+const flow = require('nimble');
+const httpStatus = require('http-status');
+const superagent = require('superagent-ls');
+const requireNew = require('require-new');
+const wipe = require('./fixture-helpers/wipe');
+const setup = require('./fixture-helpers/setup');
+const createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
 
-var config = require('../config');
+const config = require('../config');
 
-var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
-var ESDR_FEEDS_API_URL = ESDR_API_ROOT_URL + "/feeds";
-var UNKNOWN_FEED_API_KEY = "012345678901234567890123456789012345678901234567890123456789abcd";
+const ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
+const ESDR_FEEDS_API_URL = ESDR_API_ROOT_URL + "/feeds";
+const UNKNOWN_FEED_API_KEY = "012345678901234567890123456789012345678901234567890123456789abcd";
 
 describe("REST API", function() {
-   var user1 = requireNew('./fixtures/user1.json');
-   var user2 = requireNew('./fixtures/user2.json');
-   var product1 = requireNew('./fixtures/product1.json');
-   var device1 = requireNew('./fixtures/device1.json');
-   var feed1 = requireNew('./fixtures/feed1.json');   // public,  user 1, product 1, device 1
-   var feed2 = requireNew('./fixtures/feed2.json');   // private, user 1, product 1, device 1
+   const user1 = requireNew('./fixtures/user1.json');
+   const user2 = requireNew('./fixtures/user2.json');
+   const product1 = requireNew('./fixtures/product1.json');
+   const device1 = requireNew('./fixtures/device1.json');
+   const feed1 = requireNew('./fixtures/feed1.json');   // public,  user 1, product 1, device 1
+   const feed2 = requireNew('./fixtures/feed2.json');   // private, user 1, product 1, device 1
 
-   var feedUpload1 = {
+   const feedUpload1 = {
       request : requireNew('./fixtures/feed-upload1-request.json'),
       response : requireNew('./fixtures/feed-upload1-response.json')
    };
 
-   var feedUpload2 = {
+   const feedUpload2 = {
       request : requireNew('./fixtures/feed-upload2-request.json'),
       response : requireNew('./fixtures/feed-upload2-response.json')
    };
 
-   var feedUpload3 = {
+   const feedUpload3 = {
       request : requireNew('./fixtures/feed-upload3-request.json'),
       response : requireNew('./fixtures/feed-upload3-response.json')
    };
 
-   var feedUpload4 = {
+   const feedUpload4 = {
       request : requireNew('./fixtures/feed-upload4-request.json'),
       response : requireNew('./fixtures/feed-upload4-response.json')
    };
 
-   var feedUpload5 = {
+   const feedUpload5 = {
       request : requireNew('./fixtures/feed-upload5-request.json'),
       response : requireNew('./fixtures/feed-upload5-response.json')
    };
 
-   var feedUpload6 = {
+   const feedUpload6 = {
       request : requireNew('./fixtures/feed-upload6-request.json'),
       response : requireNew('./fixtures/feed-upload6-response.json')
    };
 
-   var feedUpload7 = {
+   const feedUpload7 = {
       request : requireNew('./fixtures/feed-upload7-request.json'),
       response : requireNew('./fixtures/feed-upload7-response.json')
    };
 
-   var feedUpload8 = {
+   const feedUpload8 = {
       request : requireNew('./fixtures/feed-upload8-request.json'),
       response : requireNew('./fixtures/feed-upload8-response.json')
    };
 
-   var feedUpload9 = {
+   const feedUpload9 = {
       request : requireNew('./fixtures/feed-upload9-request.json'),
       response : requireNew('./fixtures/feed-upload9-response.json')
    };
 
-   var feedUpload10 = {
+   const feedUpload10 = {
       request : requireNew('./fixtures/feed-upload10-request.json'),
       response : requireNew('./fixtures/feed-upload10-response.json')
    };
 
    before(function(initDone) {
-      var doUpload = function(feed, feedUplaod, done) {
+      const doUpload = function(feed, feedUplaod, done) {
          superagent
                .put(ESDR_FEEDS_API_URL + "/" + feed.apiKey)
                .send(feedUplaod.request)
@@ -172,20 +172,20 @@ describe("REST API", function() {
       );
    });
 
-   var getHeaderCsv = function(channels) {
+   const getHeaderCsv = function(channels) {
       return ['EpochTime'].concat(channels).join(',');
    };
 
-   var getHeaderJson = function(channels) {
+   const getHeaderJson = function(channels) {
       return '{"channel_names":[' + channels.map(function(item) {
-               return '"' + item + '"'
-            }).join(',') + '],"data":[';
+         return '"' + item + '"'
+      }).join(',') + '],"data":[';
    };
 
-   var feed1Export = function(feed, isJsonFormat) {
-      var userId = feed.userId;
-      var feedId = feed.id;
-      var channels = ['battery_voltage', 'conductivity', 'temperature', 'annotation'].map(function(channel) {
+   const feed1Export = function(feed, isJsonFormat) {
+      const userId = feed.userId;
+      const feedId = feed.id;
+      const channels = ['battery_voltage', 'conductivity', 'temperature', 'annotation'].map(function(channel) {
          return userId + '.feed_' + feedId + '.' + channel
       });
 
@@ -276,10 +276,10 @@ describe("REST API", function() {
       }
    };
 
-   var feed2Export = function(feed, isJsonFormat) {
-      var userId = feed.userId;
-      var feedId = feed.id;
-      var channels = ['battery_voltage', 'conductivity', 'temperature', 'annotation'].map(function(channel) {
+   const feed2Export = function(feed, isJsonFormat) {
+      const userId = feed.userId;
+      const feedId = feed.id;
+      const channels = ['battery_voltage', 'conductivity', 'temperature', 'annotation'].map(function(channel) {
          return userId + '.feed_' + feedId + '.' + channel
       });
 
@@ -368,7 +368,7 @@ describe("REST API", function() {
 
    describe("Feeds", function() {
       describe("Export", function() {
-         var doExport = function(test, done) {
+         const doExport = function(test, done) {
             superagent
                   .get(test.url)
                   .set(typeof test.headers === 'undefined' ? {} : test.headers)
@@ -531,7 +531,7 @@ describe("REST API", function() {
             });
 
             it("Should be able to export and limit returned records by max time (CSV)", function(done) {
-               var maxTime = 1380556691;
+               const maxTime = 1380556691;
                doExport({
                            url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage/export?to=" + maxTime,
                            expectedFileName : 'export_of_feed_' + feed1.id + '_to_time_' + maxTime + '.csv',
@@ -547,7 +547,7 @@ describe("REST API", function() {
             });
 
             it("Should be able to export and limit returned records by max time (JSON)", function(done) {
-               var maxTime = 1380556691;
+               const maxTime = 1380556691;
                doExport({
                            url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage/export?format=json&to=" + maxTime,
                            expectedFileName : 'export_of_feed_' + feed1.id + '_to_time_' + maxTime + '.json',
@@ -564,7 +564,7 @@ describe("REST API", function() {
             });
 
             it("Should be able to export and limit returned records by min time (CSV)", function(done) {
-               var minTime = 1381856528;
+               const minTime = 1381856528;
                doExport({
                            url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage/export?from=" + minTime,
                            expectedFileName : 'export_of_feed_' + feed1.id + '_from_time_' + minTime + '.csv',
@@ -580,7 +580,7 @@ describe("REST API", function() {
             });
 
             it("Should be able to export and limit returned records by min time (JSON)", function(done) {
-               var minTime = 1381856528;
+               const minTime = 1381856528;
                doExport({
                            url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage/export?format=json&from=" + minTime,
                            expectedFileName : 'export_of_feed_' + feed1.id + '_from_time_' + minTime + '.json',
@@ -597,8 +597,8 @@ describe("REST API", function() {
             });
 
             it("Should be able to export and limit returned records by min and max time (CSV)", function(done) {
-               var minTime = 1381002132;
-               var maxTime = 1381485424;
+               const minTime = 1381002132;
+               const maxTime = 1381485424;
                doExport({
                            url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage/export?from=" + minTime + "&to=" + maxTime,
                            expectedFileName : 'export_of_feed_' + feed1.id + '_from_time_' + minTime + '_to_' + maxTime + '.csv',
@@ -618,8 +618,8 @@ describe("REST API", function() {
             });
 
             it("Should be able to export and limit returned records by min and max time (JSON)", function(done) {
-               var minTime = 1381002132;
-               var maxTime = 1381485424;
+               const minTime = 1381002132;
+               const maxTime = 1381485424;
                doExport({
                            url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage/export?format=json&from=" + minTime + "&to=" + maxTime,
                            expectedFileName : 'export_of_feed_' + feed1.id + '_from_time_' + minTime + '_to_' + maxTime + '.json',
@@ -640,8 +640,8 @@ describe("REST API", function() {
             });
 
             it("Should be able to export and limit returned records by min and max time, even if min and max time values are swapped (CSV)", function(done) {
-               var minTime = 1381002132;
-               var maxTime = 1381485424;
+               const minTime = 1381002132;
+               const maxTime = 1381485424;
                doExport({
                            url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage/export?from=" + maxTime + "&to=" + minTime,
                            expectedFileName : 'export_of_feed_' + feed1.id + '_from_time_' + minTime + '_to_' + maxTime + '.csv',
@@ -661,8 +661,8 @@ describe("REST API", function() {
             });
 
             it("Should be able to export and limit returned records by min and max time, even if min and max time values are swapped (JSON)", function(done) {
-               var minTime = 1381002132;
-               var maxTime = 1381485424;
+               const minTime = 1381002132;
+               const maxTime = 1381485424;
                doExport({
                            url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage/export?format=json&from=" + maxTime + "&to=" + minTime,
                            expectedFileName : 'export_of_feed_' + feed1.id + '_from_time_' + minTime + '_to_' + maxTime + '.json',

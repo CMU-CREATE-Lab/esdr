@@ -1,35 +1,35 @@
-var should = require('should');
-var flow = require('nimble');
-var httpStatus = require('http-status');
-var superagent = require('superagent-ls');
-var requireNew = require('require-new');
-var wipe = require('./fixture-helpers/wipe');
-var setup = require('./fixture-helpers/setup');
+const should = require('should');
+const flow = require('nimble');
+const httpStatus = require('http-status');
+const superagent = require('superagent-ls');
+const requireNew = require('require-new');
+const wipe = require('./fixture-helpers/wipe');
+const setup = require('./fixture-helpers/setup');
 
-var config = require('../config');
+const config = require('../config');
 
-var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
-var ESDR_MULTIFEEDS_API_URL = ESDR_API_ROOT_URL + "/multifeeds";
+const ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
+const ESDR_MULTIFEEDS_API_URL = ESDR_API_ROOT_URL + "/multifeeds";
 
 describe("REST API", function() {
-   var user1 = requireNew('./fixtures/user1.json');
-   var user2 = requireNew('./fixtures/user2.json');
-   var product1 = requireNew('./fixtures/product1.json');
-   var product2 = requireNew('./fixtures/product2.json');
-   var device1 = requireNew('./fixtures/device1.json');
-   var device2 = requireNew('./fixtures/device2.json');
-   var device3 = requireNew('./fixtures/device3.json');
-   var feed1 = requireNew('./fixtures/feed1.json');                        // public,  user 1, product 1, device 1
-   var feed2 = requireNew('./fixtures/feed2.json');                        // private, user 1, product 1, device 1
-   var feed3 = requireNew('./fixtures/feed3.json');                        // public,  user 1, product 2, device 2
-   var feed4 = requireNew('./fixtures/feed4.json');                        // private, user 1, product 2, device 2
-   var feed5 = requireNew('./fixtures/feed5.json');                        // public,  user 2, product 1, device 3
-   var feed6 = requireNew('./fixtures/feed6.json');                        // private, user 2, product 1, device 3
-   var feed7 = requireNew('./fixtures/feed-custom-channelSpecs.json');     // private, user 1, product 1, device 1
-   var feed8 = requireNew('./fixtures/feed-null-channelSpecs.json');       // private, user 1, product 1, device 1
-   var multifeed1a = requireNew('./fixtures/multifeed1.json');
-   var multifeed1b = requireNew('./fixtures/multifeed1.json');
-   var multifeed2 = requireNew('./fixtures/multifeed2.json');
+   const user1 = requireNew('./fixtures/user1.json');
+   const user2 = requireNew('./fixtures/user2.json');
+   const product1 = requireNew('./fixtures/product1.json');
+   const product2 = requireNew('./fixtures/product2.json');
+   const device1 = requireNew('./fixtures/device1.json');
+   const device2 = requireNew('./fixtures/device2.json');
+   const device3 = requireNew('./fixtures/device3.json');
+   const feed1 = requireNew('./fixtures/feed1.json');                        // public,  user 1, product 1, device 1
+   const feed2 = requireNew('./fixtures/feed2.json');                        // private, user 1, product 1, device 1
+   const feed3 = requireNew('./fixtures/feed3.json');                        // public,  user 1, product 2, device 2
+   const feed4 = requireNew('./fixtures/feed4.json');                        // private, user 1, product 2, device 2
+   const feed5 = requireNew('./fixtures/feed5.json');                        // public,  user 2, product 1, device 3
+   const feed6 = requireNew('./fixtures/feed6.json');                        // private, user 2, product 1, device 3
+   const feed7 = requireNew('./fixtures/feed-custom-channelSpecs.json');     // private, user 1, product 1, device 1
+   const feed8 = requireNew('./fixtures/feed-null-channelSpecs.json');       // private, user 1, product 1, device 1
+   const multifeed1a = requireNew('./fixtures/multifeed1.json');
+   const multifeed1b = requireNew('./fixtures/multifeed1.json');
+   const multifeed2 = requireNew('./fixtures/multifeed2.json');
 
    before(function(initDone) {
       flow.series(
@@ -151,7 +151,7 @@ describe("REST API", function() {
 
    describe("Multifeeds", function() {
       describe("Find", function() {
-         var executeTest = function(test) {
+         const executeTest = function(test) {
             it(test.description, function(done) {
                superagent
                      .get(typeof test.url === 'function' ? test.url() : test.url)
@@ -174,7 +174,7 @@ describe("REST API", function() {
 
                            if (!test.hasEmptyData) {
                               res.body.should.have.property('data');
-                              var expectedResponseData = test.getExpectedResponseData();
+                              const expectedResponseData = test.getExpectedResponseData();
                               if ('rows' in expectedResponseData && 'totalCount' in expectedResponseData) {
                                  res.body.data.should.have.property('totalCount', expectedResponseData.totalCount);
                                  res.body.data.rows.forEach(function(item, index) {

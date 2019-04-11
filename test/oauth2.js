@@ -1,20 +1,20 @@
-var should = require('should');
-var flow = require('nimble');
-var httpStatus = require('http-status');
-var superagent = require('superagent-ls');
-var requireNew = require('require-new');
-var wipe = require('./fixture-helpers/wipe');
-var setup = require('./fixture-helpers/setup');
-var config = require('../config');
+const should = require('should');
+const flow = require('nimble');
+const httpStatus = require('http-status');
+const superagent = require('superagent-ls');
+const requireNew = require('require-new');
+const wipe = require('./fixture-helpers/wipe');
+const setup = require('./fixture-helpers/setup');
+const config = require('../config');
 
-var ESDR_OAUTH_ROOT_URL = config.get("esdr:oauthRootUrl");
+const ESDR_OAUTH_ROOT_URL = config.get("esdr:oauthRootUrl");
 
 describe("OAuth2", function() {
-   var unverifiedUser = requireNew('./fixtures/user1.json');
-   var verifiedUser = requireNew('./fixtures/user2.json');
-   var client1 = requireNew('./fixtures/client1.json');
-   var tokens = null;
-   var newTokens = null;
+   const unverifiedUser = requireNew('./fixtures/user1.json');
+   const verifiedUser = requireNew('./fixtures/user2.json');
+   const client1 = requireNew('./fixtures/client1.json');
+   let tokens = null;
+   let newTokens = null;
 
    before(function(initDone) {
       flow.series(
@@ -165,7 +165,7 @@ describe("OAuth2", function() {
          });
       });
 
-      var failureTests = [
+      const failureTests = [
          {
             description : "Should fail to request access and refresh tokens with an invalid client ID",
             client : {
@@ -298,7 +298,7 @@ describe("OAuth2", function() {
                                                      });
 
                      // remember these new tokens
-                     var newerTokens = res.body;
+                     const newerTokens = res.body;
 
                      // make sure the new tokens are different
                      newerTokens.access_token.should.not.equal(newTokens.access_token);
@@ -312,7 +312,7 @@ describe("OAuth2", function() {
          });
       });
 
-      var failureTests = [
+      const failureTests = [
          {
             description : "Should not be able to refresh an access token with an invalid refresh token",
             client : client1,
@@ -347,7 +347,7 @@ describe("OAuth2", function() {
 
       failureTests.forEach(function(test) {
          it(test.description, function(done) {
-            var refreshToken = typeof test.refreshToken === 'function' ? test.refreshToken() : test.refreshToken;
+            const refreshToken = typeof test.refreshToken === 'function' ? test.refreshToken() : test.refreshToken;
             superagent
                   .post(ESDR_OAUTH_ROOT_URL)
                   .send({

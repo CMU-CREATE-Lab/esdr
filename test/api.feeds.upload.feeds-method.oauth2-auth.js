@@ -1,62 +1,62 @@
-var should = require('should');
-var flow = require('nimble');
-var httpStatus = require('http-status');
-var superagent = require('superagent-ls');
-var requireNew = require('require-new');
-var wipe = require('./fixture-helpers/wipe');
-var setup = require('./fixture-helpers/setup');
-var executeUploadTest = require('./fixture-helpers/test-utils').executeUploadTest;
-var createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
+const should = require('should');
+const flow = require('nimble');
+const httpStatus = require('http-status');
+const superagent = require('superagent-ls');
+const requireNew = require('require-new');
+const wipe = require('./fixture-helpers/wipe');
+const setup = require('./fixture-helpers/setup');
+const executeUploadTest = require('./fixture-helpers/test-utils').executeUploadTest;
+const createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
 
-var config = require('../config');
+const config = require('../config');
 
-var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
-var ESDR_FEEDS_API_URL = ESDR_API_ROOT_URL + "/feeds";
+const ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
+const ESDR_FEEDS_API_URL = ESDR_API_ROOT_URL + "/feeds";
 
 describe("REST API", function() {
-   var user1 = requireNew('./fixtures/user1.json');
-   var user2 = requireNew('./fixtures/user2.json');
-   var product1 = requireNew('./fixtures/product1.json');
-   var device1 = requireNew('./fixtures/device1.json');
-   var feed1 = requireNew('./fixtures/feed1.json');   // public,  user 1, product 1, device 1
-   var feed2 = requireNew('./fixtures/feed2.json');   // private, user 1, product 1, device 1
+   const user1 = requireNew('./fixtures/user1.json');
+   const user2 = requireNew('./fixtures/user2.json');
+   const product1 = requireNew('./fixtures/product1.json');
+   const device1 = requireNew('./fixtures/device1.json');
+   const feed1 = requireNew('./fixtures/feed1.json');   // public,  user 1, product 1, device 1
+   const feed2 = requireNew('./fixtures/feed2.json');   // private, user 1, product 1, device 1
 
-   var feedUpload1 = {
+   const feedUpload1 = {
       request : requireNew('./fixtures/feed-upload1-request.json'),
       response : requireNew('./fixtures/feed-upload1-response.json')
    };
 
-   var feedUpload2 = {
+   const feedUpload2 = {
       request : requireNew('./fixtures/feed-upload2-request.json'),
       response : requireNew('./fixtures/feed-upload2-response.json')
    };
 
-   var feedUpload3 = {
+   const feedUpload3 = {
       request : requireNew('./fixtures/feed-upload3-request.json'),
       response : requireNew('./fixtures/feed-upload3-response.json')
    };
 
-   var feedUpload4 = {
+   const feedUpload4 = {
       request : requireNew('./fixtures/feed-upload4-request.json'),
       response : requireNew('./fixtures/feed-upload4-response.json')
    };
 
-   var feedUpload5 = {
+   const feedUpload5 = {
       request : requireNew('./fixtures/feed-upload5-request.json'),
       response : requireNew('./fixtures/feed-upload5-response.json')
    };
 
-   var feedUpload6 = {
+   const feedUpload6 = {
       request : requireNew('./fixtures/feed-upload6-request.json'),
       response : requireNew('./fixtures/feed-upload6-response.json')
    };
 
-   var feedUpload7 = {
+   const feedUpload7 = {
       request : requireNew('./fixtures/feed-upload7-request.json'),
       response : requireNew('./fixtures/feed-upload7-response.json')
    };
 
-   var feedUpload8 = {
+   const feedUpload8 = {
       request : requireNew('./fixtures/feed-upload8-request.json'),
       response : requireNew('./fixtures/feed-upload8-response.json')
    };

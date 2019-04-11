@@ -1,20 +1,20 @@
-var should = require('should');
-var flow = require('nimble');
-var httpStatus = require('http-status');
-var superagent = require('superagent-ls');
-var requireNew = require('require-new');
-var wipe = require('./fixture-helpers/wipe');
-var setup = require('./fixture-helpers/setup');
+const should = require('should');
+const flow = require('nimble');
+const httpStatus = require('http-status');
+const superagent = require('superagent-ls');
+const requireNew = require('require-new');
+const wipe = require('./fixture-helpers/wipe');
+const setup = require('./fixture-helpers/setup');
 
-var config = require('../config');
+const config = require('../config');
 
-var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
-var ESDR_PASSWORD_RESET_API_URL = ESDR_API_ROOT_URL + "/password-reset";
+const ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
+const ESDR_PASSWORD_RESET_API_URL = ESDR_API_ROOT_URL + "/password-reset";
 
 describe("REST API", function() {
-   var client1 = requireNew('./fixtures/client1.json');
-   var user1 = requireNew('./fixtures/user1.json');
-   var newPassword = "this is the new password";
+   const client1 = requireNew('./fixtures/client1.json');
+   const user1 = requireNew('./fixtures/user1.json');
+   const newPassword = "this is the new password";
 
    before(function(initDone) {
       flow.series(
@@ -33,8 +33,8 @@ describe("REST API", function() {
 
    describe("Password Reset", function() {
 
-      var testRequestPasswordResetToken = function(test) {
-         var client = test.client || client1;
+      const testRequestPasswordResetToken = function(test) {
+         const client = test.client || client1;
          it(test.description, function(done) {
             superagent
                   .post(ESDR_PASSWORD_RESET_API_URL)
@@ -68,7 +68,7 @@ describe("REST API", function() {
          });
       };
 
-      var testResetPassword = function(test) {
+      const testResetPassword = function(test) {
          it(test.description, function(done) {
             superagent
                   .put(ESDR_PASSWORD_RESET_API_URL)
@@ -106,7 +106,7 @@ describe("REST API", function() {
          });
       };
 
-      var savedTokens = {};
+      const savedTokens = {};
 
       testRequestPasswordResetToken({
                                        description : "Should be able to request a password reset token",

@@ -1,32 +1,32 @@
-var should = require('should');
-var flow = require('nimble');
-var httpStatus = require('http-status');
-var superagent = require('superagent-ls');
-var requireNew = require('require-new');
-var wipe = require('./fixture-helpers/wipe');
-var setup = require('./fixture-helpers/setup');
-var createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
+const should = require('should');
+const flow = require('nimble');
+const httpStatus = require('http-status');
+const superagent = require('superagent-ls');
+const requireNew = require('require-new');
+const wipe = require('./fixture-helpers/wipe');
+const setup = require('./fixture-helpers/setup');
+const createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
 
-var config = require('../config');
+const config = require('../config');
 
-var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
-var ESDR_DEVICES_API_URL = ESDR_API_ROOT_URL + "/devices";
+const ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
+const ESDR_DEVICES_API_URL = ESDR_API_ROOT_URL + "/devices";
 
 describe("REST API", function() {
-   var client1 = requireNew('./fixtures/client1.json');
-   var client2 = requireNew('./fixtures/client2.json');
-   var user1 = requireNew('./fixtures/user1.json');
-   var user2 = requireNew('./fixtures/user2.json');
-   var user1Client2 = null;
-   var product1 = requireNew('./fixtures/product1.json');
-   var device1User1 = requireNew('./fixtures/device1.json');
-   var device1User2 = requireNew('./fixtures/device1.json');
-   var device2User1 = requireNew('./fixtures/device2.json');
-   var device3 = requireNew('./fixtures/device3.json');
-   var device4 = requireNew('./fixtures/device4.json');
-   var feed1 = requireNew('./fixtures/feed1.json');
-   var feed2 = requireNew('./fixtures/feed2.json');
-   var feed3 = requireNew('./fixtures/feed3.json');
+   const client1 = requireNew('./fixtures/client1.json');
+   const client2 = requireNew('./fixtures/client2.json');
+   const user1 = requireNew('./fixtures/user1.json');
+   const user2 = requireNew('./fixtures/user2.json');
+   let user1Client2 = null;
+   const product1 = requireNew('./fixtures/product1.json');
+   const device1User1 = requireNew('./fixtures/device1.json');
+   const device1User2 = requireNew('./fixtures/device1.json');
+   const device2User1 = requireNew('./fixtures/device2.json');
+   const device3 = requireNew('./fixtures/device3.json');
+   const device4 = requireNew('./fixtures/device4.json');
+   const feed1 = requireNew('./fixtures/feed1.json');
+   const feed2 = requireNew('./fixtures/feed2.json');
+   const feed3 = requireNew('./fixtures/feed3.json');
 
    before(function(initDone) {
       flow.series(
@@ -121,7 +121,7 @@ describe("REST API", function() {
 
       describe("Delete", function() {
 
-         var executeDelete = function(test, done) {
+         const executeDelete = function(test, done) {
             superagent
                   .del(test.url)
                   .set(typeof test.headers === 'undefined' ? {} : test.headers)
@@ -165,7 +165,7 @@ describe("REST API", function() {
                   });
          };
 
-         var verifyDeviceIsDeleted = function(deviceId, user, done) {
+         const verifyDeviceIsDeleted = function(deviceId, user, done) {
             superagent
                   .get(ESDR_DEVICES_API_URL + "/" + deviceId)
                   .set(createAuthorizationHeader(user.accessToken))
@@ -311,7 +311,7 @@ describe("REST API", function() {
             });
 
             describe("Cascading Delete of Device Properties", function() {
-               var setProperty = function(deviceId, accessToken, propertyKey, propertyValue, callback, willDebug) {
+               const setProperty = function(deviceId, accessToken, propertyKey, propertyValue, callback, willDebug) {
                   superagent
                         .put(ESDR_DEVICES_API_URL + "/" + deviceId + "/properties/" + propertyKey)
                         .set(createAuthorizationHeader(accessToken))
@@ -332,7 +332,7 @@ describe("REST API", function() {
                                                            });
                            res.body.should.have.property('data');
 
-                           var expectedResponse = {};
+                           const expectedResponse = {};
                            expectedResponse[propertyKey] = propertyValue.value;
                            res.body.data.should.have.properties(expectedResponse);
 
@@ -340,7 +340,7 @@ describe("REST API", function() {
                         });
                };
 
-               var getProperty = function(deviceId, accessToken, propertyKey, callback, willDebug, expectedValue) {
+               const getProperty = function(deviceId, accessToken, propertyKey, callback, willDebug, expectedValue) {
                   superagent
                         .get(ESDR_DEVICES_API_URL + "/" + deviceId + "/properties/" + propertyKey)
                         .set(createAuthorizationHeader(accessToken))
@@ -362,7 +362,7 @@ describe("REST API", function() {
                            res.body.should.have.property('data');
 
                            if (typeof expectedValue !== 'undefined') {
-                              var expectedResponse = {};
+                              const expectedResponse = {};
                               expectedResponse[propertyKey] = expectedValue;
                               res.body.data.should.have.properties(expectedResponse);
                            }

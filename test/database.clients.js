@@ -1,12 +1,12 @@
-var should = require('should');
-var flow = require('nimble');
-var requireNew = require('require-new');
-var wipe = require('./fixture-helpers/wipe');
-var setup = require('./fixture-helpers/setup');
-var DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
+const should = require('should');
+const flow = require('nimble');
+const requireNew = require('require-new');
+const wipe = require('./fixture-helpers/wipe');
+const setup = require('./fixture-helpers/setup');
+const DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
 
 describe("Database", function() {
-   var user1 = requireNew('./fixtures/user1.json');
+   const user1 = requireNew('./fixtures/user1.json');
 
    before(function(initDone) {
       flow.series(
@@ -21,9 +21,9 @@ describe("Database", function() {
    });
 
    describe("Clients", function() {
-      var client1 = requireNew('./fixtures/client1.json');
-      var client2 = requireNew('./fixtures/client2.json');
-      var client3 = requireNew('./fixtures/client3.json');
+      const client1 = requireNew('./fixtures/client1.json');
+      const client2 = requireNew('./fixtures/client2.json');
+      const client3 = requireNew('./fixtures/client3.json');
 
       describe("Create", function() {
 

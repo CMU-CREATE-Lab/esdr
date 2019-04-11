@@ -4,19 +4,19 @@ if (!require('run-mode').isTest()) {
    process.exit(1);
 }
 
-var should = require('should');
-var superagent = require('superagent-ls');
-var httpStatus = require('http-status');
-var database = require('./database');
-var createRandomHexToken = require('../../lib/token').createRandomHexToken;
-var trimAndCopyPropertyIfNonEmpty = require('../../lib/objectUtils').trimAndCopyPropertyIfNonEmpty;
-var feedsQuery2query = require('../../models/feeds-query2query');
-var qs = require('qs');
+const should = require('should');
+const superagent = require('superagent-ls');
+const httpStatus = require('http-status');
+const database = require('./database');
+const createRandomHexToken = require('../../lib/token').createRandomHexToken;
+const trimAndCopyPropertyIfNonEmpty = require('../../lib/objectUtils').trimAndCopyPropertyIfNonEmpty;
+const feedsQuery2query = require('../../models/feeds-query2query');
+const qs = require('qs');
 
-var config = require('../../config');
+const config = require('../../config');
 
-var ESDR_OAUTH_ROOT_URL = config.get("esdr:oauthRootUrl");
-var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
+const ESDR_OAUTH_ROOT_URL = config.get("esdr:oauthRootUrl");
+const ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
 
 // create the client and save the database id to the given client object
 module.exports.createClient = function(client, callback) {
@@ -137,7 +137,7 @@ module.exports.deleteFeed = function(feedId, callback) {
 // create the multifeed and save the database id to the given device object
 module.exports.createMultifeed = function(multifeed, callback) {
 
-   var mf = {
+   const mf = {
       userId : multifeed.userId,
       spec : multifeed.spec,
       querySpec : "" // created below...
@@ -148,12 +148,12 @@ module.exports.createMultifeed = function(multifeed, callback) {
    }
 
    // convert the spec to a more usable form for SQL queries, so we don't have to rebuild this for every request
-   var querySpecParts = [];
-   for (var i = 0; i < multifeed.spec.length; i++) {
-      var specItem = multifeed.spec[i];
-      var miniQueryString = qs.parse(specItem.feeds);
+   const querySpecParts = [];
+   for (let i = 0; i < multifeed.spec.length; i++) {
+      const specItem = multifeed.spec[i];
+      const miniQueryString = qs.parse(specItem.feeds);
       try {
-         var result = feedsQuery2query.parseSync(miniQueryString);
+         const result = feedsQuery2query.parseSync(miniQueryString);
          if (result.where != null && result.where.length > 0) {
             querySpecParts.push({
                                    feeds : {
