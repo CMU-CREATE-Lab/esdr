@@ -1,11 +1,11 @@
-var express = require('express');
-var router = express.Router();
-var passport = require('passport');
-var httpStatus = require('http-status');
-var log = require('log4js').getLogger('esdr:routes:api:mirror-registrations');
-var JSendError = require('jsend-utils').JSendError;
-var ValidationError = require('../../lib/errors').ValidationError;
-var DuplicateRecordError = require('../../lib/errors').DuplicateRecordError;
+const express = require('express');
+const router = express.Router();
+const passport = require('passport');
+const httpStatus = require('http-status');
+const log = require('log4js').getLogger('esdr:routes:api:mirror-registrations');
+const JSendError = require('jsend-utils').JSendError;
+const ValidationError = require('../../lib/errors').ValidationError;
+const DuplicateRecordError = require('../../lib/errors').DuplicateRecordError;
 
 module.exports = function(ProductModel, MirrorRegistrationsModel) {
 
@@ -14,18 +14,18 @@ module.exports = function(ProductModel, MirrorRegistrationsModel) {
                function(req, res, next) {
 
                   // first try to find the product
-                  var productNameOrId = req.params['productNameOrId'];
+                  const productNameOrId = req.params['productNameOrId'];
                   ProductModel.findByNameOrId(productNameOrId, 'id', function(err, product) {
                      if (err) {
-                        var message = "Error while trying to find product [" + productNameOrId + "]";
+                        const message = "Error while trying to find product [" + productNameOrId + "]";
                         log.error(message + ": " + err);
                         return res.jsendServerError(message);
                      }
 
                      // continue if we found the product, otherwise return a 404
                      if (product) {
-                        var user = req.user;
-                        var realm = req.params['realm'];
+                        const user = req.user;
+                        const realm = req.params['realm'];
 
                         MirrorRegistrationsModel.createForProduct(realm, user.id, product.id, function(err, result) {
                            if (err) {
@@ -47,7 +47,7 @@ module.exports = function(ProductModel, MirrorRegistrationsModel) {
                                                                 httpStatus.CONFLICT);  // HTTP 409 Conflict
                                  }
 
-                                 var message = "Error while trying to create mirror registration for realm [" + realm + "], user [" + user.id + "], and product [" + product.id + "]";
+                                 const message = "Error while trying to create mirror registration for realm [" + realm + "], user [" + user.id + "], and product [" + product.id + "]";
                                  log.error(message + ": " + err);
                                  return res.jsendServerError(message);
                               }
@@ -67,18 +67,18 @@ module.exports = function(ProductModel, MirrorRegistrationsModel) {
               function(req, res, next) {
 
                  // first try to find the product
-                 var productNameOrId = req.params['productNameOrId'];
+                 const productNameOrId = req.params['productNameOrId'];
                  ProductModel.findByNameOrId(productNameOrId, 'id', function(err, product) {
                     if (err) {
-                       var message = "Error while trying to find product [" + productNameOrId + "]";
+                       const message = "Error while trying to find product [" + productNameOrId + "]";
                        log.error(message + ": " + err);
                        return res.jsendServerError(message);
                     }
 
                     // continue if we found the product, otherwise return a 404
                     if (product) {
-                       var user = req.user;
-                       var realm = req.params['realm'];
+                       const user = req.user;
+                       const realm = req.params['realm'];
                        MirrorRegistrationsModel.findByRealmUserAndProduct(realm, user.id, product.id, function(err, mirrorRegistration) {
                           if (err) {
                              if (err instanceof ValidationError) {
@@ -88,7 +88,7 @@ module.exports = function(ProductModel, MirrorRegistrationsModel) {
                                 return res.jsendPassThrough(err.data);
                              }
 
-                             var message = "Error while trying to find mirror registration for realm [" + realm + "], user [" + user.id + "], and product [" + product.id + "]";
+                             const message = "Error while trying to find mirror registration for realm [" + realm + "], user [" + user.id + "], and product [" + product.id + "]";
                              log.error(message + ": " + err);
                              return res.jsendServerError(message);
                           }
@@ -115,8 +115,8 @@ module.exports = function(ProductModel, MirrorRegistrationsModel) {
 
    router.get('/:realm/registrations/:mirrorToken',
               function(req, res, next) {
-                 var realm = req.params['realm'];
-                 var mirrorToken = req.params['mirrorToken'];
+                 const realm = req.params['realm'];
+                 const mirrorToken = req.params['mirrorToken'];
 
                  MirrorRegistrationsModel.findByRealmAndMirrorToken(realm, mirrorToken, function(err, mirrorRegistration) {
                     if (err) {
@@ -127,7 +127,7 @@ module.exports = function(ProductModel, MirrorRegistrationsModel) {
                           return res.jsendPassThrough(err.data);
                        }
 
-                       var message = "Error while trying to find mirror registration for realm [" + realm + "], mirror token [" + mirrorToken + "]";
+                       const message = "Error while trying to find mirror registration for realm [" + realm + "], mirror token [" + mirrorToken + "]";
                        log.error(message + ": " + err);
                        return res.jsendServerError(message);
                     }
@@ -150,8 +150,8 @@ module.exports = function(ProductModel, MirrorRegistrationsModel) {
 
    router.delete('/:realm/registrations/:mirrorToken',
                  function(req, res, next) {
-                    var realm = req.params['realm'];
-                    var mirrorToken = req.params['mirrorToken'];
+                    const realm = req.params['realm'];
+                    const mirrorToken = req.params['mirrorToken'];
 
                     MirrorRegistrationsModel.deleteRegistration(realm, mirrorToken, function(err, deleteResult) {
                        if (err) {
@@ -164,7 +164,7 @@ module.exports = function(ProductModel, MirrorRegistrationsModel) {
                              return res.jsendPassThrough(err.data);
                           }
 
-                          var message = "Error while deleting mirror registration for realm [" + realm + "] with mirror token [" + mirrorToken + "]";
+                          const message = "Error while deleting mirror registration for realm [" + realm + "] with mirror token [" + mirrorToken + "]";
                           log.error(message + ": " + err);
                           return res.jsendServerError(message);
                        }

@@ -1,13 +1,13 @@
-var express = require('express');
-var router = express.Router();
-var passport = require('passport');
-var httpStatus = require('http-status');
-var log = require('log4js').getLogger('esdr:routes:api:feeds');
-var JSendError = require('jsend-utils').JSendError;
-var ValidationError = require('../../lib/errors').ValidationError;
-var isPositiveIntString = require('../../lib/typeUtils').isPositiveIntString;
-var isString = require('../../lib/typeUtils').isString;
-var isFeedApiKey = require('../../lib/typeUtils').isFeedApiKey;
+const express = require('express');
+const router = express.Router();
+const passport = require('passport');
+const httpStatus = require('http-status');
+const log = require('log4js').getLogger('esdr:routes:api:feeds');
+const JSendError = require('jsend-utils').JSendError;
+const ValidationError = require('../../lib/errors').ValidationError;
+const isPositiveIntString = require('../../lib/typeUtils').isPositiveIntString;
+const isString = require('../../lib/typeUtils').isString;
+const isFeedApiKey = require('../../lib/typeUtils').isFeedApiKey;
 
 module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
 
@@ -16,7 +16,7 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
               function(req, res, next) {
                  passport.authenticate('bearer', function(err, user, info) {
                     if (err) {
-                       var message = "Error while authenticating to find feeds";
+                       const message = "Error while authenticating to find feeds";
                        log.error(message + ": " + err);
                        return res.jsendServerError(message);
                     }
@@ -35,8 +35,8 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                          return res.jsendServerError("Failed to get feeds", null);
                                       }
 
-                                      var willInflateChannelSpecs = (selectedFields.indexOf('channelSpecs') >= 0);
-                                      var willInflateChannelBounds = (selectedFields.indexOf('channelBounds') >= 0);
+                                      const willInflateChannelSpecs = (selectedFields.indexOf('channelSpecs') >= 0);
+                                      const willInflateChannelBounds = (selectedFields.indexOf('channelBounds') >= 0);
 
                                       if (willInflateChannelSpecs || willInflateChannelBounds) {
                                          result.rows.forEach(function(feed) {
@@ -77,7 +77,7 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
    // database to authenticate the user so we can determine whether she has access.
    router.get('/:feedIdOrApiKey',
               function(req, res, next) {
-                 var feedIdOrApiKey = req.params.feedIdOrApiKey;
+                 const feedIdOrApiKey = req.params.feedIdOrApiKey;
 
                  log.debug("Received GET to get info for feed [" + feedIdOrApiKey + "]");
                  getFeedForReadingByIdOrApiKey(feedIdOrApiKey,
@@ -90,7 +90,7 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                                         return res.jsendServerError("Failed to get feed: " + err.message, null);
                                                      }
 
-                                                     var getInfo = function(isAllowedToSelectReadWriteFeedApiKey) {
+                                                     const getInfo = function(isAllowedToSelectReadWriteFeedApiKey) {
                                                         // inflate the JSON fields into objects
                                                         if ("channelSpecs" in filteredFeed) {
                                                            filteredFeed.channelSpecs = JSON.parse(filteredFeed.channelSpecs);
@@ -122,7 +122,7 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                                               // If the given feed API key matches the feed's read-write key,
                                                               // then they obviously should be allowed to see it because they
                                                               // already know it!
-                                                              var wasGivenReadWriteApiKey = req.headers['feedapikey'] == feed.apiKey;
+                                                              const wasGivenReadWriteApiKey = req.headers['feedapikey'] === feed.apiKey;
                                                               return getInfo(wasGivenReadWriteApiKey);
                                                            }
                                                            else {
@@ -137,7 +137,7 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
 
                                                                  // prevent selection of the read-write API key unless the user
                                                                  // was authenticated successfully, and she owns the feed
-                                                                 return getInfo(user && user.id == feed.userId);
+                                                                 return getInfo(user && user.id === feed.userId);
                                                               })(req, res, next);
                                                            }
                                                         }
@@ -155,7 +155,7 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
    router.delete('/:feedId',
                  passport.authenticate('bearer', { session : false }),
                  function(req, res, next) {
-                    var feedId = req.params.feedId;
+                    let feedId = req.params.feedId;
                     if (isPositiveIntString(feedId)) {
                        feedId = parseInt(feedId);    // make it an int
                        FeedModel.deleteFeed(feedId,
@@ -201,13 +201,13 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                  getMostRecentDataSamples(req, res, next, req.params.feedIdOrApiKey, req.params.channelName)
               });
 
-   var getMostRecentDataSamples = function(req, res, next, feedIdOrApiKey, channelName) {
+   const getMostRecentDataSamples = function(req, res, next, feedIdOrApiKey, channelName) {
       getFeedForReadingByIdOrApiKey(feedIdOrApiKey,
                                     'id,userId,isPublic,apiKey,apiKeyReadOnly',
                                     function(feed) {
                                        FeedModel.getMostRecent(feed, isString(channelName) ? channelName : null, function(err, mostRecentInfo) {
                                           if (err) {
-                                             if (err.data && err.data.code == httpStatus.UNPROCESSABLE_ENTITY) {
+                                             if (err.data && err.data.code === httpStatus.UNPROCESSABLE_ENTITY) {
                                                 return res.jsendPassThrough(err.data);
                                              }
                                              return res.jsendServerError(err.message, null);
@@ -226,17 +226,17 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
    // can determine whether she has access.
    router.get('/:feedIdOrApiKey/channels/:channelName/tiles/:level.:offset',
               function(req, res, next) {
-                 var feedIdOrApiKey = req.params.feedIdOrApiKey;
-                 var channelName = req.params.channelName;
-                 var level = req.params.level;
-                 var offset = req.params.offset;
+                 const feedIdOrApiKey = req.params.feedIdOrApiKey;
+                 const channelName = req.params.channelName;
+                 const level = req.params.level;
+                 const offset = req.params.offset;
 
                  getFeedForReadingByIdOrApiKey(feedIdOrApiKey,
                                                'id,userId,isPublic,apiKey,apiKeyReadOnly',
                                                function(feed) {
                                                   FeedModel.getTile(feed, channelName, level, offset, function(err, tile) {
                                                      if (err) {
-                                                        if (err.data && err.data.code == httpStatus.UNPROCESSABLE_ENTITY) {
+                                                        if (err.data && err.data.code === httpStatus.UNPROCESSABLE_ENTITY) {
                                                            return res.jsendPassThrough(err.data);
                                                         }
                                                         return res.jsendServerError(err.message, null);
@@ -252,10 +252,10 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
    router.get('/:feedIdOrApiKey/channels/:channels/export',
               function(req, res, next) {
                  // scrub the channels, removing dupes, but preserving the requested order of the unique ones
-                 var requestedChannels = (req.params.channels || '').split(',').map(trim);
-                 var alreadyIncludedChannels = {};
-                 var channels = requestedChannels.filter(function(channel) {
-                    var isNew = !(channel in alreadyIncludedChannels);
+                 const requestedChannels = (req.params.channels || '').split(',').map(trim);
+                 const alreadyIncludedChannels = {};
+                 const channels = requestedChannels.filter(function(channel) {
+                    const isNew = !(channel in alreadyIncludedChannels);
                     if (isNew) {
                        alreadyIncludedChannels[channel] = true;
                     }
@@ -263,34 +263,34 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                  });
 
                  // parse the min and max times
-                 var parseTimeString = function(str) {
+                 const parseTimeString = function(str) {
                     if (isString(str)) {
-                       var val = parseFloat(str);
+                       const val = parseFloat(str);
                        if (isFinite(val)) {
                           return val;
                        }
                     }
                     return null;
                  };
-                 var minTime = parseTimeString(req.query.from);
-                 var maxTime = parseTimeString(req.query.to);
+                 let minTime = parseTimeString(req.query.from);
+                 let maxTime = parseTimeString(req.query.to);
 
                  // swap the times if minTime is greater than maxTime
                  if (minTime != null && maxTime != null && minTime > maxTime) {
-                    var temp = minTime;
+                    const temp = minTime;
                     minTime = maxTime;
                     maxTime = temp;
                  }
 
                  // make sure the format is valid
-                 var format = (req.query.format || 'csv');
-                 var contentType;
+                 let format = (req.query.format || 'csv');
+                 let contentType;
                  if (isString(format)) {
                     format = format.toLowerCase().trim();
-                    if (format == 'json') {
+                    if (format === 'json') {
                        contentType = 'application/json';
                     }
-                    else if (format == 'csv') {
+                    else if (format === 'csv') {
                        contentType = 'text/plain';
                     }
                     else {
@@ -305,7 +305,7 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                                'id,userId,isPublic,apiKey,apiKeyReadOnly',
                                                function(feed) {
                                                   // build the filename for the Content-disposition header
-                                                  var filename = "export_of_feed_" + feed.id;
+                                                  let filename = "export_of_feed_" + feed.id;
                                                   if (minTime != null) {
                                                      filename += "_from_time_" + minTime;
                                                   }
@@ -326,7 +326,7 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                                                        },
                                                                        function(err, eventEmitter) {
                                                                           if (err) {
-                                                                             if (err.data && err.data.code == httpStatus.UNPROCESSABLE_ENTITY) {
+                                                                             if (err.data && err.data.code === httpStatus.UNPROCESSABLE_ENTITY) {
                                                                                 return res.jsendPassThrough(err.data)
                                                                              }
 
@@ -378,7 +378,7 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                              return res.jsendPassThrough(err.data);
                           }
 
-                          var message = "Error setting property";
+                          const message = "Error setting property";
                           log.error(message + ": " + err);
                           return res.jsendServerError(message);
                        }
@@ -404,7 +404,7 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                              return res.jsendPassThrough(err.data);
                           }
 
-                          var message = "Error while finding property [" + req.params['key'] + "]";
+                          const message = "Error while finding property [" + req.params['key'] + "]";
                           log.error(message + ": " + err);
                           return res.jsendServerError(message);
                        }
@@ -426,7 +426,7 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                  verifyFeedOwnership(req, res, function(clientId, feedId) {
                     FeedPropertiesModel.find(clientId, feedId, req.query, function(err, properties) {
                        if (err) {
-                          var message = "Error while finding the feed properties";
+                          const message = "Error while finding the feed properties";
                           log.error(message + ": " + err);
                           return res.jsendServerError(message);
                        }
@@ -444,7 +444,7 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                     verifyFeedOwnership(req, res, function(clientId, feedId) {
                        FeedPropertiesModel.deleteAll(clientId, feedId, function(err, deleteResult) {
                           if (err) {
-                             var message = "Error while deleting the feed properties";
+                             const message = "Error while deleting the feed properties";
                              log.error(message + ": " + err);
                              return res.jsendServerError(message);
                           }
@@ -470,7 +470,7 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                 return res.jsendPassThrough(err.data);
                              }
 
-                             var message = "Error while deleting property [" + req.params['key'] + "]";
+                             const message = "Error while deleting property [" + req.params['key'] + "]";
                              log.error(message + ": " + err);
                              return res.jsendServerError(message);
                           }
@@ -489,13 +489,13 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
     * @param res the HTTP response
     * @param {function} action function with signature <code>callback(clientId, feedId, doesFeedExist)</code>
     */
-   var verifyFeedOwnership = function(req, res, action) {
-      var feedId = req.params.feedId;
+   const verifyFeedOwnership = function(req, res, action) {
+      let feedId = req.params.feedId;
       if (isPositiveIntString(feedId)) {
          feedId = parseInt(feedId);    // make it an int
          FeedModel.isFeedOwnedByUser(feedId, req.user.id, function(err, isOwnedByUser, doesFeedExist) {
             if (err) {
-               var message = "Error determining whether feed [" + feedId + "] is owned by user [" + req.user.id + "]";
+               const message = "Error determining whether feed [" + feedId + "] is owned by user [" + req.user.id + "]";
                log.error(message + ": " + err);
                return res.jsendServerError(message);
             }
@@ -520,21 +520,21 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
    };
 
    // Finds a feed for writing by ID or API Key
-   var getFeedForWritingByIdOrApiKey = function(feedIdOrApiKey, fieldsToSelect, successCallback, req, res, next) {
+   const getFeedForWritingByIdOrApiKey = function(feedIdOrApiKey, fieldsToSelect, successCallback, req, res, next) {
       if (isFeedApiKey(feedIdOrApiKey)) {
-         var feedApiKey = feedIdOrApiKey;
+         const feedApiKey = feedIdOrApiKey;
          FeedModel.findByApiKey(feedApiKey,
                                 fieldsToSelect,
                                 function(err, feed) {
                                    if (err) {
-                                      var message = "Error while trying to find feed with API key [" + feedApiKey + "]";
+                                      const message = "Error while trying to find feed with API key [" + feedApiKey + "]";
                                       log.error(message + ": " + err);
                                       return res.jsendServerError(message);
                                    }
 
                                    if (feed) {
                                       // make sure user is using the read-write API key
-                                      if (feed.apiKey == feedApiKey) {
+                                      if (feed.apiKey === feedApiKey) {
                                          return successCallback(feed);
                                       }
                                       else {
@@ -547,7 +547,7 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                 });
       }
       else {
-         var feedId = feedIdOrApiKey;
+         let feedId = feedIdOrApiKey;
          // Not a Feed API key, but now make sure the ID is an int or a string that parses as a positive int (e.g. reject things like '4240abc')
          if (isPositiveIntString(feedId)) {
             feedId = parseInt(feedId);    // make it an int
@@ -555,7 +555,7 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                fieldsToSelect,
                                function(err, feed) {
                                   if (err) {
-                                     var message = "Error while trying to find feed with ID [" + feedId + "]";
+                                     const message = "Error while trying to find feed with ID [" + feedId + "]";
                                      log.error(message + ": " + err);
                                      return res.jsendServerError(message);
                                   }
@@ -563,7 +563,7 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                   if (feed) {
                                      // verify acces, either by the read-write API key in the header, or the OAuth2 authorization
                                      if ("feedapikey" in req.headers) {
-                                        if ((req.headers['feedapikey'] == feed.apiKey)) {
+                                        if ((req.headers['feedapikey'] === feed.apiKey)) {
                                            return successCallback(feed);
                                         }
                                         return res.jsendClientError("Access denied.", null, httpStatus.FORBIDDEN);  // HTTP 403 Forbidden
@@ -573,14 +573,14 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                         // owns the feed.  If so, then she should be granted access to see a tile.
                                         passport.authenticate('bearer', function(err, user) {
                                            if (err) {
-                                              var message = "Error while authenticating with OAuth2 access token for feed [" + feed.id + "]";
+                                              const message = "Error while authenticating with OAuth2 access token for feed [" + feed.id + "]";
                                               log.error(message + ": " + err);
                                               return res.jsendServerError(message);
                                            }
 
                                            if (user) {
                                               // make sure the user owns the feed
-                                              if (user.id == feed.userId) {
+                                              if (user.id === feed.userId) {
                                                  return successCallback(feed);
                                               }
                                            }
@@ -604,20 +604,20 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
    };
 
    // Finds a feed for reading by ID or API Key
-   var getFeedForReadingByIdOrApiKey = function(feedIdOrApiKey, fieldsToSelect, successCallback, req, res, next) {
+   const getFeedForReadingByIdOrApiKey = function(feedIdOrApiKey, fieldsToSelect, successCallback, req, res, next) {
       if (isFeedApiKey(feedIdOrApiKey)) {
-         var feedApiKey = feedIdOrApiKey;
+         const feedApiKey = feedIdOrApiKey;
          FeedModel.findByApiKey(feedApiKey,
                                 fieldsToSelect,
                                 function(err, feed) {
                                    if (err) {
-                                      var message = "Error while trying to find feed with API key [" + feedApiKey + "]";
+                                      const message = "Error while trying to find feed with API key [" + feedApiKey + "]";
                                       log.error(message + ": " + err);
                                       return res.jsendServerError(message);
                                    }
 
                                    if (feed) {
-                                      return successCallback(feed, { hasAccessToReadWriteFeedApiKey : feed.apiKey == feedApiKey });
+                                      return successCallback(feed, { hasAccessToReadWriteFeedApiKey : feed.apiKey === feedApiKey });
                                    }
                                    else {
                                       return res.jsendClientError("Unknown or invalid feed", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
@@ -625,7 +625,7 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                 });
       }
       else {
-         var feedId = feedIdOrApiKey;
+         let feedId = feedIdOrApiKey;
          // Not a Feed API key, but now make sure the ID is an int or a string that parses as a positive int (e.g. reject things like '4240abc')
          if (isPositiveIntString(feedId)) {
             feedId = parseInt(feedId);    // make it an int
@@ -633,7 +633,7 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                fieldsToSelect,
                                function(err, feed) {
                                   if (err) {
-                                     var message = "Error while trying to find feed with ID [" + feedId + "]";
+                                     const message = "Error while trying to find feed with ID [" + feedId + "]";
                                      log.error(message + ": " + err);
                                      return res.jsendServerError(message);
                                   }
@@ -646,8 +646,8 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                      else {
                                         // if the feed is private, then check for authorization
                                         if ("feedapikey" in req.headers) {
-                                           var isReadWriteKey = (req.headers['feedapikey'] == feed.apiKey);
-                                           var isReadOnlyKey = (req.headers['feedapikey'] == feed.apiKeyReadOnly);
+                                           const isReadWriteKey = (req.headers['feedapikey'] === feed.apiKey);
+                                           const isReadOnlyKey = (req.headers['feedapikey'] === feed.apiKeyReadOnly);
 
                                            if (isReadWriteKey || isReadOnlyKey) {
                                               return successCallback(feed, { hasAccessToReadWriteFeedApiKey : isReadWriteKey });
@@ -659,14 +659,14 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                            // owns the feed.  If so, then she should be granted access to see a tile.
                                            passport.authenticate('bearer', function(err, user) {
                                               if (err) {
-                                                 var message = "Error while authenticating with OAuth2 access token for feed [" + feed.id + "]";
+                                                 const message = "Error while authenticating with OAuth2 access token for feed [" + feed.id + "]";
                                                  log.error(message + ": " + err);
                                                  return res.jsendServerError(message);
                                               }
 
                                               if (user) {
                                                  // make sure the user owns the feed
-                                                 if (user.id == feed.userId) {
+                                                 if (user.id === feed.userId) {
                                                     return successCallback(feed, { hasAccessToReadWriteFeedApiKey : true });
                                                  }
                                               }
@@ -695,7 +695,7 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
     *
     * @param {string} str the string to be trimmed
     */
-   var trim = function(str) {
+   const trim = function(str) {
       if (isString(str)) {
          return str.trim();
       }

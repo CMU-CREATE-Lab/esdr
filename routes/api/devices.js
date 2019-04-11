@@ -1,11 +1,11 @@
-var express = require('express');
-var router = express.Router();
-var passport = require('passport');
-var ValidationError = require('../../lib/errors').ValidationError;
-var httpStatus = require('http-status');
-var JSendError = require('jsend-utils').JSendError;
-var log = require('log4js').getLogger('esdr:routes:api:devices');
-var isPositiveIntString = require('../../lib/typeUtils').isPositiveIntString;
+const express = require('express');
+const router = express.Router();
+const passport = require('passport');
+const ValidationError = require('../../lib/errors').ValidationError;
+const httpStatus = require('http-status');
+const JSendError = require('jsend-utils').JSendError;
+const log = require('log4js').getLogger('esdr:routes:api:devices');
+const isPositiveIntString = require('../../lib/typeUtils').isPositiveIntString;
 
 module.exports = function(DeviceModel, DevicePropertiesModel, FeedModel) {
 
@@ -35,7 +35,7 @@ module.exports = function(DeviceModel, DevicePropertiesModel, FeedModel) {
    router.get('/:deviceId',
               passport.authenticate('bearer', { session : false }),
               function(req, res, next) {
-                 var deviceId = req.params.deviceId;
+                 const deviceId = req.params.deviceId;
                  log.debug("Received GET for device ID [" + deviceId + "]");
 
                  findDeviceByIdForUser(res, deviceId, req.user.id, req.query.fields, function(device) {
@@ -47,7 +47,7 @@ module.exports = function(DeviceModel, DevicePropertiesModel, FeedModel) {
    router.delete('/:deviceId',
                  passport.authenticate('bearer', { session : false }),
                  function(req, res, next) {
-                    var deviceId = req.params.deviceId;
+                    let deviceId = req.params.deviceId;
                     log.debug("DELETE device [" + deviceId + "] for user [" + req.user.id + "]");
                     if (isPositiveIntString(deviceId)) {
                        deviceId = parseInt(deviceId); // make it an int
@@ -76,20 +76,20 @@ module.exports = function(DeviceModel, DevicePropertiesModel, FeedModel) {
    router.post('/:deviceId/feeds',
                passport.authenticate('bearer', { session : false }),
                function(req, res, next) {
-                  var deviceId = req.params.deviceId;
+                  const deviceId = req.params.deviceId;
                   log.debug("Received POST to create a new feed for device ID [" + deviceId + "]");
 
                   // find the device
                   findDeviceByIdForUser(res, deviceId, req.user.id, 'id,serialNumber,productId', function(device) {
                      log.debug("Found device [" + device.serialNumber + "], will now create the feed...");
-                     var newFeed = req.body;
+                     const newFeed = req.body;
                      FeedModel.create(newFeed, device.id, device.productId, req.user.id, function(err2, result) {
                         if (err2) {
                            if (err2 instanceof ValidationError) {
                               return res.jsendClientValidationError("Validation failure", err2.data);   // HTTP 422 Unprocessable Entity
                            }
 
-                           var message = "Error while trying to create feed for device [" + device.serialNumber + "]";
+                           const message = "Error while trying to create feed for device [" + device.serialNumber + "]";
                            log.error(message + ": " + err2);
                            return res.jsendServerError(message);
                         }
@@ -121,7 +121,7 @@ module.exports = function(DeviceModel, DevicePropertiesModel, FeedModel) {
                              return res.jsendPassThrough(err.data);
                           }
 
-                          var message = "Error setting property";
+                          const message = "Error setting property";
                           log.error(message + ": " + err);
                           return res.jsendServerError(message);
                        }
@@ -147,7 +147,7 @@ module.exports = function(DeviceModel, DevicePropertiesModel, FeedModel) {
                              return res.jsendPassThrough(err.data);
                           }
 
-                          var message = "Error while finding property [" + req.params['key'] + "]";
+                          const message = "Error while finding property [" + req.params['key'] + "]";
                           log.error(message + ": " + err);
                           return res.jsendServerError(message);
                        }
@@ -169,7 +169,7 @@ module.exports = function(DeviceModel, DevicePropertiesModel, FeedModel) {
                  verifyDeviceOwnership(req, res, function(clientId, deviceId) {
                     DevicePropertiesModel.find(clientId, deviceId, req.query, function(err, properties) {
                        if (err) {
-                          var message = "Error while finding the device properties";
+                          const message = "Error while finding the device properties";
                           log.error(message + ": " + err);
                           return res.jsendServerError(message);
                        }
@@ -187,7 +187,7 @@ module.exports = function(DeviceModel, DevicePropertiesModel, FeedModel) {
                     verifyDeviceOwnership(req, res, function(clientId, deviceId) {
                        DevicePropertiesModel.deleteAll(clientId, deviceId, function(err, deleteResult) {
                           if (err) {
-                             var message = "Error while deleting the device properties";
+                             const message = "Error while deleting the device properties";
                              log.error(message + ": " + err);
                              return res.jsendServerError(message);
                           }
@@ -213,7 +213,7 @@ module.exports = function(DeviceModel, DevicePropertiesModel, FeedModel) {
                                 return res.jsendPassThrough(err.data);
                              }
 
-                             var message = "Error while deleting property [" + req.params['key'] + "]";
+                             const message = "Error while deleting property [" + req.params['key'] + "]";
                              log.error(message + ": " + err);
                              return res.jsendServerError(message);
                           }
@@ -232,13 +232,13 @@ module.exports = function(DeviceModel, DevicePropertiesModel, FeedModel) {
     * @param res the HTTP response
     * @param {function} action function with signature <code>callback(clientId, deviceId)</code>
     */
-   var verifyDeviceOwnership = function(req, res, action) {
+   const verifyDeviceOwnership = function(req, res, action) {
       findDeviceByIdForUser(res, req.params.deviceId, req.user.id, 'id', function(device) {
          action(req.authInfo.token.clientId, device.id);
       });
    };
 
-   var findDeviceByIdForUser = function(res, deviceId, authUserId, fieldsToSelect, successCallback) {
+   const findDeviceByIdForUser = function(res, deviceId, authUserId, fieldsToSelect, successCallback) {
       if (isPositiveIntString(deviceId)) {
          deviceId = parseInt(deviceId); // make it an int
          DeviceModel.findByIdForUser(deviceId, authUserId, fieldsToSelect, function(err, device) {
@@ -246,7 +246,7 @@ module.exports = function(DeviceModel, DevicePropertiesModel, FeedModel) {
                if (err instanceof JSendError) {
                   return res.jsendPassThrough(err.data);
                }
-               var message = "Error while trying to find device with ID [" + deviceId + "]";
+               const message = "Error while trying to find device with ID [" + deviceId + "]";
                log.error(message + ": " + err);
                return res.jsendServerError(message);
             }
@@ -258,7 +258,8 @@ module.exports = function(DeviceModel, DevicePropertiesModel, FeedModel) {
                return res.jsendClientError("Unknown or invalid device ID", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
             }
          });
-      } else {
+      }
+      else {
          return res.jsendClientError("Unknown or invalid device ID", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
       }
    };

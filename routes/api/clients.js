@@ -1,10 +1,10 @@
-var express = require('express');
-var router = express.Router();
-var passport = require('passport');
-var ValidationError = require('../../lib/errors').ValidationError;
-var DuplicateRecordError = require('../../lib/errors').DuplicateRecordError;
-var httpStatus = require('http-status');
-var log = require('log4js').getLogger('esdr:routes:api:clients');
+const express = require('express');
+const router = express.Router();
+const passport = require('passport');
+const ValidationError = require('../../lib/errors').ValidationError;
+const DuplicateRecordError = require('../../lib/errors').DuplicateRecordError;
+const httpStatus = require('http-status');
+const log = require('log4js').getLogger('esdr:routes:api:clients');
 
 module.exports = function(ClientModel) {
 
@@ -12,8 +12,8 @@ module.exports = function(ClientModel) {
    router.post('/',
                passport.authenticate('bearer', { session : false }),
                function(req, res, next) {
-                  var userId = req.user.id;
-                  var newClient = req.body;
+                  const userId = req.user.id;
+                  const newClient = req.body;
                   log.debug("Received POST from user ID [" + userId + "] to create client [" + (newClient && newClient.clientName ? newClient.clientName : null) + "]");
                   ClientModel.create(newClient,
                                      userId,
@@ -27,7 +27,7 @@ module.exports = function(ClientModel) {
                                               return res.jsendClientError("Client name already in use.", { clientName : newClient.clientName }, httpStatus.CONFLICT);  // HTTP 409 Conflict
                                            }
 
-                                           var message = "Error while trying to create client [" + newClient.clientName + "]";
+                                           const message = "Error while trying to create client [" + newClient.clientName + "]";
                                            log.error(message + ": " + err);
                                            return res.jsendServerError(message);
                                         }
@@ -47,7 +47,7 @@ module.exports = function(ClientModel) {
               function(req, res, next) {
                  passport.authenticate('bearer', function(err, user, info) {
                     if (err) {
-                       var message = "Error while authenticating to find clients";
+                       const message = "Error while authenticating to find clients";
                        log.error(message + ": " + err);
                        return res.jsendServerError(message);
                     }
