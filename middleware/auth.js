@@ -1,17 +1,17 @@
-var passport = require('passport');
-var LocalStrategy = require('passport-local').Strategy;
-var BasicStrategy = require('passport-http').BasicStrategy;
-var ClientPasswordStrategy = require('passport-oauth2-client-password').Strategy;
-var BearerStrategy = require('passport-http-bearer').Strategy;
-var LocalAPIKeyStrategy = require('passport-localapikey-update').Strategy;
-var config = require('../config');
-var httpStatus = require('http-status');
-var superagent = require('superagent-ls');
-var log = require('log4js').getLogger('esdr:middleware:auth');
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+const BasicStrategy = require('passport-http').BasicStrategy;
+const ClientPasswordStrategy = require('passport-oauth2-client-password').Strategy;
+const BearerStrategy = require('passport-http-bearer').Strategy;
+const LocalAPIKeyStrategy = require('passport-localapikey-update').Strategy;
+const config = require('../config');
+const httpStatus = require('http-status');
+const superagent = require('superagent-ls');
+const log = require('log4js').getLogger('esdr:middleware:auth');
 
 module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {
 
-   var authHelper = {
+   const authHelper = {
       authenticateByFeedApiKey : function(apiKey, done) {
          FeedModel.findByApiKey(apiKey, null, function(err, feed) {
             if (err) {
@@ -22,13 +22,13 @@ module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {
                return done(null, false, { message : 'Invalid feed API key' });
             }
 
-            var user = {
+            const user = {
                id : feed.userId
             };
 
-            var info = {
+            const info = {
                feed : feed,
-               isReadOnly : feed.apiKeyReadOnly == apiKey
+               isReadOnly : feed.apiKey !== apiKey
             };
 
             return done(null, user, info);
@@ -60,8 +60,8 @@ module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {
 
                                                    try {
                                                       if (res.statusCode === httpStatus.OK) {
-                                                         var tokenResponse = res.body;
-                                                         var user = {
+                                                         const tokenResponse = res.body;
+                                                         const user = {
                                                             id : tokenResponse.userId,
                                                             lastLogin : new Date(),
                                                             accessToken : tokenResponse.access_token,
@@ -106,7 +106,7 @@ module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {
       });
    });
 
-   var authenticateClient = function(clientName, clientSecret, callback) {
+   const authenticateClient = function(clientName, clientSecret, callback) {
       log.debug("auth.authenticateClient(" + clientName + "))");
       ClientModel.findByNameAndSecret(clientName, clientSecret, function(err, client) {
          log.debug("   in callback for ClientModel.findByNameAndSecret(" + clientName + ")");
@@ -123,7 +123,7 @@ module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {
       });
    };
 
-   var authenticateUser = function(username, password, callback) {
+   const authenticateUser = function(username, password, callback) {
       log.debug("auth.authenticateUser(" + username + "))");
       UserModel.findByEmailAndPassword(username, password, function(err, user) {
          log.debug("   in callback for UserModel.findByEmailAndPassword(" + username + ")");
@@ -184,7 +184,7 @@ module.exports = function(ClientModel, UserModel, TokenModel, FeedModel) {
                   // don't ever need to expose the password
                   delete user.password;
 
-                  var info = { scope : '*', token : token };
+                  const info = { scope : '*', token : token };
                   done(null, user, info);
                });
             });
