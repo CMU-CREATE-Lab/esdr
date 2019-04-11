@@ -266,7 +266,7 @@ Database.create(function(err, db) {
          // configure routing
          app.use('/signup', sessionSupport, require('./routes/signup'));
          app.use('/login', sessionSupport, require('./routes/login'));
-         app.use('/logout', sessionSupport, require('./routes/logout')(db.tokens));
+         app.use('/logout', sessionSupport, require('./routes/logout')());
          app.use('/verification', sessionSupport, require('./routes/verification'));
          app.use('/password-reset', sessionSupport, require('./routes/password-reset'));
          app.use('/access-token', sessionSupport, require('./routes/access-token')(db.tokens));
