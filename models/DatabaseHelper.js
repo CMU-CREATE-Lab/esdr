@@ -1,12 +1,12 @@
-var flow = require('nimble');
-var DatabaseError = require('../lib/errors').DatabaseError;
-var DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
-var log = require('log4js').getLogger('esdr:models:databasehelper');
+const flow = require('nimble');
+const DatabaseError = require('../lib/errors').DatabaseError;
+const DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
+const log = require('log4js').getLogger('esdr:models:databasehelper');
 
 module.exports = function(pool) {
-   var SELECT_PREFIX = "SELECT ";
+   const SELECT_PREFIX = "SELECT ";
 
-   var self = this;
+   const self = this;
 
    this.execute = function(query, params, callback) {
       pool.getConnection(function(err1, connection) {
@@ -18,7 +18,7 @@ module.exports = function(pool) {
             connection.release();
 
             if (err2) {
-               if (err2.code == "ER_DUP_ENTRY") {
+               if (err2.code === "ER_DUP_ENTRY") {
                   return callback(new DuplicateRecordError(err2));
                }
 
@@ -43,16 +43,16 @@ module.exports = function(pool) {
    };
 
    this.findWithLimit = function(query, params, callback) {
-      if (query && query.toUpperCase().indexOf(SELECT_PREFIX) == 0) {
+      if (query && query.toUpperCase().indexOf(SELECT_PREFIX) === 0) {
 
          // modify the query by inserting SQL_CALC_FOUND_ROWS
          query = "SELECT SQL_CALC_FOUND_ROWS " + query.slice(SELECT_PREFIX.length);
 
-         var connection = null;
-         var rows = null;
-         var totalCount = null;
-         var error = null;
-         var hasError = function() {
+         let connection = null;
+         let rows = null;
+         let totalCount = null;
+         let error = null;
+         const hasError = function() {
             return error != null;
          };
 
@@ -121,7 +121,7 @@ module.exports = function(pool) {
                                                error = err;
                                             }
                                             else {
-                                               totalCount = result[0].numFoundRows;
+                                               totalCount = result[0]['numFoundRows'];
                                             }
                                             done();
                                          });

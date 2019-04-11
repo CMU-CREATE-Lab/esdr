@@ -1,9 +1,9 @@
-var oauth2orize = require('oauth2orize');
-var config = require('../config');
-var log = require('log4js').getLogger('esdr:middleware:oauth2');
+const oauth2orize = require('oauth2orize');
+const config = require('../config');
+const log = require('log4js').getLogger('esdr:middleware:oauth2');
 
 module.exports = function(UserModel, TokenModel) {
-   var server = oauth2orize.createServer();
+   const server = oauth2orize.createServer();
 
    /**
     * Exchange user id and password for access tokens.
@@ -34,7 +34,10 @@ module.exports = function(UserModel, TokenModel) {
             if (err) {
                return done(err);
             }
-            done(null, tokenValues.access, tokenValues.refresh, { userId : user.id, 'expires_in' : config.get("security:tokenLifeSecs") });
+            done(null, tokenValues.access, tokenValues.refresh, {
+               userId : user.id,
+               'expires_in' : config.get("security:tokenLifeSecs")
+            });
          });
       });
    }));

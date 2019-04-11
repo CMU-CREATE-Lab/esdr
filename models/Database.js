@@ -1,35 +1,35 @@
-var mysql = require('mysql');
-var flow = require('nimble');
+const mysql = require('mysql');
+const flow = require('nimble');
 
-var DatabaseHelper = require("./DatabaseHelper");
-var Users = require('./Users.js');
-var Clients = require('./Clients.js');
-var Tokens = require('./Tokens.js');
-var Products = require('./Products.js');
-var Devices = require('./Devices.js');
-var Feeds = require('./Feeds.js');
-var Multifeeds = require('./Multifeeds.js');
-var UserProperties = require('./UserProperties.js');
-var FeedProperties = require('./FeedProperties.js');
-var DeviceProperties = require('./DeviceProperties.js');
-var MirrorRegistrations = require('./MirrorRegistrations.js');
+const DatabaseHelper = require("./DatabaseHelper");
+const Users = require('./Users.js');
+const Clients = require('./Clients.js');
+const Tokens = require('./Tokens.js');
+const Products = require('./Products.js');
+const Devices = require('./Devices.js');
+const Feeds = require('./Feeds.js');
+const Multifeeds = require('./Multifeeds.js');
+const UserProperties = require('./UserProperties.js');
+const FeedProperties = require('./FeedProperties.js');
+const DeviceProperties = require('./DeviceProperties.js');
+const MirrorRegistrations = require('./MirrorRegistrations.js');
 
-var DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
+const DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
 
-var config = require('../config');
-var log = require('log4js').getLogger('esdr:models:database');
+const config = require('../config');
+const log = require('log4js').getLogger('esdr:models:database');
 
 module.exports = {
    create : function(callback) {
       log.info("Initializing database...");
 
-      var errors = [];
-      var hasErrors = function() {
+      const errors = [];
+      const hasErrors = function() {
          return errors.length > 0
       };
 
-      var databaseHelper = null;
-      var db = {
+      let databaseHelper = null;
+      const db = {
          users : null,
          clients : null,
          tokens : null,
@@ -49,12 +49,12 @@ module.exports = {
                // make sure the database exists
                function(done) {
                   log.info(" 1) Ensuring the database exists.");
-                  var conn = mysql.createConnection({
-                                                       host : config.get("database:host"),
-                                                       port : config.get("database:port"),
-                                                       user : config.get("database:username"),
-                                                       password : config.get("database:password")
-                                                    });
+                  const conn = mysql.createConnection({
+                                                         host : config.get("database:host"),
+                                                         port : config.get("database:port"),
+                                                         user : config.get("database:username"),
+                                                         password : config.get("database:password")
+                                                      });
 
                   if (conn) {
                      conn.query("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?",
@@ -64,7 +64,7 @@ module.exports = {
                                       errors.push(new Error("Error trying to query for the database: " + err1));
                                    }
                                    else {
-                                      if (!(rows && rows.length > 0 && rows[0]['SCHEMA_NAME'] == config.get("database:database"))) {
+                                      if (!(rows && rows.length > 0 && rows[0]['SCHEMA_NAME'] === config.get("database:database"))) {
                                          errors.push(new Error("Could not find the database."));
                                       }
                                    }
@@ -88,14 +88,14 @@ module.exports = {
                function(done) {
                   if (!hasErrors()) {
                      log.info(" 2) Creating the connection pool.");
-                     var pool = mysql.createPool({
-                                                    connectionLimit : config.get("database:pool:connectionLimit"),
-                                                    host : config.get("database:host"),
-                                                    port : config.get("database:port"),
-                                                    database : config.get("database:database"),
-                                                    user : config.get("database:username"),
-                                                    password : config.get("database:password")
-                                                 });
+                     const pool = mysql.createPool({
+                                                      connectionLimit : config.get("database:pool:connectionLimit"),
+                                                      host : config.get("database:host"),
+                                                      port : config.get("database:port"),
+                                                      database : config.get("database:database"),
+                                                      user : config.get("database:username"),
+                                                      password : config.get("database:password")
+                                                   });
                      databaseHelper = new DatabaseHelper(pool);
                   }
                   done();
@@ -105,7 +105,7 @@ module.exports = {
                function(done) {
                   if (!hasErrors()) {
                      log.info(" 3) Ensuring the Users table exists.");
-                     var users = new Users(databaseHelper);
+                     const users = new Users(databaseHelper);
                      users.initialize(function(err) {
                         if (err) {
                            errors.push(err)
@@ -126,7 +126,7 @@ module.exports = {
                function(done) {
                   if (!hasErrors()) {
                      log.info(" 4) Ensuring the Clients table exists.");
-                     var clients = new Clients(databaseHelper);
+                     const clients = new Clients(databaseHelper);
                      clients.initialize(function(err) {
                         if (err) {
                            errors.push(err)
@@ -147,7 +147,7 @@ module.exports = {
                function(done) {
                   if (!hasErrors()) {
                      log.info(" 5) Ensuring the Tokens table exists.");
-                     var tokens = new Tokens(databaseHelper);
+                     const tokens = new Tokens(databaseHelper);
                      tokens.initialize(function(err) {
                         if (err) {
                            errors.push(err)
@@ -168,7 +168,7 @@ module.exports = {
                function(done) {
                   if (!hasErrors()) {
                      log.info(" 6) Ensuring the Products table exists.");
-                     var products = new Products(databaseHelper);
+                     const products = new Products(databaseHelper);
                      products.initialize(function(err) {
                         if (err) {
                            errors.push(err)
@@ -189,7 +189,7 @@ module.exports = {
                function(done) {
                   if (!hasErrors()) {
                      log.info(" 7) Ensuring the Devices table exists.");
-                     var devices = new Devices(databaseHelper);
+                     const devices = new Devices(databaseHelper);
                      devices.initialize(function(err) {
                         if (err) {
                            errors.push(err)
@@ -210,7 +210,7 @@ module.exports = {
                function(done) {
                   if (!hasErrors()) {
                      log.info(" 8) Ensuring the Feeds table exists.");
-                     var feeds = new Feeds(databaseHelper);
+                     const feeds = new Feeds(databaseHelper);
                      feeds.initialize(function(err) {
                         if (err) {
                            errors.push(err)
@@ -231,7 +231,7 @@ module.exports = {
                function(done) {
                   if (!hasErrors()) {
                      log.info(" 9) Ensuring the Multifeeds table exists.");
-                     var multifeeds = new Multifeeds(databaseHelper);
+                     const multifeeds = new Multifeeds(databaseHelper);
                      multifeeds.initialize(function(err) {
                         if (err) {
                            errors.push(err)
@@ -252,7 +252,7 @@ module.exports = {
                function(done) {
                   if (!hasErrors()) {
                      log.info("10) Ensuring the UserProperties table exists.");
-                     var userProperties = new UserProperties(databaseHelper);
+                     const userProperties = new UserProperties(databaseHelper);
                      userProperties.initialize(function(err) {
                         if (err) {
                            errors.push(err)
@@ -273,7 +273,7 @@ module.exports = {
                function(done) {
                   if (!hasErrors()) {
                      log.info("11) Ensuring the FeedProperties table exists.");
-                     var feedProperties = new FeedProperties(databaseHelper);
+                     const feedProperties = new FeedProperties(databaseHelper);
                      feedProperties.initialize(function(err) {
                         if (err) {
                            errors.push(err)
@@ -294,7 +294,7 @@ module.exports = {
                function(done) {
                   if (!hasErrors()) {
                      log.info("12) Ensuring the DeviceProperties table exists.");
-                     var deviceProperties = new DeviceProperties(databaseHelper);
+                     const deviceProperties = new DeviceProperties(databaseHelper);
                      deviceProperties.initialize(function(err) {
                         if (err) {
                            errors.push(err)
@@ -315,7 +315,7 @@ module.exports = {
                function(done) {
                   if (!hasErrors()) {
                      log.info("13) Ensuring the MirrorRegistrations table exists.");
-                     var mirrorRegistrations = new MirrorRegistrations(databaseHelper);
+                     const mirrorRegistrations = new MirrorRegistrations(databaseHelper);
                      mirrorRegistrations.initialize(function(err) {
                         if (err) {
                            errors.push(err)
@@ -336,7 +336,7 @@ module.exports = {
                function(done) {
                   if (!hasErrors()) {
                      log.info("14) Ensuring the ESDR client exists.");
-                     var esdrClient = config.get("esdrClient");
+                     const esdrClient = config.get("esdrClient");
                      db.clients.findByNameAndSecret(esdrClient.clientName,
                                                     esdrClient.clientSecret,
                                                     function(err, foundClient) {
@@ -379,7 +379,7 @@ module.exports = {
                      log.error("   " + e);
                   });
 
-                  var error = new Error("Error(s) occurred during database initialization. See errors property in this object.");
+                  const error = new Error("Error(s) occurred during database initialization. See errors property in this object.");
                   error.errors = errors;
                   callback(error, null);
                }
