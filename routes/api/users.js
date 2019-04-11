@@ -1,12 +1,21 @@
-var config = require('../../config');
-var express = require('express');
-var router = express.Router();
-var passport = require('passport');
-var Mailer = require('../../lib/mailer');
-var ValidationError = require('../../lib/errors').ValidationError;
-var DuplicateRecordError = require('../../lib/errors').DuplicateRecordError;
-var httpStatus = require('http-status');
-var log = require('log4js').getLogger('esdr:routes:api:users');
+const config = require('../../config');
+const express = require('express');
+const router = express.Router();
+const passport = require('passport');
+const Mailer = require('../../lib/mailer');
+const ValidationError = require('../../lib/errors').ValidationError;
+const DuplicateRecordError = require('../../lib/errors').DuplicateRecordError;
+const httpStatus = require('http-status');
+const log = require('log4js').getLogger('esdr:routes:api:users');
+
+const areIntegersEqual = function(i1, i2) {
+   const int1 = parseInt(i1);
+   const int2 = parseInt(i2);
+
+   return Number.isInteger(int1) &&
+          Number.isInteger(int2) &&
+          int1 === int2;
+};
 
 module.exports = function(UserModel, UserPropertiesModel) {
 
@@ -34,9 +43,9 @@ module.exports = function(UserModel, UserPropertiesModel) {
     */
    router.post('/',
                function(req, res, next) {
-                  var user = req.body;
+                  const user = req.body;
                   if (user) {
-                     var createUser = function(client) {
+                     const createUser = function(client) {
                         UserModel.create(user,
                                          function(err, result) {
                                             if (err) {
@@ -48,14 +57,14 @@ module.exports = function(UserModel, UserPropertiesModel) {
                                                   return res.jsendClientError("Email already in use.", { email : user.email }, httpStatus.CONFLICT);  // HTTP 409 Conflict
                                                }
 
-                                               var message = "Error while trying to create user [" + user.email + "]";
+                                               const message = "Error while trying to create user [" + user.email + "]";
                                                log.error(message + ": " + err);
                                                return res.jsendServerError(message);
                                             }
 
                                             log.debug("Created new user [" + result.email + "] with id [" + result.insertId + "] ");
 
-                                            var obj = {
+                                            const obj = {
                                                id : result.insertId,
                                                // include these because they might have been modified by the trimming in the call to UserModel.create()
                                                email : result.email,
@@ -85,7 +94,7 @@ module.exports = function(UserModel, UserPropertiesModel) {
                         // try to authenticate the client
                         passport.authenticate('basic', function(err, client) {
                            if (err) {
-                              var message = "Error while authenticating the client";
+                              const message = "Error while authenticating the client";
                               log.error(message + ": " + err);
                               return res.jsendServerError(message);
                            }
@@ -111,10 +120,10 @@ module.exports = function(UserModel, UserPropertiesModel) {
               passport.authenticate('bearer', { session : false }),
               function(req, res) {
 
-                 if (req.params.userId == req.user.id) {
+                 if (areIntegersEqual(req.params.userId, req.user.id)) {
                     UserModel.filterFields(req.user, req.query.fields, function(err, user) {
                        if (err) {
-                          var message = "Error while finding the user";
+                          const message = "Error while finding the user";
                           log.error(message + ": " + err);
                           return res.jsendServerError(message);
                        }
@@ -132,7 +141,7 @@ module.exports = function(UserModel, UserPropertiesModel) {
               passport.authenticate('bearer', { session : false }),
               function(req, res) {
 
-                 if (req.params.userId == req.user.id) {
+                 if (areIntegersEqual(req.params.userId, req.user.id)) {
 
                     // try setting the property
                     UserPropertiesModel.setProperty(req.authInfo.token.clientId, req.user.id, req.params['key'], req.body, function(err, property) {
@@ -146,7 +155,7 @@ module.exports = function(UserModel, UserPropertiesModel) {
                              return res.jsendPassThrough(err.data);
                           }
 
-                          var message = "Error setting property";
+                          const message = "Error setting property";
                           log.error(message + ": " + err);
                           return res.jsendServerError(message);
                        }
@@ -164,7 +173,7 @@ module.exports = function(UserModel, UserPropertiesModel) {
               passport.authenticate('bearer', { session : false }),
               function(req, res) {
 
-                 if (req.params.userId == req.user.id) {
+                 if (areIntegersEqual(req.params.userId, req.user.id)) {
                     UserPropertiesModel.getProperty(req.authInfo.token.clientId, req.user.id, req.params['key'], function(err, property) {
                        if (err) {
                           if (err instanceof ValidationError) {
@@ -176,7 +185,7 @@ module.exports = function(UserModel, UserPropertiesModel) {
                              return res.jsendPassThrough(err.data);
                           }
 
-                          var message = "Error while finding property [" + req.params['key'] + "]";
+                          const message = "Error while finding property [" + req.params['key'] + "]";
                           log.error(message + ": " + err);
                           return res.jsendServerError(message);
                        }
@@ -199,10 +208,10 @@ module.exports = function(UserModel, UserPropertiesModel) {
               passport.authenticate('bearer', { session : false }),
               function(req, res) {
 
-                 if (req.params.userId == req.user.id) {
+                 if (areIntegersEqual(req.params.userId, req.user.id)) {
                     UserPropertiesModel.find(req.authInfo.token.clientId, req.user.id, req.query, function(err, properties) {
                        if (err) {
-                          var message = "Error while finding the user properties";
+                          const message = "Error while finding the user properties";
                           log.error(message + ": " + err);
                           return res.jsendServerError(message);
                        }
@@ -220,10 +229,10 @@ module.exports = function(UserModel, UserPropertiesModel) {
                  passport.authenticate('bearer', { session : false }),
                  function(req, res) {
 
-                    if (req.params.userId == req.user.id) {
+                    if (areIntegersEqual(req.params.userId, req.user.id)) {
                        UserPropertiesModel.deleteAll(req.authInfo.token.clientId, req.user.id, function(err, deleteResult) {
                           if (err) {
-                             var message = "Error while deleting the user properties";
+                             const message = "Error while deleting the user properties";
                              log.error(message + ": " + err);
                              return res.jsendServerError(message);
                           }
@@ -241,7 +250,7 @@ module.exports = function(UserModel, UserPropertiesModel) {
                  passport.authenticate('bearer', { session : false }),
                  function(req, res) {
 
-                    if (req.params.userId == req.user.id) {
+                    if (areIntegersEqual(req.params.userId, req.user.id)) {
                        UserPropertiesModel.deleteProperty(req.authInfo.token.clientId, req.user.id, req.params['key'], function(err, deleteResult) {
                           if (err) {
                              if (err instanceof ValidationError) {
@@ -253,7 +262,7 @@ module.exports = function(UserModel, UserPropertiesModel) {
                                 return res.jsendPassThrough(err.data);
                              }
 
-                             var message = "Error while deleting property [" + req.params['key'] + "]";
+                             const message = "Error while deleting property [" + req.params['key'] + "]";
                              log.error(message + ": " + err);
                              return res.jsendServerError(message);
                           }
