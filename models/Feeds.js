@@ -10,7 +10,7 @@ const config = require('../config');
 const flow = require('nimble');
 const JSendClientError = require('jsend-utils').JSendClientError;
 const JSendServerError = require('jsend-utils').JSendServerError;
-const isString = require('../lib/typeUtils').isString;
+const isString = require('data-type-utils').isString;
 
 // instantiate the datastore
 const datastore = new BodyTrackDatastore({
