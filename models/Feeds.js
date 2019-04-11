@@ -1,73 +1,73 @@
-var trimAndCopyPropertyIfNonEmpty = require('../lib/objectUtils').trimAndCopyPropertyIfNonEmpty;
-var copyPropertyIfDefinedAndNonNull = require('../lib/objectUtils').copyPropertyIfDefinedAndNonNull;
-var JaySchema = require('jayschema');
-var jsonValidator = new JaySchema();
-var createRandomHexToken = require('../lib/token').createRandomHexToken;
-var ValidationError = require('../lib/errors').ValidationError;
-var httpStatus = require('http-status');
-var BodyTrackDatastore = require('bodytrack-datastore');
-var query2query = require('./feeds-query2query');
-var config = require('../config');
-var flow = require('nimble');
-var JSendClientError = require('jsend-utils').JSendClientError;
-var JSendServerError = require('jsend-utils').JSendServerError;
-var isString = require('../lib/typeUtils').isString;
+const trimAndCopyPropertyIfNonEmpty = require('../lib/objectUtils').trimAndCopyPropertyIfNonEmpty;
+const copyPropertyIfDefinedAndNonNull = require('../lib/objectUtils').copyPropertyIfDefinedAndNonNull;
+const Ajv = require('ajv');
+const createRandomHexToken = require('../lib/token').createRandomHexToken;
+const ValidationError = require('../lib/errors').ValidationError;
+const httpStatus = require('http-status');
+const BodyTrackDatastore = require('bodytrack-datastore');
+const query2query = require('./feeds-query2query');
+const config = require('../config');
+const flow = require('nimble');
+const JSendClientError = require('jsend-utils').JSendClientError;
+const JSendServerError = require('jsend-utils').JSendServerError;
+const isString = require('../lib/typeUtils').isString;
 
 // instantiate the datastore
-var datastore = new BodyTrackDatastore({
-                                          binDir : config.get("datastore:binDirectory"),
-                                          dataDir : config.get("datastore:dataDirectory")
-                                       });
+const datastore = new BodyTrackDatastore({
+                                            binDir : config.get("datastore:binDirectory"),
+                                            dataDir : config.get("datastore:dataDirectory")
+                                         });
 
-var log = require('log4js').getLogger('esdr:models:feeds');
+const log = require('log4js').getLogger('esdr:models:feeds');
 
-var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Feeds` ( " +
-                         "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
-                         "`name` varchar(255) NOT NULL, " +
-                         "`deviceId` bigint(20) NOT NULL, " +
-                         "`productId` bigint(20) NOT NULL, " +
-                         "`userId` bigint(20) NOT NULL, " +
-                         "`apiKey` varchar(64) NOT NULL, " +
-                         "`apiKeyReadOnly` varchar(64) NOT NULL, " +
-                         "`exposure` enum('indoor','outdoor','virtual') NOT NULL, " +
-                         "`isPublic` boolean DEFAULT 0, " +
-                         "`isMobile` boolean DEFAULT 0, " +
-                         "`latitude` double DEFAULT NULL, " +
-                         "`longitude` double DEFAULT NULL, " +
-                         "`channelSpecs` text NOT NULL, " +
-                         "`channelBounds` text DEFAULT NULL, " +
-                         "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
-                         "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
-                         "`lastUpload` timestamp NOT NULL DEFAULT 0, " +
-                         "`minTimeSecs` double DEFAULT NULL, " +
-                         "`maxTimeSecs` double DEFAULT NULL, " +
-                         "PRIMARY KEY (`id`), " +
-                         "KEY `name` (`name`), " +
-                         "KEY `deviceId` (`deviceId`), " +
-                         "KEY `productId` (`productId`), " +
-                         "KEY `userId` (`userId`), " +
-                         "UNIQUE KEY `apiKey` (`apiKey`), " +
-                         "UNIQUE KEY `apiKeyReadOnly` (`apiKeyReadOnly`), " +
-                         "KEY `exposure` (`exposure`), " +
-                         "KEY `isPublic` (`isPublic`), " +
-                         "KEY `isMobile` (`isMobile`), " +
-                         "KEY `latitude` (`latitude`), " +
-                         "KEY `longitude` (`longitude`), " +
-                         "KEY `created` (`created`), " +
-                         "KEY `modified` (`modified`), " +
-                         "KEY `lastUpload` (`lastUpload`), " +
-                         "KEY `minTimeSecs` (`minTimeSecs`), " +
-                         "KEY `maxTimeSecs` (`maxTimeSecs`), " +
-                         "CONSTRAINT `feeds_deviceId_fk_1` FOREIGN KEY (`deviceId`) REFERENCES `Devices` (`id`), " +
-                         "CONSTRAINT `feeds_productId_fk_1` FOREIGN KEY (`productId`) REFERENCES `Products` (`id`), " +
-                         "CONSTRAINT `feeds_userId_fk_1` FOREIGN KEY (`userId`) REFERENCES `Users` (`id`) " +
-                         ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
+// language=MySQL
+const CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Feeds` ( " +
+                           "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
+                           "`name` varchar(255) NOT NULL, " +
+                           "`deviceId` bigint(20) NOT NULL, " +
+                           "`productId` bigint(20) NOT NULL, " +
+                           "`userId` bigint(20) NOT NULL, " +
+                           "`apiKey` varchar(64) NOT NULL, " +
+                           "`apiKeyReadOnly` varchar(64) NOT NULL, " +
+                           "`exposure` enum('indoor','outdoor','virtual') NOT NULL, " +
+                           "`isPublic` boolean DEFAULT 0, " +
+                           "`isMobile` boolean DEFAULT 0, " +
+                           "`latitude` double DEFAULT NULL, " +
+                           "`longitude` double DEFAULT NULL, " +
+                           "`channelSpecs` text NOT NULL, " +
+                           "`channelBounds` text DEFAULT NULL, " +
+                           "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
+                           "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
+                           "`lastUpload` timestamp NOT NULL DEFAULT 0, " +
+                           "`minTimeSecs` double DEFAULT NULL, " +
+                           "`maxTimeSecs` double DEFAULT NULL, " +
+                           "PRIMARY KEY (`id`), " +
+                           "KEY `name` (`name`), " +
+                           "KEY `deviceId` (`deviceId`), " +
+                           "KEY `productId` (`productId`), " +
+                           "KEY `userId` (`userId`), " +
+                           "UNIQUE KEY `apiKey` (`apiKey`), " +
+                           "UNIQUE KEY `apiKeyReadOnly` (`apiKeyReadOnly`), " +
+                           "KEY `exposure` (`exposure`), " +
+                           "KEY `isPublic` (`isPublic`), " +
+                           "KEY `isMobile` (`isMobile`), " +
+                           "KEY `latitude` (`latitude`), " +
+                           "KEY `longitude` (`longitude`), " +
+                           "KEY `created` (`created`), " +
+                           "KEY `modified` (`modified`), " +
+                           "KEY `lastUpload` (`lastUpload`), " +
+                           "KEY `minTimeSecs` (`minTimeSecs`), " +
+                           "KEY `maxTimeSecs` (`maxTimeSecs`), " +
+                           "CONSTRAINT `feeds_deviceId_fk_1` FOREIGN KEY (`deviceId`) REFERENCES `Devices` (`id`), " +
+                           "CONSTRAINT `feeds_productId_fk_1` FOREIGN KEY (`productId`) REFERENCES `Products` (`id`), " +
+                           "CONSTRAINT `feeds_userId_fk_1` FOREIGN KEY (`userId`) REFERENCES `Users` (`id`) " +
+                           ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
 
-var MAX_FOUND_FEEDS = 1000;
-var MIN_CHANNEL_SPECS_STRING_LENGTH = 2;
+const MAX_FOUND_FEEDS = 1000;
+const MIN_CHANNEL_SPECS_STRING_LENGTH = 2;
 
-var JSON_SCHEMA = {
-   "$schema" : "http://json-schema.org/draft-04/schema#",
+const JSON_SCHEMA = {
+   "$async" : true,
    "title" : "Feed",
    "description" : "An ESDR feed",
    "type" : "object",
@@ -104,9 +104,12 @@ var JSON_SCHEMA = {
    "required" : ["name", "exposure", "channelSpecs"]
 };
 
+const ajv = new Ajv({ allErrors : true });
+const ifFeedIsValid = ajv.compile(JSON_SCHEMA);
+
 module.exports = function(databaseHelper) {
 
-   var self = this;
+   const self = this;
 
    this.jsonSchema = JSON_SCHEMA;
 
@@ -123,7 +126,7 @@ module.exports = function(databaseHelper) {
 
    this.create = function(feedDetails, deviceId, productId, userId, callback) {
       // first build a copy and trim some fields
-      var feed = {
+      const feed = {
          deviceId : deviceId,
          productId : productId,
          userId : userId,
@@ -137,12 +140,12 @@ module.exports = function(databaseHelper) {
       copyPropertyIfDefinedAndNonNull(feedDetails, feed, "latitude");
       copyPropertyIfDefinedAndNonNull(feedDetails, feed, "longitude");
 
-      var channelSpecs = null;
+      let channelSpecs = null;
       flow.series(
             [
                // get the channelSpecs from the product, if necessary
                function(done) {
-                  var isChannelSpecsSpecified = (typeof feedDetails.channelSpecs !== 'undefined') && (feedDetails.channelSpecs != null);
+                  const isChannelSpecsSpecified = (typeof feedDetails.channelSpecs !== 'undefined') && (feedDetails.channelSpecs != null);
                   if (isChannelSpecsSpecified) {
                      channelSpecs = JSON.stringify(feedDetails.channelSpecs);
                      done();
@@ -150,7 +153,9 @@ module.exports = function(databaseHelper) {
                   else {
                      // Since the channelSpecs weren't specified, get the default channel specs from this device's
                      // Product (which was already validated when inserted into the product, so no need to do so here)
-                     databaseHelper.findOne("SELECT defaultChannelSpecs FROM Products WHERE id = ?",
+                     // language=MySQL
+                     const sql = "SELECT defaultChannelSpecs FROM Products WHERE id = ?";
+                     databaseHelper.findOne(sql,
                                             [productId],
                                             function(err, result) {
                                                if (err) {
@@ -175,25 +180,22 @@ module.exports = function(databaseHelper) {
             function() {
                feed.channelSpecs = channelSpecs;
 
-               jsonValidator.validate(feed, JSON_SCHEMA, function(err1) {
-                  if (err1) {
-                     return callback(new ValidationError(err1));
-                  }
+               ifFeedIsValid(feed)
+                     .then(function() {
+                        // now try to insert
+                        databaseHelper.execute("INSERT INTO Feeds SET ?", feed, function(err2, result) {
+                           if (err2) {
+                              return callback(err2);
+                           }
 
-                  // now try to insert
-                  databaseHelper.execute("INSERT INTO Feeds SET ?", feed, function(err2, result) {
-                     if (err2) {
-                        return callback(err2);
-                     }
-
-                     return callback(null, {
-                        insertId : result.insertId,
-                        apiKey : feed.apiKey,
-                        apiKeyReadOnly : feed.apiKeyReadOnly
-                     });
-                  });
-
-               });
+                           return callback(null, {
+                              insertId : result.insertId,
+                              apiKey : feed.apiKey,
+                              apiKeyReadOnly : feed.apiKeyReadOnly
+                           });
+                        });
+                     })
+                     .catch(err => callback(new ValidationError(err)));
             }
       );
    };
@@ -203,14 +205,14 @@ module.exports = function(databaseHelper) {
       // by the user (403), or successful delete (200), etc.  So, we'll create a transaction, try to find the feed,
       // manually check whether the feed is owned by the user, and proceed with the delete accordingly.
 
-      var connection = null;
-      var error = null;
-      var hasError = function() {
+      let connection = null;
+      let error = null;
+      const hasError = function() {
          return error != null;
       };
-      var isExistingFeed = false;
-      var isFeedOwnedByUser = false;
-      var deleteResult = null;
+      let isExistingFeed = false;
+      let isFeedOwnedByUser = false;
+      let deleteResult = null;
 
       flow.series(
             [
@@ -248,6 +250,7 @@ module.exports = function(databaseHelper) {
                function(done) {
                   if (!hasError()) {
                      log.debug("delete feed [user " + userId + ", feed " + feedId + "]: 3) Find the feed");
+                     // language=MySQL
                      connection.query("SELECT userId FROM Feeds WHERE id=?",
                                       [feedId],
                                       function(err, rows) {
@@ -256,7 +259,7 @@ module.exports = function(databaseHelper) {
                                          }
                                          else {
                                             // set flags for whether the feed exists and is owned by the requesting user
-                                            isExistingFeed = (rows && rows.length == 1);
+                                            isExistingFeed = (rows && rows.length === 1);
                                             if (isExistingFeed) {
                                                isFeedOwnedByUser = rows[0].userId === userId;
                                             }
@@ -274,6 +277,7 @@ module.exports = function(databaseHelper) {
                function(done) {
                   if (!hasError() && isExistingFeed && isFeedOwnedByUser) {
                      log.debug("delete feed [user " + userId + ", feed " + feedId + "]: 4) Delete the feed properties (if any), then the feed");
+                     // language=MySQL
                      connection.query("DELETE FROM FeedProperties where feedId = ?",
                                       [feedId],
                                       function(err) {
@@ -378,7 +382,7 @@ module.exports = function(databaseHelper) {
                         function(err, tile) {
 
                            if (err) {
-                              if (err.data && err.data.code == httpStatus.UNPROCESSABLE_ENTITY) {
+                              if (err.data && err.data.code === httpStatus.UNPROCESSABLE_ENTITY) {
                                  return callback(err);
                               }
 
@@ -417,10 +421,10 @@ module.exports = function(databaseHelper) {
    this.getTiles = function(feedsAndChannels, level, offset, callback) {
 
       // remove duplicates
-      var feedMap = {};
+      const feedMap = {};
       feedsAndChannels.forEach(function(item) {
-         var feeds = item.feeds;
-         var channels = item.channels;
+         const feeds = item.feeds;
+         const channels = item.channels;
 
          feeds.forEach(function(feed) {
             if (!(feed.id in feedMap)) {
@@ -434,7 +438,7 @@ module.exports = function(databaseHelper) {
       });
 
       // build the userIdDeviceChannelObjects array needed for the call to getTiles()
-      var userIdDeviceChannelObjects = [];
+      const userIdDeviceChannelObjects = [];
       Object.keys(feedMap).forEach(function(feedId) {
          userIdDeviceChannelObjects.push({
                                             userId : feedMap[feedId].userId,
@@ -452,11 +456,11 @@ module.exports = function(databaseHelper) {
       }
    };
 
-   var getDatastoreDeviceNameForFeed = function(feedId) {
+   const getDatastoreDeviceNameForFeed = function(feedId) {
       return "feed_" + feedId;
    };
 
-   var createEmptyTile = function(level, offset) {
+   const createEmptyTile = function(level, offset) {
       return {
          "data" : [],
          "fields" : ["time", "mean", "stddev", "count"],
@@ -470,7 +474,7 @@ module.exports = function(databaseHelper) {
    };
 
    this.importData = function(feed, data, callback) {
-      var deviceName = getDatastoreDeviceNameForFeed(feed.id);
+      const deviceName = getDatastoreDeviceNameForFeed(feed.id);
       datastore.importJson(feed.userId,
                            deviceName,
                            data,
@@ -486,14 +490,14 @@ module.exports = function(databaseHelper) {
                               }
 
                               // create the bounds object we'll return to the caller
-                              var bounds = {
+                              const bounds = {
                                  channelBounds : {},
                                  importedBounds : {}
                               };
 
                               // If there was no error, then first see whether any data were actually
                               // imported.  The "channel_specs" field will be defined and non-null if so.
-                              var wasDataActuallyImported = typeof importResult.channel_specs !== 'undefined' && importResult.channel_specs != null;
+                              const wasDataActuallyImported = typeof importResult['channel_specs'] !== 'undefined' && importResult['channel_specs'] != null;
 
                               // if data was imported, then copy the imported_bounds from importResult to our
                               // new bounds object, but change field names from snake case to camel case.
@@ -501,17 +505,17 @@ module.exports = function(databaseHelper) {
                                  bounds.importedBounds.channels = {};
                                  bounds.importedBounds.minTimeSecs = Number.MAX_VALUE;
                                  bounds.importedBounds.maxTimeSecs = Number.MIN_VALUE;
-                                 Object.keys(importResult.channel_specs).forEach(function(channelName) {
-                                    var importedBounds = importResult.channel_specs[channelName].imported_bounds;
+                                 Object.keys(importResult['channel_specs']).forEach(function(channelName) {
+                                    const importedBounds = importResult['channel_specs'][channelName]['imported_bounds'];
                                     bounds.importedBounds.channels[channelName] = {
-                                       minTimeSecs : importedBounds.min_time,
-                                       maxTimeSecs : importedBounds.max_time,
-                                       minValue : importedBounds.min_value,
-                                       maxValue : importedBounds.max_value
+                                       minTimeSecs : importedBounds['min_time'],
+                                       maxTimeSecs : importedBounds['max_time'],
+                                       minValue : importedBounds['min_value'],
+                                       maxValue : importedBounds['max_value']
                                     };
 
-                                    bounds.importedBounds.minTimeSecs = Math.min(bounds.importedBounds.minTimeSecs, importedBounds.min_time);
-                                    bounds.importedBounds.maxTimeSecs = Math.max(bounds.importedBounds.maxTimeSecs, importedBounds.max_time);
+                                    bounds.importedBounds.minTimeSecs = Math.min(bounds.importedBounds.minTimeSecs, importedBounds['min_time']);
+                                    bounds.importedBounds.maxTimeSecs = Math.max(bounds.importedBounds.maxTimeSecs, importedBounds['max_time']);
                                  });
                               }
 
@@ -537,28 +541,28 @@ module.exports = function(databaseHelper) {
                                                    // imported above, then update the database with the channel bounds,
                                                    // the min/max times, and last upload time
                                                    if (wasDataActuallyImported &&
-                                                       typeof info.min_time !== 'undefined' &&
-                                                       typeof info.max_time !== 'undefined') {
+                                                       typeof info['min_time'] !== 'undefined' &&
+                                                       typeof info['max_time'] !== 'undefined') {
 
                                                       // Iterate over each of the channels in the info from the datastore
                                                       // and copy to our bounds object.
-                                                      var deviceAndChannelPrefixLength = (deviceName + ".").length;
+                                                      const deviceAndChannelPrefixLength = (deviceName + ".").length;
                                                       bounds.channelBounds.channels = {};
-                                                      Object.keys(info.channel_specs).forEach(function(deviceAndChannel) {
-                                                         var channelName = deviceAndChannel.slice(deviceAndChannelPrefixLength);
-                                                         var channelInfo = info.channel_specs[deviceAndChannel];
+                                                      Object.keys(info['channel_specs']).forEach(function(deviceAndChannel) {
+                                                         const channelName = deviceAndChannel.slice(deviceAndChannelPrefixLength);
+                                                         const channelInfo = info['channel_specs'][deviceAndChannel];
 
                                                          // copy the bounds (changing from snake to camel case)
-                                                         var channelBounds = channelInfo.channel_bounds;
+                                                         const channelBounds = channelInfo['channel_bounds'];
                                                          bounds.channelBounds.channels[channelName] = {
-                                                            minTimeSecs : channelBounds.min_time,
-                                                            maxTimeSecs : channelBounds.max_time,
-                                                            minValue : channelBounds.min_value,
-                                                            maxValue : channelBounds.max_value
+                                                            minTimeSecs : channelBounds['min_time'],
+                                                            maxTimeSecs : channelBounds['max_time'],
+                                                            minValue : channelBounds['min_value'],
+                                                            maxValue : channelBounds['max_value']
                                                          };
                                                       });
-                                                      bounds.channelBounds.minTimeSecs = info.min_time;
-                                                      bounds.channelBounds.maxTimeSecs = info.max_time;
+                                                      bounds.channelBounds.minTimeSecs = info['min_time'];
+                                                      bounds.channelBounds.maxTimeSecs = info['max_time'];
 
                                                       // finally, update the database with the new bounds and lastUpload time
                                                       databaseHelper.execute("UPDATE Feeds SET " +
@@ -587,9 +591,9 @@ module.exports = function(databaseHelper) {
    };
 
    this.getMostRecent = function(feed, channelName, callback) {
-      var deviceName = getDatastoreDeviceNameForFeed(feed.id);
+      const deviceName = getDatastoreDeviceNameForFeed(feed.id);
 
-      var options = {
+      const options = {
          userId : feed.userId,
          deviceName : deviceName,
          willFindMostRecentSample : true
@@ -611,40 +615,40 @@ module.exports = function(databaseHelper) {
                               return callback(new Error("Failed to get feed info"));
                            }
 
-                           var channelInfo = {
+                           const channelInfo = {
                               channels : {}
                            };
 
-                           // If there's data in the datastore for this device, rawInfo.channel_specs will be non-empty
-                           if (rawInfo && rawInfo.channel_specs) {
+                           // If there's data in the datastore for this device, rawInfo['channel_specs'] will be non-empty
+                           if (rawInfo && rawInfo['channel_specs']) {
                               // Iterate over each of the channels in the info from the datastore
                               // and copy to our channelInfo object.
-                              var deviceAndChannelPrefixLength = (deviceName + ".").length;
-                              Object.keys(rawInfo.channel_specs).forEach(function(deviceAndChannel) {
-                                 var channelName = deviceAndChannel.slice(deviceAndChannelPrefixLength);
-                                 var rawChannelInfo = rawInfo.channel_specs[deviceAndChannel];
+                              const deviceAndChannelPrefixLength = (deviceName + ".").length;
+                              Object.keys(rawInfo['channel_specs']).forEach(function(deviceAndChannel) {
+                                 const channelName = deviceAndChannel.slice(deviceAndChannelPrefixLength);
+                                 const rawChannelInfo = rawInfo['channel_specs'][deviceAndChannel];
 
                                  channelInfo.channels[channelName] = {};
 
                                  // copy the bounds and most recent data sample (changing from snake to camel case)
-                                 if (rawChannelInfo.channel_bounds) {
+                                 if (rawChannelInfo['channel_bounds']) {
                                     channelInfo.channels[channelName].channelBounds = {
-                                       minTimeSecs : rawChannelInfo.channel_bounds.min_time,
-                                       maxTimeSecs : rawChannelInfo.channel_bounds.max_time,
-                                       minValue : rawChannelInfo.channel_bounds.min_value,
-                                       maxValue : rawChannelInfo.channel_bounds.max_value
+                                       minTimeSecs : rawChannelInfo['channel_bounds']['min_time'],
+                                       maxTimeSecs : rawChannelInfo['channel_bounds']['max_time'],
+                                       minValue : rawChannelInfo['channel_bounds']['min_value'],
+                                       maxValue : rawChannelInfo['channel_bounds']['max_value']
                                     };
                                  }
-                                 if (rawChannelInfo.most_recent_data_sample) {
+                                 if (rawChannelInfo['most_recent_data_sample']) {
                                     channelInfo.channels[channelName].mostRecentDataSample = {
-                                       timeSecs : rawChannelInfo.most_recent_data_sample.time,
-                                       value : rawChannelInfo.most_recent_data_sample.value
+                                       timeSecs : rawChannelInfo['most_recent_data_sample'].time,
+                                       value : rawChannelInfo['most_recent_data_sample'].value
                                     };
                                  }
-                                 if (rawChannelInfo.most_recent_string_sample) {
+                                 if (rawChannelInfo['most_recent_string_sample']) {
                                     channelInfo.channels[channelName].mostRecentStringSample = {
-                                       timeSecs : rawChannelInfo.most_recent_string_sample.time,
-                                       value : rawChannelInfo.most_recent_string_sample.value
+                                       timeSecs : rawChannelInfo['most_recent_string_sample'].time,
+                                       value : rawChannelInfo['most_recent_string_sample'].value
                                     };
                                  }
                               });
@@ -667,7 +671,7 @@ module.exports = function(databaseHelper) {
     */
    this.exportData = function(feedAndChannelsObjects, filter, callback) {
       filter = filter || {};
-      var userIdDeviceChannelObjects = [];
+      const userIdDeviceChannelObjects = [];
       feedAndChannelsObjects.forEach(function(feedAndChannels) {
          userIdDeviceChannelObjects.push({
                                             userId : feedAndChannels.feed.userId,
@@ -695,11 +699,11 @@ module.exports = function(databaseHelper) {
 
                            // We need to be really careful about security here!  Restrict the WHERE clause to allow returning
                            // only the public feeds, or feeds owned by the authenticated user (if any).
-                           var additionalWhereExpression = "(isPublic = true)";
+                           let additionalWhereExpression = "(isPublic = true)";
                            if (authUserId != null) {
                               additionalWhereExpression = "(" + additionalWhereExpression + " OR (userId = " + authUserId + "))";
                            }
-                           var whereClause = "WHERE " + additionalWhereExpression;
+                           let whereClause = "WHERE " + additionalWhereExpression;
                            if (queryParts.whereExpressions.length > 0) {
                               whereClause += " AND (" + queryParts.where + ")";
                            }
@@ -707,14 +711,14 @@ module.exports = function(databaseHelper) {
                            // More security! Now disallow selection of the apiKey if not authenticated.  If the user IS authenticated,
                            // then we'll need to manually remove the apiKey field from feeds not owned by the auth'd user after we fetch
                            // the feeds from the database (see below).
-                           var apiKeyIndex = queryParts.selectFields.indexOf('apiKey');
+                           const apiKeyIndex = queryParts.selectFields.indexOf('apiKey');
                            if (authUserId == null && apiKeyIndex >= 0) {
                               // remove the apiKey field from the array
                               queryParts.selectFields.splice(apiKeyIndex, 1);
                            }
 
                            // remember whether the user is requesting the user ID
-                           var isRequestingUserId = queryParts.selectFields.indexOf('userId') >= 0;
+                           const isRequestingUserId = queryParts.selectFields.indexOf('userId') >= 0;
 
                            // we need the user ID in order to do the feed ownership security check below, so make sure
                            // it gets requested in the query
@@ -723,7 +727,7 @@ module.exports = function(databaseHelper) {
                            }
 
                            // build the restricted SQL query
-                           var restrictedSql = [
+                           const restrictedSql = [
                               "SELECT " + queryParts.selectFields.join(','),
                               "FROM Feeds",
                               whereClause,
@@ -747,7 +751,7 @@ module.exports = function(databaseHelper) {
                               // which the user does not own.
                               if (authUserId != null && apiKeyIndex >= 0) {
                                  result.rows.forEach(function(feed) {
-                                    if (feed.userId != authUserId) {
+                                    if (feed.userId !== authUserId) {
                                        delete feed.apiKey;
                                     }
                                  });
@@ -781,7 +785,7 @@ module.exports = function(databaseHelper) {
             return callback(err);
          }
 
-         var sql = queryParts.selectClause + " FROM Feeds WHERE id=?";
+         const sql = queryParts.selectClause + " FROM Feeds WHERE id=?";
          databaseHelper.findOne(sql, [id], function(err, feed) {
             if (err) {
                log.error("Error trying to find feed with id [" + id + "]: " + err);
@@ -808,7 +812,7 @@ module.exports = function(databaseHelper) {
          }
          else {
             if (feed) {
-               callback(null, feed.userId == userId, true);
+               callback(null, feed.userId === userId, true);
             }
             else {
                callback(null, false, false);
@@ -850,7 +854,7 @@ module.exports = function(databaseHelper) {
     */
    this.findBySqlWhere = function(whereSql, queryString, willLimitResults, callback) {
 
-      var limitedQueryString;
+      let limitedQueryString;
       if (typeof queryString !== 'undefined' && queryString != null) {
          // make a copy, then delete the where clause stuff
          limitedQueryString = JSON.parse(JSON.stringify(queryString));
@@ -870,7 +874,7 @@ module.exports = function(databaseHelper) {
                            queryParts.whereClause = "WHERE " + whereSql.where;
                            queryParts.whereValues = whereSql.values;
 
-                           var handleFindResult = function(err, result) {
+                           const handleFindResult = function(err, result) {
                               if (err) {
                                  return callback(err);
                               }
@@ -893,7 +897,7 @@ module.exports = function(databaseHelper) {
                            }
                            else {
                               // passing true in the 2nd argument ensures that limit/offset won't be considered
-                              var sql = queryParts.sql("Feeds", true);
+                              const sql = queryParts.sql("Feeds", true);
                               databaseHelper.execute(sql,
                                                      queryParts.whereValues,
                                                      handleFindResult);
@@ -909,7 +913,7 @@ module.exports = function(databaseHelper) {
             return callback(err);
          }
 
-         var filteredFeed = {};
+         const filteredFeed = {};
          queryParts.selectFields.forEach(function(fieldName) {
             if (fieldName in feed) {
                filteredFeed[fieldName] = feed[fieldName];
