@@ -1,9 +1,9 @@
-var superagent = require('superagent-ls');
-var should = require('should');
+const superagent = require('superagent-ls');
+const should = require('should');
 
-var shallowClone = function(obj) {
+const shallowClone = function(obj) {
    if (obj) {
-      var clone = {};
+      const clone = {};
       Object.keys(obj).forEach(function(key) {
          clone[key] = obj[key];
       });
@@ -12,7 +12,7 @@ var shallowClone = function(obj) {
    return obj;
 };
 
-var executeUploadTest = function(test) {
+const executeUploadTest = function(test) {
    it(test.description, function(done) {
       superagent
             .put(typeof test.url === 'function' ? test.url() : test.url)
@@ -52,9 +52,9 @@ var executeUploadTest = function(test) {
    });
 };
 
-var createAuthorizationHeader = function(accessToken) {
-   var token = typeof accessToken === 'function' ? accessToken() : accessToken;
-   var authorization;
+const createAuthorizationHeader = function(accessToken) {
+   const token = typeof accessToken === 'function' ? accessToken() : accessToken;
+   let authorization;
    if (typeof token !== 'undefined' && token != null) {
       authorization = {
          Authorization : "Bearer " + token

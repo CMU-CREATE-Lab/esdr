@@ -1,17 +1,17 @@
-var should = require('should');
-var flow = require('nimble');
-var httpStatus = require('http-status');
-var requireNew = require('require-new');
-var wipe = require('./fixture-helpers/wipe');
-var setup = require('./fixture-helpers/setup');
-var DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
-var JSendError = require('jsend-utils').JSendError;
-var JSendClientError = require('jsend-utils').JSendClientError;
+const should = require('should');
+const flow = require('nimble');
+const httpStatus = require('http-status');
+const requireNew = require('require-new');
+const wipe = require('./fixture-helpers/wipe');
+const setup = require('./fixture-helpers/setup');
+const DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
+const JSendError = require('jsend-utils').JSendError;
+const JSendClientError = require('jsend-utils').JSendClientError;
 
 describe("Database", function() {
-   var user1 = requireNew('./fixtures/user1.json');
-   var user2 = requireNew('./fixtures/user2.json');
-   var product4 = requireNew('./fixtures/product4.json');
+   const user1 = requireNew('./fixtures/user1.json');
+   const user2 = requireNew('./fixtures/user2.json');
+   const product4 = requireNew('./fixtures/product4.json');
 
    before(function(initDone) {
       flow.series(
@@ -32,7 +32,7 @@ describe("Database", function() {
    });
 
    describe("Devices", function() {
-      var device5 = requireNew('./fixtures/device5.json');
+      const device5 = requireNew('./fixtures/device5.json');
 
       describe("Create", function() {
 

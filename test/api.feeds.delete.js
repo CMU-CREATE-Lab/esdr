@@ -1,50 +1,50 @@
-var should = require('should');
-var flow = require('nimble');
-var httpStatus = require('http-status');
-var superagent = require('superagent-ls');
-var requireNew = require('require-new');
-var wipe = require('./fixture-helpers/wipe');
-var setup = require('./fixture-helpers/setup');
-var createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
-var fs = require('fs');
-var path = require('path');
+const should = require('should');
+const flow = require('nimble');
+const httpStatus = require('http-status');
+const superagent = require('superagent-ls');
+const requireNew = require('require-new');
+const wipe = require('./fixture-helpers/wipe');
+const setup = require('./fixture-helpers/setup');
+const createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
+const fs = require('fs');
+const path = require('path');
 
-var config = require('../config');
+const config = require('../config');
 
-var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
-var ESDR_FEEDS_API_URL = ESDR_API_ROOT_URL + "/feeds";
+const ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
+const ESDR_FEEDS_API_URL = ESDR_API_ROOT_URL + "/feeds";
 
 describe("REST API", function() {
-   var client1 = requireNew('./fixtures/client1.json');
-   var client2 = requireNew('./fixtures/client2.json');
-   var user1 = requireNew('./fixtures/user1.json');
-   var user2 = requireNew('./fixtures/user2.json');
-   var user1Client2 = null;
-   var product1 = requireNew('./fixtures/product1.json');
-   var product2 = requireNew('./fixtures/product2.json');
-   var device1 = requireNew('./fixtures/device1.json');
-   var device2 = requireNew('./fixtures/device2.json');
-   var device3 = requireNew('./fixtures/device3.json');
-   var feed1 = requireNew('./fixtures/feed1.json');                        // public,  user 1, product 1, device 1
-   var feed2 = requireNew('./fixtures/feed2.json');                        // private, user 1, product 1, device 1
-   var feed3 = requireNew('./fixtures/feed3.json');                        // public,  user 1, product 2, device 2
-   var feed4 = requireNew('./fixtures/feed4.json');                        // private, user 1, product 2, device 2
-   var feed5 = requireNew('./fixtures/feed5.json');                        // public,  user 2, product 1, device 3
-   var feed6 = requireNew('./fixtures/feed6.json');                        // private, user 2, product 1, device 3
-   var feed7 = requireNew('./fixtures/feed-custom-channelSpecs.json');     // private, user 1, product 1, device 1
-   var feed8 = requireNew('./fixtures/feed-null-channelSpecs.json');       // private, user 1, product 1, device 1
+   const client1 = requireNew('./fixtures/client1.json');
+   const client2 = requireNew('./fixtures/client2.json');
+   const user1 = requireNew('./fixtures/user1.json');
+   const user2 = requireNew('./fixtures/user2.json');
+   let user1Client2 = null;
+   const product1 = requireNew('./fixtures/product1.json');
+   const product2 = requireNew('./fixtures/product2.json');
+   const device1 = requireNew('./fixtures/device1.json');
+   const device2 = requireNew('./fixtures/device2.json');
+   const device3 = requireNew('./fixtures/device3.json');
+   const feed1 = requireNew('./fixtures/feed1.json');                        // public,  user 1, product 1, device 1
+   const feed2 = requireNew('./fixtures/feed2.json');                        // private, user 1, product 1, device 1
+   const feed3 = requireNew('./fixtures/feed3.json');                        // public,  user 1, product 2, device 2
+   const feed4 = requireNew('./fixtures/feed4.json');                        // private, user 1, product 2, device 2
+   const feed5 = requireNew('./fixtures/feed5.json');                        // public,  user 2, product 1, device 3
+   const feed6 = requireNew('./fixtures/feed6.json');                        // private, user 2, product 1, device 3
+   const feed7 = requireNew('./fixtures/feed-custom-channelSpecs.json');     // private, user 1, product 1, device 1
+   const feed8 = requireNew('./fixtures/feed-null-channelSpecs.json');       // private, user 1, product 1, device 1
 
-   var feedUpload1 = {
+   const feedUpload1 = {
       request : requireNew('./fixtures/feed-upload1-request.json'),
       response : requireNew('./fixtures/feed-upload1-response.json')
    };
-   var feedUpload5 = {
+   const feedUpload5 = {
       request : requireNew('./fixtures/feed-upload5-request.json'),
       response : requireNew('./fixtures/feed-upload5-response.json')
    };
 
    before(function(initDone) {
-      var doUpload = function(upload, done) {
+      const doUpload = function(upload, done) {
          superagent
                .put(ESDR_FEEDS_API_URL + "/" + upload.feed.id)
                .set(createAuthorizationHeader(upload.user.accessToken))
@@ -201,7 +201,7 @@ describe("REST API", function() {
    describe("Feeds", function() {
       describe("Delete", function() {
 
-         var executeDelete = function(test, done) {
+         const executeDelete = function(test, done) {
             superagent
                   .del(test.url)
                   .set(typeof test.headers === 'undefined' ? {} : test.headers)
@@ -245,7 +245,7 @@ describe("REST API", function() {
                   });
          };
 
-         var verifyFeedIsDeleted = function(feedId, user, done) {
+         const verifyFeedIsDeleted = function(feedId, user, done) {
             superagent
                   .get(ESDR_FEEDS_API_URL + "/" + feedId)
                   .set(createAuthorizationHeader(user.accessToken))
@@ -261,7 +261,7 @@ describe("REST API", function() {
                                                      });
 
                      // make sure the feed directory doesn't exist anymore
-                     var dirPath = path.join(config.get("datastore:dataDirectory"), String(user.id), "feed_" + feedId);
+                     const dirPath = path.join(config.get("datastore:dataDirectory"), String(user.id), "feed_" + feedId);
                      (function() {
                         fs.statSync(dirPath)
                      }).should.throw(Error);
@@ -453,7 +453,7 @@ describe("REST API", function() {
                              }, done);
             });
             describe("Cascading Delete of Feed Properties", function() {
-               var setProperty = function(feedId, accessToken, propertyKey, propertyValue, callback, willDebug) {
+               const setProperty = function(feedId, accessToken, propertyKey, propertyValue, callback, willDebug) {
                   superagent
                         .put(ESDR_FEEDS_API_URL + "/" + feedId + "/properties/" + propertyKey)
                         .set(createAuthorizationHeader(accessToken))
@@ -474,7 +474,7 @@ describe("REST API", function() {
                                                            });
                            res.body.should.have.property('data');
 
-                           var expectedResponse = {};
+                           const expectedResponse = {};
                            expectedResponse[propertyKey] = propertyValue.value;
                            res.body.data.should.have.properties(expectedResponse);
 
@@ -482,7 +482,7 @@ describe("REST API", function() {
                         });
                };
 
-               var getProperty = function(feedId, accessToken, propertyKey, callback, willDebug, expectedValue) {
+               const getProperty = function(feedId, accessToken, propertyKey, callback, willDebug, expectedValue) {
                   superagent
                         .get(ESDR_FEEDS_API_URL + "/" + feedId + "/properties/" + propertyKey)
                         .set(createAuthorizationHeader(accessToken))
@@ -504,7 +504,7 @@ describe("REST API", function() {
                            res.body.should.have.property('data');
 
                            if (typeof expectedValue !== 'undefined') {
-                              var expectedResponse = {};
+                              const expectedResponse = {};
                               expectedResponse[propertyKey] = expectedValue;
                               res.body.data.should.have.properties(expectedResponse);
                            }
@@ -564,7 +564,7 @@ describe("REST API", function() {
                                    expectedResponseData : { id : feed3.id },
                                    additionalTests : function(done) {
                                       // make sure the feed no longer exists
-                                      verifyFeedIsDeleted(feed3.id, user1, function(){
+                                      verifyFeedIsDeleted(feed3.id, user1, function() {
                                          // make sure the property for feed4 didn't get deleted
                                          getProperty(feed4.id, user1.accessToken, 'baz', done, false, 42.42);
                                       });

@@ -1,15 +1,15 @@
-var should = require('should');
-var requireNew = require('require-new');
-var wipe = require('./fixture-helpers/wipe');
-var DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
+const should = require('should');
+const requireNew = require('require-new');
+const wipe = require('./fixture-helpers/wipe');
+const DuplicateRecordError = require('../lib/errors').DuplicateRecordError;
 
 describe("Database", function() {
 
    before(wipe.wipeAllData);
 
    describe("Users", function() {
-      var user1 = requireNew('./fixtures/user1.json');
-      var user2 = requireNew('./fixtures/user2.json');
+      const user1 = requireNew('./fixtures/user1.json');
+      const user2 = requireNew('./fixtures/user2.json');
 
       describe("Create", function() {
 
@@ -58,7 +58,7 @@ describe("Database", function() {
 
       describe("Find", function() {
 
-         var foundUser1 = null;
+         let foundUser1 = null;
 
          it("Should be able to find a user by email", function(done) {
             global.db.users.findByEmail(user1.email, function(err, user) {
@@ -145,9 +145,9 @@ describe("Database", function() {
 
       describe("Reset Password", function() {
 
-         var resetPasswordToken = null;
-         var foundUser = null;
-         var newPassword = 'this is my new password';
+         let resetPasswordToken = null;
+         let foundUser = null;
+         const newPassword = 'this is my new password';
 
          it("Should be able to create a reset password token", function(done) {
             global.db.users.findByEmail(user1.email, function(err, user) {

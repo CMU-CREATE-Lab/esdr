@@ -1,89 +1,79 @@
-var should = require('should');
-var flow = require('nimble');
-var httpStatus = require('http-status');
-var superagent = require('superagent-ls');
-var requireNew = require('require-new');
-var wipe = require('./fixture-helpers/wipe');
-var setup = require('./fixture-helpers/setup');
+const should = require('should');
+const flow = require('nimble');
+const httpStatus = require('http-status');
+const superagent = require('superagent-ls');
+const requireNew = require('require-new');
+const wipe = require('./fixture-helpers/wipe');
+const setup = require('./fixture-helpers/setup');
 
-var config = require('../config');
+const config = require('../config');
 
-var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
-var ESDR_FEEDS_API_URL = ESDR_API_ROOT_URL + "/feeds";
-var ESDR_MULTIFEEDS_API_URL = ESDR_API_ROOT_URL + "/multifeeds";
+const ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
+const ESDR_FEEDS_API_URL = ESDR_API_ROOT_URL + "/feeds";
+const ESDR_MULTIFEEDS_API_URL = ESDR_API_ROOT_URL + "/multifeeds";
 
 describe("REST API", function() {
-   var user1 = requireNew('./fixtures/user1.json');
-   var user2 = requireNew('./fixtures/user2.json');
-   var product1 = requireNew('./fixtures/product1.json');
-   var product2 = requireNew('./fixtures/product2.json');
-   var device1 = requireNew('./fixtures/device1.json');
-   var device2 = requireNew('./fixtures/device2.json');
-   var device3 = requireNew('./fixtures/device3.json');
-   var feed1 = requireNew('./fixtures/feed1.json');                        // public,  user 1, product 1, device 1
-   var feed2 = requireNew('./fixtures/feed2.json');                        // private, user 1, product 1, device 1
-   var feed3 = requireNew('./fixtures/feed3.json');                        // public,  user 1, product 2, device 2
-   var feed4 = requireNew('./fixtures/feed4.json');                        // private, user 1, product 2, device 2
-   var feed5 = requireNew('./fixtures/feed5.json');                        // public,  user 2, product 1, device 3
-   var feed6 = requireNew('./fixtures/feed6.json');                        // private, user 2, product 1, device 3
-   var feed7 = requireNew('./fixtures/feed-custom-channelSpecs.json');     // private, user 1, product 1, device 1
-   var feed8 = requireNew('./fixtures/feed-null-channelSpecs.json');       // private, user 1, product 1, device 1
-   var multifeed1a = requireNew('./fixtures/multifeed1.json');
-   var multifeed1b = requireNew('./fixtures/multifeed1.json');
-   var multifeed2 = requireNew('./fixtures/multifeed2.json');
+   const user1 = requireNew('./fixtures/user1.json');
+   const user2 = requireNew('./fixtures/user2.json');
+   const product1 = requireNew('./fixtures/product1.json');
+   const product2 = requireNew('./fixtures/product2.json');
+   const device1 = requireNew('./fixtures/device1.json');
+   const device2 = requireNew('./fixtures/device2.json');
+   const device3 = requireNew('./fixtures/device3.json');
+   const feed1 = requireNew('./fixtures/feed1.json');                        // public,  user 1, product 1, device 1
+   const feed2 = requireNew('./fixtures/feed2.json');                        // private, user 1, product 1, device 1
+   const feed3 = requireNew('./fixtures/feed3.json');                        // public,  user 1, product 2, device 2
+   const feed4 = requireNew('./fixtures/feed4.json');                        // private, user 1, product 2, device 2
+   const feed5 = requireNew('./fixtures/feed5.json');                        // public,  user 2, product 1, device 3
+   const feed6 = requireNew('./fixtures/feed6.json');                        // private, user 2, product 1, device 3
+   const feed7 = requireNew('./fixtures/feed-custom-channelSpecs.json');     // private, user 1, product 1, device 1
+   const feed8 = requireNew('./fixtures/feed-null-channelSpecs.json');       // private, user 1, product 1, device 1
+   const multifeed1a = requireNew('./fixtures/multifeed1.json');
+   const multifeed1b = requireNew('./fixtures/multifeed1.json');
+   const multifeed2 = requireNew('./fixtures/multifeed2.json');
 
-   var feedUpload1 = {
+   const feedUpload1 = {
       request : requireNew('./fixtures/feed-upload1-request.json'),
       response : requireNew('./fixtures/feed-upload1-response.json')
    };
 
-   var feedUpload2 = {
+   const feedUpload2 = {
       request : requireNew('./fixtures/feed-upload2-request.json'),
       response : requireNew('./fixtures/feed-upload2-response.json')
    };
 
-   var feedUpload3 = {
+   const feedUpload3 = {
       request : requireNew('./fixtures/feed-upload3-request.json'),
       response : requireNew('./fixtures/feed-upload3-response.json')
    };
 
-   var feedUpload4 = {
+   const feedUpload4 = {
       request : requireNew('./fixtures/feed-upload4-request.json'),
       response : requireNew('./fixtures/feed-upload4-response.json')
    };
 
-   var feedUpload5 = {
+   const feedUpload5 = {
       request : requireNew('./fixtures/feed-upload5-request.json'),
       response : requireNew('./fixtures/feed-upload5-response.json')
    };
 
-   var feedUpload6 = {
+   const feedUpload6 = {
       request : requireNew('./fixtures/feed-upload6-request.json'),
       response : requireNew('./fixtures/feed-upload6-response.json')
    };
 
-   var feedUpload7 = {
+   const feedUpload7 = {
       request : requireNew('./fixtures/feed-upload7-request.json'),
       response : requireNew('./fixtures/feed-upload7-response.json')
    };
 
-   var feedUpload8 = {
+   const feedUpload8 = {
       request : requireNew('./fixtures/feed-upload8-request.json'),
       response : requireNew('./fixtures/feed-upload8-response.json')
    };
 
-   var feedUpload9 = {
-      request : requireNew('./fixtures/feed-upload9-request.json'),
-      response : requireNew('./fixtures/feed-upload9-response.json')
-   };
-
-   var feedUpload10 = {
-      request : requireNew('./fixtures/feed-upload10-request.json'),
-      response : requireNew('./fixtures/feed-upload10-response.json')
-   };
-
    before(function(initDone) {
-      var doUpload = function(feed, feedUplaod, done) {
+      const doUpload = function(feed, feedUplaod, done) {
          superagent
                .put(ESDR_FEEDS_API_URL + "/" + feed.apiKey)
                .send(feedUplaod.request)
