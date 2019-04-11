@@ -72,10 +72,6 @@ const REALM_JSON_SCHEMA = {
 const ajv = new Ajv({ allErrors : true });
 const ifRealmIsValid = ajv.compile(REALM_JSON_SCHEMA);
 
-// ifRealmIsValid(registration)
-//       .then(function() {})
-//       .catch(err => callback(new ValidationError(err)));
-
 module.exports = function(databaseHelper) {
 
    this.initialize = function(callback) {
