@@ -1,7 +1,7 @@
 const mysql = require('mysql');
 const flow = require('nimble');
 
-const DatabaseHelper = require("./DatabaseHelper");
+const DatabaseHelper = require('./DatabaseHelper');
 const Users = require('./Users.js');
 const Clients = require('./Clients.js');
 const Tokens = require('./Tokens.js');

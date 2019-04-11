@@ -5,8 +5,8 @@ if (!require('run-mode').isTest()) {
 }
 
 const flow = require('nimble');
-const database = require("./database");
-const datastore = require("./datastore");
+const database = require('./database');
+const datastore = require('./datastore');
 
 module.exports.wipeAllData = function(callback) {
    flow.series(
