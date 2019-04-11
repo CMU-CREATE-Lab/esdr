@@ -35,7 +35,8 @@ config.defaults({
                       // the URL a client (e.g. web browser) must use to access the ESDR REST API
                       "apiRootUrl" : "http://localhost:3000/api/v1",
                       // the URL that the ESDR server must use to access itself for OAuth (should be localhost)
-                      "oauthRootUrl" : "http://localhost:3000/oauth/token"
+                      "oauthRootUrl" : "http://localhost:3000/oauth/token",
+                      "numProcesses" : 2
                    },
                    "cookie" : {
                       "name" : "esdr_sid",

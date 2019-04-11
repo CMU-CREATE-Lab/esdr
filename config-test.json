@@ -29,5 +29,8 @@
    },
    "datastore" : {
       "dataDirectory" : "./datastore/data-test"
+   },
+   "requestLogging" : {
+      "isEnabled" : true
    }
 }

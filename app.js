@@ -132,7 +132,7 @@ Database.create(function(err, db) {
                app.use(requestLogger(logFormat, { stream : accessLogStream }));
             }
             else {
-               app.use(requestLogger(':method :url :status :response-time ms :res[content-length] :uid'));      // simple console request logging when in non-production mode
+               app.use(requestLogger(':method :url :status :res[content-length] :response-time ms :uid'));      // simple console request logging when in non-production mode
             }
          }
          else {
