@@ -1,23 +1,23 @@
-var should = require('should');
-var flow = require('nimble');
-var httpStatus = require('http-status');
-var superagent = require('superagent-ls');
-var requireNew = require('require-new');
-var wipe = require('./fixture-helpers/wipe');
-var setup = require('./fixture-helpers/setup');
-var createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
+const should = require('should');
+const flow = require('nimble');
+const httpStatus = require('http-status');
+const superagent = require('superagent-ls');
+const requireNew = require('require-new');
+const wipe = require('./fixture-helpers/wipe');
+const setup = require('./fixture-helpers/setup');
+const createAuthorizationHeader = require('./fixture-helpers/test-utils').createAuthorizationHeader;
 
-var config = require('../config');
+const config = require('../config');
 
-var ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
-var ESDR_MULTIFEEDS_API_URL = ESDR_API_ROOT_URL + "/multifeeds";
+const ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
+const ESDR_MULTIFEEDS_API_URL = ESDR_API_ROOT_URL + "/multifeeds";
 
 describe("REST API", function() {
-   var user1 = requireNew('./fixtures/user1.json');
-   var user2 = requireNew('./fixtures/user2.json');
-   var multifeed1a = requireNew('./fixtures/multifeed1.json');
-   var multifeed1b = requireNew('./fixtures/multifeed1.json');
-   var multifeed2 = requireNew('./fixtures/multifeed2.json');
+   const user1 = requireNew('./fixtures/user1.json');
+   const user2 = requireNew('./fixtures/user2.json');
+   const multifeed1a = requireNew('./fixtures/multifeed1.json');
+   const multifeed1b = requireNew('./fixtures/multifeed1.json');
+   const multifeed2 = requireNew('./fixtures/multifeed2.json');
 
    before(function(initDone) {
       flow.series(
@@ -49,7 +49,7 @@ describe("REST API", function() {
    describe("Multifeeds", function() {
       describe("Create", function() {
 
-         var executeTest = function(test) {
+         const executeTest = function(test) {
             it(test.description, function(done) {
                superagent
                      .post(ESDR_MULTIFEEDS_API_URL)
@@ -84,7 +84,7 @@ describe("REST API", function() {
                               }
                            }
 
-                           if (test.expectedHttpStatus == httpStatus.CREATED) {
+                           if (test.expectedHttpStatus === httpStatus.CREATED) {
                               res.body.data.should.have.property('id');
                               res.body.data.should.have.property('name');
 
@@ -138,7 +138,7 @@ describe("REST API", function() {
                {
                   description : "Should be able to create a multifeed with no name specified",
                   headers : function() {
-                     return createAuthorizationHeader(user1.accessToken);
+                     return createAuthorizationHeader(user1['accessToken']);
                   },
                   multifeed : multifeed1a,
                   expectedHttpStatus : httpStatus.CREATED,
@@ -147,50 +147,50 @@ describe("REST API", function() {
                {
                   description : "Should be able to create the same multifeed again with no name specified",
                   headers : function() {
-                     return createAuthorizationHeader(user1.accessToken);
+                     return createAuthorizationHeader(user1['accessToken']);
                   },
                   multifeed : multifeed1b,
                   expectedHttpStatus : httpStatus.CREATED,
                   expectedStatusText : 'success',
                   additionalTests : function(originalErr, originalRes, done) {
                      // make sure the names are different
-                     multifeed1a.name.should.not.equal(multifeed1b.name);
+                     multifeed1a['name'].should.not.equal(multifeed1b['name']);
                      done();
                   }
                },
                {
                   description : "Should be able to create a named multifeed (and the name will be trimmed)",
                   headers : function() {
-                     return createAuthorizationHeader(user1.accessToken);
+                     return createAuthorizationHeader(user1['accessToken']);
                   },
                   multifeed : multifeed2,
                   expectedHttpStatus : httpStatus.CREATED,
                   expectedStatusText : 'success',
                   additionalTests : function(originalErr, originalRes, done) {
-                     // make sure the name got trimmed
-                     multifeed2._name.trim().should.equal(multifeed2.name);
+                     // make sure the name got trimmed (see note above about _name)
+                     multifeed2._name.trim().should.equal(multifeed2['name']);
                      done();
                   }
                },
                {
                   description : "Should fail to create a named multifeed again, by the same user",
                   headers : function() {
-                     return createAuthorizationHeader(user1.accessToken);
+                     return createAuthorizationHeader(user1['accessToken']);
                   },
                   multifeed : multifeed2,
                   expectedHttpStatus : httpStatus.CONFLICT,
                   expectedStatusText : 'error',
-                  expectedResponseData : { name : multifeed2.name.trim() }
+                  expectedResponseData : { name : multifeed2['name'].trim() }
                },
                {
                   description : "Should fail to create a named multifeed again, by a different user",
                   headers : function() {
-                     return createAuthorizationHeader(user2.accessToken);
+                     return createAuthorizationHeader(user2['accessToken']);
                   },
                   multifeed : multifeed2,
                   expectedHttpStatus : httpStatus.CONFLICT,
                   expectedStatusText : 'error',
-                  expectedResponseData : { name : multifeed2.name.trim() }
+                  expectedResponseData : { name : multifeed2['name'].trim() }
                }
             ].forEach(executeTest);
 
@@ -199,16 +199,18 @@ describe("REST API", function() {
                {
                   description : "Should fail to create multifeed with no spec field specified",
                   accessToken : function() {
-                     return user1.accessToken
+                     return user1['accessToken']
                   },
                   multifeed : {},
                   getExpectedValidationItems : function() {
                      return [
                         {
-                           instanceContext : '#/spec',
-                           constraintName : 'type',
-                           constraintValue : 'array',
-                           testedValue : 'undefined'
+                           "keyword" : "required",
+                           "dataPath" : "",
+                           "schemaPath" : "#/required",
+                           "params" : {
+                              "missingProperty" : "spec"
+                           }
                         }
                      ];
                   }
@@ -216,17 +218,15 @@ describe("REST API", function() {
                {
                   description : "Should fail to create multifeed with an empty array of specs specified",
                   accessToken : function() {
-                     return user1.accessToken
+                     return user1['accessToken']
                   },
                   multifeed : { spec : [] },
                   getExpectedValidationItems : function() {
                      return [
                         {
-                           instanceContext : '#/spec',
-                           constraintName : 'minItems',
-                           constraintValue : 1,
-                           testedValue : 0,
-                           kind : 'ArrayValidationError'
+                           "keyword" : "minItems",
+                           "dataPath" : ".spec",
+                           "schemaPath" : "#/properties/spec/minItems"
                         }
                      ];
                   }
@@ -234,16 +234,18 @@ describe("REST API", function() {
                {
                   description : "Should fail to create multifeed if the spec field is not an array",
                   accessToken : function() {
-                     return user1.accessToken
+                     return user1['accessToken']
                   },
                   multifeed : { spec : "bogus" },
                   getExpectedValidationItems : function() {
                      return [
                         {
-                           instanceContext : '#/spec',
-                           constraintName : 'type',
-                           constraintValue : 'array',
-                           testedValue : 'string'
+                           "keyword" : "type",
+                           "dataPath" : ".spec",
+                           "schemaPath" : "#/properties/spec/type",
+                           "params" : {
+                              "type" : "array"
+                           }
                         }
                      ];
                   }
@@ -251,16 +253,26 @@ describe("REST API", function() {
                {
                   description : "Should fail to create multifeed with the spec array containing a single empty object",
                   accessToken : function() {
-                     return user1.accessToken
+                     return user1['accessToken']
                   },
                   multifeed : { spec : [{}] },
                   getExpectedValidationItems : function() {
                      return [
                         {
-                           instanceContext : '#/spec/0',
-                           constraintName : 'required',
-                           constraintValue : ["feeds", "channels"],
-                           kind : 'ObjectValidationError'
+                           "keyword" : "required",
+                           "dataPath" : ".spec[0]",
+                           "schemaPath" : "#/properties/spec/items/required",
+                           "params" : {
+                              "missingProperty" : "feeds"
+                           }
+                        },
+                        {
+                           "keyword" : "required",
+                           "dataPath" : ".spec[0]",
+                           "schemaPath" : "#/properties/spec/items/required",
+                           "params" : {
+                              "missingProperty" : "channels"
+                           }
                         }
                      ];
                   }
@@ -268,22 +280,26 @@ describe("REST API", function() {
                {
                   description : "Should fail to create multifeed with the spec array containing an object with feeds and channels fields of the wrong type",
                   accessToken : function() {
-                     return user1.accessToken
+                     return user1['accessToken']
                   },
                   multifeed : { spec : [{ feeds : 4, channels : 42 }] },
                   getExpectedValidationItems : function() {
                      return [
                         {
-                           instanceContext : '#/spec/0/feeds',
-                           constraintName : 'type',
-                           constraintValue : 'string',
-                           testedValue : 'integer'
+                           "keyword" : "type",
+                           "dataPath" : ".spec[0].feeds",
+                           "schemaPath" : "#/properties/spec/items/properties/feeds/type",
+                           "params" : {
+                              "type" : "string"
+                           }
                         },
                         {
-                           instanceContext : '#/spec/0/channels',
-                           constraintName : 'type',
-                           constraintValue : 'array',
-                           testedValue : 'integer'
+                           "keyword" : "type",
+                           "dataPath" : ".spec[0].channels",
+                           "schemaPath" : "#/properties/spec/items/properties/channels/type",
+                           "params" : {
+                              "type" : "array"
+                           }
                         }
                      ];
                   }
@@ -291,16 +307,18 @@ describe("REST API", function() {
                {
                   description : "Should fail to create multifeed with the spec array containing an object with only the feeds field",
                   accessToken : function() {
-                     return user1.accessToken
+                     return user1['accessToken']
                   },
                   multifeed : { spec : [{ feeds : "where=outdoor=1,productId=42" }] },
                   getExpectedValidationItems : function() {
                      return [
                         {
-                           instanceContext : '#/spec/0',
-                           constraintName : 'required',
-                           constraintValue : ["feeds", "channels"],
-                           kind : 'ObjectValidationError'
+                           "keyword" : "required",
+                           "dataPath" : ".spec[0]",
+                           "schemaPath" : "#/properties/spec/items/required",
+                           "params" : {
+                              "missingProperty" : "channels"
+                           }
                         }
                      ];
                   }
@@ -308,16 +326,18 @@ describe("REST API", function() {
                {
                   description : "Should fail to create multifeed with the spec array containing an object with only the channels field",
                   accessToken : function() {
-                     return user1.accessToken
+                     return user1['accessToken']
                   },
                   multifeed : { spec : [{ channels : ["particle_concentration", "humidity"] }] },
                   getExpectedValidationItems : function() {
                      return [
                         {
-                           instanceContext : '#/spec/0',
-                           constraintName : 'required',
-                           constraintValue : ["feeds", "channels"],
-                           kind : 'ObjectValidationError'
+                           "keyword" : "required",
+                           "dataPath" : ".spec[0]",
+                           "schemaPath" : "#/properties/spec/items/required",
+                           "params" : {
+                              "missingProperty" : "feeds"
+                           }
                         }
                      ];
                   }
@@ -325,17 +345,15 @@ describe("REST API", function() {
                {
                   description : "Should fail to create multifeed with if the channels array is empty",
                   accessToken : function() {
-                     return user1.accessToken
+                     return user1['accessToken']
                   },
                   multifeed : { spec : [{ feeds : "where=outdoor=1,productId=42", channels : [] }] },
                   getExpectedValidationItems : function() {
                      return [
                         {
-                           instanceContext : '#/spec/0/channels',
-                           constraintName : 'minItems',
-                           constraintValue : 1,
-                           testedValue : 0,
-                           kind : 'ArrayValidationError'
+                           "keyword" : "minItems",
+                           "dataPath" : ".spec[0].channels",
+                           "schemaPath" : "#/properties/spec/items/properties/channels/minItems"
                         }
                      ];
                   }
@@ -343,7 +361,7 @@ describe("REST API", function() {
                {
                   description : "Should fail to create multifeed with if the channels array contains an empty string",
                   accessToken : function() {
-                     return user1.accessToken
+                     return user1['accessToken']
                   },
                   multifeed : {
                      spec : [{
@@ -354,11 +372,9 @@ describe("REST API", function() {
                   getExpectedValidationItems : function() {
                      return [
                         {
-                           instanceContext : '#/spec/0/channels/1',
-                           constraintName : 'minLength',
-                           constraintValue : 1,
-                           testedValue : 0,
-                           kind : 'StringValidationError'
+                           "keyword" : "minLength",
+                           "dataPath" : ".spec[0].channels[1]",
+                           "schemaPath" : "#/properties/spec/items/properties/channels/items/minLength"
                         }
                      ];
                   }
@@ -366,7 +382,7 @@ describe("REST API", function() {
                {
                   description : "Should fail to create multifeed if the channels array contains multiple instances of the same string",
                   accessToken : function() {
-                     return user1.accessToken
+                     return user1['accessToken']
                   },
                   multifeed : {
                      spec : [{
@@ -377,10 +393,9 @@ describe("REST API", function() {
                   getExpectedValidationItems : function() {
                      return [
                         {
-                           instanceContext : '#/spec/0/channels',
-                           constraintName : 'uniqueItems',
-                           constraintValue : true,
-                           kind : 'ArrayValidationError'
+                           "keyword" : "uniqueItems",
+                           "dataPath" : ".spec[0].channels",
+                           "schemaPath" : "#/properties/spec/items/properties/channels/uniqueItems"
                         }
                      ];
                   }
@@ -389,7 +404,7 @@ describe("REST API", function() {
                it(test.description, function(done) {
                   superagent
                         .post(ESDR_MULTIFEEDS_API_URL)
-                        .set(createAuthorizationHeader(test.accessToken))
+                        .set(createAuthorizationHeader(test['accessToken']))
                         .send(test.multifeed)
                         .end(function(err, res) {
                            should.not.exist(err);
@@ -407,10 +422,10 @@ describe("REST API", function() {
                                                               status : 'error'
                                                            });
 
-                           var expectedValidationItems = test.getExpectedValidationItems();
+                           const expectedValidationItems = test.getExpectedValidationItems();
                            res.body.should.have.property('data');
-                           res.body.data.should.have.length(expectedValidationItems.length);
-                           res.body.data.forEach(function(validationItem, index) {
+                           res.body.data.errors.should.have.length(expectedValidationItems.length);
+                           res.body.data.errors.forEach(function(validationItem, index) {
                               validationItem.should.have.properties(expectedValidationItems[index]);
                            });
 

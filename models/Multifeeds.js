@@ -1,33 +1,33 @@
-var trimAndCopyPropertyIfNonEmpty = require('../lib/objectUtils').trimAndCopyPropertyIfNonEmpty;
-var JaySchema = require('jayschema');
-var jsonValidator = new JaySchema();
-var ValidationError = require('../lib/errors').ValidationError;
-var Query2Query = require('query2query');
-var createRandomHexToken = require('../lib/token').createRandomHexToken;
-var qs = require('qs');
-var feedsQuery2query = require('./feeds-query2query');
-var log = require('log4js').getLogger('esdr:models:multifeeds');
-var isPositiveIntString = require('../lib/typeUtils').isPositiveIntString;
+const trimAndCopyPropertyIfNonEmpty = require('../lib/objectUtils').trimAndCopyPropertyIfNonEmpty;
+const Ajv = require('ajv');
+const ValidationError = require('../lib/errors').ValidationError;
+const Query2Query = require('query2query');
+const createRandomHexToken = require('../lib/token').createRandomHexToken;
+const qs = require('qs');
+const feedsQuery2query = require('./feeds-query2query');
+const log = require('log4js').getLogger('esdr:models:multifeeds');
+const isPositiveIntString = require('../lib/typeUtils').isPositiveIntString;
 
-var CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Multifeeds` ( " +
-                         "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
-                         "`name` varchar(255) NOT NULL, " +
-                         "`userId` bigint(20) NOT NULL, " +
-                         "`spec` text NOT NULL, " +
-                         "`querySpec` text NOT NULL, " +
-                         "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
-                         "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
-                         "PRIMARY KEY (`id`), " +
-                         "UNIQUE KEY `name` (`name`), " +
-                         "KEY `userId` (`userId`), " +
-                         "KEY `created` (`created`), " +
-                         "KEY `modified` (`modified`), " +
-                         "CONSTRAINT `multifeeds_userId_fk_1` FOREIGN KEY (`userId`) REFERENCES `Users` (`id`) " +
-                         ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
+// language=MySQL
+const CREATE_TABLE_QUERY = "CREATE TABLE IF NOT EXISTS `Multifeeds` ( " +
+                           "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
+                           "`name` varchar(255) NOT NULL, " +
+                           "`userId` bigint(20) NOT NULL, " +
+                           "`spec` text NOT NULL, " +
+                           "`querySpec` text NOT NULL, " +
+                           "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
+                           "`modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
+                           "PRIMARY KEY (`id`), " +
+                           "UNIQUE KEY `name` (`name`), " +
+                           "KEY `userId` (`userId`), " +
+                           "KEY `created` (`created`), " +
+                           "KEY `modified` (`modified`), " +
+                           "CONSTRAINT `multifeeds_userId_fk_1` FOREIGN KEY (`userId`) REFERENCES `Users` (`id`) " +
+                           ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
 
-var MAX_FOUND_MULTIFEEDS = 100;
+const MAX_FOUND_MULTIFEEDS = 100;
 
-var query2query = new Query2Query();
+const query2query = new Query2Query();
 query2query.addField('id', true, true, false, Query2Query.types.INTEGER);
 query2query.addField('name', true, true, false);
 query2query.addField('userId', true, true, false, Query2Query.types.INTEGER);
@@ -36,8 +36,8 @@ query2query.addField('querySpec', false, false, false);
 query2query.addField('created', true, true, false, Query2Query.types.DATETIME);
 query2query.addField('modified', true, true, false, Query2Query.types.DATETIME);
 
-var JSON_SCHEMA = {
-   "$schema" : "http://json-schema.org/draft-04/schema#",
+const JSON_SCHEMA = {
+   "$async" : true,
    "title" : "Multitile",
    "description" : "An ESDR multitile",
    "type" : "object",
@@ -75,6 +75,9 @@ var JSON_SCHEMA = {
    "required" : ["name", "spec"]
 };
 
+const ajv = new Ajv({ allErrors : true });
+const ifMultifeedIsValid = ajv.compile(JSON_SCHEMA);
+
 module.exports = function(databaseHelper) {
 
    this.initialize = function(callback) {
@@ -89,7 +92,7 @@ module.exports = function(databaseHelper) {
    };
 
    this.create = function(multifeedDetails, userId, callback) {
-      var multifeed = {
+      const multifeed = {
          userId : userId,
          spec : multifeedDetails.spec,
          querySpec : "" // created below...
@@ -100,55 +103,53 @@ module.exports = function(databaseHelper) {
       }
 
       // now validate
-      jsonValidator.validate(multifeed, JSON_SCHEMA, function(err) {
-         if (err) {
-            return callback(new ValidationError(err));
-         }
-
-         // convert the spec to a more usable form for SQL queries, so we don't have to rebuild this for every request
-         var querySpecParts = [];
-         for (var i = 0; i < multifeedDetails.spec.length; i++) {
-            var specItem = multifeedDetails.spec[i];
-            var miniQueryString = qs.parse(specItem.feeds);
-            log.debug("multifeed create: miniQueryString: " + JSON.stringify(miniQueryString, null, 3));
-            try {
-               var result = feedsQuery2query.parseSync(miniQueryString);
-               log.debug("multifeed create: result: " + JSON.stringify(result, null, 3));
-               if (result.where != null && result.where.length > 0) {
-                  querySpecParts.push({
-                                            feeds : {
-                                               where : result.where,
-                                               values : result.whereValues
-                                            },
-                                            channels : specItem.channels
-                                         });
+      ifMultifeedIsValid(multifeed)
+            .then(function() {
+               // convert the spec to a more usable form for SQL queries, so we don't have to rebuild this for every request
+               const querySpecParts = [];
+               for (let i = 0; i < multifeedDetails.spec.length; i++) {
+                  const specItem = multifeedDetails.spec[i];
+                  const miniQueryString = qs.parse(specItem.feeds);
+                  log.debug("multifeed create: miniQueryString: " + JSON.stringify(miniQueryString, null, 3));
+                  try {
+                     const result = feedsQuery2query.parseSync(miniQueryString);
+                     log.debug("multifeed create: result: " + JSON.stringify(result, null, 3));
+                     if (result.where != null && result.where.length > 0) {
+                        querySpecParts.push({
+                                               feeds : {
+                                                  where : result.where,
+                                                  values : result.whereValues
+                                               },
+                                               channels : specItem.channels
+                                            });
+                     }
+                     else {
+                        return callback(new ValidationError(miniQueryString, "No where clause found"));
+                     }
+                  }
+                  catch (e) {
+                     return callback(e);
+                  }
                }
-               else {
-                  return callback(new ValidationError(miniQueryString, "No where clause found"));
-               }
-            }
-            catch (e) {
-               return callback(e);
-            }
-         }
 
-         // need to stringify the spec and querySpec objects for storage in the DB
-         multifeed.spec = JSON.stringify(multifeedDetails.spec);
-         multifeed.querySpec = JSON.stringify(querySpecParts);
+               // need to stringify the spec and querySpec objects for storage in the DB
+               multifeed.spec = JSON.stringify(multifeedDetails.spec);
+               multifeed.querySpec = JSON.stringify(querySpecParts);
 
-         // now try to insert
-         databaseHelper.execute("INSERT INTO Multifeeds SET ?", multifeed, function(err, result) {
-            if (err) {
-               return callback(err);
-            }
+               // now try to insert
+               databaseHelper.execute("INSERT INTO Multifeeds SET ?", multifeed, function(err, result) {
+                  if (err) {
+                     return callback(err);
+                  }
 
-            return callback(null, {
-               insertId : result.insertId,
-               // include these because they might have been modified by the trimming
-               name : multifeed.name
-            });
-         });
-      });
+                  return callback(null, {
+                     insertId : result.insertId,
+                     // include these because they might have been modified by the trimming
+                     name : multifeed.name
+                  });
+               });
+            })
+            .catch(err => callback(new ValidationError(err)));
    };
 
    this.find = function(queryString, callback) {
@@ -159,7 +160,7 @@ module.exports = function(databaseHelper) {
                               return callback(err);
                            }
 
-                           var sql = queryParts.sql("Multifeeds");
+                           const sql = queryParts.sql("Multifeeds");
                            log.debug("Multifeeds.find(): " + sql + (queryParts.whereValues.length > 0 ? " [where values: " + queryParts.whereValues + "]" : ""));
 
                            // use findWithLimit so we can also get a count of the total number of records that would have been returned
@@ -189,7 +190,7 @@ module.exports = function(databaseHelper) {
     * @param {function} callback function with signature <code>callback(err, feed)</code>
     */
    this.findByNameOrId = function(nameOrId, fieldsToSelect, callback) {
-      var methodName = isPositiveIntString(nameOrId) ? "findById" : "findByName";
+      const methodName = isPositiveIntString(nameOrId) ? "findById" : "findByName";
 
       this[methodName](nameOrId, fieldsToSelect, callback);
    };
@@ -220,7 +221,7 @@ module.exports = function(databaseHelper) {
       findMultifeed(fieldsToSelect, 'id', parseInt(id), callback);
    };
 
-   var findMultifeed = function(fieldsToSelect, whereField, whereValue, callback) {
+   const findMultifeed = function(fieldsToSelect, whereField, whereValue, callback) {
       query2query.parse({ fields : fieldsToSelect }, function(err, queryParts) {
          if (err) {
             return callback(err);
