@@ -7,7 +7,7 @@ if (!require('run-mode').isTest()) {
 const mysql = require('mysql');
 const flow = require('nimble');
 const bcrypt = require('bcrypt');
-const DatabaseHelper = require("../../models/DatabaseHelper");
+const DatabaseHelper = require('../../models/DatabaseHelper');
 const config = require('../../config');
 
 const log4js = require('log4js');

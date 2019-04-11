@@ -4,7 +4,7 @@ if (!require('run-mode').isTest()) {
    process.exit(1);
 }
 
-const Database = require("../models/Database");
+const Database = require('../models/Database');
 
 global.db = null;
 
