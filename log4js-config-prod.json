@@ -3,7 +3,7 @@
       "file" : {
          "type" : "dateFile",
          "filename" : "/logs/esdr/esdr",
-         "pattern" : "-yyyy-MM-dd.log",
+         "pattern" : "yyyy-MM-dd.log",
          "alwaysIncludePattern" : true,
          "layout" : {
             "type" : "basic"
