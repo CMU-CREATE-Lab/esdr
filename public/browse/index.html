@@ -455,6 +455,20 @@
       #export-button > p{
         padding-left: 0px;
       }
+       
+       #histogram-button{
+        position: relative;
+        float: right;
+        clear: none;
+        width: 150px;
+        top: 50%;
+        transform: translateY(-50%);
+        margin-right: 15px;
+        margin-left: 13px;
+      }
+      #histogram-button > p{
+        padding-left: 0px;
+      }
 
       #dark-background{
         position: absolute;
@@ -464,7 +478,7 @@
         z-index: 999;
       }
 
-      #export-menu{
+      #export-menu, #histogram-menu{
         position: relative;
         height: 50%;
         width: 60%;
@@ -476,7 +490,7 @@
         background-color: rgb(180, 180, 180);
       }
 
-      #export-title{
+      #export-title, #histogram-title{
         position: absolute;
         width: 100%;
         min-width: 250px;
@@ -489,13 +503,13 @@
         text-align: center;
       }
 
-      #export-title p{
+      #export-title p, #histogram-title p{
         color: white;
         margin: 0px;
         padding: 0px;
       }
 
-      #export-title .x-button{
+      #export-title .x-button, #histogram-title .x-button{
         position: absolute;
         height: 50px;
         width: 50px;
@@ -519,15 +533,19 @@
         font-size: 30px
       }
 
-      #export-content{
+      #export-content, #histogram{
         position: relative;
         top: 50px;
         height: 100%;
         width: 100%;
         background-color: rgb(180, 180, 180);
         overflow: auto;
-
       }
+     
+     #histogram{
+       background-color: white;
+       text-align: center;
+     }
 
       .file-info{
         margin-left: 15px;
@@ -715,6 +733,11 @@
             float : left;
             clear : left;
           }
+          #histogram-button{
+            top : 17%;
+            float : left;
+            clear : left;
+          }
       }
       @media (min-width: 500px) and (max-width: 800px){
           #map-bar{
@@ -735,7 +758,7 @@
             top: 125px;
             left: 180px;
           }
-          #export-button{
+          #export-button, #histogram-button{
             top : 17%;
             float : left;
             clear : left;
@@ -763,7 +786,7 @@
             margin : -25px 50px 0px;
             float : left;
           }
-          #export-button{
+          #export-button, #histogram-button{
             top : 0%;
             float : right;
             clear : none;
@@ -884,6 +907,10 @@
     <div class="button title-bar" id="export-button">
       <p>Export Data</p>
     </div>
+      
+    <div class="button title-bar" id="histogram-button">
+      <p>View Histogram</p>
+    </div>
   </div>
 
   <div class="main-content" id="charts">
@@ -937,6 +964,10 @@
   <script src="./CanvasLayer.js"></script>
   <script src="./fastdom.js"></script>
   <script src="./dateFormat.js"></script>
+    
+  <script src="https://d3js.org/d3.v4.js"></script>
+  <script src="./histogram_spikes.js"></script>
+    
 
   <script language="JavaScript" type="text/javascript">
     "use strict"
@@ -1201,6 +1232,7 @@
 
     var exportMenuOpen = false;
     var exportMenuTimer = null;
+    var histoMenuOpen = false;
 
     document.getElementById("loadP").innerHTML = "Load next " + numbLoad;
 
@@ -1712,6 +1744,8 @@
       });
 
       $('#export-button').on('click', exportData);
+      
+      $('#histogram-button').on('click', viewHistogram);
 
       var timer = null;
 
@@ -1934,6 +1968,7 @@
 
       if (exportMenuOpen) {
         params.push('export=open');
+        params.push('histo=open');
       }
 
       var newHash = '#' + params.join('&');
@@ -2038,6 +2073,13 @@
           exportMenuOpen = false;
           $("#dark-background").remove();
         }
+        else if (params.histo && !$("#dark-background").length) {
+          exportData();
+        } 
+        else if (!params.histo) {
+          histoMenuOpen = false;
+          $("#dark-background").remove();
+        }
       }
 
       oldParams = params;
@@ -2134,6 +2176,7 @@
       for (var key in plotIdxToChannel) {
         if (plotIdxToChannel.hasOwnProperty(key)) {
           var feedNumAndChannelName = plotIdxToChannel[key].split(".");
+          console.log(feedNumAndChannelName);
           var feedIDIndex = feedIDs.indexOf(feedNumAndChannelName[0]);
           if (feedIDIndex > -1) {
             channelNamesPerID[feedIDIndex].push(feedNumAndChannelName[1]);
@@ -2186,8 +2229,90 @@
 
       updateHash();
     }
+    
+    function refreshHisto(){
+      console.log("refresh histo");
+      var xMax2 = document.getElementById("x-max").value;
+      console.log("xmax2="+xMax2);
+      
+      //d3.select("histogram").selectAll("svg").remove();
+      document.getElementById("histogram").innerHTML = "";
+      
+      var jsonURLs = getJsonUrls();
+      Histogram(jsonURLs[0], xMax2);
+    }
+    
+    function getJsonUrls(){
+      var feedIDs = [];
+      var channelNamesPerID = [];
+      for (var key in plotIdxToChannel) {
+        if (plotIdxToChannel.hasOwnProperty(key)) {
+          var feedNumAndChannelName = plotIdxToChannel[key].split(".");
+          console.log(feedNumAndChannelName);
+          var feedIDIndex = feedIDs.indexOf(feedNumAndChannelName[0]);
+          if (feedIDIndex > -1) {
+            channelNamesPerID[feedIDIndex].push(feedNumAndChannelName[1]);
+          } else {
+            feedIDs.push(feedNumAndChannelName[0]);
+            channelNamesPerID.push([feedNumAndChannelName[1]]);
+          }
+        }
+      }
+      
+      var jsonURLs = [];
+      for (var i = 0; i < feedIDs.length; i++) {
+        var url = ESDR_API_ROOT_URL + "/feeds/" + feedIDs[i] + "/channels/" + channelNamesPerID[i].join(',') + "/export?from=" + dateProperties.min + "&to=" + dateProperties.max;
+        jsonURLs.push(url + '&format=json');
+      }
+      
+      return jsonURLs;
+    }
 
-
+    function viewHistogram(){
+      //copied + modified from exportData
+      histoMenuOpen = true;
+      var jsonURLs = getJsonUrls();
+      
+      var menuDiv = [];
+      menuDiv.push('<div id="dark-background">');
+        menuDiv.push('<div id="histogram-menu">');
+          menuDiv.push('<div id="histogram-title">');
+            menuDiv.push('<div class="x-button"><span style="color:rgb(200,200,200);">&times</span></div>');
+            menuDiv.push('<div id="refresh-histo">');
+              menuDiv.push('<input type="text" id="x-max">');
+              menuDiv.push('<button type="button id="xmax-button onclick="refreshHisto()">Use Custom Max Value</button>');
+              menuDiv.push('</div>');
+            menuDiv.push('</div>'); //histogram-title
+          menuDiv.push('<div id="histogram">');
+            menuDiv.push('</div>'); //histogram
+          menuDiv.push('</div>'); //histogram-menu
+        menuDiv.push('</div>'); //dark-background
+      
+      menuDiv.push('<div id="download-histogram">');
+        if (!jsonURLs.length) menuDiv.push('<div class="file-info"><p><span style="color:red;">&#9888;&emsp;&emsp;</span>No channel data to export.<br><br>Open up a channel by checkboxing in the sidebar or by clicking a node on the map.</p></div>');
+        else menuDiv.push('<a href=' + jsonURLs[0] + ' download>Download Link (.json)</a>');
+        menuDiv.push('</div>'); //download-histogram
+      
+      //custom max button
+      //$('#xmax-button').on('click', function(e){alert("hi")});
+      
+      var histoDiv = $(menuDiv.join(""));
+      $('body').append(histoDiv);
+      
+      //x button
+      $(histoDiv).children().children().children().filter(".x-button").click(function() {
+      //document.getElementById("exit-histo").click(function() {
+        histoMenuOpen = false; 
+        console.log("exit");
+        $(histoDiv).remove();
+      })
+      
+      console.log(jsonURLs[0]);
+      Histogram(jsonURLs[0]);
+      //window.open("https://esdr.cmucreatelab.org/browse/histogram.html");
+//      alert(jsonURLs[0]);
+      //document.getElementById("export-button").click();
+    }
 
     window.grapherLoad = function() {
       var maxTimeSecs = Date.now() / 1000;
