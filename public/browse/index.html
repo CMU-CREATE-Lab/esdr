@@ -2230,21 +2230,39 @@
       updateHash();
     }
     
+    //refresh histogram with new max
     function refreshHisto(){
       console.log("refresh histo");
       var xMax2 = document.getElementById("x-max").value;
       console.log("xmax2="+xMax2);
       
-      //d3.select("histogram").selectAll("svg").remove();
       document.getElementById("histogram").innerHTML = "";
       
       var jsonURLs = getJsonUrls();
-      Histogram(jsonURLs[0], xMax2);
+      //Histogram(jsonURLs[0], xMax2);
+      for(var i=0; i<jsonURLs.length; i++){
+        Histogram(jsonURLs[i], xMax2);
+      }
     }
     
+    // reset histogram with original max
+    function resetHisto(){
+      console.log("reset histo");
+      
+      document.getElementById("histogram").innerHTML = "";
+      
+      var jsonURLs = getJsonUrls();
+      //Histogram(jsonURLs[0], undefined);
+      for(var i=0; i<jsonURLs.length; i++){
+        Histogram(jsonURLs[i], undefined);
+      }
+    }
+    
+    // get info for histograms in json format
     function getJsonUrls(){
       var feedIDs = [];
       var channelNamesPerID = [];
+      
       for (var key in plotIdxToChannel) {
         if (plotIdxToChannel.hasOwnProperty(key)) {
           var feedNumAndChannelName = plotIdxToChannel[key].split(".");
@@ -2258,7 +2276,6 @@
           }
         }
       }
-      
       var jsonURLs = [];
       for (var i = 0; i < feedIDs.length; i++) {
         var url = ESDR_API_ROOT_URL + "/feeds/" + feedIDs[i] + "/channels/" + channelNamesPerID[i].join(',') + "/export?from=" + dateProperties.min + "&to=" + dateProperties.max;
@@ -2268,7 +2285,8 @@
       return jsonURLs;
     }
 
-    function viewHistogram(){
+    // pull up histogram viewer menu
+    function viewHistogram(){      
       //copied + modified from exportData
       histoMenuOpen = true;
       var jsonURLs = getJsonUrls();
@@ -2280,7 +2298,9 @@
             menuDiv.push('<div class="x-button"><span style="color:rgb(200,200,200);">&times</span></div>');
             menuDiv.push('<div id="refresh-histo">');
               menuDiv.push('<input type="text" id="x-max">');
-              menuDiv.push('<button type="button id="xmax-button onclick="refreshHisto()">Use Custom Max Value</button>');
+              //custom max button
+              menuDiv.push('<button type="button id="xmax-button onclick="refreshHisto()">Custom Max Value</button>');
+              menuDiv.push('<button type="button id="reset-button onclick="resetHisto()">Reset</button>');
               menuDiv.push('</div>');
             menuDiv.push('</div>'); //histogram-title
           menuDiv.push('<div id="histogram">');
@@ -2288,14 +2308,12 @@
           menuDiv.push('</div>'); //histogram-menu
         menuDiv.push('</div>'); //dark-background
       
+      //fix this
       menuDiv.push('<div id="download-histogram">');
         if (!jsonURLs.length) menuDiv.push('<div class="file-info"><p><span style="color:red;">&#9888;&emsp;&emsp;</span>No channel data to export.<br><br>Open up a channel by checkboxing in the sidebar or by clicking a node on the map.</p></div>');
         else menuDiv.push('<a href=' + jsonURLs[0] + ' download>Download Link (.json)</a>');
         menuDiv.push('</div>'); //download-histogram
-      
-      //custom max button
-      //$('#xmax-button').on('click', function(e){alert("hi")});
-      
+            
       var histoDiv = $(menuDiv.join(""));
       $('body').append(histoDiv);
       
@@ -2308,10 +2326,9 @@
       })
       
       console.log(jsonURLs[0]);
-      Histogram(jsonURLs[0]);
-      //window.open("https://esdr.cmucreatelab.org/browse/histogram.html");
-//      alert(jsonURLs[0]);
-      //document.getElementById("export-button").click();
+      for(var i=0; i<jsonURLs.length; i++){
+        Histogram(jsonURLs[i]);
+      }
     }
 
     window.grapherLoad = function() {

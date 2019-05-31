@@ -1,7 +1,8 @@
 function Histogram(jsonURL, xMax){
   
 if (jsonURL == undefined)
-  jsonURL = "https://esdr.cmucreatelab.org/api/v1/feeds/26154/channels/benzene_qa_v2,benzene_v2/export?from=1558182242.096208&to=1558299081.131782&format=json";
+  //jsonURL = "https://esdr.cmucreatelab.org/api/v1/feeds/26154/channels/benzene_qa_v2,benzene_v2/export?from=1558182242.096208&to=1558299081.131782&format=json";
+  alert("no channels selected");
 
 function humanTime(t){ 
   var date = new Date(t * 1000);
@@ -46,7 +47,7 @@ function makeHistogram(json, channel, numBins=15,
                         color="#69b3a2", opacity=0.5){   
   
 // Set the dimensions, padding, margins of the graph
-var totalWidth = 500
+var totalWidth = 500;
 var totalHeight = 400;
 var margin = {top: 10, right: 30, bottom: 60, left: 40},
     width = totalWidth - margin.left - margin.right,
