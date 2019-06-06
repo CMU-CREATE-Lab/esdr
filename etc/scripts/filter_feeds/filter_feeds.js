@@ -1,4 +1,6 @@
-//can modify to make esdr website show active/inactive channels/feeds
+// filter_feeds.js
+// lists feed IDs of all active feeds from a product
+// can modify to make esdr website show active/inactive channels and feeds
 
 var feedsURL = "https://esdr.cmucreatelab.org/api/v1/feeds?fields=id,userId,productId,deviceId,name&where=productId=68";
   //var inactiveFeeds = [];

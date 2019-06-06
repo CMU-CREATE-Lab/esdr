@@ -1,3 +1,7 @@
+// filter_feeds_ramp.js
+// specifically for filtering out pm 2.5 channel on RAMP sensors and sending
+// data to smell pittsburgh
+
 var feedsURL = "https://esdr.cmucreatelab.org/api/v1/feeds?fields=id,userId,productId,deviceId,name&where=productId=68";
   //var inactiveFeeds = [];
 var feeds = $.getJSON(feedsURL);
