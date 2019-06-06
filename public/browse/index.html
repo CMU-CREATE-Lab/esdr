@@ -2233,16 +2233,13 @@
     //refresh histogram with new max
     function refreshHisto(){
       console.log("refresh histo");
+      
       var xMax2 = document.getElementById("x-max").value;
       console.log("xmax2="+xMax2);
       
       document.getElementById("histogram").innerHTML = "";
       
-      var jsonURLs = getJsonUrls();
-      //Histogram(jsonURLs[0], xMax2);
-      for(var i=0; i<jsonURLs.length; i++){
-        Histogram(jsonURLs[i], xMax2);
-      }
+      makeAllHisto(xMax2);
     }
     
     // reset histogram with original max
@@ -2251,14 +2248,24 @@
       
       document.getElementById("histogram").innerHTML = "";
       
-      var jsonURLs = getJsonUrls();
-      //Histogram(jsonURLs[0], undefined);
+      makeAllHisto(undefined);
+    }
+    
+    // make all histograms, assumes div elements are all added to html
+    // just appends svg elements
+    function makeAllHisto(xmax){
+      //var jsonURLs = getJsonUrls();
+      var jsonURLs = getJsonUrls2();
+      console.log("jsonURLs=", jsonURLs);
       for(var i=0; i<jsonURLs.length; i++){
-        Histogram(jsonURLs[i], undefined);
+        Histogram(jsonURLs[i][0], xmax, jsonURLs[i][1]);
+        //Histogram(jsonURLs[i], xmax);
       }
     }
     
     // get info for histograms in json format
+    // return array of [json url arr]
+    // see getJsonUrls2
     function getJsonUrls(){
       var feedIDs = [];
       var channelNamesPerID = [];
@@ -2266,7 +2273,7 @@
       for (var key in plotIdxToChannel) {
         if (plotIdxToChannel.hasOwnProperty(key)) {
           var feedNumAndChannelName = plotIdxToChannel[key].split(".");
-          console.log(feedNumAndChannelName);
+          //console.log(feedNumAndChannelName);
           var feedIDIndex = feedIDs.indexOf(feedNumAndChannelName[0]);
           if (feedIDIndex > -1) {
             channelNamesPerID[feedIDIndex].push(feedNumAndChannelName[1]);
@@ -2274,22 +2281,63 @@
             feedIDs.push(feedNumAndChannelName[0]);
             channelNamesPerID.push([feedNumAndChannelName[1]]);
           }
+          
         }
       }
       var jsonURLs = [];
       for (var i = 0; i < feedIDs.length; i++) {
-        var url = ESDR_API_ROOT_URL + "/feeds/" + feedIDs[i] + "/channels/" + channelNamesPerID[i].join(',') + "/export?from=" + dateProperties.min + "&to=" + dateProperties.max;
-        jsonURLs.push(url + '&format=json');
+        //var url = ESDR_API_ROOT_URL + "/feeds/" + feedIDs[i] + "/channels/" + channelNamesPerID[i].join(',') + "/export?from=" + dateProperties.min + "&to=" + dateProperties.max;
+        for (var j=0; j < channelNamesPerID[i].length; j++){
+          var channelName = channelNamesPerID[i][j];
+          var url = ESDR_API_ROOT_URL + "/feeds/" + feedIDs[i] + "/channels/" + channelName + "/export?from=" + dateProperties.min + "&to=" + dateProperties.max + '&format=json';
+          jsonURLs.push(url);
+        }
       }
       
+      return jsonURLs;
+    }
+    
+        // get info for histograms in json format
+    // return array of [data json url arr, specs json url arr]
+    // see getJsonUrls
+    function getJsonUrls2(){
+      var feedIDs = [];
+      var channelNamesPerID = [];
+      
+      for (var key in plotIdxToChannel) {
+        if (plotIdxToChannel.hasOwnProperty(key)) {
+          var feedNumAndChannelName = plotIdxToChannel[key].split(".");
+          var feedIDIndex = feedIDs.indexOf(feedNumAndChannelName[0]);
+          if (feedIDIndex > -1) {
+            channelNamesPerID[feedIDIndex].push(feedNumAndChannelName[1]);
+          } else {
+            feedIDs.push(feedNumAndChannelName[0]);
+            channelNamesPerID.push([feedNumAndChannelName[1]]);
+          }
+          
+        }
+      }
+      var jsonURLs = [];
+      for (var i = 0; i < feedIDs.length; i++) {
+        //specs
+        var surl = ESDR_API_ROOT_URL + "/feeds/"+ feedIDs[i];
+        
+        //data
+        //var durl = ESDR_API_ROOT_URL + "/feeds/" + feedIDs[i] + "/channels/" + channelNamesPerID[i].join(',') + "/export?from=" + dateProperties.min + "&to=" + dateProperties.max + '&format=json';
+        for (var j=0; j < channelNamesPerID[i].length; j++){
+          var channelName = channelNamesPerID[i][j];
+          var durl = ESDR_API_ROOT_URL + "/feeds/" + feedIDs[i] + "/channels/" + channelName + "/export?from=" + dateProperties.min + "&to=" + dateProperties.max + '&format=json';
+          jsonURLs.push([durl,surl]);
+        }
+      }
       return jsonURLs;
     }
 
     // pull up histogram viewer menu
     function viewHistogram(){      
       //copied + modified from exportData
+      console.log("channels", getChannels())
       histoMenuOpen = true;
-      var jsonURLs = getJsonUrls();
       
       var menuDiv = [];
       menuDiv.push('<div id="dark-background">');
@@ -2309,26 +2357,22 @@
         menuDiv.push('</div>'); //dark-background
       
       //fix this
-      menuDiv.push('<div id="download-histogram">');
-        if (!jsonURLs.length) menuDiv.push('<div class="file-info"><p><span style="color:red;">&#9888;&emsp;&emsp;</span>No channel data to export.<br><br>Open up a channel by checkboxing in the sidebar or by clicking a node on the map.</p></div>');
-        else menuDiv.push('<a href=' + jsonURLs[0] + ' download>Download Link (.json)</a>');
-        menuDiv.push('</div>'); //download-histogram
+//      menuDiv.push('<div id="download-histogram">');
+//        if (!jsonURLs.length) menuDiv.push('<div class="file-info"><p><span style="color:red;">&#9888;&emsp;&emsp;</span>No channel data to export.<br><br>Open up a channel by checkboxing in the sidebar or by clicking a node on the map.</p></div>');
+//        else menuDiv.push('<a href=' + jsonURLs + ' download>Download Link (.json)</a>');
+//        menuDiv.push('</div>'); //download-histogram
             
       var histoDiv = $(menuDiv.join(""));
       $('body').append(histoDiv);
       
       //x button
       $(histoDiv).children().children().children().filter(".x-button").click(function() {
-      //document.getElementById("exit-histo").click(function() {
         histoMenuOpen = false; 
         console.log("exit");
         $(histoDiv).remove();
       })
       
-      console.log(jsonURLs[0]);
-      for(var i=0; i<jsonURLs.length; i++){
-        Histogram(jsonURLs[i]);
-      }
+      makeAllHisto(undefined);
     }
 
     window.grapherLoad = function() {

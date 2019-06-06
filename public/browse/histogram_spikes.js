@@ -1,16 +1,20 @@
 var FONT_SIZE = 12;
 
-function Histogram(jsonURL, xMax){
+function Histogram(jsonURL, xMax, specsURL=undefined){
   
-  if (jsonURL == undefined)
-    //jsonURL = "https://esdr.cmucreatelab.org/api/v1/feeds/26154/channels/benzene_qa_v2,benzene_v2/export?from=1558182242.096208&to=1558299081.131782&format=json";
-    alert("no channels selected");
+  if (jsonURL == undefined){
+    console.log("no channels selected");
+    d3.select("#histogram").text("bad url");
+    return;
+  }
   
-
+  console.log("d3 recieved json url ", jsonURL);
+  
   // Do stuff w json
   d3.json(jsonURL, function(dataJson){  
-    var allBins = new Array(dataJson.channel_names.length);
-    console.log("num channels=" + dataJson.channel_names.length);
+    //var allBins = new Array(dataJson.channel_names.length);
+    //console.log("data json", dataJson);
+    console.log("num channels=",dataJson.channel_names.length);
     
     //get specs
 //    var specsURL = jsonURL.substring(0,jsonURL.indexOf("channels"));
@@ -42,16 +46,20 @@ function Histogram(jsonURL, xMax){
 //    });
     
     // make histogram for each channel
-    for (var i=1; i <= dataJson.channel_names.length; i++){
-        console.log(dataJson.channel_names[i-1]);
-          makeHistogram(dataJson, i);
-      }
+//    for (var i=1; i <= dataJson.channel_names.length; i++){
+//        console.log(dataJson.channel_names[i-1]);
+//        makeHistogram(dataJson, i);
+//      }
+    
+    //assume only 1 channel
+    console.log("making histogram for", dataJson.channel_names[0]);
+    makeHistogram(dataJson,1);
   });
 
   // Make one histogram from json arr and channel #
   function makeHistogram(json, channel, numBins=15, 
                           channelName, units,
-                         color="#69b3a2", opacity=0.5){   
+                         color="#FFA500", opacity=0.5){   
 
     // Set the dimensions, padding, margins of the graph
     var totalWidth = 500;
@@ -74,15 +82,17 @@ function Histogram(jsonURL, xMax){
 
     // process stuff
     var data = json.data;
-
+    
     var startTime = data[0][0];
     var endTime = data[data.length-1][0];
 
 
     //HISTOGRAM DATA
     // X axis: scale 
-    if (xMax == undefined)
+    if (xMax == undefined){
+      console.log("no user input xmax")
       xMax = getMaxValue(data, channel);
+    }
     console.log("x max=" + xMax);
     var x = d3.scaleLinear()
         .domain([0,xMax])
@@ -140,9 +150,11 @@ function Histogram(jsonURL, xMax){
     if (channelName == undefined)
       channelName = trimName(json.channel_names[channel-1]);
     if (units == undefined)
-      units = "no units available"
+      units = "units N/A"
+      var feedName;
 
-    // Draw x axis and format to human time
+    // Draw x axis  and label and format to human time
+    // if specified, include feed name in addition to channel name
     svg.append("g")
         .attr("transform", "translate(" + yAxisPad + "," + height + ")")
         //.call(d3.axisBottom(x).tickFormat(humanTime)); 
@@ -152,13 +164,27 @@ function Histogram(jsonURL, xMax){
           .attr("dx", "-0.8em")
           .attr("dy", "0.15em")
           .attr("transform", "rotate(-65)"); 
-    svg.append("text")             
-        .attr("transform",
-              "translate(" + (width/2) + " ," + 
-                             (xLabelY) + ")")
-        .style("text-anchor", "middle")
-        .style("font-size",FONT_SIZE)
-        .text("Value of " + channelName + " (" + units + ")");
+    if (specsURL == undefined){ // no feed name
+      svg.append("text")             
+          .attr("transform",
+                "translate(" + (width/2) + " ," + 
+                               (xLabelY) + ")")
+          .style("text-anchor", "middle")
+          .style("font-size",FONT_SIZE)
+          .text("Value of " + channelName + " (" + units + ")");
+    }
+    else{ // include feed name
+       d3.json(specsURL, function(specsJson){
+         var feedName = specsJson.data.name;
+         svg.append("text")             
+            .attr("transform",
+                  "translate(" + (width/2) + " ," + 
+                                 (xLabelY) + ")")
+            .style("text-anchor", "middle")
+            .style("font-size",FONT_SIZE)
+            .text("Value of " + feedName + " " + channelName + " (" + units + ")");
+      }); 
+    }
 
     // Draw y axis
     svg.append("g")
@@ -175,18 +201,27 @@ function Histogram(jsonURL, xMax){
 
     // Append the bar rectangles to the svg element
     function drawBars(bins,x,y,getHeight,color,opacity){
-      svg.selectAll("rect")
-          .data(bins)
-          .enter()
-          .append("rect")
-            .attr("x", yAxisPad+1)
-            .attr("y", 0)
-            .attr("transform", function(d) {
-                return "translate("+x(d.x0)+","+y(getHeight(d))+")"; })
-            .attr("width", function(d) { return x(d.x1) - x(d.x0) -1 ; })
-            .attr("height", function(d) { return height - y(getHeight(d));}) 
-            .style("fill", color)
-            .attr("fill-opacity", opacity);
+      var bars = svg.selectAll("rect").data(bins).enter()
+      
+      bars.append("rect")
+          .attr("x", yAxisPad+1)
+          .attr("y", 0)
+          .attr("transform", function(d) {
+              return "translate("+x(d.x0)+","+y(getHeight(d))+")"; })
+          .attr("width", function(d) { return x(d.x1) - x(d.x0) -1 ; })
+          .attr("height", function(d) { return height - y(getHeight(d));}) 
+          .style("fill", color)
+          .attr("fill-opacity", opacity);
+      
+      // add value text
+      bars.append("text")
+          //.attr("dy", ".75em")
+          .attr("y", function(d) { // either above x axis or right below top of bar
+              return Math.min(height - 5, y(getHeight(d))+12)})
+          .attr("x", function(d) { return yAxisPad + ((x(d.x1) + x(d.x0))/2); })
+          .attr("text-anchor", "middle")
+          .style("font-size", FONT_SIZE)
+          .text(getHeight);
     }
     drawBars(bins,x,y,getHeight,color,opacity);
   //  var bar = svg.selectAll(".bar").data(data);
@@ -223,6 +258,6 @@ function binAvg(b, channel){
 function trimName(s){
   var s1 = s.substring(s.indexOf(".")+1,s.length); //first period
   var s2 = s1.substring(s1.indexOf(".")+1,s1.length); //first period
-  console.log("name trim", s1,s2);
+  //console.log("name trim", s1,s2);
   return s2;
 }
