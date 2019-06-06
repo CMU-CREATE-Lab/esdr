@@ -477,8 +477,15 @@
         background-color: rgba(30, 30, 30, .85);
         z-index: 999;
       }
+      
+      #histogram-menu-background{
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        z-index: 999;
+      }
 
-      #export-menu, #histogram-menu{
+     #export-menu{
         position: relative;
         height: 50%;
         width: 60%;
@@ -489,7 +496,18 @@
         transform: translateY(-50%);
         background-color: rgb(180, 180, 180);
       }
-
+     
+     #histogram-menu{
+        position: relative;
+        height: 50%;
+        width: 60%;
+        min-width: 300px;
+        min-height: 250px;
+        margin: auto;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+     
       #export-title, #histogram-title{
         position: absolute;
         width: 100%;
@@ -545,6 +563,7 @@
      #histogram{
        background-color: white;
        text-align: center;
+       resize: vertical;
      }
 
       .file-info{
@@ -2340,7 +2359,8 @@
       histoMenuOpen = true;
       
       var menuDiv = [];
-      menuDiv.push('<div id="dark-background">');
+      //menuDiv.push('<div id="dark-background">');
+      //menuDiv.push('<div id="histogram-menu-background">');
         menuDiv.push('<div id="histogram-menu">');
           menuDiv.push('<div id="histogram-title">');
             menuDiv.push('<div class="x-button"><span style="color:rgb(200,200,200);">&times</span></div>');
@@ -2354,7 +2374,7 @@
           menuDiv.push('<div id="histogram">');
             menuDiv.push('</div>'); //histogram
           menuDiv.push('</div>'); //histogram-menu
-        menuDiv.push('</div>'); //dark-background
+        //menuDiv.push('</div>'); //histogram-menu-background
       
       //fix this
 //      menuDiv.push('<div id="download-histogram">');
