@@ -498,14 +498,14 @@
       }
      
      #histogram-menu{
-        position: relative;
+       position:relative;
         height: 50%;
         width: 60%;
         min-width: 300px;
         min-height: 250px;
         margin: auto;
         top: 50%;
-        transform: translateY(-50%);
+        transform: translateY(-75%);
       }
      
       #export-title, #histogram-title{
@@ -1625,11 +1625,26 @@
       appendSensors();
       searchAttributes();
     }
+    
+    //str = string, keywords = string array
+    //search for array of keywords in str
+    function searchKeywords(str, keywords){
+      for (var i = 0; i < keywords.length; i++){
+        if (str.indexOf(keywords[i]) < 0){
+          return false;
+        }
+      }
+      return true;
+    }
 
     //searches sensors based on content of the search bar returns array
     function searchJSON() {
       //gets content of search bar which is what will be checked for in latter strings
       var str = document.getElementById("search-bar").value;
+      
+      var keywords = str.toLowerCase().split(" ");
+      console.log("keyword", keywords);
+      
       var searchRes = [];
       //checks if search was empty
       if (str.length < 1) {
@@ -1639,12 +1654,11 @@
       //search all sensor names for the search input and adds the to the search results array if input is there
       for (var j = 0; j < allFeeds.length; j++) {
         // TODO(pdille): Do we want to check for ids too?
-        if (allFeeds[j].name.toLowerCase().indexOf(str.toLowerCase()) > -1) {
-          searchRes.push(allFeeds[j]);
-        } else {
           let KeysArr = Object.keys(allFeeds[j].channelBounds.channels);
           for (var ij = 0; ij < KeysArr.length; ij++) {
-            if (KeysArr[ij].toLowerCase().indexOf(str.toLowerCase()) > -1) {
+            //combines feed name with channel name and searches that
+            var searchMe = allFeeds[j].name.toLowerCase() + KeysArr[ij].toLowerCase();
+            if (searchKeywords(searchMe, keywords)) {
               let testArr = [];
               testArr.push(channels);
               let channels5 = {
@@ -1665,7 +1679,7 @@
               }
             }
           }
-        }
+//        }
       }
       if (searchRes.length < 1) {
         searchRes.push(-2);
@@ -2360,21 +2374,21 @@
       
       var menuDiv = [];
       //menuDiv.push('<div id="dark-background">');
-      //menuDiv.push('<div id="histogram-menu-background">');
-        menuDiv.push('<div id="histogram-menu">');
+      menuDiv.push('<div id="histogram-menu-background">');
+        menuDiv.push('<div id="histogram-menu" draggable="true" top:50px>');
           menuDiv.push('<div id="histogram-title">');
             menuDiv.push('<div class="x-button"><span style="color:rgb(200,200,200);">&times</span></div>');
             menuDiv.push('<div id="refresh-histo">');
-              menuDiv.push('<input type="text" id="x-max">');
+              menuDiv.push('<input type="text" id="x-max" placeholder="enter custom max">');
               //custom max button
-              menuDiv.push('<button type="button id="xmax-button onclick="refreshHisto()">Custom Max Value</button>');
+              menuDiv.push('<button type="button id="xmax-button onclick="refreshHisto()" >Custom Max Value</button>');
               menuDiv.push('<button type="button id="reset-button onclick="resetHisto()">Reset</button>');
               menuDiv.push('</div>');
             menuDiv.push('</div>'); //histogram-title
           menuDiv.push('<div id="histogram">');
             menuDiv.push('</div>'); //histogram
           menuDiv.push('</div>'); //histogram-menu
-        //menuDiv.push('</div>'); //histogram-menu-background
+        menuDiv.push('</div>'); //histogram-menu-background
       
       //fix this
 //      menuDiv.push('<div id="download-histogram">');
