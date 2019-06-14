@@ -441,33 +441,37 @@
         margin : 0px 10px;
       }
 
-      #export-button{
+      #export-button, #histogram-button{
         position: relative;
         float: right;
         clear: none;
-        width: 150px;
-        top: 50%;
-        transform: translateY(-50%);
+        display: inline;
+        transform: translateY(25%);
         margin-right: 15px;
         margin-left: 13px;
       }
-
-      #export-button > p{
-        padding-left: 0px;
+     
+      #histogram-button > p, #export-button > p, #toggle-map-button > p{
+        padding-left: 15px;
+        padding-right: 15px;
+        font-size: 13px; !important
+        text-align: center;
       }
-       
-       #histogram-button{
+     
+      #toggle-map-button{
         position: relative;
         float: right;
         clear: none;
-        width: 150px;
-        top: 50%;
-        transform: translateY(-50%);
+        display: inline;
+        transform: translateY(25%);
         margin-right: 15px;
         margin-left: 13px;
+       visibility: hidden;
+        background-color: rgba(255,255,255,.75); !important
       }
-      #histogram-button > p{
-        padding-left: 0px;
+     
+      #toggle-map-button:hover{
+       background-color: rgba(200,200,200,.75); !important
       }
 
       #dark-background{
@@ -485,7 +489,7 @@
         z-index: 999;
       }
 
-     #export-menu{
+      #export-menu{
         position: relative;
         height: 50%;
         width: 60%;
@@ -497,7 +501,7 @@
         background-color: rgb(180, 180, 180);
       }
      
-     #histogram-menu{
+      #histogram-menu{
        position:relative;
         height: 50%;
         width: 60%;
@@ -560,11 +564,11 @@
         overflow: auto;
       }
      
-     #histogram{
-       background-color: white;
-       text-align: center;
-       resize: vertical;
-     }
+      #histogram{
+        background-color: white;
+        text-align: center;
+        resize: vertical;
+      }
 
       .file-info{
         margin-left: 15px;
@@ -589,9 +593,12 @@
         width:100%;
         border-bottom: 1px solid black;
         overflow-x: hidden;
-        background-color: white;
-
       }
+     
+      #chart-button-container{
+        position: relative;
+        float: right;
+      } 
 
       #button-container{
         color: white;
@@ -613,6 +620,7 @@
         font-size: 13px;
         cursor: pointer;
       }
+     
 
       #date_axis{
         overflow: hidden;
@@ -747,6 +755,7 @@
             top: 125px;
             left: 180px;
           }
+/*
           #export-button{
             top : 17%;
             float : left;
@@ -757,6 +766,7 @@
             float : left;
             clear : left;
           }
+*/
       }
       @media (min-width: 500px) and (max-width: 800px){
           #map-bar{
@@ -777,11 +787,15 @@
             top: 125px;
             left: 180px;
           }
+        
+        
+/*
           #export-button, #histogram-button{
             top : 17%;
             float : left;
             clear : left;
           }
+*/
           #day-button{
             clear: left;
             margin-left: 109px;
@@ -805,11 +819,13 @@
             margin : -25px 50px 0px;
             float : left;
           }
+/*
           #export-button, #histogram-button{
             top : 0%;
             float : right;
             clear : none;
           }
+*/
       }
 
       @media (max-width: 1125px){
@@ -828,6 +844,7 @@
 
 </head>
 <body>
+  
 <div class="title-bar tool-bar" id="channels-title">
       <p>Channels</p>
       <a target="_blank" href="https://docs.google.com/document/d/18IFx6Tyv0EGenEpOrexnB1ajQEBYHsWWpN5wi7PPXC0/pub" title="opens up help screen">
@@ -836,7 +853,7 @@
   </div>
 
   <form class="tool-bar title-bar" id="search-box">
-    <input id="search-bar" type="search" autocomplete="off" placeholder=" (loading)" results="0" disabled></input>
+    <input id="search-bar" type="search" autocomplete="off" placeholder=" (loading)" results="0" disabled>
   </form>
   <div class="tool-bar title-bar" id="filter-title">
         <p>Search Result Filters</p>
@@ -922,14 +939,6 @@
         <label title="set duration of loop"><span style="color: white">Loop Duration:</span><input type="number" min="1" max="99" id="duration" value="15"></label>
       </fieldset>
     </form>
-
-    <div class="button title-bar" id="export-button">
-      <p>Export Data</p>
-    </div>
-      
-    <div class="button title-bar" id="histogram-button">
-      <p>View Histogram</p>
-    </div>
   </div>
 
   <div class="main-content" id="charts">
@@ -962,6 +971,21 @@
           Year
         </button>
       </div>
+        
+      <!--Lauren Z. reorganize histogram + export button-->
+      <div class="chart-button-container">
+        <div class="button title-bar" id="export-button">
+          <p>Export Data</p>
+        </div>
+        <div class="button title-bar" id="histogram-button">
+          <p>View Histogram</p>
+        </div>
+        <div class="button title-bar" id="toggle-map-button" style>
+          <p style="color:rgba(50,50,50, .9)">Show/Hide Map</p>
+        </div>
+        
+      </div>
+        
     </div>
     <div id="axis-container">
         <div id="date_axis" class="grabbable"></div>
@@ -1642,44 +1666,48 @@
       //gets content of search bar which is what will be checked for in latter strings
       var str = document.getElementById("search-bar").value;
       
-      var keywords = str.toLowerCase().split(" ");
-      console.log("keyword", keywords);
-      
       var searchRes = [];
       //checks if search was empty
       if (str.length < 1) {
         searchRes.push(-1);
         return searchRes;
       }
-      //search all sensor names for the search input and adds the to the search results array if input is there
+      
+      var keywords = str.toLowerCase().split(" ");
+      //searchs feed and channel names together and adds the to the search results array
       for (var j = 0; j < allFeeds.length; j++) {
+        //quickly just search feed first
+        if (allFeeds[j].name.toLowerCase().indexOf(str.toLowerCase()) > -1){
+          searchRes.push(allFeeds[j]);
+          continue;
+        }
+        
         // TODO(pdille): Do we want to check for ids too?
-          let KeysArr = Object.keys(allFeeds[j].channelBounds.channels);
-          for (var ij = 0; ij < KeysArr.length; ij++) {
-            //combines feed name with channel name and searches that
-            var searchMe = allFeeds[j].name.toLowerCase() + KeysArr[ij].toLowerCase();
-            if (searchKeywords(searchMe, keywords)) {
-              let testArr = [];
-              testArr.push(channels);
-              let channels5 = {
-                [KeysArr[ij]]: allFeeds[j].channelBounds.channels[KeysArr[ij]]
-              };
-              var objCloneOfSensor = JSON.parse(JSON.stringify(allFeeds[j]));
-              objCloneOfSensor.channelBounds.channels = channels5;
-              var addNewEntry = true;
-              for (var k = 0; k < searchRes.length; k++) {
-                if (searchRes[k].id == objCloneOfSensor.id) {
-                  $.extend(true, searchRes[k], objCloneOfSensor);
-                  addNewEntry = false;
-                  break;
-                }
-              }
-              if (addNewEntry) {
-                searchRes.push(objCloneOfSensor);
+        //combines feed name with channel name and searches that
+        let KeysArr = Object.keys(allFeeds[j].channelBounds.channels);
+        for (var ij = 0; ij < KeysArr.length; ij++) {
+          var searchMe = allFeeds[j].name.toLowerCase() + KeysArr[ij].toLowerCase();
+          if (searchKeywords(searchMe, keywords)) {
+            let testArr = [];
+            testArr.push(channels);
+            let channels5 = {
+              [KeysArr[ij]]: allFeeds[j].channelBounds.channels[KeysArr[ij]]
+            };
+            var objCloneOfSensor = JSON.parse(JSON.stringify(allFeeds[j]));
+            objCloneOfSensor.channelBounds.channels = channels5;
+            var addNewEntry = true;
+            for (var k = 0; k < searchRes.length; k++) {
+              if (searchRes[k].id == objCloneOfSensor.id) {
+                $.extend(true, searchRes[k], objCloneOfSensor);
+                addNewEntry = false;
+                break;
               }
             }
+            if (addNewEntry) {
+              searchRes.push(objCloneOfSensor);
+            }
           }
-//        }
+        }
       }
       if (searchRes.length < 1) {
         searchRes.push(-2);
@@ -1913,6 +1941,26 @@
         var secondsInYear = (dayInMiddle.isLeapYear()) ? 60 * 60 * 24 * 364 : 60 * 60 * 24 * 365;
         plotManager.getDateAxis().setRange(startOfYear, startOfYear + secondsInYear);
       });
+      
+      // Lauren Z.
+      // toggle map
+      $("#toggle-map-button").on('click',function(){
+        
+        var mapDiv = document.getElementById("map-div");
+        var mapBar = document.getElementById("map-bar");
+        //toggle(document.getElementById("legend"));
+        toggle(mapDiv);
+        toggle(mapBar);
+        
+        function toggle(x){ x.style.display = x.style.display === "none" ? "block" : "none"; }
+        
+        var c = document.getElementById("charts");
+        c.style.height = (c.style.height === "100%") ? "45%" : "100%";
+      })
+      // don't show toggle map button until most map elements loaded
+      setTimeout(function(){
+        document.getElementById("toggle-map-button").style.visibility = "visible";
+      }, 8000);
     }
 
     Date.prototype.isLeapYear = function(utc) {
@@ -2373,28 +2421,23 @@
       histoMenuOpen = true;
       
       var menuDiv = [];
-      //menuDiv.push('<div id="dark-background">');
-      menuDiv.push('<div id="histogram-menu-background">');
+      menuDiv.push('<div id="dark-background">');
+//      menuDiv.push('<div id="histogram-menu-background">');
         menuDiv.push('<div id="histogram-menu" draggable="true" top:50px>');
           menuDiv.push('<div id="histogram-title">');
             menuDiv.push('<div class="x-button"><span style="color:rgb(200,200,200);">&times</span></div>');
             menuDiv.push('<div id="refresh-histo">');
               menuDiv.push('<input type="text" id="x-max" placeholder="enter custom max">');
               //custom max button
-              menuDiv.push('<button type="button id="xmax-button onclick="refreshHisto()" >Custom Max Value</button>');
-              menuDiv.push('<button type="button id="reset-button onclick="resetHisto()">Reset</button>');
+              menuDiv.push('<button type="button" id="xmax-button" onclick="refreshHisto()" >Custom max value</button>');
+              menuDiv.push('<button type="button" id="reset-button" onclick="resetHisto()">Reset</button>');
+//              menuDiv.push('<button type="button" id="save-button" onclick="saveHisto()">Save histograms</button>');
               menuDiv.push('</div>');
             menuDiv.push('</div>'); //histogram-title
           menuDiv.push('<div id="histogram">');
             menuDiv.push('</div>'); //histogram
           menuDiv.push('</div>'); //histogram-menu
         menuDiv.push('</div>'); //histogram-menu-background
-      
-      //fix this
-//      menuDiv.push('<div id="download-histogram">');
-//        if (!jsonURLs.length) menuDiv.push('<div class="file-info"><p><span style="color:red;">&#9888;&emsp;&emsp;</span>No channel data to export.<br><br>Open up a channel by checkboxing in the sidebar or by clicking a node on the map.</p></div>');
-//        else menuDiv.push('<a href=' + jsonURLs + ' download>Download Link (.json)</a>');
-//        menuDiv.push('</div>'); //download-histogram
             
       var histoDiv = $(menuDiv.join(""));
       $('body').append(histoDiv);
