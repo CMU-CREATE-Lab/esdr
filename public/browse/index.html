@@ -1579,13 +1579,15 @@
     }
 
     // pull up histogram viewer menu
-    function viewHistogram(){      
+    function viewHistogram(){  
+      if (histoMenuOpen) return; //histogram menu already open
+      
       //copied + modified from exportData
       console.log("channels", getChannels())
       histoMenuOpen = true;
       
       var menuDiv = [];
-      menuDiv.push('<div id="dark-background">');
+//      menuDiv.push('<div id="dark-background">');
 //      menuDiv.push('<div id="histogram-menu-background">');
         menuDiv.push('<div id="histogram-menu" draggable="true" top:50px>');
           menuDiv.push('<div id="histogram-title">');
@@ -1601,14 +1603,14 @@
           menuDiv.push('<div id="histogram">');
             menuDiv.push('</div>'); //histogram
           menuDiv.push('</div>'); //histogram-menu
-        menuDiv.push('</div>'); //histogram-menu-background or dark-background
+//        menuDiv.push('</div>'); //histogram-menu-background or dark-background
             
       var histoDiv = $(menuDiv.join(""));
       $('body').append(histoDiv);
       
       //x button
-      $(histoDiv).children().children().children().filter(".x-button").click(function() {
-//      $(histoDiv).children().children().filter(".x-button").click(function() {
+//      $(histoDiv).children().children().children().filter(".x-button").click(function() {
+      $(histoDiv).children().children().filter(".x-button").click(function() {
         histoMenuOpen = false; 
         console.log("exit");
         $(histoDiv).remove();
