@@ -57,13 +57,20 @@ function Histogram(jsonURL, xMax, specsURL=undefined){
   });
 
   // Make one histogram from json arr and channel #
+  // 'channel' is the column index of the json array that contains the value for the channel
   function makeHistogram(json, channel, numBins=15, 
                           channelName, units,
-                         color="#FFA500", opacity=0.5){   
+                         color="#FFA500", opacity=0.5){  
+    
+    // set undefined parameters
+    if (channelName == undefined)
+      channelName = trimName(json.channel_names[channel-1]);
+    if (units == undefined)
+      units = "units N/A"
 
     // Set the dimensions, padding, margins of the graph
-    var totalWidth = 500;
-    var totalHeight = 400;
+    var totalWidth = 440;//500
+    var totalHeight = 320;//400
     var margin = {top: 10, right: 30, bottom: 60, left: 40},
         width = totalWidth - margin.left - margin.right,
         height = totalHeight - margin.top - margin.bottom;
@@ -82,6 +89,16 @@ function Histogram(jsonURL, xMax, specsURL=undefined){
 
     // process stuff
     var data = json.data;
+    
+    if (data.length == 0){
+      svg.append("text")
+        .attr("transform","translate("+width/2+","+height/2+")")
+        .style("font-size",FONT_SIZE)
+        .style("text-anchor","middle")
+        .text("Could not make histogram for " + channelName + " because there was no data.");
+      return;
+    }
+      
     
     var startTime = data[0][0];
     var endTime = data[data.length-1][0];
@@ -147,12 +164,6 @@ function Histogram(jsonURL, xMax, specsURL=undefined){
                 " to "+ end.toDateString() + " " + humanTime(end));
     
     //channel name and units goes on x axis
-    if (channelName == undefined)
-      channelName = trimName(json.channel_names[channel-1]);
-    if (units == undefined)
-      units = "units N/A"
-      var feedName;
-
     // Draw x axis  and label and format to human time
     // if specified, include feed name in addition to channel name
     svg.append("g")
