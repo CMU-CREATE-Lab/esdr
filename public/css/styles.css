@@ -61,6 +61,30 @@
         color: rgba(255,255,255,.9)
       }
 
+      #feedback-button{
+        position: absolute;
+        width: 20%;
+        min-width: 225px;
+        left: 0px;
+        z-index: 1;
+        
+        height: 35px;
+        background-color: rgba(50,50,50);
+        font-weight: bold;
+        
+        display: inline-block;
+        bottom: 0px;
+      }
+
+      #feedback-button > p{
+        text-align: center;
+        float: middle;
+      }
+
+      #feedback-button:hover{
+        background-color: rgba(150,150,150);
+      }
+  
       #channels-title{
         display: inline-block;
         top: 0px;
