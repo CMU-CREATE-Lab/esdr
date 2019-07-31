@@ -494,7 +494,31 @@
       html.push('</div>');
       $('#plots').append(html.join(''));
 
-      plotManager.addDataSeriesPlot(plotName, createDatasource(channel), plotName, yAxisName, 0, 100, lineStyle);
+      plotManager.addDataSeriesPlot(plotName, createDatasource(channel), plotName, yAxisName, 0, 100, lineStyle, false, function(range) {
+        var paddedRange = {
+          min : range.min,
+          max : range.max
+        };
+
+        var yDiff = paddedRange.max - paddedRange.min;
+        if (isFinite(yDiff)) {
+          var paddingTop, paddingBottom;
+          if (yDiff < 1e-10) {
+            paddingTop = 0.5;
+            paddingBottom = 0.5;
+          }
+          else {
+            paddingTop = 0.2 * yDiff;
+            paddingBottom = 0.05 * yDiff;
+          }
+
+          paddedRange.min -= paddingBottom;
+          paddedRange.max += paddingTop;
+        }
+
+        return paddedRange;
+      });
+      
       var thisPlotIdx = plotCount;
       setTimeout(function() {
         clampNumberAxisToDataRange(thisPlotIdx);
