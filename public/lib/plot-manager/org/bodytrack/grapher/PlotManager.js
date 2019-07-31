@@ -110,6 +110,14 @@ if (!window['$']) {
     */
 
    /**
+    * Strategy function which pads the given <code>AxisRange</code> and returns a new <code>AxisRange</code>.
+    *
+    * @callback yAxisRangePaddingStrategyFunction
+    * @param {AxisRange} range an axis range
+    * @returns {AxisRange} the padded axis range
+    */
+
+   /**
     * An axis change event object.
     *
     * @typedef {Object} AxisChangeEvent
@@ -388,8 +396,9 @@ if (!window['$']) {
     * @param {number} [yMin=0] - the minimum initial value for the Y axis. Defaults to 0 if undefined, <code>null</code>, or non-numeric.
     * @param {number} [yMax=100] - the maximum initial value for the Y axis. Defaults to 100 if undefined, <code>null</code>, or non-numeric.
     * @param {boolean} [willNotPadRange=false] - whether to pad the range
+    * @param {yAxisRangePaddingStrategyFunction} [rangePaddingStrategyFunction] - range padding strategy function (only used if padding is enabled).
     */
-   org.bodytrack.grapher.YAxis = function(elementId, yMin, yMax, willNotPadRange) {
+   org.bodytrack.grapher.YAxis = function(elementId, yMin, yMax, willNotPadRange, rangePaddingStrategyFunction) {
       var self = this;
 
       var wrappedAxis = null;
@@ -443,7 +452,8 @@ if (!window['$']) {
       this.getRange = function() {
          if (typeof wrappedAxis.getRange === 'function') {
             return wrappedAxis.getRange();
-         } else {
+         }
+         else {
             return {
                min : wrappedAxis.getMin(),
                max : wrappedAxis.getMax()
@@ -466,7 +476,7 @@ if (!window['$']) {
 
          // pad, if desired
          if (!willNotPad) {
-            range = padRange(range);
+            range = rangePaddingStrategy(range);
          }
 
          wrappedAxis.setRange(range.min, range.max);
@@ -487,7 +497,7 @@ if (!window['$']) {
 
          // pad, if desired
          if (!willNotPad) {
-            range = padRange(range);
+            range = rangePaddingStrategy(range);
          }
 
          wrappedAxis.setMaxRange(range.min, range.max);
@@ -497,7 +507,7 @@ if (!window['$']) {
        * Clears the range constraints by setting bounds to [<code>-1 * Number.MAX_VALUE</code>, <code>Number.MAX_VALUE</code>].
        */
       this.clearRangeConstraints = function() {
-         self.constrainRangeTo(null, null)
+         self.constrainRangeTo(null, null);
       };
 
       /**
@@ -516,7 +526,7 @@ if (!window['$']) {
 
          // pad, if desired
          if (!willNotPad) {
-            range = padRange(range);
+            range = rangePaddingStrategy(range);
          }
 
          wrappedAxis.setMinRangeConstraints(range.min, range.max);
@@ -541,7 +551,7 @@ if (!window['$']) {
          wrappedAxis.setSize(element.width(), height, SequenceNumber.getNext());
       };
 
-      var padRange = function(range) {
+      var __defaultRangePaddingStrategy = function(range) {
          var paddedRange = {
             min : range.min,
             max : range.max
@@ -564,6 +574,23 @@ if (!window['$']) {
          return paddedRange;
       };
 
+      var rangePaddingStrategy = __defaultRangePaddingStrategy;
+
+      /**
+       * Sets the strategy function for padding the range, if padding is enabled.  If <code>f</code> is not a function,
+       * then the padding strategy reverts to the default.
+       *
+       * @param {yAxisRangePaddingStrategyFunction} f - the range padding strategy function
+       */
+      this.setRangePaddingStrategy = function(f) {
+         if (typeof f === 'function') {
+            rangePaddingStrategy = f;
+         }
+         else {
+            rangePaddingStrategy = __defaultRangePaddingStrategy;
+         }
+      };
+
       // the "constructor"
       (function() {
          var range = {
@@ -571,9 +598,11 @@ if (!window['$']) {
             max : isNumeric(yMax) ? yMax : 100
          };
 
+         self.setRangePaddingStrategy(rangePaddingStrategyFunction);
+
          // pad, if desired and possible
          if (!willNotPadRange) {
-            range = padRange(range);
+            range = rangePaddingStrategy(range);
          }
 
          wrappedAxis = new NumberAxis(elementId, "vertical", range);
@@ -666,7 +695,8 @@ if (!window['$']) {
          var rawStatistics;
          if (typeof wrappedPlot.getSimpleStatistics === 'function') {
             rawStatistics = wrappedPlot.getSimpleStatistics(validRange.min, validRange.max);
-         } else if (typeof wrappedPlot.getMinMaxValuesWithinTimeRange === 'function') {
+         }
+         else if (typeof wrappedPlot.getMinMaxValuesWithinTimeRange === 'function') {
             var result = wrappedPlot.getMinMaxValuesWithinTimeRange(validRange.min, validRange.max);
             rawStatistics = {
                count : null,
@@ -785,10 +815,10 @@ if (!window['$']) {
          wrappedPlot = new DataSeriesPlot(datasource,
                                           dateAxis.getWrappedAxis(),
                                           yAxis.getWrappedAxis(),
-               {
-                  "style" : style,
-                  "localDisplay" : !!isLocalTime
-               });
+                                          {
+                                             "style" : style,
+                                             "localDisplay" : !!isLocalTime
+                                          });
       })();
    };
 
@@ -861,8 +891,9 @@ if (!window['$']) {
        * @param {number} [maxValue=100] - the maximum initial value for the Y axis (if the Y axis is created for this plot). Defaults to 100 if undefined, <code>null</code>, or non-numeric.
        * @param {Object} [style] - the style object. A default style is used if undefined, null, or not an object.
        * @param {boolean} [isLocalTime=false] - whether the plot's data uses local time. Defaults to false (UTC).
+       * @param {yAxisRangePaddingStrategyFunction} [yAxisRangePaddingStrategyFunction] - Y axis range padding strategy function. Defaults to the default padding strategy.
        */
-      this.addDataSeriesPlot = function(plotId, datasource, yAxisElementId, minValue, maxValue, style, isLocalTime) {
+      this.addDataSeriesPlot = function(plotId, datasource, yAxisElementId, minValue, maxValue, style, isLocalTime, yAxisRangePaddingStrategyFunction) {
          // validation
          if (!isNumberOrString(plotId)) {
             throw new Error("The plotId must be a number or a string.")
@@ -905,7 +936,9 @@ if (!window['$']) {
             // this is a new Y axis, so create it and initialize its plot count to 1
             yAxis = new org.bodytrack.grapher.YAxis(yAxisElementId,    // DOM element ID
                                                     minValue,          // initial min value for the y axis
-                                                    maxValue);         // initial max value for the y axis
+                                                    maxValue,          // initial max value for the y axis
+                                                    false,
+                                                    yAxisRangePaddingStrategyFunction);
 
             yAxesAndPlotCount[yAxisElementId] = {
                yAxis : yAxis,
@@ -1015,7 +1048,8 @@ if (!window['$']) {
       this.setAutoScaleEnabled = function(isEnabled, isPaddingEnabled) {
          if (typeof wrappedPlotContainer.setAutoScaleEnabled === 'function') {
             wrappedPlotContainer.setAutoScaleEnabled(!!isEnabled, !!isPaddingEnabled);
-         } else {
+         }
+         else {
             console.log("WARN: the underlying grapher does not support autoscaling.");
          }
       };
@@ -1144,20 +1178,20 @@ if (!window['$']) {
       /**
        * Removes the plotContainer with the given <code>plotContainerId</code> from this PlotManager.
        *
-       * @param {string|number} plotContainerId - A identifier for the plotContainer to remove, unique within the PlotManager.  Must be a number or a string.
+       * @param {string|number} plotContainerElementId - A identifier for the plotContainer to remove, unique within the PlotManager.  Must be a number or a string.
        */
       this.removePlotContainer = function(plotContainerElementId) {
-        plotContainers[plotContainerElementId].removeAllPlots();
-        delete plotContainers[plotContainerElementId];
+         plotContainers[plotContainerElementId].removeAllPlots();
+         delete plotContainers[plotContainerElementId];
       };
 
       /**
        * Removes all PlotContainers from PlotManger.
        */
       this.removeAllPlotContainers = function() {
-        Object.keys(plotContainers).forEach(function(plotContainerElementId) {
-          self.removePlotContainer(plotContainerElementId);
-        });
+         Object.keys(plotContainers).forEach(function(plotContainerElementId) {
+            self.removePlotContainer(plotContainerElementId);
+         });
       };
 
       /**
@@ -1193,17 +1227,19 @@ if (!window['$']) {
        * @param {number} [maxValue=100] - the maximum initial value for the Y axis (if the Y axis is created for this plot). Defaults to 100 if undefined, <code>null</code>, or non-numeric.
        * @param {Object} [style] - the style object. A default style is used if undefined, null, or not an object.
        * @param {boolean} [isLocalTime=false] - whether the plot's data uses local time. Defaults to false (UTC).
+       * @param {yAxisRangePaddingStrategyFunction} [yAxisRangePaddingStrategyFunction] - Y axis range padding strategy function. Defaults to the default padding strategy.
        *
        * @see org.bodytrack.grapher.PlotContainer#addDataSeriesPlot
        */
-      this.addDataSeriesPlot = function(plotId, datasource, plotContainerElementId, yAxisElementId, minValue, maxValue, style, isLocalTime) {
+      this.addDataSeriesPlot = function(plotId, datasource, plotContainerElementId, yAxisElementId, minValue, maxValue, style, isLocalTime, yAxisRangePaddingStrategyFunction) {
          self.addPlotContainer(plotContainerElementId).addDataSeriesPlot(plotId,
                                                                          datasource,
                                                                          yAxisElementId,
                                                                          minValue,
                                                                          maxValue,
                                                                          style,
-                                                                         isLocalTime);
+                                                                         isLocalTime,
+                                                                         yAxisRangePaddingStrategyFunction);
       };
 
       /**
