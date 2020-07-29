@@ -159,6 +159,20 @@
         <option name="KEEP_BLANK_LINES_IN_CODE" value="1" />
         <option name="ALIGN_MULTILINE_PARAMETERS_IN_CALLS" value="true" />
       </codeStyleSettings>
+      <codeStyleSettings language="DB2">
+        <indentOptions>
+          <option name="INDENT_SIZE" value="3" />
+          <option name="CONTINUATION_INDENT_SIZE" value="6" />
+          <option name="TAB_SIZE" value="3" />
+        </indentOptions>
+      </codeStyleSettings>
+      <codeStyleSettings language="Derby">
+        <indentOptions>
+          <option name="INDENT_SIZE" value="3" />
+          <option name="CONTINUATION_INDENT_SIZE" value="6" />
+          <option name="TAB_SIZE" value="3" />
+        </indentOptions>
+      </codeStyleSettings>
       <codeStyleSettings language="ECMA Script Level 4">
         <option name="KEEP_FIRST_COLUMN_COMMENT" value="false" />
         <option name="KEEP_BLANK_LINES_IN_CODE" value="1" />
@@ -207,8 +221,22 @@
         <option name="WHILE_BRACE_FORCE" value="3" />
         <option name="FOR_BRACE_FORCE" value="3" />
       </codeStyleSettings>
+      <codeStyleSettings language="H2">
+        <indentOptions>
+          <option name="INDENT_SIZE" value="3" />
+          <option name="CONTINUATION_INDENT_SIZE" value="6" />
+          <option name="TAB_SIZE" value="3" />
+        </indentOptions>
+      </codeStyleSettings>
       <codeStyleSettings language="HOCON">
         <option name="KEEP_BLANK_LINES_BEFORE_RBRACE" value="0" />
+      </codeStyleSettings>
+      <codeStyleSettings language="HSQLDB">
+        <indentOptions>
+          <option name="INDENT_SIZE" value="3" />
+          <option name="CONTINUATION_INDENT_SIZE" value="6" />
+          <option name="TAB_SIZE" value="3" />
+        </indentOptions>
       </codeStyleSettings>
       <codeStyleSettings language="HTML">
         <indentOptions>
@@ -295,6 +323,27 @@
           <option name="TAB_SIZE" value="3" />
         </indentOptions>
       </codeStyleSettings>
+      <codeStyleSettings language="MySQL">
+        <indentOptions>
+          <option name="INDENT_SIZE" value="3" />
+          <option name="CONTINUATION_INDENT_SIZE" value="6" />
+          <option name="TAB_SIZE" value="3" />
+        </indentOptions>
+      </codeStyleSettings>
+      <codeStyleSettings language="Oracle">
+        <indentOptions>
+          <option name="INDENT_SIZE" value="3" />
+          <option name="CONTINUATION_INDENT_SIZE" value="6" />
+          <option name="TAB_SIZE" value="3" />
+        </indentOptions>
+      </codeStyleSettings>
+      <codeStyleSettings language="PostgreSQL">
+        <indentOptions>
+          <option name="INDENT_SIZE" value="3" />
+          <option name="CONTINUATION_INDENT_SIZE" value="6" />
+          <option name="TAB_SIZE" value="3" />
+        </indentOptions>
+      </codeStyleSettings>
       <codeStyleSettings language="SASS">
         <indentOptions>
           <option name="INDENT_SIZE" value="3" />
@@ -310,6 +359,13 @@
         </indentOptions>
       </codeStyleSettings>
       <codeStyleSettings language="SQL">
+        <indentOptions>
+          <option name="INDENT_SIZE" value="3" />
+          <option name="CONTINUATION_INDENT_SIZE" value="6" />
+          <option name="TAB_SIZE" value="3" />
+        </indentOptions>
+      </codeStyleSettings>
+      <codeStyleSettings language="SQLite">
         <indentOptions>
           <option name="INDENT_SIZE" value="3" />
           <option name="CONTINUATION_INDENT_SIZE" value="6" />
@@ -334,6 +390,20 @@
         <option name="DOWHILE_BRACE_FORCE" value="3" />
         <option name="WHILE_BRACE_FORCE" value="3" />
         <option name="FOR_BRACE_FORCE" value="3" />
+        <indentOptions>
+          <option name="INDENT_SIZE" value="3" />
+          <option name="CONTINUATION_INDENT_SIZE" value="6" />
+          <option name="TAB_SIZE" value="3" />
+        </indentOptions>
+      </codeStyleSettings>
+      <codeStyleSettings language="Sybase">
+        <indentOptions>
+          <option name="INDENT_SIZE" value="3" />
+          <option name="CONTINUATION_INDENT_SIZE" value="6" />
+          <option name="TAB_SIZE" value="3" />
+        </indentOptions>
+      </codeStyleSettings>
+      <codeStyleSettings language="TSQL">
         <indentOptions>
           <option name="INDENT_SIZE" value="3" />
           <option name="CONTINUATION_INDENT_SIZE" value="6" />
@@ -767,7 +837,7 @@
     <file url="PROJECT" dialect="MySQL" />
   </component>
   <component name="SqlResolveMappings">
-    <file url="file://$PROJECT_DIR$/models/DeviceProperties.js" scope="{&quot;node&quot;:{  &quot;@negative&quot;:&quot;1&quot;,  &quot;group&quot;:{   &quot;@kind&quot;:&quot;root&quot;,   &quot;node&quot;:{    &quot;name&quot;:{     &quot;@name&quot;:&quot;8407a622-3086-4350-85e3-af669192afda&quot;,     &quot;@quoted&quot;:&quot;1&quot;    },    &quot;group&quot;:{     &quot;@kind&quot;:&quot;schema&quot;,     &quot;node&quot;:{      &quot;@negative&quot;:&quot;1&quot;     }    }   }  } }}" />
+    <file url="file://$PROJECT_DIR$/models/DeviceProperties.js" scope="{&quot;node&quot;:{  &quot;@negative&quot;:&quot;1&quot;,  &quot;group&quot;:{   &quot;@kind&quot;:&quot;root&quot;,   &quot;node&quot;:{    &quot;name&quot;:{     &quot;@qname&quot;:&quot;8407a622-3086-4350-85e3-af669192afda&quot;    },    &quot;group&quot;:{     &quot;@kind&quot;:&quot;schema&quot;,     &quot;node&quot;:{      &quot;@negative&quot;:&quot;1&quot;     }    }   }  } }}" />
     <file url="PROJECT" scope="{&quot;node&quot;:{  &quot;@negative&quot;:&quot;1&quot;,  &quot;group&quot;:{   &quot;@kind&quot;:&quot;root&quot;,   &quot;node&quot;:{    &quot;@negative&quot;:&quot;1&quot;   }  } }}" />
   </component>
   <component name="VcsDirectoryMappings">
@@ -782,7 +852,11 @@
       <case-sensitivity plain-identifiers="mixed" quoted-identifiers="mixed" />
       <secret-storage>master_key</secret-storage>
       <user-name>esdr_dev</user-name>
-      <introspection-schemas>*:esdr_dev</introspection-schemas>
+      <schema-mapping>
+        <introspection-scope>
+          <node kind="schema" qname="esdr_dev" />
+        </introspection-scope>
+      </schema-mapping>
     </data-source>
   </component>
   <component name="libraryTable">
