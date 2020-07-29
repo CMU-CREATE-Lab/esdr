@@ -1,4 +1,5 @@
 const httpStatus = require('http-status');
+const log = require('log4js').getLogger('esdr:routes:api:feed-route-helper');
 
 module.exports = function(FeedModel) {
 
@@ -14,7 +15,9 @@ module.exports = function(FeedModel) {
                                         typeof err.data.status !== 'undefined') {
                                        return res.jsendPassThrough(err.data);
                                     }
-                                    return res.jsendServerError("Failed to import data: " + err.message, null);
+                                    const message = "Failed to import data: " + err.message;
+                                    log.error(message);
+                                    return res.jsendServerError(message, null);
                                  }
 
                                  return res.jsendSuccess(importResult, httpStatus.OK); // HTTP 200 OK
