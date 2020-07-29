@@ -71,7 +71,8 @@
     <version value="1.0" />
   </component>
   <component name="JavaScriptLibraryMappings">
-    <file url="PROJECT" libraries="{@types/bcrypt, @types/body-parser, @types/compression, @types/cookie-parser, @types/express, @types/express-handlebars, @types/express-mysql-session, @types/express-serve-static-core, @types/express-session, @types/http-status, @types/mocha, @types/morgan, @types/mysql, @types/nconf, @types/nodemailer, @types/nodemailer-smtp-transport, @types/oauth2orize, @types/passport, @types/passport-http, @types/passport-http-bearer, @types/passport-local, @types/passport-oauth2-client-password, @types/qs, @types/rimraf, @types/serve-favicon, @types/string, @types/superagent, Generated files, jQuery 1.11.1, should-DefinitelyTyped}" />
+    <file url="file://$PROJECT_DIR$" libraries="{EnvironmentalSensorDataRepository/node_modules}" />
+    <file url="PROJECT" libraries="{@types/bcrypt, @types/body-parser, @types/bootstrap, @types/compression, @types/cookie-parser, @types/express, @types/express-handlebars, @types/express-mysql-session, @types/express-serve-static-core, @types/express-session, @types/handlebars-helpers, @types/http-status, @types/mocha, @types/morgan, @types/mysql, @types/nconf, @types/nodemailer, @types/nodemailer-smtp-transport, @types/oauth2orize, @types/passport, @types/passport-http, @types/passport-http-bearer, @types/passport-local, @types/passport-oauth2-client-password, @types/qs, @types/rimraf, @types/serve-favicon, @types/string, @types/superagent, EnvironmentalSensorDataRepository/node_modules, Generated files, bootstrap, handlebars.js, jquery, nimble, should-DefinitelyTyped}" />
     <includedPredefinedLibrary name="Node.js Core" />
   </component>
   <component name="JavaScriptSettings">
@@ -811,10 +812,10 @@
       <option name="workingDir" value="$FileDir$" />
       <envs />
     </TaskOptions>
-    <TaskOptions isEnabled="false">
+    <TaskOptions isEnabled="true">
       <option name="arguments" value="$ProjectFileDir$/public-templates -m -e hbs" />
       <option name="checkSyntaxErrors" value="true" />
-      <option name="description" value="Compiles Handlebars templates" />
+      <option name="description" />
       <option name="exitCodeBehavior" value="ERROR" />
       <option name="fileExtension" value="handlebars;hbs;mustache" />
       <option name="immediateSync" value="true" />
@@ -867,19 +868,6 @@
       </properties>
       <CLASSES>
         <root url="file://$PROJECT_DIR$/public/js/handlebars_templates.js" />
-      </CLASSES>
-      <JAVADOC />
-      <SOURCES />
-    </library>
-    <library name="jQuery 1.11.1" type="javaScript">
-      <properties>
-        <sourceFilesUrls>
-          <item url="file://$PROJECT_DIR$/public/lib/jquery/jquery-1.11.1.js" />
-        </sourceFilesUrls>
-      </properties>
-      <CLASSES>
-        <root url="file://$PROJECT_DIR$/public/lib/jquery/jquery-1.11.1.js" />
-        <root url="file://$PROJECT_DIR$/public/lib/jquery/jquery-1.11.1.min.js" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />
