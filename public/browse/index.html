@@ -15,7 +15,7 @@
   </div>
 
   <form class="tool-bar title-bar" id="search-box">
-    <input id="search-bar" type="search" autocomplete="off" placeholder=" (loading)" results="0" disabled>
+    <input id="search-bar" type="search" autocomplete="off" placeholder=" (loading)" results="0">
   </form>
   <div class="tool-bar title-bar" id="filter-title">
         <p>Search Result Filters</p>
@@ -41,7 +41,7 @@
     <div class="load" onclick="getNext()"><p id="loadP">Load next 50</p></div>
   </form>
   <div class="title-bar tool-bar" id="results-title">
-      <p>Results (<span style="font-size:12px">Showing 0 of 0</span>):</p>
+      <p>Results (<span style="font-size:12px" id="results-count">Showing 0 of 0</span><span style="font-size:12px" id="loading-text">, loading…</span>):</p>
   </div>
 
   <div class="tool-bar" id="channels"></div>
@@ -309,10 +309,11 @@
     //___________________ WebGL Variables: _____________________________________
 
     var feedLocList = {
-      latlng: [], //Mutated by WebGL and parameters added for
+      latlng: new Float32Array(0), // latlng stores coordinates as js array
+      color: new Float32Array(0),
       index: [], //WebGL buffer
-      color: []
     };
+
 
     var ALPHA = 0.50; //Initial page node alpha
     var COLOR_ALPHA = 1; //Alpha value for colored nodes
@@ -484,13 +485,22 @@
     }
 
     function addPlot(channel) {
+      if ((channel === undefined) || (channel.length < 1))
+      {
+        console.log("addPlot() called with invalid channel, ignoring.")
+        return
+      }
       var html = [];
       html.push('<div style="height:100px; width:100%; position:relative; border-bottom:1px solid black">');
       var plotName = 'plot' + plotCount;
       var yAxisName = 'yaxis' + plotCount;
+
+      // in case the proper name is not loaded, yet, display the channelId for the time being
+      var channelName = channelLabels[channel] || channel
+
       html.push('<div id="' + plotName + '" style="position:absolute; left:0px; top:0px; bottom:0px; right:30px"></div>');
       html.push('<div id="' + yAxisName + '" style="position:absolute; width:30px; top:0px; bottom:0px; right:0px"></div>');
-      html.push('<div style="position:absolute"><span style="cursor:pointer" onclick="removePlot(\'' + channel + '\')">☒</span> <font size=-1>' + channelLabels[channel] + '</font></div>');
+      html.push('<div style="position:absolute"><span style="cursor:pointer" onclick="removePlot(\'' + channel + '\')">☒</span> <font size=-1 id="plot-title-' + channel.replace('.', '-') + '">' + channelName + '</font></div>');
       html.push('</div>');
       $('#plots').append(html.join(''));
 
@@ -592,6 +602,11 @@
       var feeds = data.rows;
       var html = [];
 
+      // locally update the values as arrays
+      var latlng = Array.from(feedLocList.latlng || [])
+      var indices = feedLocList.index
+      var color = Array.from(feedLocList.color || [])
+
       for (var i = 0; i < feeds.length; i++) {
         var feed = feeds[i];
 
@@ -599,9 +614,9 @@
           var channels = Object.keys(feed.channelBounds.channels).sort();
 
           if (channels.length > 0) {
-            feedLocList.latlng.push(feed.latitude, feed.longitude);
-            feedLocList.index.push(feed.id);
-            feedLocList.color.push(0, 0, 1, ALPHA, 1, 0);
+            latlng.push(feed.latitude, feed.longitude);
+            indices.push(feed.id);
+            color.push(0, 0, 1, ALPHA, 1, 0);
           }
 
           allFeeds.push(feeds[i]);
@@ -613,22 +628,28 @@
             var label = feed.name + ' (' + feed.id + ').' + channel;
             var id = feed.id + '.' + channel;
             channelLabels[id] = label;
+
+            // replace plot title as the proper device info is loaded for linked plots
+            $('#plot-title-' + id.replace('.', '-')).text(label)
           }
         }
       }
       updateDisplaySensorsIds();  // keep displaySensorsIds in sync with displaySensors
 
+      // update data for drawing
+      feedLocList.latlng = new Float32Array(latlng);
+      feedLocList.color = new Float32Array(color);
+      feedLocList.index = indices
+      prepareSeries(gl, feedLocList);
+      window.onhashchange = loadHash;
+
+      updateSensors();
+
       if (data.totalCount <= max) {
-        // That was the last data.  Ready to process
+        // That was the last data, remove the loading stuff
         document.getElementById("loading").style['display'] = 'none';
-        feedLocList.latlng = new Float32Array(feedLocList.latlng);
-        feedLocList.color = new Float32Array(feedLocList.color);
-        initializeWebGL();
-        document.getElementById("loading").style['display'] = 'none';
-        loadHashInit();
-        window.onhashchange = loadHash;
+        document.getElementById("loading-text").style['display'] = 'none';
         enableSearch();
-        updateSensors();
       }
 
     }
@@ -738,13 +759,13 @@
       }
       //actually appending things
       if (numbDivs <= getNumbChannels()) {
-        $('#results-title p').replaceWith('<p>Results (<span style="font-size:12px">Showing ' +
-          numbDivs + " of " + numbChannels + '</span>):</p>');
+        $('#results-count').text('Showing ' +
+          numbDivs + " of " + numbChannels);
         $('#channels').append(html.join(''));
       }
     }
 
-    //sets dispalSensors to be a copy of allFeeds so that all sensors will be displayed
+    //sets displaySensors to be a copy of allFeeds so that all sensors will be displayed
     function resetDisplay() {
       displaySensors = [];
       for (var j = 0; j < allFeeds.length; j++) {
@@ -983,13 +1004,23 @@
     //~~~~~~~~~~~~~~~~~~~~ init() function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     function init() {
+
+      // moved these inits from when all data is loaded to beginning to support incremental loading
+      initializeWebGL();
+      loadHashInit();
+
       map.addListener('dragend', updateHash);
       map.addListener('zoom_changed', updateHash);
+
+      // this starts the first request for loading a list of ALL feeds, presumably to put them on the map
+      // loadFeeds then successively loads them... and this can take a loooong time
       $.ajax({
         url: ESDR_API_ROOT_URL + '/feeds',
         success: loadFeeds
       });
 
+      // remove keyboard focus from search bar on clicks anywhere in the document that aren't the search bar
+      // presumably to be able to use keyboard shortcuts for map etc?
       $(document).on('click', function(event) {
         if (!$(event.target).closest('#search-bar').length) {
           $('#search-bar').blur();
@@ -1000,26 +1031,29 @@
       
       $('#histogram-button').on('click', viewHistogram);
 
-      var timer = null;
+      var searchTimer = null;
 
+      // prevent submitting the search field from generating a POST request via the default mechanisms
+      // search is handled via JS instead
       document.getElementById('search-box').addEventListener('submit', function(e) {
         e.preventDefault();
       }, false);
 
       $('#search-bar').keyup(function() {
+        // wait 800ms after user is done typing to trigger processing search 
         if ($('#search-bar').val() == "") {
-          clearInterval(timer);
-          timer = null;
+          clearInterval(searchTimer);
+          searchTimer = null;
           updateSensors();
-        } else if (timer == null) {
-          timer = setTimeout(function() {
+        } else if (searchTimer == null) {
+          searchTimer = setTimeout(function() {
             updateSensors()
           }, 800)
         }
       }).keydown(function() {
-        if (timer) {
-          clearInterval(timer);
-          timer = null;
+        if (searchTimer) {
+          clearInterval(searchTimer);
+          searchTimer = null;
         }
       }).click(function() {
         $(this).focus();
@@ -1431,7 +1465,12 @@
     function removePlot(channel) {
       var plotIdx = channelToPlotIdx[channel];
       var plotName = 'plot' + plotIdx;
-      plotManager.getPlotContainer(plotName).removePlot(plotManager.getPlot(plotName));
+      var plot = plotManager.getPlot(plotName)
+      // how can this be null?
+      if (plotName)
+      {
+        plotManager.getPlotContainer(plotName).removePlot(plot);
+      }
       $('#plot' + plotIdx).parent().remove();
       delete plotScalers[plotIdx];
       $('input[name="' + channel + '"]').prop('checked', false);
