@@ -628,7 +628,7 @@
             var id = feed.id + '.' + channel;
             channelLabels[id] = label;
 
-            feed.channelLabels[channel] = id
+            feed.channelLabels[channel] = label
 
             // replace plot title as the proper device info is loaded for linked plots
             $('#plot-title-' + id.replace('.', '-')).text(label)
