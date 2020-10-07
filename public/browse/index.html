@@ -619,9 +619,8 @@
             color.push(0, 0, 1, ALPHA, 1, 0);
           }
 
-          allFeeds.push(feeds[i]);
-          displaySensors.push(feeds[i]);
-          allFeedNums.push(feeds[i].id);
+          // store labels on the feeds, too, for searching
+          feed.channelLabels = {}
 
           for (var c = 0; c < channels.length; c++) {
             var channel = channels[c];
@@ -629,9 +628,15 @@
             var id = feed.id + '.' + channel;
             channelLabels[id] = label;
 
+            feed.channelLabels[channel] = id
+
             // replace plot title as the proper device info is loaded for linked plots
             $('#plot-title-' + id.replace('.', '-')).text(label)
           }
+
+          allFeeds.push(feed);
+          displaySensors.push(feed);
+          allFeedNums.push(feed.id);
         }
       }
       updateDisplaySensorsIds();  // keep displaySensorsIds in sync with displaySensors
@@ -881,48 +886,53 @@
       var str = document.getElementById("search-bar").value;
       
       var searchRes = [];
-      //checks if search was empty
+      // checks if search was empty
+      // return -1 to indicate so
+      // if ((str.length < 1) || (str === '.')) {
       if (str.length < 1) {
         searchRes.push(-1);
         return searchRes;
       }
       
       var keywords = str.toLowerCase().split(" ");
+      var lowercaseStr = str.toLowerCase()
       //searchs feed and channel names together and adds the to the search results array
-      for (var j = 0; j < allFeeds.length; j++) {
+      for (let feed of allFeeds) {
         //quickly just search feed first
-        if (allFeeds[j].name.toLowerCase().indexOf(str.toLowerCase()) > -1){
-          searchRes.push(allFeeds[j]);
+        if (feed.name.toLowerCase().indexOf(lowercaseStr) > -1){
+          searchRes.push(feed);
           continue;
         }
-        
+        // also search for feedId
+        if (feed.id.toString() == str) {
+          searchRes.push(feed);
+          continue;
+        }
+
         // TODO(pdille): Do we want to check for ids too?
-        //combines feed name with channel name and searches that
-        let KeysArr = Object.keys(allFeeds[j].channelBounds.channels);
-        for (var ij = 0; ij < KeysArr.length; ij++) {
-          var searchMe = allFeeds[j].name.toLowerCase() + KeysArr[ij].toLowerCase();
+        // combines feed name with channel name and searches that
+
+        let matchingChannels = {}
+
+        for (let channelName of Object.keys(feed.channelLabels)) {
+          // checks keywords against channelId (deviceId.channelName)
+          let searchMe = feed.channelLabels[channelName].toLowerCase();
           if (searchKeywords(searchMe, keywords)) {
-            let testArr = [];
-            testArr.push(channels);
-            let channels5 = {
-              [KeysArr[ij]]: allFeeds[j].channelBounds.channels[KeysArr[ij]]
-            };
-            var objCloneOfSensor = JSON.parse(JSON.stringify(allFeeds[j]));
-            objCloneOfSensor.channelBounds.channels = channels5;
-            var addNewEntry = true;
-            for (var k = 0; k < searchRes.length; k++) {
-              if (searchRes[k].id == objCloneOfSensor.id) {
-                $.extend(true, searchRes[k], objCloneOfSensor);
-                addNewEntry = false;
-                break;
-              }
-            }
-            if (addNewEntry) {
-              searchRes.push(objCloneOfSensor);
-            }
+            matchingChannels[channelName] = feed.channelBounds.channels[channelName]
           }
         }
+
+        // if we found matched channels, clone feed object with matched channels only
+        if (Object.keys(matchingChannels).length)
+        {
+            var objCloneOfSensor = Object.assign({}, feed);
+            objCloneOfSensor.channelBounds.channels = matchingChannels;
+            searchRes.push(objCloneOfSensor)
+        }
+
       }
+
+      // -2 to indicate no results have been found
       if (searchRes.length < 1) {
         searchRes.push(-2);
       }
