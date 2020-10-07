@@ -1,17 +1,18 @@
 function drawPoints(gl, transform, series, from, to, settings) {
-  var program = series.program;
-  gl.useProgram(series.program);
+  var program = series.program
+
+  gl.useProgram(program)
 
   if (program.aPointSizeAttribLocation === undefined) {
-    program.aPointSizeAttribLocation = gl.getAttribLocation(series.program, 'aPointSize')
+    program.aPointSizeAttribLocation = gl.getAttribLocation(program, 'aPointSize')
   }
 
   if (program.mapMatrixUniformLocation === undefined) {
-    program.mapMatrixUniformLocation = gl.getUniformLocation(series.program, 'mapMatrix')
+    program.mapMatrixUniformLocation = gl.getUniformLocation(program, 'mapMatrix')
   }
 
   if (program.hardFractionUniformLocation === undefined) {
-    program.hardFractionUniformLocation = gl.getUniformLocation(series.program, 'hardFraction')
+    program.hardFractionUniformLocation = gl.getUniformLocation(program, 'hardFraction')
   }
 
   gl.vertexAttrib1f(program.aPointSizeAttribLocation, settings.pointSize);
@@ -26,8 +27,8 @@ function drawPoints(gl, transform, series, from, to, settings) {
   // TODO(rsargent): make sure hardFraction is at least 1 pixel less than 100% for antialiasing
   gl.uniform1f(program.hardFractionUniformLocation, settings.hardFraction);
 
-  // draw!
-  gl.drawArrays(gl.POINTS, from, to);
+  // drawArrays takes (start, count) params, not (to, from)
+  gl.drawArrays(gl.POINTS, from, to-from);
 }
 
 // Converts from latlng to xy, and create WebGL buffer
