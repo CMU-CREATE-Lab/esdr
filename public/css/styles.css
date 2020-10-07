@@ -138,8 +138,8 @@
       }
 
       #search-bar:focus{
-        background-color: rgba(130,130,130, .75);
-        color: white;
+        /*background-color: rgba(130,130,130, .75);*/
+        color: black;
       }
 
       .load{
