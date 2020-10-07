@@ -33,8 +33,8 @@ function drawPoints(gl, transform, series, from, to, settings) {
 
 // Converts from latlng to xy, and create WebGL buffer
 function prepareSeries(gl, series, settings) {
-  // Reuse latlng array for x, y
-  series.xy = series.latlng;
+  // just create a new array copying latlng
+  series.xy = new Float32Array(series.latlng);
   for (var i = 0; i < series.latlng.length; i += 2) {
       var lat = series.latlng[i];
       var lon = series.latlng[i + 1];
@@ -42,7 +42,7 @@ function prepareSeries(gl, series, settings) {
       series.xy[i] = pixel.x;
       series.xy[i + 1] = pixel.y;
   }
-  delete series.latlng;
+
   series.glBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, series.glBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, series.xy, gl.STATIC_DRAW);
