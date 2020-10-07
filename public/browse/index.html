@@ -41,7 +41,7 @@
     <div class="load" onclick="getNext()"><p id="loadP">Load next 50</p></div>
   </form>
   <div class="title-bar tool-bar" id="results-title">
-      <p>Results (<span style="font-size:12px" id="results-count">Showing 0 of 0</span><span style="font-size:12px" id="loading-text">, loading…</span>):</p>
+      <p>Results (<span style="font-size:12px" id="results-count">0 of 0</span><span style="font-size:12px" id="loading-text">, loading…</span>):</p>
   </div>
 
   <div class="tool-bar" id="channels"></div>
@@ -644,6 +644,8 @@
       window.onhashchange = loadHash;
 
       updateSensors();
+      var percentComplete = 100.0*max/data.totalCount
+      $('#loading-text').text(', ' + percentComplete.toFixed(1) + '% loaded…')
 
       if (data.totalCount <= max) {
         // That was the last data, remove the loading stuff
@@ -759,8 +761,7 @@
       }
       //actually appending things
       if (numbDivs <= getNumbChannels()) {
-        $('#results-count').text('Showing ' +
-          numbDivs + " of " + numbChannels);
+        $('#results-count').text(numbDivs + " of " + numbChannels);
         $('#channels').append(html.join(''));
       }
     }
