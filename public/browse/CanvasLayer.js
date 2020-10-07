@@ -402,8 +402,9 @@ CanvasLayer.prototype.resize_ = function() {
 
   // resizing may allocate a new back buffer, so do so conservatively
   if (oldWidth !== width || oldHeight !== height) {
-    this.canvas.width = width;
-    this.canvas.height = height;
+    let scale = window.devicePixelRatio ? window.devicePixelRatio : 1.0
+    this.canvas.width = width*scale;
+    this.canvas.height = height*scale;
     this.canvas.style.width = width + 'px';
     this.canvas.style.height = height + 'px';
 

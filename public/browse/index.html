@@ -2648,7 +2648,9 @@
       // Erase frame
       gl.clear(gl.COLOR_BUFFER_BIT);
 
-      var pointSize = .75 * countryPointSizePixels * Math.pow(blockPointSizePixels / countryPointSizePixels, (map.zoom - 4) / (18 - 4));
+      let pixelScale = window.devicePixelRatio ? window.devicePixelRatio : 1.0
+
+      var pointSize = pixelScale*(.75 * countryPointSizePixels * Math.pow(blockPointSizePixels / countryPointSizePixels, (map.zoom - 4) / (18 - 4)));
 
       currentPointSize = pointSize;
 
@@ -2683,6 +2685,8 @@
     }
 
     function resize() {
+      let scale = window.devicePixelRatio ? window.devicePixelRatio : 1.0
+
       var w = canvasLayer.canvas.width;
       var h = canvasLayer.canvas.height;
 
@@ -2690,8 +2694,8 @@
       gl.viewport(0, 0, w, h);
 
       // Map canvas pixel coordinates to WebGL coordinates
-      pixelsToWebGLMatrix.set([2 / w, 0, 0, 0,
-        0, -2 / h, 0, 0,
+      pixelsToWebGLMatrix.set([2 / w*scale, 0, 0, 0,
+        0, -2 / h*scale, 0, 0,
         0, 0, 1, 0,
         -1, 1, 0, 1
       ]);
@@ -2699,6 +2703,9 @@
 
     // Find closest elements to click location, but filter to only include sensors which are currently visible.
     function findClosestVisibleElements(pixelXY, maxDistInPixels) {
+      let scale = window.devicePixelRatio ? window.devicePixelRatio : 1.0
+      pixelXY.x *= scale
+      pixelXY.y *= scale
       return findClosestElements(gl, mapMatrix, feedLocList, pixelXY, maxDistInPixels).filter(function(sensor) {
         var feed = allFeeds[sensor.i];
         if (feed && 'id' in feed) {
