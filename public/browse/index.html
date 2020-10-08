@@ -38,7 +38,7 @@
   </div>
   <form class="tool-bar" id="clear-button">
     <div id="clear-button-div" onclick="clearFilters()" title="resets map to show all channels"><p>Clear Search Filters</p></div>
-    <div class="load" onclick="getNext()"><p id="loadP">Load next 50</p></div>
+    <div class="load" onclick="getMoreSearchResults()"><p id="loadP">Load more…</p></div>
   </form>
   <div class="title-bar tool-bar" id="results-title">
       <p>Results (<span style="font-size:12px" id="results-count">0 of 0</span><span style="font-size:12px" id="loading-text">, loading…</span>):</p>
@@ -342,7 +342,6 @@
     var numbDivs = 0; // keeps track of the number of divs being displayed
     var numbLoad = 10000; // the number of divs to be loaded per time more divs loading button is clicked
     var chanNames = []; // keeps track of labels for sensors that meet checked box criteria
-    var placeInChanNames = 0; // keeps track of place to strat in update for loop for chanNames array
     var chanNamesExisted = false; //becomes true if chanNames is altered as this may make it seem like it was never changed for the initial state of [] so this
     //is used to see if there are no things that meet request not just the array was always empty
     //aliases used to have concrete names for channels which have names that vary
@@ -664,8 +663,9 @@
 
     //Andrew's functions---------------------------------------------------------------------
 
-    //Orginally had more content now is just calls appendSensors
-    function getNext() {
+    // update number of requested divs and append list
+    function getMoreSearchResults() {
+      gUpdateSensorsCache.requestedDivs += numbLoad
       appendSensors();
 
     }
@@ -673,12 +673,10 @@
     // returns the number of channels on the displaySensor array
     function getNumbChannels() {
       var numb = 0;
-      var counted = 0;
-      displaySensors.forEach(function(sen, ind) {
-        var keys = Object.keys(sen.channelBounds.channels);
+      for (let feed of displaySensors) {
+        var keys = Object.keys(feed.channelBounds.channels);
         numb += keys.length;
-        counted++;
-      });
+      };
       return numb;
     }
 
@@ -713,79 +711,101 @@
     function appendSensors() {
       var html = [];
       var first = true;
-      var countChans = 0;
-      var count2 = 0;
-      var numbChannels = getNumbChannels();
       //checks to see if there are just no channels that meet request
-      if (chanNamesExisted && chanNames.length < 1) {
-        numbChannels = 0;
-      } else {
-        //for loop of sensors starts on last used sensor
-        for (var i = feedPlaceHolder; i < displaySensors.length; i++) {
-          var feed = displaySensors[i];
-          var keys = Object.keys(feed.channelBounds.channels);
-          //for loop of a sensors channels starts after the last logged channel
-          for (var k = channelPlaceHolder; k < keys.length; k++) {
-            var holder;
-            //makes sure only numbLoad divs are loaded with each call
-            if (countChans < numbLoad) {
-              channelPlaceHolder = 0;
-              //if the channels search has created an array of labels i need to only look through that
-              if (chanNames.length > 0) {
-                numbChannels = chanNames.length;
-                for (var ic = placeInChanNames; ic < chanNames.length; ic++) {
-                  if (count2 < numbLoad) {
-                    holder = makeDiv(keys[k], displaySensors[i], chanNames[ic]);
-                    html.push(holder);
-                    numbDivs++;
-                    placeInChanNames++;
-                    count2++;
-                    countChans++;
-                  }
-                }
-              } else {
-                //when channels haven't been made
-                placeInChanNames = 0;
-                holder = makeDiv(keys[k], displaySensors[i]);
-                html.push(holder);
-                numbDivs++;
-              }
-            } else {
-              //the else is when numbLoad divs have been made so we dont need more
-              if (first) {
-                //tracks where the last div was appended so it can start here in the future
-                channelPlaceHolder = k;
-                feedPlaceHolder = i;
-                first = false;
-              }
-            }
-            countChans += 1;
+
+      //for loop of sensors starts on last used sensor
+      for (var i = feedPlaceHolder; i < displaySensors.length; i++) {
+
+        if (numbDivs >= gUpdateSensorsCache.requestedDivs)
+        {
+          break
+        }
+
+        feedPlaceHolder = i
+
+        // update the global counter to know where to pick up loading more data
+
+        var feed = displaySensors[i];
+        var keys = Object.keys(feed.channelBounds.channels);
+        //for loop of a sensors channels starts after the last logged channel
+        for (var k = channelPlaceHolder; k < keys.length; k++) {
+          //makes sure only numbLoad divs are loaded with each call
+          if (numbDivs >= gUpdateSensorsCache.requestedDivs)
+          {
+            feedPlaceHolder = i
+            channelPlaceHolder = k
+            break
+          }
+          else
+          {
+            channelPlaceHolder = 0
+            feedPlaceHolder = i+1
           }
 
+          // we don't have channel names to check
+          var content = makeDiv(keys[k], feed);
+          html.push(content);
+          numbDivs++;
         }
       }
+
       //actually appending things
-      if (numbDivs <= getNumbChannels()) {
-        $('#results-count').text(numbDivs + " of " + numbChannels);
-        $('#channels').append(html.join(''));
-      }
+      updateResultsCount(numbDivs, getNumbChannels())
+      $('#channels').append(html.join(''));
+    }
+
+    function updateResultsCount(currentCount, maxCount) {
+      $('#results-count').text(currentCount + " of " + maxCount);
     }
 
     //sets displaySensors to be a copy of allFeeds so that all sensors will be displayed
     function resetDisplay() {
-      displaySensors = [];
-      for (var j = 0; j < allFeeds.length; j++) {
-        displaySensors.push(allFeeds[j]);
-      }
+      displaySensors = Array.from(allFeeds);
+
       updateDisplaySensorsIds();  // keep displaySensorsIds in sync with displaySensors
     }
 
+    // cache things that influence what sensors we're showing to not have to rebuild the 10k long list on every update
+    var gUpdateSensorsCache = {
+      searchString: "",
+      channelFilter: [],
+      feedCount: 0,
+      noSearchResults: true,
+      noSearchQuery: true,
+      requestedDivs: numbLoad,
+    }
     //updates what needs to be displayed then displays it
     function updateSensors() {
       var t0 = performance.now(); //times this function
-      resetDisplay(); //sets displaySensors back to show all sensors
-      searchSensors = searchJSON(); //array of sensors that meets search bar parameters
-      channelSensors = searchChannel(); //array of sensors that meets checked box parameters
+      //resetDisplay(); //sets displaySensors back to show all sensors
+
+      // check if number of feeds increased (this means more have been loaded)
+      let feedCount = allFeeds.length
+      let feedCountChanged = (feedCount != gUpdateSensorsCache.feedCount)
+      let feedCountIncreased = (feedCount > gUpdateSensorsCache.feedCount)
+      gUpdateSensorsCache.feedCount = feedCount
+
+      // check if search string has changed
+      let searchString = document.getElementById("search-bar").value
+      let searchStringChanged = (searchString != gUpdateSensorsCache.searchString)
+      gUpdateSensorsCache.searchString = searchString
+
+      // check if channel filters have changed
+      let checkedChannelFilterKeys = Object.keys(checks).filter(key => checks[key].checked)
+      let channelFilterChanged = !((checkedChannelFilterKeys.length === gUpdateSensorsCache.channelFilter.length) && checkedChannelFilterKeys.every((value, index) => value === gUpdateSensorsCache.channelFilter[index]))
+      gUpdateSensorsCache.channelFilter = checkedChannelFilterKeys
+
+      if (!feedCountChanged && !searchStringChanged && !channelFilterChanged)
+      {
+        // if nothing changed, return because we have nothing else to do
+        return
+      }
+
+      // maybe we do append only
+      let appendOnly = feedCountIncreased && !searchStringChanged && !channelFilterChanged
+
+      searchSensors = searchJSON(searchString); //array of sensors that meets search bar parameters
+      channelSensors = searchChannel(checkedChannelFilterKeys); //array of sensors that meets checked box parameters
       let holdArr = []; //used to swap chanNames
       //if chanNames has been created and a search was input then chanNames needs to be refined to meet the search bar
       if (searchSensors.length > 0 && chanNames.length > 0) {
@@ -799,20 +819,24 @@
         }
         chanNames = holdArr;
       }
-      var none = false;
-      var none2 = false;
+      var noSearchQuery = false;
+      var noSearchResults = false;
       //used to tell the difference between no resualts found and no query in put
       //if the condition was met no no input was used in the search
       if (searchSensors.length > 0 && searchSensors[0] == -1) {
         searchSensors = [];
         //used later to set displaySensors=[]
-        none = true;
+        noSearchQuery = true;
       }
       if (searchSensors.length > 0 && searchSensors[0] == -2) {
         searchSensors = [];
         //used later to set displaySensors=[]
-        none2 = true;
+        noSearchResults = true;
       }
+
+      // the next section creates an intersection of the sensor search and channel filter results
+      // eg, if both are used, compat will end up containing sensors that match both criteria
+
       var compat = [];
       var short;
       var long;
@@ -840,32 +864,50 @@
           compat = long;
         }
       }
-      //if none is true then no input to search was used so all that matters is the channel search
-      if (none) {
+
+      //if noSearchQuery is true then no input to search was used so all that matters is the channel search
+      if (noSearchQuery) {
         //if the channel search was not used dont change displaySensors
         if (channelSensors.length > 0) {
           displaySensors = channelSensors;
-          updateDisplaySensorsIds();  // keep displaySensorsIds in sync with displaySensors
         }
-      } else {
+        else
+        {
+          displaySensors = Array.from(allFeeds)
+        }
+        updateDisplaySensorsIds();  // keep displaySensorsIds in sync with displaySensors
+      } else if (false == noSearchResults) {
         //no special cases happened so uses the matches
         if (compat.length > 0) {
           displaySensors = compat;
           updateDisplaySensorsIds();  // keep displaySensorsIds in sync with displaySensors
         }
       }
-      if (none2) {
+      else if (noSearchResults) {
         displaySensors = [];
         updateDisplaySensorsIds();  // keep displaySensorsIds in sync with displaySensors
       }
+
       var t1 = performance.now(); //used for timing
-      console.log("Timing " + (t1 - t0))
-      channelPlaceHolder = 0;
-      feedPlaceHolder = 0;
-      numbDivs = 0;
-      placeInChanNames = 0;
-      document.getElementById("channels").innerHTML = "";
-      appendSensors();
+      console.log("updateSensors() search phase took " + (t1 - t0)) + "s"
+      // reset channels
+      if (!appendOnly)
+      {
+        gUpdateSensorsCache.requestedDivs = numbLoad
+        numbDivs = 0
+        channelPlaceHolder = 0
+        feedPlaceHolder = 0
+        document.getElementById("channels").innerHTML = ""
+      }
+      if (numbDivs < gUpdateSensorsCache.requestedDivs)
+      {
+        appendSensors();
+      }
+      else
+      {
+        updateResultsCount(numbDivs, getNumbChannels())
+      }
+
       searchAttributes();
     }
     
@@ -881,9 +923,7 @@
     }
 
     //searches sensors based on content of the search bar returns array
-    function searchJSON() {
-      //gets content of search bar which is what will be checked for in latter strings
-      var str = document.getElementById("search-bar").value;
+    function searchJSON(str) {
       
       var searchRes = [];
       // checks if search was empty
@@ -941,19 +981,15 @@
 
 
     //searches sensors to see if they have a channel which matches checked box inputs
-    function searchChannel() {
+    function searchChannel(checkedKeys) {
       chanNames = [];
       chanNamesExisted = false;
       var resArr = [];
-      var keys = Object.keys(checks);
-      for (var j = 0; j < allFeeds.length; j++) {
-        for (var i = 0; i < keys.length; i++) {
-          var x = checks[keys[i]];
-          if (x.checked) {
-            //the rest of this method ifor itteration hasChannel actually checks for valid channels
-            if (hasChannel(allFeeds[j], keys[i])) {
-              resArr.push(allFeeds[j]);
-            }
+      for (let feed of allFeeds) {
+        for (let key of checkedKeys) {
+          //the rest of this method ifor itteration hasChannel actually checks for valid channels
+          if (hasChannel(feed, key)) {
+            resArr.push(feed);
           }
         }
 
