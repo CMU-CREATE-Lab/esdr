@@ -484,6 +484,7 @@
     }
 
     function addPlot(channel) {
+      // channel is in the format of feedId.channelName
       if ((channel === undefined) || (channel.length < 1))
       {
         console.log("addPlot() called with invalid channel, ignoring.")
@@ -703,7 +704,9 @@
       //old way divs were structed vs new way
       //var aDiv='<div class="sensors" style="margin-left: 3px" id='+idHashTag+'-'+channel+'> <label> <input type="checkbox" onclick="clickChannel(this)" data='+label+'name="' + id +'">' + label + '<br></label></div>';
 
-      var aDiv = '<div class="sensors" style="margin-left: 3px" id=' + idHashTag + '-' + channel + '> <label> <input type="checkbox" onclick="clickChannel(this)"data="' + label + '"name="' + id + '">' + label + '<br></label></div>';
+      let checked = (channelToPlotIdx[id] !== undefined)
+
+      var aDiv = '<div class="sensors" style="margin-left: 3px" id=' + idHashTag + '-' + channel + '> <label> <input type="checkbox" ' + (checked ? ' checked ' : ' ') + 'onclick="clickChannel(this)" data="' + label + '"name="' + id + '">' + label + '<br></label></div>';
       return aDiv;
     }
 
