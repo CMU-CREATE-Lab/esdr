@@ -268,8 +268,8 @@
       }
 
       #channels{
-        height: calc(100% - 174px);
-        bottom: 0px;
+        height: calc(100% - 174px - 35px);
+        bottom: 35px;
         margin-bottom: 0px;
         font-size:10px;
         overflow-y:auto;
