@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<style>
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+input[type="search"] {
+  -webkit-appearance: textfield;
+}
+
+.sidebar {
+
+  width: 0px;
+  position: fixed;
+  z-index: 1;
+  /*use top and bottom instead of height attribute to make it fill the screen vertically*/
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background-color: #EEE;
+  font-family: sans-serif;
+  overflow-x: hidden;
+  /*overflow-y: scroll;*/
+  box-shadow: 1px 0px 1px rgba(0,0,0, 0.1);
+  transition: 0.3s;
+  /*padding-top: 60px;*/
+}
+
+.sidebar .search-results {
+  font-size: small;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  overflow-y: scroll;
+  height: 100%;
+}
+
+
+.sidebar a {
+  /*padding: 8px 8px 8px 32px;*/
+  text-decoration: none;
+  font-size: large;
+  /*background-color: #818181;*/
+  display: block;
+  transition: 0.3s;
+}
+
+.sidebar a:hover {
+  color: #f1f1f1;
+}
+
+.floaty-search {
+  position: fixed;
+  /*align-items: middle;*/
+  top: 0px;
+  left: 0px;
+  margin: 0.5em;
+  z-index: 1;
+  float: right;
+  /*display: table-row;*/
+  /*font-size: 20px;*/
+  background-color: #e7f3ff;
+  color: black;
+  padding: 5px 5px;
+  /*border-width: 1px;*/
+  /*border: 0.5px solid #777;*/
+  border-radius: 3px;
+  box-shadow: 0px 1px 1px rgba(0,0,0,0.1);
+  font-family: sans-serif;
+}
+
+.searchbar {
+  display: flex;
+  align-items: center;
+  /*background-color: #777;*/
+}
+
+.searchbar-button {
+  /*float: left;*/
+  vertical-align: middle;
+/*  font-size: 20px;
+  cursor: pointer;
+*/  
+  font-size: large;
+  height: inherit;
+  background-color: inherit;
+  /*background-color: #EEE;*/
+  display: inline;
+  /*color: white;*/
+  /*padding: 10px 15px;*/
+  border: none;
+  cursor: pointer;
+/*  padding: 0px;
+  margin: 0px;
+*/
+  text-align: center;
+}
+
+.searchbar-divider {
+  display: inline-block;
+  height: 1.5em;
+  width: 1px;
+  background-color: rgba(0,0,0,0.2);
+}
+
+.search-text {
+  border-radius: 3px;
+  border: 0px solid rgba(0,0,0,0.2);
+  box-shadow: 0px 0px 1px rgba(0,0,0,0.1);
+  font-size: large;
+}
+
+.search-filters {
+  height: 0px;
+  overflow: hidden;
+  /*display: none;*/
+  transition: 0.3s;
+}
+
+.search-progress-block {
+  height: 0px;
+  overflow: hidden;
+  transition: 0.3s
+}
+
+.search-result-feed-block {
+  background-color: #FDD;
+}
+.search-result-channel-block {
+  background-color: #FDF;
+}
+
+.graphs {
+  height: 0px;
+  overflow-y: scroll;
+  /*display: none;*/
+  transition: 0.3s;
+}
+
+.googlemap {
+  /*display: inline-block;*/
+/*  position: absolute;
+  top: 0px;
+  bottom: 0px;
+*/  height: 100%;
+  /*min-height: 100%;*/
+  transition: 0.3s;
+}
+
+
+#main {
+  transition: margin-left .3s;
+  /*padding: 16px;*/
+  height: 100%;
+}
+
+
+
+/* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
+@media screen and (max-height: 450px) {
+  .sidebar {padding-top: 15px;}
+  .sidebar a {font-size: 18px;}
+}
+</style>
+</head>
+<body>
+
+<div id="searchSidebar" class="sidebar">
+    <div id="searchResultsList" class="search-results"></div>
+</div>
+
+<div id="searchBlock" class="floaty-search">
+  <div class="searchbar">
+  <button class="searchbar-button" onclick="toggleSidebar()">☰</button>
+  <div class="searchbar-divider"></div>
+  <button class="searchbar-button" onclick="toggleFilters()">&gt;</button>
+  <!-- <div class="searchbar-divider"></div> -->
+  <input type="search" class="search-text" placeholder="search sensor feeds">
+  <!-- <div class="searchbar-divider"></div> -->
+  <button class="searchbar-button" onclick="doSensorSearch()">Search</button>
+  </div>
+  <div id="progressBlock" class="search-progress-block">
+    <div id="searchProgressText">Lorem Searchum</div>
+  </div>
+  <div id="filtersBlock" class="search-filters">
+    <div>Filter 1</div>
+    <div>Filter 2</div>
+  </div>
+</div>
+
+
+
+<div id="main">
+  <!-- <button class="open-button" onclick="openSidebar()">☰ Open Sidebar</button>   -->
+<!--   <h2>Collapsed Sidebar</h2>
+  <p>Click on the hamburger menu/bar icon to open the sidebar, and push this content to the right.</p>
+ -->  
+  <div id="googlemap" class="googlemap"></div>
+  <!-- <div id="graphs"></div> -->
+</div>
+
+<script src="esdrFeeds.js"></script>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjVZHnH5L8ty50awHChDGdtJ5ZHqCFc-Y&callback=initMap" defer></script>
+
+<script>
+
+let gMap // google map instance
+let esdr = new ESDR() // interface to ESDR data
+let gSearchResults = {
+  results: [],
+}
+
+function initMap() {
+  let mapdiv = document.getElementById('googlemap');
+  gMap = new google.maps.Map(
+    document.getElementById('googlemap'),
+    {
+      zoom: 5,
+      center: new google.maps.LatLng(49.35720091782239, -92.91969375610346),
+
+      streetViewControl: false,
+      fullscreenControl: false,
+
+      mapTypeControlOptions: {
+        position: google.maps.ControlPosition.TOP_RIGHT,
+      },
+
+    }
+  );
+
+  // parse the url hash part
+  parseUrlParams()
+
+  // install search results callback
+  esdr.searchCallback = (searchResults, isAppendUpdate) => processNewSearchResults(searchResults, isAppendUpdate)
+  // start loading feed data
+  esdr.loadFeeds(esdrFeedsReceived)
+  //
+
+  // install scroll listener
+  let searchResultsList = document.getElementById("searchResultsList")
+  searchResultsList.addEventListener('scroll', () => {
+    appendSearchResultsListIfNeeded()
+  })
+}
+
+
+function parseUrlParams() {
+  let browserParams = new URLSearchParams(window.location.hash.slice(1))
+
+  if (browserParams.has("channels")) {
+    let channelIds = browserParams.get("channels").split(",").filter((word) => word.length > 0)
+    for (channelId of channelIds) {
+      esdr.selectChannelWithId(channelId, true)
+    }
+  }
+
+  if (browserParams.has("time")) {
+    let times = browserParams.get("time").split(",")
+    gSearchResults.startTime = times[0]
+    gSearchResults.endTime = times[1]
+  }
+
+  if (browserParams.has("zoom")) {
+    gSearchResults.zoom = browserParams.get("zoom")
+  }
+
+  if (browserParams.has("cursor")) {
+    gSearchResults.cursorTime = browserParams.get("cursor")
+  }
+
+  if (browserParams.has("center")) {
+    let latlon = browserParams.get("center").split(",")
+    gSearchResults.center = {latitude: latlon[0], longitude: latlon[1]}
+  }
+}
+
+function createUrlParams() {
+  let browserParams = new URLSearchParams()
+
+  if (esdr.selectedChannelIds.length > 0) {
+    browserParams.set("channels", esdr.selectedChannelIds.join(','))
+  }
+
+  return browserParams
+}
+
+function updateUrlHash() {
+  let params = createUrlParams()
+  // as URLSearchParams escapes commas, finally replace the escaped commas with human readable commas again
+  window.location.hash = `#${params.toString().replace(/%2C/gi,',')}`
+}
+
+
+function adjustSidebarTopPadding(adjustment) {
+  let searchBlock = document.getElementById("searchBlock")
+  let searchStyle = window.getComputedStyle(searchBlock)
+  let sidebar = document.getElementById("searchSidebar")
+
+  sidebar.style.paddingTop = `calc(${searchBlock.offsetHeight}px + ${searchStyle.marginTop} + ${searchStyle.marginBottom} + (${adjustment}))`
+
+}
+
+
+
+function toggleSidebar() {
+  let searchBlock = document.getElementById("searchBlock")
+  let searchStyle = window.getComputedStyle(searchBlock)
+  let sidebar = document.getElementById("searchSidebar")
+  let mainBlock = document.getElementById("main")
+
+  if (!sidebar.style.width || sidebar.style.marginLeft !== "0px") {
+    // set the widths to show sidebar
+    let blockWidth = searchBlock.scrollWidth + 'px'
+    let margin = `${searchStyle.marginLeft} + ${searchStyle.marginRight}`
+    let width = `${margin} + ${blockWidth}`
+    sidebar.style.width = `calc(${width})`
+    sidebar.style.left = `0px`
+    sidebar.style.marginLeft = `0px`
+    mainBlock.style.marginLeft = `calc(${width})`
+
+  }
+  else {
+    sidebar.style.marginLeft = `calc(0px - (${sidebar.style.width}))`
+    // sidebar.style.width = "0px"
+    mainBlock.style.marginLeft = "0px"
+  }
+
+  // make sure top padding exludes search box
+  adjustSidebarTopPadding('0px')
+}
+
+function toggleFilters() {
+  let filtersBlock = document.getElementById("filtersBlock")
+  let adjustment = 0
+  if (!filtersBlock.style.height || filtersBlock.style.height === "0px") {
+    adjustment = `${filtersBlock.scrollHeight}px`
+    filtersBlock.style.height = filtersBlock.scrollHeight + 'px'
+  }
+  else {
+    adjustment = `-${filtersBlock.scrollHeight}px`
+    filtersBlock.style.height = "0px"
+  }
+
+  adjustSidebarTopPadding(adjustment)
+
+}
+
+function updateEsdrLoadProgress(numFeedsReceived, numFeedsTotal) {
+  let progressBlock = document.getElementById("progressBlock")
+  let progressText = document.getElementById("searchProgressText")
+  progressText.textContent = `Loading, received ${numFeedsReceived} of ${numFeedsTotal} feeds…`
+
+
+  let adjustment = 0
+  if (!progressBlock.style.height || progressBlock.style.height === "0px")
+  {
+    adjustment = `${progressBlock.scrollHeight}px`
+    progressBlock.style.height = progressBlock.scrollHeight + 'px'
+  }
+  else if (numFeedsReceived == numFeedsTotal)
+  {
+    adjustment = `-${progressBlock.scrollHeight}px`
+    progressBlock.style.height = "0px"
+  }
+
+  adjustSidebarTopPadding(adjustment)
+
+}
+
+function esdrFeedsReceived(feedIds, progress) {
+  
+  updateEsdrLoadProgress(progress.current, progress.total)
+
+
+  let newDivs = []
+  for (let feedId of feedIds) {
+    let feed = esdr.feeds[feedId]
+    if (feed && feed.channelBounds && feed.channelBounds.channels)
+    {
+      for (let channelName in feed.channelBounds.channels) {
+        let div = searchResultsDivForChannel(feed.id, channelName)
+        newDivs.push(div)
+      }
+    }
+
+  }
+
+  let searchResultsList = document.getElementById("searchResultsList")
+  for (div of newDivs)
+  {
+    if (searchResultsList.children.length < 1000)
+      searchResultsList.appendChild(div)
+  }
+}
+
+function processNewSearchResults(newResults, isAppendUpdate) {
+  // this function receives a list of search results in the {feedId: , channelNames:} format
+  // if isAppendUpdate is true, this is an incremental search result, and results can be appended
+  // otherwise clear search results list
+
+
+  let searchResultsList = document.getElementById("searchResultsList")
+
+  // remove previous results on full update
+  if (!isAppendUpdate) {
+    clearSearchResultsList()
+    gSearchResults.results = []
+  }
+
+  gSearchResults.results = gSearchResults.results.concat(newResults)
+
+  appendSearchResultsListIfNeeded(newResults)
+}
+
+function clearSearchResultsList() {
+  let searchResultsList = document.getElementById("searchResultsList")
+  while (searchResultsList.childElementCount) {
+    searchResultsList.removeChild(searchResultsList.lastChild)
+  }
+
+}
+
+function appendSearchResultsListBy(results) {
+  // this function just adds more entries to the search results
+
+
+  let feedDivs = []
+  for (let result of results) {
+    let feedId = result.feedId
+    let feed = esdr.feeds[feedId]
+    let feedDiv = searchResultsDivForFeed(feedId)
+    if (feed && feed.channelBounds && feed.channelBounds.channels)
+    {
+      let channelDivs = []
+      for (let channelName in feed.channelBounds.channels) {
+        let chdiv = searchResultsDivForChannel(feedId, channelName)
+        channelDivs.push(chdiv)
+      }
+
+      for (let chdiv of channelDivs) {
+        feedDiv.appendChild(chdiv)
+      }
+    }
+    feedDivs.push(feedDiv)
+
+  }
+
+  let searchResultsList = document.getElementById("searchResultsList")
+
+  for (div of feedDivs)
+  {
+    searchResultsList.appendChild(div)
+  }
+}
+
+function appendSearchResultsListIfNeeded() {
+  let searchTotal = gSearchResults.results.length
+
+  let results = gSearchResults.results.slice(searchResultsList.children.length)
+
+  // if we have items to be added
+  if (results.length > 0)
+  {
+    let shouldAppend = false
+    if (searchResultsList.children.length > 0)
+    {
+      // if the last item is less than 100px from the bottom, append some more
+      let itemBottom = searchResultsList.children[searchResultsList.children.length-1].getBoundingClientRect().bottom;
+      let containerBottom = searchResultsList.getBoundingClientRect().bottom;
+      shouldAppend = itemBottom - containerBottom < 100
+    }
+    else
+    {
+      shouldAppend = true
+    }
+
+    if (shouldAppend)
+    {
+      // add at least 20, at most 1000 based on the length of the list already
+      // cap to the number of actually available results
+      let addCount = Math.min(results.length, Math.min(1000, Math.max(20, Math.floor(searchTotal*0.5))))
+      appendSearchResultsListBy(results.slice(0, addCount))
+    }
+    // console.log(`${itemBottom} of ${containerBottom}`)
+  }
+
+
+}
+
+
+
+function labelForChannel(feedId, channelName) {
+  let feed = esdr.feeds[feedId] ? `${esdr.feeds[feedId].name} ` : ""
+  let label = `${feed}(${feedId}).${channelName}`
+  return label
+}
+
+function searchResultsDivForFeed(feedId) {
+  let feed = esdr.feeds[feedId]
+  let label = `${feed.name} (${feedId})`
+
+  let div = document.createElement("div")
+  div.setAttribute("id", `feed-${feedId}`)
+  div.setAttribute("class", "search-result-feed-block")
+
+  let labelElement = document.createElement("label")
+  labelElement.setAttribute("id", `label-${feedId}`)
+  labelElement.innerText = label
+
+  div.appendChild(labelElement)
+
+  return div
+}
+
+function getChannelIdFromElementId(elementId) {
+  let hyphenLoc = elementId.indexOf("-")
+  let channelId = elementId.slice(hyphenLoc+1)
+  return channelId
+}
+
+function searchResultsDivForChannel(feedId, channelName) {
+  let label = labelForChannel(feedId, channelName)
+  let channelId = `${feedId}.${channelName}`
+  let selected = esdr.isChannelSelected(channelId)
+
+  let div = document.createElement("div")
+  div.setAttribute("class", "search-result-channel-block")
+
+  let checkbox = document.createElement("input")
+  checkbox.setAttribute("type", "checkbox")
+  checkbox.setAttribute("id", `checkbox-${channelId}`)
+  checkbox.setAttribute("name", `checkbox-${channelId}`)
+  if (selected)
+  {
+    checkbox.checked = true
+  }
+  checkbox.onclick = function() {
+    let checked = this.checked
+    let channelId = getChannelIdFromElementId(this.getAttribute("id"))
+      esdr.selectChannelWithId(channelId, checked)
+
+    updateUrlHash()
+  }
+  div.appendChild(checkbox)
+
+
+  let labelElement = document.createElement("label")
+  labelElement.setAttribute("for", `checkbox-${channelId}`)
+  labelElement.setAttribute("id", `label-${channelId}`)
+  labelElement.innerText = label
+
+  div.appendChild(labelElement)
+
+  return div
+}
+
+
+</script>
+   
+</body>
+</html> 
+
