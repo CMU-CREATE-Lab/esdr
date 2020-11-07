@@ -3,6 +3,7 @@ class ESDR {
 
 	constructor() {
 		this.feeds = {}
+		this.feedIds = []
 		this.apiUrl = 'https://esdr.cmucreatelab.org/api/v1'
 		this.selectedChannelIds = [] // an array to respect order
 		this.selectedChannels_ = {} // a map for quick testing if a channel is selected
@@ -53,16 +54,38 @@ class ESDR {
 			return undefined
 	}
 
-	feedsReceived(feedsJson, callback) {
+	feedsReceived(feedsJson, endOffset, callback) {
 	  // feedsJson.limit contains how big the batches are
-	  let numFeedsReceived = feedsJson.rows.length + feedsJson.offset;
-
-	  let numFeedsTotal = feedsJson.totalCount
+	  let endFeedsReceived = feedsJson.rows.length + feedsJson.offset;
 
 	  // kick off another GET if we haven't received all feeds, yet
-	  if (numFeedsReceived < numFeedsTotal)
+	  if ((endFeedsReceived < endOffset) && (endFeedsReceived < feedsJson.totalCount))
 	  {
-	    this.getFeedsFromOffset(numFeedsReceived, (feedsJson) => this.feedsReceived(feedsJson, callback))
+	  	if (feedsJson.offset == 0) {
+	  		// if this was the first batch, kick off several parallel requests
+	  		let numParallelRequests = 8
+
+	  		let batchLimit = feedsJson.limit
+	  		let feedsRemaining = endOffset - endFeedsReceived;
+	  		let requestsRemaining = Math.ceil(feedsRemaining / batchLimit)
+	  		let requestsPerWorker = Math.floor(requestsRemaining / numParallelRequests)
+	  		let remainder = requestsRemaining - requestsPerWorker*numParallelRequests
+
+	  		for (let i = 0; i < numParallelRequests; i++) {
+	  			let start = requestsPerWorker*i
+	  			let end = requestsPerWorker*(i+1)
+	  			// the last batch handles what remains
+	  			if (i+1 == numParallelRequests)
+	  				end += remainder
+	    		let workerStartOffset = endFeedsReceived + batchLimit*start
+	    		let workerEndOffset = endFeedsReceived + batchLimit*end
+
+	    		this.getFeedsFromOffset(workerStartOffset, (feedsJson) => this.feedsReceived(feedsJson, workerEndOffset, callback))
+	  		}
+	  	}
+	  	else {
+	    	this.getFeedsFromOffset(endFeedsReceived, (feedsJson) => this.feedsReceived(feedsJson, endOffset, callback))
+	  	}
 	  }
 
 	  let feedIds = []
@@ -72,14 +95,15 @@ class ESDR {
 	    this.feeds[feed.id] = feed
 	  }
 
+	  this.feedIds = this.feedIds.concat(feedIds)
+
 	  // update search results with new feeds
 	  this._updateSearch(feedIds)
 
-	  callback(feedIds, {current: numFeedsReceived, total: numFeedsTotal})
+	  callback(feedIds, {current: this.feedIds.length, total: feedsJson.totalCount})
 	}
 
 	getFeedsFromOffset(feedOffset, callback) {
-
 	  var request = new XMLHttpRequest();
 	  request.open('GET', `${this.apiUrl}/feeds?offset=${feedOffset}`, true);
 
@@ -104,7 +128,7 @@ class ESDR {
 
 	loadFeeds(loadCallback) {
 		this.getFeedsFromOffset(0, (feedsJson) => {
-			this.feedsReceived(feedsJson, loadCallback)
+			this.feedsReceived(feedsJson, feedsJson.totalCount, loadCallback)
 		})
 	}
 

@@ -454,29 +454,7 @@ function updateEsdrLoadProgress(numFeedsReceived, numFeedsTotal) {
 }
 
 function esdrFeedsReceived(feedIds, progress) {
-  
   updateEsdrLoadProgress(progress.current, progress.total)
-
-
-  let newDivs = []
-  for (let feedId of feedIds) {
-    let feed = esdr.feeds[feedId]
-    if (feed && feed.channelBounds && feed.channelBounds.channels)
-    {
-      for (let channelName in feed.channelBounds.channels) {
-        let div = searchResultsDivForChannel(feed.id, channelName)
-        newDivs.push(div)
-      }
-    }
-
-  }
-
-  let searchResultsList = document.getElementById("searchResultsList")
-  for (div of newDivs)
-  {
-    if (searchResultsList.children.length < 1000)
-      searchResultsList.appendChild(div)
-  }
 }
 
 function processNewSearchResults(newResults, isAppendUpdate) {
@@ -508,7 +486,6 @@ function clearSearchResultsList() {
 
 function appendSearchResultsListBy(results) {
   // this function just adds more entries to the search results
-
 
   let feedDivs = []
   for (let result of results) {
@@ -562,9 +539,9 @@ function appendSearchResultsListIfNeeded() {
 
     if (shouldAppend)
     {
-      // add at least 20, at most 1000 based on the length of the list already
+      // add at least 10, at most 100 based on the length of the list already
       // cap to the number of actually available results
-      let addCount = Math.min(results.length, Math.min(1000, Math.max(20, Math.floor(searchTotal*0.5))))
+      let addCount = Math.min(results.length, Math.min(100, Math.max(10, Math.floor(searchResultsList.children.length*0.5))))
       appendSearchResultsListBy(results.slice(0, addCount))
     }
     // console.log(`${itemBottom} of ${containerBottom}`)
