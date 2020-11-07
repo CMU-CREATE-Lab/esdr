@@ -153,6 +153,15 @@ input[type="search"] {
   transition: 0.3s;
 }
 
+.map-overlay-static {
+  position: absolute;
+  z-index: 5;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+}
+
 
 #main {
   transition: margin-left .3s;
@@ -185,29 +194,27 @@ input[type="search"] {
   <!-- <div class="searchbar-divider"></div> -->
   <button class="searchbar-button" onclick="doSensorSearch()">Search</button>
   </div>
-  <div id="progressBlock" class="search-progress-block">
-    <div id="searchProgressText">Lorem Searchum</div>
-  </div>
   <div id="filtersBlock" class="search-filters">
     <div>Filter 1</div>
     <div>Filter 2</div>
+  </div>
+  <div id="progressBlock" class="search-progress-block">
+    <div id="searchProgressText">Lorem Searchum</div>
   </div>
 </div>
 
 
 
 <div id="main">
-  <!-- <button class="open-button" onclick="openSidebar()">☰ Open Sidebar</button>   -->
-<!--   <h2>Collapsed Sidebar</h2>
-  <p>Click on the hamburger menu/bar icon to open the sidebar, and push this content to the right.</p>
- -->  
+  <!-- <canvas id="mapStaticCanvas" class="map-overlay-static"></canvas> -->
   <div id="googlemap" class="googlemap"></div>
   <!-- <div id="graphs"></div> -->
 </div>
 
 <script src="esdrFeeds.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjVZHnH5L8ty50awHChDGdtJ5ZHqCFc-Y"></script>
+<script src="mapOverlay.js"></script>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjVZHnH5L8ty50awHChDGdtJ5ZHqCFc-Y&callback=initMap" defer></script>
 
 <script>
 
@@ -218,12 +225,20 @@ let gSearchResults = {
 }
 
 function initMap() {
+  // parse the url hash part
+  parseUrlParams()
+  // execute params
+  if (gSearchResults.showFilters)
+    showSearchFilters()
+  if (gSearchResults.showResults)
+    showSearchResults()
+
   let mapdiv = document.getElementById('googlemap');
   gMap = new google.maps.Map(
     document.getElementById('googlemap'),
     {
-      zoom: 5,
-      center: new google.maps.LatLng(49.35720091782239, -92.91969375610346),
+      zoom: parseInt(gSearchResults.zoom) || 5,
+      center: gSearchResults.center || new google.maps.LatLng(49.35720091782239, -92.91969375610346*0.0),
 
       streetViewControl: false,
       fullscreenControl: false,
@@ -235,8 +250,24 @@ function initMap() {
     }
   );
 
-  // parse the url hash part
-  parseUrlParams()
+  google.maps.event.addListener(gMap, 'bounds_changed', function() {
+   // console.log(`bounds_changed event to ${map.getBounds()}`);
+   let center = this.getCenter()
+   gSearchResults.center = center
+   let zoom = this.getZoom()
+   gSearchResults.zoom = zoom
+
+   updateUrlHash()
+  });
+
+  // add overlay
+  // const bounds = new google.maps.LatLngBounds(
+  //   new google.maps.LatLng(62.281819, -150.287132),
+  //   new google.maps.LatLng(62.400471, -150.005608)
+  // );
+  gSearchResults.mapOverlay = new MapOverlay(mapdiv)
+  gSearchResults.mapOverlay.setMap(gMap)
+
 
   // install search results callback
   esdr.searchCallback = (searchResults, isAppendUpdate) => processNewSearchResults(searchResults, isAppendUpdate)
@@ -255,6 +286,7 @@ function initMap() {
 function parseUrlParams() {
   let browserParams = new URLSearchParams(window.location.hash.slice(1))
 
+  // selected channels for plotting
   if (browserParams.has("channels")) {
     let channelIds = browserParams.get("channels").split(",").filter((word) => word.length > 0)
     for (channelId of channelIds) {
@@ -262,24 +294,35 @@ function parseUrlParams() {
     }
   }
 
+  // grapher time limits and cursor
   if (browserParams.has("time")) {
     let times = browserParams.get("time").split(",")
     gSearchResults.startTime = times[0]
     gSearchResults.endTime = times[1]
   }
 
-  if (browserParams.has("zoom")) {
-    gSearchResults.zoom = browserParams.get("zoom")
-  }
-
   if (browserParams.has("cursor")) {
     gSearchResults.cursorTime = browserParams.get("cursor")
   }
 
+  // map params
+  if (browserParams.has("zoom")) {
+    gSearchResults.zoom = browserParams.get("zoom")
+  }
+
   if (browserParams.has("center")) {
     let latlon = browserParams.get("center").split(",")
-    gSearchResults.center = {latitude: latlon[0], longitude: latlon[1]}
+    gSearchResults.center = new google.maps.LatLng(latlon[0], latlon[1])
   }
+
+  // new params for display state
+  if (browserParams.has("showFilters")) {
+    gSearchResults.showFilters = browserParams.get("showFilters") == "true"
+  }
+  if (browserParams.has("showResults")) {
+    gSearchResults.showResults = browserParams.get("showResults") == "true"
+  }
+
 }
 
 function createUrlParams() {
@@ -287,6 +330,19 @@ function createUrlParams() {
 
   if (esdr.selectedChannelIds.length > 0) {
     browserParams.set("channels", esdr.selectedChannelIds.join(','))
+  }
+
+  if (gSearchResults.showFilters) {
+    browserParams.set("showFilters", "true")
+  }
+  if (gSearchResults.showResults) {
+    browserParams.set("showResults", "true")
+  }
+  if (gSearchResults.center) {
+    browserParams.set("center", `${gSearchResults.center.lat()},${gSearchResults.center.lng()}`)
+  }
+  if (gSearchResults.zoom) {
+    browserParams.set("zoom", `${gSearchResults.zoom}`)
   }
 
   return browserParams
@@ -299,6 +355,8 @@ function updateUrlHash() {
 }
 
 
+
+
 function adjustSidebarTopPadding(adjustment) {
   let searchBlock = document.getElementById("searchBlock")
   let searchStyle = window.getComputedStyle(searchBlock)
@@ -309,6 +367,12 @@ function adjustSidebarTopPadding(adjustment) {
 }
 
 
+function showSearchResults() {
+  let sidebar = document.getElementById("searchSidebar")
+  if (!sidebar.style.width || sidebar.style.marginLeft !== "0px") {
+    toggleSidebar()
+  }
+}
 
 function toggleSidebar() {
   let searchBlock = document.getElementById("searchBlock")
@@ -325,16 +389,26 @@ function toggleSidebar() {
     sidebar.style.left = `0px`
     sidebar.style.marginLeft = `0px`
     mainBlock.style.marginLeft = `calc(${width})`
-
+    gSearchResults.showResults = true
   }
   else {
     sidebar.style.marginLeft = `calc(0px - (${sidebar.style.width}))`
     // sidebar.style.width = "0px"
     mainBlock.style.marginLeft = "0px"
+    gSearchResults.showResults = false
   }
 
   // make sure top padding exludes search box
   adjustSidebarTopPadding('0px')
+
+  updateUrlHash()
+}
+
+function showSearchFilters() {
+  let filtersBlock = document.getElementById("filtersBlock")
+  if (!filtersBlock.style.height || filtersBlock.style.height === "0px") {
+    toggleFilters()
+  }
 }
 
 function toggleFilters() {
@@ -343,13 +417,17 @@ function toggleFilters() {
   if (!filtersBlock.style.height || filtersBlock.style.height === "0px") {
     adjustment = `${filtersBlock.scrollHeight}px`
     filtersBlock.style.height = filtersBlock.scrollHeight + 'px'
+    gSearchResults.showFilters = true
   }
   else {
     adjustment = `-${filtersBlock.scrollHeight}px`
     filtersBlock.style.height = "0px"
+    gSearchResults.showFilters = false
   }
 
   adjustSidebarTopPadding(adjustment)
+
+  updateUrlHash()
 
 }
 
@@ -562,6 +640,8 @@ function searchResultsDivForChannel(feedId, channelName) {
   return div
 }
 
+// call initMap() as we fully loaded maps api to be able to extend the overlays in mapOverlay.js
+initMap()
 
 </script>
    
