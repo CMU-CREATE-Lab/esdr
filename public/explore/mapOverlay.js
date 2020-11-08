@@ -283,6 +283,38 @@ class MapOverlay extends google.maps.OverlayView {
 
 	}
 
+	createQuadIndices(count) {
+		let indices = []
+		for (let i = 0; i < count; i++)
+		{
+			indices.push(4*i + 0, 4*i + 1, 4*i + 2)
+			indices.push(4*i + 2, 4*i + 3, 4*i + 0)
+		}
+		return indices
+	}
+
+	splatArrayForQuad(src, numComponents) {
+		let dst = []
+		for (let i = 0; i < src.length/numComponents; i++)
+		{
+			let k = i*numComponents
+			let element = src.slice(k, k+numComponents)
+			dst.push(...element, ...element, ...element, ...element)
+		}
+
+		return dst
+	}
+
+	repeatArray(src, count) {
+		let dst = []
+		for (let i = 0; i < count; i++)
+		{
+			dst.push(...src)
+		}
+		return dst
+	}
+
+
 	glDrawMarkers(gl) {
 		let pixelScale = window.devicePixelRatio || 1.0
 
@@ -310,105 +342,48 @@ class MapOverlay extends google.maps.OverlayView {
 			  -1.0, 	 -1.0, 0, 1
 		]
 
-		let indices = [
-			0,1,2,
-			2,3,0,
-			4,5,6,
-			6,7,4,
-			8,9,10,
-			10,11,8,
-		]
+		let indices = this.createQuadIndices(3)
 
-		let vertices = [
-			0.0, 0.0,
-			0.0, 0.0,
-			0.0, 0.0,
+		let vertices = this.splatArrayForQuad([
 			0.0, 0.0,
 			50.0, 50.0,
-			50.0, 50.0,
-			50.0, 50.0,
-			50.0, 50.0,
 			6.9603, 50.9375,
-			6.9603, 50.9375,
-			6.9603, 50.9375,
-			6.9603, 50.9375,
-		]
-		let fillColors = [
+			], 2)
+		let fillColors = this.splatArrayForQuad([
 			// red
-			0.5,0.0,0.0,0.5,
-			0.5,0.0,0.0,0.5,
-			0.5,0.0,0.0,0.5,
 			0.5,0.0,0.0,0.5,
 			// purple
 			0.5,0.0,0.5,0.5,
-			0.5,0.0,0.5,0.5,
-			0.5,0.0,0.5,0.5,
-			0.5,0.0,0.5,0.5,
 			// blue
 			0.0,0.0,0.5,0.5,
-			0.0,0.0,0.5,0.5,
-			0.0,0.0,0.5,0.5,
-			0.0,0.0,0.5,0.5,
-		]
-		let strokeColors = [
+		], 4)
+
+		let strokeColors = this.splatArrayForQuad([
 			// yellow
 			1.0,1.0,0.0,1.0,
-			1.0,1.0,0.0,1.0,
-			1.0,1.0,0.0,1.0,
-			1.0,1.0,0.0,1.0,
 			// blue
-			0.0,0.0,0.5,0.5,
-			0.0,0.0,0.5,0.5,
-			0.0,0.0,0.5,0.5,
 			0.0,0.0,0.5,0.5,
 			// black
 			0.0,0.0,0.0,0.5,
-			0.0,0.0,0.0,0.5,
-			0.0,0.0,0.0,0.5,
-			0.0,0.0,0.0,0.5,
-		]
-		let offsets = [
+		], 4)
+
+		let offsets = this.repeatArray([
 			-1.0, 1.0,
 			-1.0,-1.0,
 			 1.0,-1.0,
 			 1.0, 1.0,
-			-1.0, 1.0,
-			-1.0,-1.0,
-			 1.0,-1.0,
-			 1.0, 1.0,
-			-1.0, 1.0,
-			-1.0,-1.0,
-			 1.0,-1.0,
-			 1.0, 1.0,
-		]
-		let sizes = [
-			20.0,
-			20.0,
-			20.0,
+		], 3)
+
+		let sizes = this.splatArrayForQuad([
 			20.0,
 			30.0,
-			30.0,
-			30.0,
-			30.0,
 			40.0,
-			40.0,
-			40.0,
-			40.0,
-		]
-		let strokeWidths = [
-			1.0,
-			1.0,
-			1.0,
+		], 1)
+		let strokeWidths = this.splatArrayForQuad([
 			1.0,
 			3.0,
-			3.0,
-			3.0,
-			3.0,
 			2.0,
-			2.0,
-			2.0,
-			2.0,
-		]
+		], 1)
 
 		const indexBuffer = this.markerShader.indexBuffer || gl.createBuffer()
 		this.markerShader.indexBuffer = indexBuffer
