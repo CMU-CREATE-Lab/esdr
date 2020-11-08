@@ -159,7 +159,9 @@ class MapOverlay extends google.maps.OverlayView {
 	    attribute vec2 geoVertexPos;
 	    attribute vec2 pxVertexOffsetDirection;
 	    attribute float pxMarkerSizeIn;
-	    attribute vec4 colorIn;
+	    attribute float pxStrokeWidthIn;
+	    attribute vec4 fillColorIn;
+	    attribute vec4 strokeColorIn;
 
 	    uniform float zoomFactor;
 	    uniform mat4 modelViewMatrix;
@@ -167,11 +169,12 @@ class MapOverlay extends google.maps.OverlayView {
 
 	    varying vec2 pxCenterOffset; 
 	    varying float pxMarkerSize;
-	    varying vec4 color;
+	    varying float pxStrokeWidth;
+	    varying vec4 fillColor;
+	    varying vec4 strokeColor;
 
 	    vec2 geoToMercator(vec2 geo) {
 				return vec2(geo.x, (180.0/pi)*log(tan(pi*0.25 + geo.y*(pi/180.0*0.5))));
-				// return vec2(geo.x, geo.y);
 	    }
 
 	    vec2 mercatorToMeterScale(vec2 mercator, float latitude) {
@@ -184,23 +187,20 @@ class MapOverlay extends google.maps.OverlayView {
 
 	    void main() {
 	    	vec2 mercatorPos = geoToMercator(geoVertexPos);
-	    	// vec2 meterPos = mercatorToMeter(mercatorPos, geoVertexPos.y);
 	    	vec2 pixelPos = mercatorToPixel(mercatorPos, zoomFactor);
-	    	// pixelPos = mercatorPos;
 
 	    	// offset vertex by direction and size of marker
 	    	// actual offset is 1px bigger than markerSize to leave room for AA
-	    	vec2 pxOffset = pxVertexOffsetDirection*(pxMarkerSizeIn + 1.0);
+	    	vec2 pxOffset = pxVertexOffsetDirection*(0.5*pxMarkerSizeIn + pxStrokeWidthIn + 1.0);
 	    	pixelPos += pxOffset;
 
 	    	// outputs
 	    	pxCenterOffset = pxOffset;
-	      // gl_Position = projectionMatrix * modelViewMatrix * vec4(pixelPos, 0.0, 1.0);
-	      // for debugging purposes, don't do transformation
 	      gl_Position = projectionMatrix * modelViewMatrix * vec4(pixelPos, 0.0, 1.0);
-	      color = colorIn;
+	      fillColor = fillColorIn;
+	      strokeColor = strokeColorIn;
 	      pxMarkerSize = pxMarkerSizeIn;
-	      // gl_PointSize = 20.0;
+	      pxStrokeWidth = pxStrokeWidthIn;
 	    }
   	`
 
@@ -209,11 +209,18 @@ class MapOverlay extends google.maps.OverlayView {
 
 	  	varying vec2 pxCenterOffset;
 	  	varying float pxMarkerSize;
-	  	varying vec4 color;
+	  	varying float pxStrokeWidth;
+	  	varying vec4 fillColor;
+	  	varying vec4 strokeColor;
 
 	    void main() {
-	    	float coverage = clamp(0.5 + 0.5*pxMarkerSize - length(pxCenterOffset), 0.0, 1.0);
-	      gl_FragColor = vec4(color.rgb, color.a*coverage);
+	    	float r = length(pxCenterOffset);
+	    	float rd = (0.5*pxMarkerSize - r);
+	    	float fillCoverage = clamp(0.5 + 2.0*(rd - 0.5*pxStrokeWidth), 0.0, 1.0);
+	    	vec4 fill = vec4(fillColor.rgb, fillColor.a)*fillCoverage;
+	    	float strokeCoverage = clamp(0.5 - 2.0*(rd - 0.5*pxStrokeWidth), 0.0, 1.0)*clamp(0.5 + 2.0*(rd + 0.5*pxStrokeWidth), 0.0, 1.0);
+	    	vec4 stroke = strokeColor*strokeCoverage;
+	      gl_FragColor = fill + stroke;
 	      // gl_FragColor = color;
 	      // gl_FragColor = vec4(0.0,0.0,0.0,0.5);
 	    }
@@ -226,7 +233,9 @@ class MapOverlay extends google.maps.OverlayView {
   		geoVertexPos: 						gl.getAttribLocation(this.markerShader.shaderProgram, "geoVertexPos"),
   		pxVertexOffsetDirection: 	gl.getAttribLocation(this.markerShader.shaderProgram, "pxVertexOffsetDirection"),
   		pxMarkerSize: 						gl.getAttribLocation(this.markerShader.shaderProgram, "pxMarkerSizeIn"),
-  		color: 										gl.getAttribLocation(this.markerShader.shaderProgram, "colorIn"),  		
+  		pxStrokeWidth: 						gl.getAttribLocation(this.markerShader.shaderProgram, "pxStrokeWidthIn"),
+  		fillColor: 										gl.getAttribLocation(this.markerShader.shaderProgram, "fillColorIn"),  		
+  		strokeColor: 										gl.getAttribLocation(this.markerShader.shaderProgram, "strokeColorIn"),  		
   	}
   	this.markerShader.uniformLocations = {
   		zoomFactor: 	gl.getUniformLocation(this.markerShader.shaderProgram, "zoomFactor"),
@@ -324,36 +333,53 @@ class MapOverlay extends google.maps.OverlayView {
 			6.9603, 50.9375,
 			6.9603, 50.9375,
 		]
-		let colors = [
+		let fillColors = [
 			// red
-			1.0,0.0,0.0,0.5,
-			1.0,0.0,0.0,0.5,
-			1.0,0.0,0.0,0.5,
-			1.0,0.0,0.0,0.5,
+			0.5,0.0,0.0,0.5,
+			0.5,0.0,0.0,0.5,
+			0.5,0.0,0.0,0.5,
+			0.5,0.0,0.0,0.5,
 			// purple
-			1.0,0.0,1.0,0.5,
-			1.0,0.0,1.0,0.5,
-			1.0,0.0,1.0,0.5,
-			1.0,0.0,1.0,0.5,
+			0.5,0.0,0.5,0.5,
+			0.5,0.0,0.5,0.5,
+			0.5,0.0,0.5,0.5,
+			0.5,0.0,0.5,0.5,
 			// blue
-			0.0,0.0,1.0,0.5,
-			0.0,0.0,1.0,0.5,
-			0.0,0.0,1.0,0.5,
-			0.0,0.0,1.0,0.5,
+			0.0,0.0,0.5,0.5,
+			0.0,0.0,0.5,0.5,
+			0.0,0.0,0.5,0.5,
+			0.0,0.0,0.5,0.5,
+		]
+		let strokeColors = [
+			// yellow
+			1.0,1.0,0.0,1.0,
+			1.0,1.0,0.0,1.0,
+			1.0,1.0,0.0,1.0,
+			1.0,1.0,0.0,1.0,
+			// blue
+			0.0,0.0,0.5,0.5,
+			0.0,0.0,0.5,0.5,
+			0.0,0.0,0.5,0.5,
+			0.0,0.0,0.5,0.5,
+			// black
+			0.0,0.0,0.0,0.5,
+			0.0,0.0,0.0,0.5,
+			0.0,0.0,0.0,0.5,
+			0.0,0.0,0.0,0.5,
 		]
 		let offsets = [
-			-0.7071, 0.7071,
-			-0.7071,-0.7071,
-			 0.7071,-0.7071,
-			 0.7071, 0.7071,
-			-0.7071, 0.7071,
-			-0.7071,-0.7071,
-			 0.7071,-0.7071,
-			 0.7071, 0.7071,
-			-0.7071, 0.7071,
-			-0.7071,-0.7071,
-			 0.7071,-0.7071,
-			 0.7071, 0.7071,
+			-1.0, 1.0,
+			-1.0,-1.0,
+			 1.0,-1.0,
+			 1.0, 1.0,
+			-1.0, 1.0,
+			-1.0,-1.0,
+			 1.0,-1.0,
+			 1.0, 1.0,
+			-1.0, 1.0,
+			-1.0,-1.0,
+			 1.0,-1.0,
+			 1.0, 1.0,
 		]
 		let sizes = [
 			20.0,
@@ -369,6 +395,20 @@ class MapOverlay extends google.maps.OverlayView {
 			40.0,
 			40.0,
 		]
+		let strokeWidths = [
+			1.0,
+			1.0,
+			1.0,
+			1.0,
+			3.0,
+			3.0,
+			3.0,
+			3.0,
+			2.0,
+			2.0,
+			2.0,
+			2.0,
+		]
 
 		const indexBuffer = this.markerShader.indexBuffer || gl.createBuffer()
 		this.markerShader.indexBuffer = indexBuffer
@@ -380,10 +420,15 @@ class MapOverlay extends google.maps.OverlayView {
 		gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW)
 
-		const colorBuffer = this.markerShader.colorBuffer || gl.createBuffer()
-		this.markerShader.colorBuffer = colorBuffer
-		gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW)
+		const fillColorBuffer = this.markerShader.fillColorBuffer || gl.createBuffer()
+		this.markerShader.colorBuffer = fillColorBuffer
+		gl.bindBuffer(gl.ARRAY_BUFFER, fillColorBuffer)
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(fillColors), gl.STATIC_DRAW)
+
+		const strokeColorBuffer = this.markerShader.strokeColorBuffer || gl.createBuffer()
+		this.markerShader.colorBuffer = strokeColorBuffer
+		gl.bindBuffer(gl.ARRAY_BUFFER, strokeColorBuffer)
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(strokeColors), gl.STATIC_DRAW)
 
 		const offsetBuffer = this.markerShader.offsetBuffer || gl.createBuffer()
 		this.markerShader.offsetBuffer = offsetBuffer
@@ -395,10 +440,17 @@ class MapOverlay extends google.maps.OverlayView {
 		gl.bindBuffer(gl.ARRAY_BUFFER, sizeBuffer)
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(sizes), gl.STATIC_DRAW)
 
+		const strokeWidthBuffer = this.markerShader.strokeWidthBuffer || gl.createBuffer()
+		this.markerShader.strokeWidthBuffer = strokeWidthBuffer
+		gl.bindBuffer(gl.ARRAY_BUFFER, strokeWidthBuffer)
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(strokeWidths), gl.STATIC_DRAW)
 
 
-		// gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-		gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+		// premuliplied alpha blend
+		gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+		// for non-premul alpha blending
+		// gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 		gl.enable(gl.BLEND)
 		gl.disable(gl.DEPTH_TEST)
 		let shader = this.markerShader
@@ -412,15 +464,21 @@ class MapOverlay extends google.maps.OverlayView {
 		gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
 		gl.vertexAttribPointer(shader.attribLocations.geoVertexPos, 2, gl.FLOAT, false, 0, 0)
 		gl.enableVertexAttribArray(shader.attribLocations.geoVertexPos)
-		gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
-		gl.vertexAttribPointer(shader.attribLocations.color, 4, gl.FLOAT, false, 0, 0)
-		gl.enableVertexAttribArray(shader.attribLocations.color)
+		gl.bindBuffer(gl.ARRAY_BUFFER, fillColorBuffer)
+		gl.vertexAttribPointer(shader.attribLocations.fillColor, 4, gl.FLOAT, false, 0, 0)
+		gl.enableVertexAttribArray(shader.attribLocations.fillColor)
+		gl.bindBuffer(gl.ARRAY_BUFFER, strokeColorBuffer)
+		gl.vertexAttribPointer(shader.attribLocations.strokeColor, 4, gl.FLOAT, false, 0, 0)
+		gl.enableVertexAttribArray(shader.attribLocations.strokeColor)
 		gl.bindBuffer(gl.ARRAY_BUFFER, offsetBuffer)
 		gl.vertexAttribPointer(shader.attribLocations.pxVertexOffsetDirection, 2, gl.FLOAT, false, 0, 0)
 		gl.enableVertexAttribArray(shader.attribLocations.pxVertexOffsetDirection)
 		gl.bindBuffer(gl.ARRAY_BUFFER, sizeBuffer)
 		gl.vertexAttribPointer(shader.attribLocations.pxMarkerSize, 1, gl.FLOAT, false, 0, 0)
 		gl.enableVertexAttribArray(shader.attribLocations.pxMarkerSize)
+		gl.bindBuffer(gl.ARRAY_BUFFER, strokeWidthBuffer)
+		gl.vertexAttribPointer(shader.attribLocations.pxStrokeWidth, 1, gl.FLOAT, false, 0, 0)
+		gl.enableVertexAttribArray(shader.attribLocations.pxStrokeWidth)
 
 		// gl.drawArrays(gl.QUAD, 0, vertices.length/2)
 		gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0)
@@ -436,7 +494,7 @@ class MapOverlay extends google.maps.OverlayView {
 		gl.clearColor(0.0, 0.0, 0.0, 0.0)
 		gl.clear(gl.COLOR_BUFFER_BIT)
 
-		this.glDrawGeoGrid(gl)
+		// this.glDrawGeoGrid(gl)
 		this.glDrawMarkers(gl)
 	}
 
