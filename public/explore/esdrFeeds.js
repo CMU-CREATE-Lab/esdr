@@ -2,6 +2,7 @@
 class ESDR {
 
 	constructor() {
+		this.numParallelRequests = 1
 		this.feeds = {}
 		this.feedIds = []
 		this.apiUrl = 'https://esdr.cmucreatelab.org/api/v1'
@@ -63,7 +64,7 @@ class ESDR {
 	  {
 	  	if (feedsJson.offset == 0) {
 	  		// if this was the first batch, kick off several parallel requests
-	  		let numParallelRequests = 8
+	  		let numParallelRequests = this.numParallelRequests
 
 	  		let batchLimit = feedsJson.limit
 	  		let feedsRemaining = endOffset - endFeedsReceived;
