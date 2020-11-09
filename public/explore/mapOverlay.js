@@ -150,6 +150,16 @@ class MapOverlay extends google.maps.OverlayView {
 			alert("Cannot initialize WebGL.")
 			return
 		}
+
+
+		// check that element indices can be UINT32, for we would like to address more than 65k vertices at a time
+		var ext = gl.getExtension('OES_element_index_uint');
+		if (!ext) {
+			alert("OES_element_index_uint is not supported.")
+			return
+		}
+
+		// if WebGL context has been successfully setup, assign it to an ivar for later use
 		this.gl = gl
 
 		const markerVertexShader = `
@@ -314,81 +324,32 @@ class MapOverlay extends google.maps.OverlayView {
 		return dst
 	}
 
+	_updateMarkerBuffers(gl) {
+		let markers = this.markers
+		if (!markers)
+			return
 
-	glDrawMarkers(gl) {
-		let pixelScale = window.devicePixelRatio || 1.0
+		let indices = this.createQuadIndices(markers.feeds.length)
 
-		// the scale is simple enough, but we also need to shift the center
-		// (0,0) in pixel coords should be at the bottom left of the screen
-		let xshift = this.longitudeToGlobalPixel(this.mapSouthWest.lng(), this.zoomFactor)
-		let yshift = this.latitudeToGlobalPixel(this.mapSouthWest.lat(), this.zoomFactor)
-		// during drag/zoom gotta add these shift values for things to line up right due to CSS voodoo
-		xshift -= 0.5*this.canvas.width/pixelScale + this.pixSouthWest.x
-		yshift -= 0.5*this.canvas.height/pixelScale - this.pixSouthWest.y
-		console.log(`swlon ${this.mapSouthWest.lng()} swlat ${this.mapSouthWest.lat()}`)
-		console.log(`xshift ${xshift} yshift ${yshift} zf ${this.zoomFactor}`)
-		let xscale = 2.0/this.canvas.width*pixelScale
-		let yscale = 2.0/this.canvas.height*pixelScale
-		const MV = [
-			      1,       0, 0, 0,
-			      0,       1, 0, 0,
-						0,       0, 1, 0,
-			-xshift, -yshift, 0, 1
-		]
-		const PM = [
-			xscale, 		  0, 0, 0,
-			     0,  yscale, 0, 0,
-					 0, 		  0, 1, 0,
-			  -1.0, 	 -1.0, 0, 1
-		]
+		let vertices = this.splatArrayForQuad(markers.positions, 2)
+		let fillColors = this.splatArrayForQuad(markers.fillColors, 4)
 
-		let indices = this.createQuadIndices(3)
-
-		let vertices = this.splatArrayForQuad([
-			0.0, 0.0,
-			50.0, 50.0,
-			6.9603, 50.9375,
-			], 2)
-		let fillColors = this.splatArrayForQuad([
-			// red
-			0.5,0.0,0.0,0.5,
-			// purple
-			0.5,0.0,0.5,0.5,
-			// blue
-			0.0,0.0,0.5,0.5,
-		], 4)
-
-		let strokeColors = this.splatArrayForQuad([
-			// yellow
-			1.0,1.0,0.0,1.0,
-			// blue
-			0.0,0.0,0.5,0.5,
-			// black
-			0.0,0.0,0.0,0.5,
-		], 4)
+		let strokeColors = this.splatArrayForQuad(markers.strokeColors, 4)
 
 		let offsets = this.repeatArray([
 			-1.0, 1.0,
 			-1.0,-1.0,
 			 1.0,-1.0,
 			 1.0, 1.0,
-		], 3)
+		], markers.feeds.length)
 
-		let sizes = this.splatArrayForQuad([
-			20.0,
-			30.0,
-			40.0,
-		], 1)
-		let strokeWidths = this.splatArrayForQuad([
-			1.0,
-			3.0,
-			2.0,
-		], 1)
+		let sizes = this.splatArrayForQuad(markers.markerSizes, 1)
+		let strokeWidths = this.splatArrayForQuad(markers.strokeWidths, 1)
 
 		const indexBuffer = this.markerShader.indexBuffer || gl.createBuffer()
 		this.markerShader.indexBuffer = indexBuffer
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
-		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW)
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(indices), gl.STATIC_DRAW)
 
 		const vertexBuffer = this.markerShader.vertexBuffer || gl.createBuffer()
 		this.markerShader.vertexBuffer = vertexBuffer
@@ -396,12 +357,12 @@ class MapOverlay extends google.maps.OverlayView {
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW)
 
 		const fillColorBuffer = this.markerShader.fillColorBuffer || gl.createBuffer()
-		this.markerShader.colorBuffer = fillColorBuffer
+		this.markerShader.fillColorBuffer = fillColorBuffer
 		gl.bindBuffer(gl.ARRAY_BUFFER, fillColorBuffer)
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(fillColors), gl.STATIC_DRAW)
 
 		const strokeColorBuffer = this.markerShader.strokeColorBuffer || gl.createBuffer()
-		this.markerShader.colorBuffer = strokeColorBuffer
+		this.markerShader.strokeColorBuffer = strokeColorBuffer
 		gl.bindBuffer(gl.ARRAY_BUFFER, strokeColorBuffer)
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(strokeColors), gl.STATIC_DRAW)
 
@@ -420,6 +381,83 @@ class MapOverlay extends google.maps.OverlayView {
 		gl.bindBuffer(gl.ARRAY_BUFFER, strokeWidthBuffer)
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(strokeWidths), gl.STATIC_DRAW)
 
+	}
+
+	glDrawMarkers(gl) {
+
+		if (!this.markers)
+			return
+
+		let pixelScale = window.devicePixelRatio || 1.0
+
+		// the scale is simple enough, but we also need to shift the center
+		// (0,0) in pixel coords should be at the bottom left of the screen
+		let xshift = this.longitudeToGlobalPixel(this.mapSouthWest.lng(), this.zoomFactor)
+		let yshift = this.latitudeToGlobalPixel(this.mapSouthWest.lat(), this.zoomFactor)
+		// during drag/zoom gotta add these shift values for things to line up right due to CSS voodoo
+		xshift -= 0.5*this.canvas.width/pixelScale + this.pixSouthWest.x
+		yshift -= 0.5*this.canvas.height/pixelScale - this.pixSouthWest.y
+		// console.log(`swlon ${this.mapSouthWest.lng()} swlat ${this.mapSouthWest.lat()}`)
+		// console.log(`xshift ${xshift} yshift ${yshift} zf ${this.zoomFactor}`)
+		let xscale = 2.0/this.canvas.width*pixelScale
+		let yscale = 2.0/this.canvas.height*pixelScale
+		const MV = [
+			      1,       0, 0, 0,
+			      0,       1, 0, 0,
+						0,       0, 1, 0,
+			-xshift, -yshift, 0, 1
+		]
+		const PM = [
+			xscale, 		  0, 0, 0,
+			     0,  yscale, 0, 0,
+					 0, 		  0, 1, 0,
+			  -1.0, 	 -1.0, 0, 1
+		]
+
+		// let indices = this.createQuadIndices(3)
+
+		// let vertices = this.splatArrayForQuad([
+		// 	0.0, 0.0,
+		// 	50.0, 50.0,
+		// 	6.9603, 50.9375,
+		// 	], 2)
+		// let fillColors = this.splatArrayForQuad([
+		// 	// red
+		// 	0.5,0.0,0.0,0.5,
+		// 	// purple
+		// 	0.5,0.0,0.5,0.5,
+		// 	// blue
+		// 	0.0,0.0,0.5,0.5,
+		// ], 4)
+
+		// let strokeColors = this.splatArrayForQuad([
+		// 	// yellow
+		// 	1.0,1.0,0.0,1.0,
+		// 	// blue
+		// 	0.0,0.0,0.5,0.5,
+		// 	// black
+		// 	0.0,0.0,0.0,0.5,
+		// ], 4)
+
+		// let offsets = this.repeatArray([
+		// 	-1.0, 1.0,
+		// 	-1.0,-1.0,
+		// 	 1.0,-1.0,
+		// 	 1.0, 1.0,
+		// ], 3)
+
+		// let sizes = this.splatArrayForQuad([
+		// 	20.0,
+		// 	30.0,
+		// 	40.0,
+		// ], 1)
+		// let strokeWidths = this.splatArrayForQuad([
+		// 	1.0,
+		// 	3.0,
+		// 	2.0,
+		// ], 1)
+
+
 
 
 		// premuliplied alpha blend
@@ -434,29 +472,29 @@ class MapOverlay extends google.maps.OverlayView {
 		gl.uniformMatrix4fv(shader.uniformLocations.projectionMatrix, false, PM)
 		gl.uniform1f(shader.uniformLocations.zoomFactor, this.zoomFactor)
 
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shader.indexBuffer)
 
-		gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
+		gl.bindBuffer(gl.ARRAY_BUFFER, shader.vertexBuffer)
 		gl.vertexAttribPointer(shader.attribLocations.geoVertexPos, 2, gl.FLOAT, false, 0, 0)
 		gl.enableVertexAttribArray(shader.attribLocations.geoVertexPos)
-		gl.bindBuffer(gl.ARRAY_BUFFER, fillColorBuffer)
+		gl.bindBuffer(gl.ARRAY_BUFFER, shader.fillColorBuffer)
 		gl.vertexAttribPointer(shader.attribLocations.fillColor, 4, gl.FLOAT, false, 0, 0)
 		gl.enableVertexAttribArray(shader.attribLocations.fillColor)
-		gl.bindBuffer(gl.ARRAY_BUFFER, strokeColorBuffer)
+		gl.bindBuffer(gl.ARRAY_BUFFER, shader.strokeColorBuffer)
 		gl.vertexAttribPointer(shader.attribLocations.strokeColor, 4, gl.FLOAT, false, 0, 0)
 		gl.enableVertexAttribArray(shader.attribLocations.strokeColor)
-		gl.bindBuffer(gl.ARRAY_BUFFER, offsetBuffer)
+		gl.bindBuffer(gl.ARRAY_BUFFER, shader.offsetBuffer)
 		gl.vertexAttribPointer(shader.attribLocations.pxVertexOffsetDirection, 2, gl.FLOAT, false, 0, 0)
 		gl.enableVertexAttribArray(shader.attribLocations.pxVertexOffsetDirection)
-		gl.bindBuffer(gl.ARRAY_BUFFER, sizeBuffer)
+		gl.bindBuffer(gl.ARRAY_BUFFER, shader.sizeBuffer)
 		gl.vertexAttribPointer(shader.attribLocations.pxMarkerSize, 1, gl.FLOAT, false, 0, 0)
 		gl.enableVertexAttribArray(shader.attribLocations.pxMarkerSize)
-		gl.bindBuffer(gl.ARRAY_BUFFER, strokeWidthBuffer)
+		gl.bindBuffer(gl.ARRAY_BUFFER, shader.strokeWidthBuffer)
 		gl.vertexAttribPointer(shader.attribLocations.pxStrokeWidth, 1, gl.FLOAT, false, 0, 0)
 		gl.enableVertexAttribArray(shader.attribLocations.pxStrokeWidth)
 
 		// gl.drawArrays(gl.QUAD, 0, vertices.length/2)
-		gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0)
+		gl.drawElements(gl.TRIANGLES, this.markers.feeds.length*6, gl.UNSIGNED_INT, 0)
 
 		// draw vertices for debugging purposes
 		// gl.pointSize(40)
@@ -729,6 +767,31 @@ class MapOverlay extends google.maps.OverlayView {
 		}
 
 
+	}
+
+	setFeeds(feeds) {
+		// feeds to draw as markers
+		// filter out all that don't have lon/lat
+		feeds = feeds.filter(feed => Number.isFinite(parseFloat(feed.longitude)) && Number.isFinite(parseFloat(feed.latitude)))
+		for (let feed of feeds) {
+			console.assert(Number.isFinite(feed.longitude), "longitude not finite", feed.longitude)
+			console.assert(Number.isFinite(feed.latitude), "latitude not finite", feed.latitude)
+		}
+``
+		let positions = feeds.map(feed => [parseFloat(feed.longitude), parseFloat(feed.latitude)]).flat()
+		this.markers = {
+			feeds: feeds,
+			positions: positions,
+			fillColors: this.repeatArray([0.0,0.0,0.5,0.5], feeds.length),
+			strokeColors: this.repeatArray([0.0,1.0,0.0,1.0], feeds.length),
+			strokeWidths: this.repeatArray([1.0], feeds.length),
+			markerSizes: this.repeatArray([10.0], feeds.length),
+		}
+
+		if (this.gl) {
+			this._updateMarkerBuffers(this.gl)
+			this.glDraw(this.gl)
+		}
 	}
 
 } // class MapOverlay

@@ -273,7 +273,7 @@ function initMap() {
   esdr.searchCallback = (searchResults, isAppendUpdate) => processNewSearchResults(searchResults, isAppendUpdate)
   // start loading feed data
   esdr.loadFeeds(esdrFeedsReceived)
-  //
+
 
   // install scroll listener
   let searchResultsList = document.getElementById("searchResultsList")
@@ -455,6 +455,8 @@ function updateEsdrLoadProgress(numFeedsReceived, numFeedsTotal) {
 
 function esdrFeedsReceived(feedIds, progress) {
   updateEsdrLoadProgress(progress.current, progress.total)
+
+  gSearchResults.mapOverlay.setFeeds(Object.values(esdr.feeds))
 }
 
 function processNewSearchResults(newResults, isAppendUpdate) {
