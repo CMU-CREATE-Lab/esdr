@@ -22,9 +22,10 @@ The pipeline is
 */
 
 class MapOverlay extends google.maps.OverlayView {
-	constructor(mapDiv) {
+	constructor(map, mapDiv) {
 		super()
 		this.mapDiv = mapDiv
+  	this.setMap(map)
 	}
 
 	onAdd() {
@@ -105,6 +106,15 @@ class MapOverlay extends google.maps.OverlayView {
 			this.glDraw(this.gl)
 		}
 
+	}
+
+	// find z-index of DOM element
+	getElementZIndex(e) {      
+	  var z = window.getComputedStyle(e).getPropertyValue('z-index')
+	  if (isNaN(z)) 
+	  	return this.getElementZIndex(e.parentNode)
+	  else
+	 	 	return z
 	}
 
 	_loadShader(gl, type, source) {
@@ -303,38 +313,40 @@ class MapOverlay extends google.maps.OverlayView {
 		return indices
 	}
 
-	splatArrayForQuad(src, numComponents) {
-		let dst = []
-		for (let i = 0; i < src.length/numComponents; i++)
-		{
-			let k = i*numComponents
-			let element = src.slice(k, k+numComponents)
-			dst.push(...element, ...element, ...element, ...element)
-		}
+	splatArrayForQuad(src) {
+		let dst = src.flatMap(e => {
+			let array = new Array(4)
+			return array.fill(e, 0, 4)
+		})
+
+		// for (let i = 0; i < src.length/numComponents; i++)
+		// {
+		// 	let k = i*numComponents
+		// 	let element = src.slice(k, k+numComponents)
+		// 	dst.push(...element, ...element, ...element, ...element)
+		// }
 
 		return dst
 	}
 
 	repeatArray(src, count) {
-		let dst = []
-		for (let i = 0; i < count; i++)
-		{
-			dst.push(...src)
-		}
-		return dst
+		let array = new Array(count)
+		return array.fill(src, 0, count)
+		// for (let i = 0; i < count; i++)
+		// {
+		// 	dst.push(...src)
+		// }
+		// return dst
 	}
 
 	_updateMarkerBuffers(gl) {
 		let markers = this.markers
-		if (!markers)
+		if (!markers || !markers.feeds)
 			return
 
 		let indices = this.createQuadIndices(markers.feeds.length)
 
-		let vertices = this.splatArrayForQuad(markers.positions, 2)
-		let fillColors = this.splatArrayForQuad(markers.fillColors, 4)
-
-		let strokeColors = this.splatArrayForQuad(markers.strokeColors, 4)
+		let vertices = this.splatArrayForQuad(markers.positions)
 
 		let offsets = this.repeatArray([
 			-1.0, 1.0,
@@ -343,49 +355,62 @@ class MapOverlay extends google.maps.OverlayView {
 			 1.0, 1.0,
 		], markers.feeds.length)
 
-		let sizes = this.splatArrayForQuad(markers.markerSizes, 1)
-		let strokeWidths = this.splatArrayForQuad(markers.strokeWidths, 1)
+		let sizes = this.splatArrayForQuad(markers.markerSizes)
+		let strokeWidths = this.splatArrayForQuad(markers.strokeWidths)
 
+		// upload data to GL buffers
 		const indexBuffer = this.markerShader.indexBuffer || gl.createBuffer()
 		this.markerShader.indexBuffer = indexBuffer
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
-		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(indices), gl.STATIC_DRAW)
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(indices.flat()), gl.STATIC_DRAW)
 
 		const vertexBuffer = this.markerShader.vertexBuffer || gl.createBuffer()
 		this.markerShader.vertexBuffer = vertexBuffer
 		gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW)
-
-		const fillColorBuffer = this.markerShader.fillColorBuffer || gl.createBuffer()
-		this.markerShader.fillColorBuffer = fillColorBuffer
-		gl.bindBuffer(gl.ARRAY_BUFFER, fillColorBuffer)
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(fillColors), gl.STATIC_DRAW)
-
-		const strokeColorBuffer = this.markerShader.strokeColorBuffer || gl.createBuffer()
-		this.markerShader.strokeColorBuffer = strokeColorBuffer
-		gl.bindBuffer(gl.ARRAY_BUFFER, strokeColorBuffer)
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(strokeColors), gl.STATIC_DRAW)
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices.flat()), gl.STATIC_DRAW)
 
 		const offsetBuffer = this.markerShader.offsetBuffer || gl.createBuffer()
 		this.markerShader.offsetBuffer = offsetBuffer
 		gl.bindBuffer(gl.ARRAY_BUFFER, offsetBuffer)
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(offsets), gl.STATIC_DRAW)
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(offsets.flat()), gl.STATIC_DRAW)
 
 		const sizeBuffer = this.markerShader.sizeBuffer || gl.createBuffer()
 		this.markerShader.sizeBuffer = sizeBuffer
 		gl.bindBuffer(gl.ARRAY_BUFFER, sizeBuffer)
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(sizes), gl.STATIC_DRAW)
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(sizes.flat()), gl.STATIC_DRAW)
 
 		const strokeWidthBuffer = this.markerShader.strokeWidthBuffer || gl.createBuffer()
 		this.markerShader.strokeWidthBuffer = strokeWidthBuffer
 		gl.bindBuffer(gl.ARRAY_BUFFER, strokeWidthBuffer)
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(strokeWidths), gl.STATIC_DRAW)
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(strokeWidths.flat()), gl.STATIC_DRAW)
 
+		this._updateMarkerColorBuffers(gl)
+
+	}
+
+	_updateMarkerColorBuffers(gl) {
+		let markers = this.markers
+		if (!markers || !markers.feeds)
+			return
+
+		let fillColors = this.splatArrayForQuad(markers.fillColors)
+
+		let strokeColors = this.splatArrayForQuad(markers.strokeColors)
+
+		const fillColorBuffer = this.markerShader.fillColorBuffer || gl.createBuffer()
+		this.markerShader.fillColorBuffer = fillColorBuffer
+		gl.bindBuffer(gl.ARRAY_BUFFER, fillColorBuffer)
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(fillColors.flat()), gl.STATIC_DRAW)
+
+		const strokeColorBuffer = this.markerShader.strokeColorBuffer || gl.createBuffer()
+		this.markerShader.strokeColorBuffer = strokeColorBuffer
+		gl.bindBuffer(gl.ARRAY_BUFFER, strokeColorBuffer)
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(strokeColors.flat()), gl.STATIC_DRAW)
 	}
 
 	glDrawMarkers(gl) {
 
-		if (!this.markers)
+		if (!this.markers || !this.markers.feeds)
 			return
 
 		let pixelScale = window.devicePixelRatio || 1.0
@@ -414,51 +439,6 @@ class MapOverlay extends google.maps.OverlayView {
 			  -1.0, 	 -1.0, 0, 1
 		]
 
-		// let indices = this.createQuadIndices(3)
-
-		// let vertices = this.splatArrayForQuad([
-		// 	0.0, 0.0,
-		// 	50.0, 50.0,
-		// 	6.9603, 50.9375,
-		// 	], 2)
-		// let fillColors = this.splatArrayForQuad([
-		// 	// red
-		// 	0.5,0.0,0.0,0.5,
-		// 	// purple
-		// 	0.5,0.0,0.5,0.5,
-		// 	// blue
-		// 	0.0,0.0,0.5,0.5,
-		// ], 4)
-
-		// let strokeColors = this.splatArrayForQuad([
-		// 	// yellow
-		// 	1.0,1.0,0.0,1.0,
-		// 	// blue
-		// 	0.0,0.0,0.5,0.5,
-		// 	// black
-		// 	0.0,0.0,0.0,0.5,
-		// ], 4)
-
-		// let offsets = this.repeatArray([
-		// 	-1.0, 1.0,
-		// 	-1.0,-1.0,
-		// 	 1.0,-1.0,
-		// 	 1.0, 1.0,
-		// ], 3)
-
-		// let sizes = this.splatArrayForQuad([
-		// 	20.0,
-		// 	30.0,
-		// 	40.0,
-		// ], 1)
-		// let strokeWidths = this.splatArrayForQuad([
-		// 	1.0,
-		// 	3.0,
-		// 	2.0,
-		// ], 1)
-
-
-
 
 		// premuliplied alpha blend
 		gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
@@ -471,6 +451,10 @@ class MapOverlay extends google.maps.OverlayView {
 		gl.uniformMatrix4fv(shader.uniformLocations.modelViewMatrix, false, MV)
 		gl.uniformMatrix4fv(shader.uniformLocations.projectionMatrix, false, PM)
 		gl.uniform1f(shader.uniformLocations.zoomFactor, this.zoomFactor)
+
+		// if index buffer hasn't been set, yet, can't draw
+		if (!shader.indexBuffer)
+			return
 
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shader.indexBuffer)
 
@@ -494,6 +478,7 @@ class MapOverlay extends google.maps.OverlayView {
 		gl.enableVertexAttribArray(shader.attribLocations.pxStrokeWidth)
 
 		// gl.drawArrays(gl.QUAD, 0, vertices.length/2)
+
 		gl.drawElements(gl.TRIANGLES, this.markers.feeds.length*6, gl.UNSIGNED_INT, 0)
 
 		// draw vertices for debugging purposes
@@ -524,7 +509,7 @@ class MapOverlay extends google.maps.OverlayView {
 
 		for (let i = Math.ceil(geosw.lng()); i < geone.lng(); i++)
 		{
-			let xpix = this.longitudeToViewPixel(i)
+			let xpix = this.longitudeToCanvasPixel(i)
 			vertices.push(xpix, 0.1*this.canvas.height)
 			vertices.push(xpix, 0.9*this.canvas.height)
 			let color = [0.5, 0, 1.0, 1.0];
@@ -539,7 +524,7 @@ class MapOverlay extends google.maps.OverlayView {
 
 		for (let i = Math.ceil(geosw.lat()); i < geone.lat(); i++)
 		{
-			let ypix = this.latitudeToViewPixel(i)
+			let ypix = this.latitudeToCanvasPixel(i)
 			vertices.push(0.1*this.canvas.width, ypix)
 			vertices.push(0.9*this.canvas.width, ypix)
 			let color = [0.5, 0, 1.0, 1.0];
@@ -639,6 +624,19 @@ class MapOverlay extends google.maps.OverlayView {
 		return mercatorPixel
 	}
 
+	mercatorToLatitude(lntany) {
+		// lntany = (180.0/Math.PI)*Math.log(Math.tan(Math.PI*0.25 + latitude*(Math.PI/180.0*0.5)))
+		// lntany*(Math.PI/180.0) = Math.log(Math.tan(Math.PI*0.25 + latitude*(Math.PI/180.0*0.5)))
+		// Math.exp(lntany*(Math.PI/180.0)) = Math.tan(Math.PI*0.25 + latitude*(Math.PI/180.0*0.5))
+		// Math.atan(Math.exp(lntany*(Math.PI/180.0))) = Math.PI*0.25 + latitude*(Math.PI/180.0*0.5)
+		// Math.atan(Math.exp(lntany*(Math.PI/180.0))) - Math.PI*0.25 = latitude*(Math.PI/180.0*0.5)
+		// (Math.atan(Math.exp(lntany*(Math.PI/180.0))) - Math.PI*0.25)*(180.0/Math.PI/0.5) = latitude
+		return (Math.atan(Math.exp(lntany*(Math.PI/180.0))) - Math.PI*0.25)*(180.0/Math.PI/0.5)
+	}
+	latitudeToMercator(latitude) {
+		let lntany = (180.0/Math.PI)*Math.log(Math.tan(Math.PI*0.25 + latitude*(Math.PI/180.0*0.5)))
+		return lntany
+	}
 
 
 	// create functions to convert from geometric to window coordinates
@@ -681,28 +679,43 @@ class MapOverlay extends google.maps.OverlayView {
 		this.zoomFactor = zoomFactor
 		this.mapSouthWest = geosw
 		this.pixSouthWest = pixsw
+		this.pixHeight = pixHeight
 
 		// console.log(`zoomFactor ${Math.log2(zoomFactor)} (${zoomFactor}) zoomLevel ${map.getZoom()} (${Math.pow(2.0, map.getZoom())})`)
 
-		this.longitudeToViewPixel = function(longitude) {
+		this.viewPixelToLongitude = function(x) {
+			// x = 0.5*canvasWidth + pixelScale*(pixsw.x + (longitude - geosw.lng())/geoWidth*pixWidth)
+			// x - 0.5*canvasWidth = pixelScale*(pixsw.x + (longitude - geosw.lng())/geoWidth*pixWidth)
+			// (x - 0.5*canvasWidth)/pixelScale = pixsw.x + (longitude - geosw.lng())/geoWidth*pixWidth
+			// (x - 0.5*canvasWidth)/pixelScale - pixsw.x = (longitude - geosw.lng())/geoWidth*pixWidth
+			// ((x - 0.5*canvasWidth)/pixelScale - pixsw.x)*geoWidth/pixWidth = longitude - geosw.lng()
+			return ((x*pixelScale - 0.5*canvasWidth)/pixelScale - pixsw.x)*geoWidth/pixWidth + geosw.lng()
+		}
+		this.longitudeToCanvasPixel = function(longitude) {
 			// geo == mercator for longitude
 			// original:
-			// return 0.5*canvasWidth + pixelScale*(pixsw.x + (longitude - geosw.lng())/geoWidth*pixWidth)
+			return 0.5*canvasWidth + pixelScale*(pixsw.x + (longitude - geosw.lng())/geoWidth*pixWidth)
 
 			// shift removed from inside
 			// 
-			return pixelScale*pixWidth/geoWidth*(0.5*geoWidth + pixsw.x/pixWidth*geoWidth - geosw.lng() + longitude)
+			// return pixelScale*pixWidth/geoWidth*(0.5*geoWidth + pixsw.x/pixWidth*geoWidth - geosw.lng() + longitude)
 
 		}
 
-		this.latitudeToMercator = function(latitude) {
-			let lntany = (180.0/Math.PI)*Math.log(Math.tan(Math.PI*0.25 + latitude*(Math.PI/180.0*0.5)))
-			return lntany
-		}
 		// height in "projected" space
 		let geoHeight = this.latitudeToMercator(geone.lat()) - this.latitudeToMercator(geosw.lat())
 
-		this.latitudeToViewPixel = function(latitude) {
+		this.viewPixelToLatitude = function(y) {
+			// y = 0.5*canvasHeight + pixelScale*(pixsw.y + (this.latitudeToMercator(latitude) - this.latitudeToMercator(geosw.lat()))/geoHeight*pixHeight)
+			// y - 0.5*canvasHeight = pixelScale*(pixsw.y + (this.latitudeToMercator(latitude) - this.latitudeToMercator(geosw.lat()))/geoHeight*pixHeight)
+			// (y - 0.5*canvasHeight)/pixelScale = pixsw.y + (this.latitudeToMercator(latitude) - this.latitudeToMercator(geosw.lat()))/geoHeight*pixHeight
+			// (y - 0.5*canvasHeight)/pixelScale - pixsw.y = (this.latitudeToMercator(latitude) - this.latitudeToMercator(geosw.lat()))/geoHeight*pixHeight
+			// ((y - 0.5*canvasHeight)/pixelScale - pixsw.y)*geoHeight/pixHeight = this.latitudeToMercator(latitude) - this.latitudeToMercator(geosw.lat())
+			// ((y - 0.5*canvasHeight)/pixelScale - pixsw.y)*geoHeight/pixHeight + this.latitudeToMercator(geosw.lat()) = this.latitudeToMercator(latitude)
+			// this.mercatorToLatitude(((y - 0.5*canvasHeight)/pixelScale - pixsw.y)*geoHeight/pixHeight + this.latitudeToMercator(geosw.lat())) = latitude
+			return this.mercatorToLatitude(((y*pixelScale - 0.5*canvasHeight)/pixelScale - pixsw.y)*geoHeight/pixHeight + this.latitudeToMercator(geosw.lat()))
+		}
+		this.latitudeToCanvasPixel = function(latitude) {
 			return 0.5*canvasHeight + pixelScale*(pixsw.y + (this.latitudeToMercator(latitude) - this.latitudeToMercator(geosw.lat()))/geoHeight*pixHeight)
 		}
 
@@ -743,7 +756,7 @@ class MapOverlay extends google.maps.OverlayView {
 		// draw lon/lat grid for test purposes
 		for (let i = Math.ceil(geosw.lng()); i < geone.lng(); i++)
 		{
-			let xpix = this.longitudeToViewPixel(i)
+			let xpix = this.longitudeToCanvasPixel(i)
 			ctx.strokeStyle = `rgba(0, 200, ${Math.max(0, Math.min(255, 127 + 30*i))}, 1.0)`;
 			if (i == 0)
 			ctx.strokeStyle = `rgba(0, 0, 0, 1.0)`;
@@ -754,7 +767,7 @@ class MapOverlay extends google.maps.OverlayView {
 		}
 		for (let i = Math.ceil(geosw.lat()); i < geone.lat(); i++)
 		{
-			let ypix = this.latitudeToViewPixel(i)
+			let ypix = this.latitudeToCanvasPixel(i)
 			ctx.strokeStyle = `rgba(${Math.max(0, Math.min(255, 127 + 30*i))}, 0, 200, 1.0)`;
 			if (i % 10 == 0)
 				ctx.strokeStyle = `rgba(0, 255, 0, 1.0)`;
@@ -769,24 +782,142 @@ class MapOverlay extends google.maps.OverlayView {
 
 	}
 
+	/**
+ * Return 0 <= i <= array.length such that !predicate(array[i - 1]) && predicate(array[i]).
+ */
+_binarySearch(array, predicate) {
+    let lo = -1
+    let hi = array.length
+    while (1 + lo < hi) {
+        const mi = lo + ((hi - lo) >> 1)
+        if (predicate(array[mi])) {
+            hi = mi;
+        } else {
+            lo = mi;
+        }
+    }
+    return hi;
+	}
+
+	highlightMarkersAt(eventPixel) {
+		if (!this.markers)
+			return
+
+		let pixsw = this.pixSouthWest
+
+		let x = eventPixel.x
+		let y = eventPixel.y
+		// let x = eventPixel.x
+		// let y = pixsw.y - eventPixel.y
+
+    // console.log(`mousemove ${pixsw}`)
+
+    let feeds = this.feedsCloseToPixel({x: x, y: y}, 10.0)
+
+    // console.log(`feeds ${feeds}`)
+
+    this.markers.highlightedFeeds = new Set(feeds)
+
+    this.colorMarkers()
+
+    if (this.gl) {
+			this.glDraw(this.gl)
+		}
+
+	}
+
+
+	feedsCloseToPixel(pxPos, pxRadius) {
+		let pixsw = {x: pxPos.x - pxRadius, y: pxPos.y + pxRadius}
+		let pixne = {x: pxPos.x + pxRadius, y: pxPos.y - pxRadius}
+
+		let geosw = new google.maps.LatLng(this.viewPixelToLatitude(pixsw.y), this.viewPixelToLongitude(pixsw.x))
+		let geone = new google.maps.LatLng(this.viewPixelToLatitude(pixne.y), this.viewPixelToLongitude(pixne.x))
+
+		console.log(`feedsCloseToPixelv ${geosw.lng()} to ${geone.lng()}, ${geosw.lat()} to ${geone.lat()}`)
+
+		let feedIds = this.feedsInGeoBox(geosw, geone)
+
+		return feedIds
+	}
+
+	feedsInGeoBox(sw, ne) {
+		if (!this.markers)
+			return []
+
+		// binsearch lng/lat to find range covered in box
+		let latArray = this.markers.sortedFeeds.latitude
+		let latLo = this._binarySearch(latArray, e => e[0] >= sw.lat())
+		let latHi = this._binarySearch(latArray, e => e[0] > ne.lat())
+
+		if (latLo >= latHi) // same indices indicate nothing found
+			return []
+
+		let lngArray = this.markers.sortedFeeds.longitude
+		let lngLo = this._binarySearch(lngArray, e => e[0] >= sw.lng())
+		let lngHi = this._binarySearch(lngArray, e => e[0] > ne.lng())
+
+		if (lngLo >= lngHi)
+			return []
+
+		// find intersection of lat/lng results, eg. only those that have both
+		let lngSet = new Set(lngArray.slice(lngLo, lngHi).map(e => e[1]))
+		let intersectArray = latArray.slice(latLo, latHi).map(e => e[1]).filter(e => lngSet.has(e))
+
+		// return only the feedIds
+		return intersectArray
+
+	}
+
+	colorMarkers() {
+		let markers = this.markers
+		if (!markers)
+			return
+
+		let fillColors = markers.feeds.map( (feed, i) => {
+			if (markers.highlightedFeeds.has(feed.id))
+				return [0.0,0.2,0.2,0.2]
+			else
+				return [0.0,0.0,0.3,0.3]
+		})
+
+		this.markers.fillColors = fillColors
+
+		if (this.gl) {
+			this._updateMarkerColorBuffers(this.gl)
+		}
+	}
+
 	setFeeds(feeds) {
 		// feeds to draw as markers
 		// filter out all that don't have lon/lat
+		// accept both strings and numeric values by using parseFloat()
 		feeds = feeds.filter(feed => Number.isFinite(parseFloat(feed.longitude)) && Number.isFinite(parseFloat(feed.latitude)))
-		for (let feed of feeds) {
-			console.assert(Number.isFinite(feed.longitude), "longitude not finite", feed.longitude)
-			console.assert(Number.isFinite(feed.latitude), "latitude not finite", feed.latitude)
-		}
-``
-		let positions = feeds.map(feed => [parseFloat(feed.longitude), parseFloat(feed.latitude)]).flat()
+		let feedIndexMap = new Map(feeds.map((e, i) => [e.id, i]))
+
+		// sort by lon/lat for selection with mouse
+		let longitudeFeeds = feeds.map(feed => [parseFloat(feed.longitude), feed.id]).sort((a,b) => a[0]-b[0])
+		let latitudeFeeds = feeds.map(feed => [parseFloat(feed.latitude), feed.id]).sort((a,b) => a[0]-b[0])
+
+
+		let positions = feeds.map(feed => [parseFloat(feed.longitude), parseFloat(feed.latitude)])
+
 		this.markers = {
+			sortedFeeds: {
+				longitude: longitudeFeeds,
+				latitude: latitudeFeeds,
+				index: feedIndexMap, // maps feedId -> array index (for updating buffers when the markers change)
+			},
 			feeds: feeds,
 			positions: positions,
 			fillColors: this.repeatArray([0.0,0.0,0.5,0.5], feeds.length),
-			strokeColors: this.repeatArray([0.0,1.0,0.0,1.0], feeds.length),
+			strokeColors: this.repeatArray([0.0,0.0,0.5,0.5], feeds.length),
 			strokeWidths: this.repeatArray([1.0], feeds.length),
 			markerSizes: this.repeatArray([10.0], feeds.length),
+			highlightedFeeds: new Set(),
 		}
+
+		this.colorMarkers()
 
 		if (this.gl) {
 			this._updateMarkerBuffers(this.gl)
