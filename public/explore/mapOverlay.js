@@ -826,15 +826,19 @@ _binarySearch(array, predicate) {
 
 	}
 
+	viewPixelToGeoCoords(px) {
+		let geo = new google.maps.LatLng(this.viewPixelToLatitude(px.y), this.viewPixelToLongitude(px.x))
+		return geo
+	}
 
 	feedsCloseToPixel(pxPos, pxRadius) {
 		let pixsw = {x: pxPos.x - pxRadius, y: pxPos.y + pxRadius}
 		let pixne = {x: pxPos.x + pxRadius, y: pxPos.y - pxRadius}
 
-		let geosw = new google.maps.LatLng(this.viewPixelToLatitude(pixsw.y), this.viewPixelToLongitude(pixsw.x))
-		let geone = new google.maps.LatLng(this.viewPixelToLatitude(pixne.y), this.viewPixelToLongitude(pixne.x))
+		let geosw = this.viewPixelToGeoCoords(pixsw)
+		let geone = this.viewPixelToGeoCoords(pixne)
 
-		console.log(`feedsCloseToPixelv ${geosw.lng()} to ${geone.lng()}, ${geosw.lat()} to ${geone.lat()}`)
+		// console.log(`feedsCloseToPixelv ${geosw.lng()} to ${geone.lng()}, ${geosw.lat()} to ${geone.lat()}`)
 
 		let feedIds = this.feedsInGeoBox(geosw, geone)
 
