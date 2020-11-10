@@ -26,12 +26,13 @@ class MapOverlay extends google.maps.OverlayView {
 		super()
 		this.mapDiv = mapDiv
   	this.setMap(map)
+  	this.canvas = document.createElement("canvas")
+
 	}
 
 	onAdd() {
 		let clientBounds = this.mapDiv.getBoundingClientRect()
 
-		this.canvas = document.createElement("canvas")
 		// this.canvas.style.top = `${clientBounds.top}px`
 		// this.canvas.style.left = `${clientBounds.left}px`
 		// this.canvas.style.width = `${clientBounds.width}px`
@@ -388,24 +389,47 @@ class MapOverlay extends google.maps.OverlayView {
 
 	}
 
-	_updateMarkerColorBuffers(gl) {
+	_updateMarkerColorBuffers(gl, changedFeedIndices) {
 		let markers = this.markers
 		if (!markers || !markers.feeds)
 			return
 
-		let fillColors = this.splatArrayForQuad(markers.fillColors)
+		// do a sub buffer update for changes with less than 1000 markers changed
+		// exact number can be tuned for performance, 1000 is just a guess
+		if (!changedFeedIndices || (changedFeedIndices.length < 1000)) {
+			let fillColors = this.splatArrayForQuad(markers.fillColors)
 
-		let strokeColors = this.splatArrayForQuad(markers.strokeColors)
+			let strokeColors = this.splatArrayForQuad(markers.strokeColors)
 
-		const fillColorBuffer = this.markerShader.fillColorBuffer || gl.createBuffer()
-		this.markerShader.fillColorBuffer = fillColorBuffer
-		gl.bindBuffer(gl.ARRAY_BUFFER, fillColorBuffer)
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(fillColors.flat()), gl.STATIC_DRAW)
+			const fillColorBuffer = this.markerShader.fillColorBuffer || gl.createBuffer()
+			this.markerShader.fillColorBuffer = fillColorBuffer
+			gl.bindBuffer(gl.ARRAY_BUFFER, fillColorBuffer)
+			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(fillColors.flat()), gl.DYNAMIC_DRAW)
 
-		const strokeColorBuffer = this.markerShader.strokeColorBuffer || gl.createBuffer()
-		this.markerShader.strokeColorBuffer = strokeColorBuffer
-		gl.bindBuffer(gl.ARRAY_BUFFER, strokeColorBuffer)
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(strokeColors.flat()), gl.STATIC_DRAW)
+			const strokeColorBuffer = this.markerShader.strokeColorBuffer || gl.createBuffer()
+			this.markerShader.strokeColorBuffer = strokeColorBuffer
+			gl.bindBuffer(gl.ARRAY_BUFFER, strokeColorBuffer)
+			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(strokeColors.flat()), gl.DYNAMIC_DRAW)
+
+		}
+		else
+		{
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.markerShader.fillColorBuffer)
+			for (let i of changedFeedIndices) {
+				let colors = this.splatArrayForQuad(markers.fillColors.slice(i,i+1)).flat()
+				let fcolors = new Float32Array(colors)
+
+				gl.bufferSubData(gl.ARRAY_BUFFER, i*4*4*Float32Array.BYTES_PER_ELEMENT, fcolors)
+
+			}
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.markerShader.strokeColorBuffer)
+			for (let i of changedFeedIndices) {
+				let colors = this.splatArrayForQuad(markers.strokeColors.slice(i,i+1)).flat()
+
+				gl.bufferSubData(gl.ARRAY_BUFFER, i*4*4*Float32Array.BYTES_PER_ELEMENT, new Float32Array(colors))
+
+			}
+		}
 	}
 
 	glDrawMarkers(gl) {
@@ -801,7 +825,7 @@ _binarySearch(array, predicate) {
 
 	highlightMarkersAt(eventPixel) {
 		if (!this.markers)
-			return
+			return []
 
 		let pixsw = this.pixSouthWest
 
@@ -810,15 +834,23 @@ _binarySearch(array, predicate) {
 		// let x = eventPixel.x
 		// let y = pixsw.y - eventPixel.y
 
-    // console.log(`mousemove ${pixsw}`)
+    // console.log(`mousemove ${eventPixel}`)
 
     let feeds = this.feedsCloseToPixel({x: x, y: y}, 10.0)
 
     // console.log(`feeds ${feeds}`)
 
-    this.markers.highlightedFeeds = new Set(feeds)
+    // create set of affected feeds
+    let oldFeedSet = new Set(this.markers.highlightedFeeds)
+    let newFeedSet = new Set(feeds)
+    let oldFeeds = Array.from(this.markers.highlightedFeeds)
 
-    this.colorMarkers()
+    // changed are only the difference between the two sets
+    let changedFeeds = oldFeeds.filter( e => !newFeedSet.has(e) )
+    changedFeeds = changedFeeds.concat(feeds.filter( e => !oldFeedSet.has(e) ))
+
+    this.markers.highlightedFeeds = newFeedSet
+    this.colorMarkers(changedFeeds)
 
     if (this.gl) {
 			this.glDraw(this.gl)
@@ -874,22 +906,37 @@ _binarySearch(array, predicate) {
 
 	}
 
-	colorMarkers() {
+	colorMarkers(changedFeeds) {
 		let markers = this.markers
 		if (!markers)
 			return
 
-		let fillColors = markers.feeds.map( (feed, i) => {
-			if (markers.highlightedFeeds.has(feed.id))
+		// if no change list supplied, color all
+		if (!changedFeeds)
+			changedFeeds = markers.feeds.map(feed => feed.id)
+
+		let fillColors = changedFeeds.map( (feedId) => {
+			if (markers.highlightedFeeds.has(feedId))
 				return [0.0,0.2,0.2,0.2]
 			else
 				return [0.0,0.0,0.3,0.3]
 		})
 
-		this.markers.fillColors = fillColors
+		let feedIndices = undefined
+		if (!this.markers.fillColors || (this.markers.fillColors.length == fillColors.length)) {
+			this.markers.fillColors = fillColors
+		}
+		else
+		{
+			feedIndices = changedFeeds.map(feedId => this.markers.sortedFeeds.index.get(feedId))
+			for (let i = 0; i < fillColors.length; i++) {
+				let feedIndex = feedIndices[i]
+				this.markers.fillColors[feedIndex] = fillColors[i]
+			}
+		}
 
 		if (this.gl) {
-			this._updateMarkerColorBuffers(this.gl)
+			this._updateMarkerColorBuffers(this.gl, feedIndices)
 		}
 	}
 
