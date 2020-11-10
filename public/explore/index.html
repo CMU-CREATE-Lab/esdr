@@ -265,15 +265,19 @@ function initMap() {
   })
 
   google.maps.event.addListener(gMap, 'mousemove', function(event) {
-    gSearchResults.mapOverlay.highlightMarkersAt(event.pixel)
+    let feedIds = gSearchResults.mapOverlay.highlightMarkersAt(event.pixel)
+    this.setOptions({
+      draggableCursor: (feedIds.length > 0 ? 'default' : null)
+    });
+
   })
 
   google.maps.event.addListener(gMap, 'click', function(event) {
     gSearchResults.mapOverlay.highlightMarkersAt(event.pixel)
 
 
-  let div = document.createElement("div")
-  // div.setAttribute("class", "search-result-channel-block")
+    let div = document.createElement("div")
+    // div.setAttribute("class", "search-result-channel-block")
 
     let highlightedFeedIds = Array.from(gSearchResults.mapOverlay.markers.highlightedFeeds).sort()
 
@@ -296,17 +300,17 @@ function initMap() {
 
     }
 
+    if (this.infoWindow)
+      this.infoWindow.close()
 
-
-
-    let infoContent = "HI!"
-
-    let eventGeoCoords = gSearchResults.mapOverlay.viewPixelToGeoCoords(event.pixel)
-    let infoWindow = new google.maps.InfoWindow({
-      content: div,
-      position: eventGeoCoords,
-    })
-    infoWindow.open(gMap)
+    if (highlightedFeedIds.length > 0) {
+      let eventGeoCoords = gSearchResults.mapOverlay.viewPixelToGeoCoords(event.pixel)
+      this.infoWindow = new google.maps.InfoWindow({
+        content: div,
+        position: eventGeoCoords,
+      })
+      this.infoWindow.open(gMap)
+    }
   })
 
 

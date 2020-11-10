@@ -824,6 +824,7 @@ _binarySearch(array, predicate) {
 			this.glDraw(this.gl)
 		}
 
+		return feeds
 	}
 
 	viewPixelToGeoCoords(px) {
