@@ -194,7 +194,7 @@ input[type="search"] {
   <div class="searchbar-divider"></div>
   <button class="searchbar-button" onclick="toggleFilters()">&gt;</button>
   <!-- <div class="searchbar-divider"></div> -->
-  <input type="search" class="search-text" placeholder="search sensor feeds">
+  <input type="search" id="sensorSearchField" class="search-text" placeholder="search sensor feeds">
   <!-- <div class="searchbar-divider"></div> -->
   <button class="searchbar-button" onclick="doSensorSearch()">Search</button>
   </div>
@@ -285,7 +285,7 @@ function initMap() {
     let highlightedFeedIds = Array.from(gSearchResults.mapOverlay.markers.highlightedFeeds).sort()
 
     for (let feedId of highlightedFeedIds) {
-      let feed = esdr.feeds[feedId]
+      let feed = esdr.feeds.get(feedId)
       let feedDiv = searchResultsDivForFeed(feedId)
       if (feed && feed.channelBounds && feed.channelBounds.channels)
       {
@@ -316,6 +316,13 @@ function initMap() {
     }
   })
 
+  // install search response events
+  let searchInput = document.getElementById("sensorSearchField")
+  searchInput.addEventListener("change", event => {
+    let searchText = event.target.value
+    console.log(searchText)
+    esdr.searchQuery = {text: searchText}
+  })
 
   // install search results callback
   esdr.searchCallback = (searchResults, isAppendUpdate) => processNewSearchResults(searchResults, isAppendUpdate)
@@ -361,6 +368,12 @@ function parseUrlParams() {
   if (browserParams.has("center")) {
     let latlon = browserParams.get("center").split(",")
     gSearchResults.center = new google.maps.LatLng(latlon[0], latlon[1])
+  }
+
+  // search
+  if (browserParams.has("search")) {
+    let searchText = browserParams.get("search")
+    gSearchResults.search = {text: searchText}
   }
 
   // new params for display state
@@ -504,14 +517,14 @@ function updateEsdrLoadProgress(numFeedsReceived, numFeedsTotal) {
 function esdrFeedsReceived(feedIds, progress) {
   updateEsdrLoadProgress(progress.current, progress.total)
 
-  gSearchResults.mapOverlay.setFeeds(Object.values(esdr.feeds))
+  gSearchResults.mapOverlay.setFeeds(Array.from(esdr.feeds.values()))
 }
 
 function processNewSearchResults(newResults, isAppendUpdate) {
   // this function receives a list of search results in the {feedId: , channelNames:} format
   // if isAppendUpdate is true, this is an incremental search result, and results can be appended
   // otherwise clear search results list
-
+  console.log(`processNewSearchResults(${newResults.length}, ${isAppendUpdate})`)
 
   let searchResultsList = document.getElementById("searchResultsList")
 
@@ -540,12 +553,13 @@ function appendSearchResultsListBy(results) {
   let feedDivs = []
   for (let result of results) {
     let feedId = result.feedId
-    let feed = esdr.feeds[feedId]
+    let feed = esdr.feeds.get(feedId)
+    let channelNames = result.channels
     let feedDiv = searchResultsDivForFeed(feedId)
-    if (feed && feed.channelBounds && feed.channelBounds.channels)
+    if (channelNames)
     {
       let channelDivs = []
-      for (let channelName in feed.channelBounds.channels) {
+      for (let channelName of channelNames) {
         let chdiv = searchResultsDivForChannel(feedId, channelName)
         channelDivs.push(chdiv)
       }
@@ -593,6 +607,8 @@ function appendSearchResultsListIfNeeded() {
       // cap to the number of actually available results
       let addCount = Math.min(results.length, Math.min(100, Math.max(10, Math.floor(searchResultsList.children.length*0.5))))
       appendSearchResultsListBy(results.slice(0, addCount))
+      // call this function again until div is full enough
+      appendSearchResultsListIfNeeded()
     }
     // console.log(`${itemBottom} of ${containerBottom}`)
   }
@@ -601,16 +617,9 @@ function appendSearchResultsListIfNeeded() {
 }
 
 
-
-function labelForChannel(feedId, channelName) {
-  let feed = esdr.feeds[feedId] ? `${esdr.feeds[feedId].name} ` : ""
-  let label = `${feed}(${feedId}).${channelName}`
-  return label
-}
-
 function searchResultsDivForFeed(feedId) {
-  let feed = esdr.feeds[feedId]
-  let label = `${feed.name} (${feedId})`
+  let feed = esdr.feeds.get(feedId)
+  let label = esdr.labelForFeed(feedId)
 
   let div = document.createElement("div")
   div.setAttribute("id", `feed-${feedId}`)
@@ -625,14 +634,16 @@ function searchResultsDivForFeed(feedId) {
   return div
 }
 
+
 function getChannelIdFromElementId(elementId) {
   let hyphenLoc = elementId.indexOf("-")
   let channelId = elementId.slice(hyphenLoc+1)
   return channelId
 }
 
+
 function searchResultsDivForChannel(feedId, channelName) {
-  let label = labelForChannel(feedId, channelName)
+  let label = esdr.labelForChannel(feedId, channelName)
   let channelId = `${feedId}.${channelName}`
   let selected = esdr.isChannelSelected(channelId)
 

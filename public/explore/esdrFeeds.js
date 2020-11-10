@@ -3,40 +3,89 @@ class ESDR {
 
 	constructor() {
 		this.numParallelRequests = 1
-		this.feeds = {}
+		this.feeds = new Map
 		this.feedIds = []
 		this.apiUrl = 'https://esdr.cmucreatelab.org/api/v1'
 		this.selectedChannelIds = [] // an array to respect order
 		this.selectedChannels_ = {} // a map for quick testing if a channel is selected
 		this.searchCallback_ = (results, isAppendUpdate) => {} // empty function initially
 		this.searchQuery_ = undefined
+		this.oldSearchQuery_ = undefined
+		this.searchResults_ = undefined
+	}
+
+	_separateKeywordsInSearchString(text) {
+		// TODO: add support for quoted substrings
+		return text.toLowerCase().split(" ")
+	}
+
+	_performSearchOn(feedIds, search) {
+		let searchText = search.text
+		let keywords = this._separateKeywordsInSearchString(searchText)
+		let searchResults = feedIds.reduce( (results, feedId) => {
+			let feed = this.feeds.get(feedId)
+			let feedName = feed.name.toLowerCase()
+			let feedIdString = feedId.toString()
+			// match keywords to feed name substring or feedId exact match
+			let feedMatches = keywords.some( word => (feedName.indexOf(word) > -1) || (feedIdString == word) )
+
+
+			// if the feed matches the search, return a result with all channels
+			if (feedMatches)
+			{
+				results.push({feedId: feedId, channels: feed.channelNames})
+				return results
+			}
+			let channelMatches = feed.channelNames ? feed.channelNames.filter(name => keywords.some(word => name.toLowerCase().indexOf(word) > -1)) : []
+
+			if (channelMatches.length > 0)
+			{
+				results.push({feedId: feedId, channels: channelMatches})
+			}
+
+			return results
+
+		}, [])
+		return searchResults
 	}
 
 	_updateSearch(appendedFeedIds) {
 		// empty search means all the feeds
-		if (this.searchQuery === undefined || searchQuery == {})
+		if (this.searchQuery_ === undefined || this.searchQuery_ == {})
 		{
 			let searchResults = []
-			let feedIds = appendedFeedIds ? appendedFeedIds : this.feeds.keys
+			let feedIds = appendedFeedIds ? appendedFeedIds : this.feeds.keys()
 
 			// do nothing if there's nothing to report
-			if (feedIds === undefined)
+			if (feedIds === undefined) {
+				this.searchResults_ = undefined
+				this.searchCallback_([], appendedFeedIds !== undefined);
 				return
+			}
 
 			for (let feedId of feedIds)
 			{
 				let channelNames = this.channelNamesForFeed(feedId)
 				searchResults.push({feedId: feedId, channels: channelNames})
 			}
+			this.searchResults_ = searchResults
 			this.searchCallback_(searchResults, appendedFeedIds !== undefined);
 		}
-		else
+		else if (this.oldSearchQuery_ == this.searchQuery_ && appendedFeedIds)
 		{
-			// else do the actual search
+			// search only appended feeds
+			this.searchResults = this._performSearchOn(appendedFeedIds, this.searchQuery_)
+			this.searchCallback_(this.searchResults, false);
+		}
+		else if (this.oldSearchQuery_ != this.searchQuery_)
+		{
+			this.searchResults = this._performSearchOn(Array.from(this.feeds.keys()), this.searchQuery_)
+			this.searchCallback_(this.searchResults, false);
 		}
 	}
 
 	set searchQuery(query) {
+		this.oldSearchQuery_ = this.searchQuery_
 		this.searchQuery_ = query
 		this._updateSearch()
 	}
@@ -46,14 +95,33 @@ class ESDR {
 		this._updateSearch()
 	}
 
-	channelNamesForFeed(feedId) {
-		let feed = this.feeds[feedId]
+	// feed is optional, if not provided it is looked up
+	channelNamesForFeed(feedId, feed) {
+		if (!feed)
+			feed = this.feeds.get(feedId)
 		if (feed && feed.channelBounds && feed.channelBounds.channels) {
-			return feed.channelBounds.channels.keys
+			return Object.keys(feed.channelBounds.channels)
 		}
 		else
 			return undefined
 	}
+
+	// feed is optional, if it's empty the feed is looked up
+	// this is so that labels can be generated when receiving feeds
+	labelForFeed(feedId, feed) {
+		if (!feed)
+	  	feed = this.feeds.has(feedId) ? `${this.feeds.get(feedId).name} ` : ""
+	  let label = `${feed}(${feedId})`
+	  return label
+	}
+
+	// feed is optional
+	labelForChannel(feedId, channelName, feed) {
+	  let feedLabel = this.labelForFeed(feedId, feed)
+	  let label = `${feedLabel}.${channelName}`
+	  return label
+	}
+
 
 	feedsReceived(feedsJson, endOffset, callback) {
 	  // feedsJson.limit contains how big the batches are
@@ -91,9 +159,13 @@ class ESDR {
 
 	  let feedIds = []
 	  for (let feed of feedsJson.rows) {
+	  	// create channel labels if feed has channels
+	  	feed.channelNames = this.channelNamesForFeed(feed.id, feed)
+	  	if (feed.channelNames)
+	  		feed.channelLabels = feed.channelNames.map( name => this.labelForChannel(feed.id, name, feed) )
 
 	  	feedIds.push(feed.id)
-	    this.feeds[feed.id] = feed
+	    this.feeds.set(feed.id, feed)
 	  }
 
 	  this.feedIds = this.feedIds.concat(feedIds)
