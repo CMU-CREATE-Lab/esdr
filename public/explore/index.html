@@ -254,6 +254,9 @@ function initMap() {
     }
   );
 
+  gSearchResults.mapOverlay = new MapOverlay(gMap, mapdiv)
+
+
   google.maps.event.addListener(gMap, 'bounds_changed', function() {
    // console.log(`bounds_changed event to ${map.getBounds()}`);
    let center = this.getCenter()
@@ -267,7 +270,7 @@ function initMap() {
   google.maps.event.addListener(gMap, 'mousemove', function(event) {
     let feedIds = gSearchResults.mapOverlay.highlightMarkersAt(event.pixel)
     this.setOptions({
-      draggableCursor: (feedIds.length > 0 ? 'default' : null)
+      draggableCursor: (feedIds.length > 0 ? 'default' :  null)
     });
 
   })
@@ -312,14 +315,6 @@ function initMap() {
       this.infoWindow.open(gMap)
     }
   })
-
-
-  // add overlay
-  // const bounds = new google.maps.LatLngBounds(
-  //   new google.maps.LatLng(62.281819, -150.287132),
-  //   new google.maps.LatLng(62.400471, -150.005608)
-  // );
-  gSearchResults.mapOverlay = new MapOverlay(gMap, mapdiv)
 
 
   // install search results callback
