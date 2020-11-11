@@ -20,15 +20,25 @@ class ESDR {
 	}
 
 	_performSearchOn(feedIds, search) {
-		let searchText = search.text
+	  let now = Date.now() / 1000;
+	  let recentThreshold = now - 30 * 24 * 60 * 60;
+
+		let searchText = search.text || ""
 		let keywords = this._separateKeywordsInSearchString(searchText)
 		let searchResults = feedIds.reduce( (results, feedId) => {
 			let feed = this.feeds.get(feedId)
+
+			// filter out feeds that are older
+			if (search.recentOnly) {
+				let feedLastTime = parseFloat(feed.maxTimeSecs || 0.0)
+				if (feedLastTime < recentThreshold)
+					return results
+			}
+
 			let feedName = feed.name.toLowerCase()
 			let feedIdString = feedId.toString()
 			// match keywords to feed name substring or feedId exact match
 			let feedMatches = keywords.some( word => (feedName.indexOf(word) > -1) || (feedIdString == word) )
-
 
 			// if the feed matches the search, return a result with all channels
 			if (feedMatches)
@@ -84,10 +94,23 @@ class ESDR {
 		}
 	}
 
+	updateQuery(queryUpdate) {
+		let query = Object.assign({}, this.searchQuery_ || {}, queryUpdate)
+		this.searchQuery_ = query;
+		this._updateSearch()
+}
+
 	set searchQuery(query) {
 		this.oldSearchQuery_ = this.searchQuery_
 		this.searchQuery_ = query
 		this._updateSearch()
+	}
+	get searchQuery() {
+		if (!this.searchQuery_)
+			return {}
+		// return a copy of the query to detect changes
+		// not ideal, as deep changes wouldn't be seen
+		return Object.assign({}, this.searchQuery_)
 	}
 
 	set searchCallback(callback) {

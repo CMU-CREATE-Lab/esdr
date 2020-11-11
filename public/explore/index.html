@@ -295,7 +295,7 @@ input[type="search"] {
   <button class="searchbar-button" onclick="doSensorSearch()">Search</button>
   </div>
   <div id="filtersBlock" class="search-filters">
-    <div>Filter 1</div>
+    <div><input type="checkbox" id="recentOnlyCheckbox" name="checkbox-recentOnly"><label for="checkbox-recentOnly">Data in last 30 days</label></div>
     <div>Filter 2</div>
   </div>
   <div id="progressBlock" class="search-progress-block">
@@ -439,7 +439,16 @@ function initMap() {
   searchInput.addEventListener("change", event => {
     let searchText = event.target.value
     console.log(searchText)
-    esdr.searchQuery = {text: searchText}
+    esdr.updateQuery({text: searchText})
+
+    updateUrlHash()
+  })
+  let recentOnlyCheckbox = document.getElementById("recentOnlyCheckbox")
+  recentOnlyCheckbox.addEventListener("change", event => {
+    let checked = event.target.checked
+    esdr.updateQuery({recentOnly: checked})
+
+    updateUrlHash()
   })
 
   // install search results callback
@@ -491,7 +500,15 @@ function parseUrlParams() {
   // search
   if (browserParams.has("search")) {
     let searchText = browserParams.get("search")
-    explorer.search = {text: searchText}
+    let searchInput = document.getElementById("sensorSearchField")
+    searchInput.value = searchText
+    esdr.updateQuery({text: searchText})
+  }
+  if (browserParams.has("recentOnly")) {
+    let recentOnly = browserParams.get("recentOnly") == "true"
+    let recentOnlyCheckbox = document.getElementById("recentOnlyCheckbox")
+    recentOnlyCheckbox.checked = recentOnly
+    esdr.updateQuery({recentOnly: recentOnly})
   }
 
   // new params for display state
@@ -522,6 +539,14 @@ function createUrlParams() {
   }
   if (explorer.zoom) {
     browserParams.set("zoom", `${explorer.zoom}`)
+  }
+  if (esdr.searchQuery.recentOnly)
+  {
+    browserParams.set("recentOnly", `${esdr.searchQuery.recentOnly}`)
+  }
+  if (esdr.searchQuery.text)
+  {
+    browserParams.set("search", text)
   }
 
   return browserParams
