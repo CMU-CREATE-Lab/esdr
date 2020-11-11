@@ -396,7 +396,7 @@ class MapOverlay extends google.maps.OverlayView {
 
 		// do a sub buffer update for changes with less than 1000 markers changed
 		// exact number can be tuned for performance, 1000 is just a guess
-		if (!changedFeedIndices || (changedFeedIndices.length < 1000)) {
+		if (!changedFeedIndices || (changedFeedIndices.length > 1000)) {
 			let fillColors = this.splatArrayForQuad(markers.fillColors)
 
 			let strokeColors = this.splatArrayForQuad(markers.strokeColors)
@@ -853,6 +853,8 @@ _binarySearch(array, predicate) {
     this.colorMarkers(changedFeeds)
 
     if (this.gl) {
+			let feedIndices = changedFeeds.map(feedId => this.markers.sortedFeeds.index.get(feedId))
+			this._updateMarkerColorBuffers(this.gl, feedIndices)
 			this.glDraw(this.gl)
 		}
 
@@ -933,10 +935,6 @@ _binarySearch(array, predicate) {
 				let feedIndex = feedIndices[i]
 				this.markers.fillColors[feedIndex] = fillColors[i]
 			}
-		}
-
-		if (this.gl) {
-			this._updateMarkerColorBuffers(this.gl, feedIndices)
 		}
 	}
 
