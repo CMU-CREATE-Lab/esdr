@@ -644,7 +644,8 @@ function updateEsdrLoadProgress(numFeedsReceived, numFeedsTotal) {
 function esdrFeedsReceived(feedIds, progress) {
   updateEsdrLoadProgress(progress.current, progress.total)
 
-  explorer.mapOverlay.setFeeds(Array.from(esdr.feeds.values()))
+  // set with all feeds rejected to start with
+  explorer.mapOverlay.setFeeds(Array.from(esdr.feeds.values()), {rejectedFeeds: new Set(feedIds)})
 }
 
 function processNewSearchResults(newResults, isAppendUpdate) {

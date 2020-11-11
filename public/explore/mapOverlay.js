@@ -345,7 +345,6 @@ class MapOverlay extends google.maps.OverlayView {
 		if (!markers || !markers.feeds)
 			return
 
-		let indices = this.createQuadIndices(markers.feeds.length)
 
 		let vertices = this.splatArrayForQuad(markers.positions)
 
@@ -360,11 +359,6 @@ class MapOverlay extends google.maps.OverlayView {
 		let strokeWidths = this.splatArrayForQuad(markers.strokeWidths)
 
 		// upload data to GL buffers
-		const indexBuffer = this.markerShader.indexBuffer || gl.createBuffer()
-		this.markerShader.indexBuffer = indexBuffer
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
-		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(indices.flat()), gl.STATIC_DRAW)
-
 		const vertexBuffer = this.markerShader.vertexBuffer || gl.createBuffer()
 		this.markerShader.vertexBuffer = vertexBuffer
 		gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
@@ -385,6 +379,7 @@ class MapOverlay extends google.maps.OverlayView {
 		gl.bindBuffer(gl.ARRAY_BUFFER, strokeWidthBuffer)
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(strokeWidths.flat()), gl.STATIC_DRAW)
 
+		this._updateIndexBuffer(gl)
 		this._updateMarkerColorBuffers(gl)
 
 	}
@@ -430,6 +425,34 @@ class MapOverlay extends google.maps.OverlayView {
 
 			}
 		}
+	}
+
+	_updateIndexBuffer(gl) {
+		if (!this.markers)
+			return
+
+		// indices determine draw order
+		// and filtered feeds should be after before rejected feeds to come out on top
+
+		let rejectedFeeds = this.markers.rejectedFeeds
+		let filteredFeeds = Array.from(this.markers.sortedFeeds.index.keys()).filter(feedId => !rejectedFeeds.has(feedId))
+
+		let indicesForQuad = function(i) {
+			return [4*i + 0, 4*i + 1, 4*i + 2, 4*i + 2, 4*i + 3, 4*i + 0]
+		}
+
+
+		let indices = Array.from(rejectedFeeds).concat(filteredFeeds).map(feedId => {
+			let i = this.markers.sortedFeeds.index.get(feedId)
+			return indicesForQuad(i)
+		})
+
+		// upload data to GL buffers
+		const indexBuffer = this.markerShader.indexBuffer || gl.createBuffer()
+		this.markerShader.indexBuffer = indexBuffer
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(indices.flat()), gl.STATIC_DRAW)
+
 	}
 
 	glDrawMarkers(gl) {
@@ -880,6 +903,7 @@ _binarySearch(array, predicate) {
 
 		if (this.gl) {
 			let feedIndices = changedFeeds.map(feedId => this.markers.sortedFeeds.index.get(feedId))
+			this._updateIndexBuffer(this.gl)
 			this._updateMarkerColorBuffers(this.gl, feedIndices)
 			this.glDraw(this.gl)
 		}
@@ -960,7 +984,7 @@ _binarySearch(array, predicate) {
 			if (markers.highlightedFeeds.has(feedId))
 				return [0.0,0.2,0.2,0.2]
 			else if (markers.rejectedFeeds.has(feedId))
-				return [0.05,0.05,0.05,0.1]
+				return [0.025,0.025,0.025,0.05]
 			else
 				return [0.0,0.0,0.3,0.3]
 		})
@@ -1005,8 +1029,10 @@ _binarySearch(array, predicate) {
 
 		// look for feed states that determine coloring
 		let highlightedFeeds = feedStates && feedStates.highlightedFeeds ? feedStates.highlightedFeeds : (this.markers && this.markers.highlightedFeeds) || new Set()
-		let rejectedFeeds = feedStates && feedStates.rejectedFeeds ? feedStates.rejectedFeeds : (this.markers && this.markers.rejectedFeeds) || new Set()
 		let activeFeeds = feedStates && feedStates.activeFeeds ? feedStates.activeFeeds : (this.markers && this.markers.activeFeeds) || new Set()
+
+		let rejectedFeeds = feedStates && feedStates.rejectedFeeds ? feedStates.rejectedFeeds : (this.markers && this.markers.rejectedFeeds) || new Set()
+
 
 		this.markers = {
 			sortedFeeds: {
