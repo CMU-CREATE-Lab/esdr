@@ -19,7 +19,7 @@ input[type="search"] {
 
   width: 0px;
   position: fixed;
-  z-index: 1;
+  z-index: 2;
   /*use top and bottom instead of height attribute to make it fill the screen vertically*/
   top: 0;
   bottom: 0;
@@ -61,7 +61,7 @@ input[type="search"] {
   top: 0px;
   left: 0px;
   margin: 0.5em;
-  z-index: 1;
+  z-index: 2;
   float: right;
   /*display: table-row;*/
   /*font-size: 20px;*/
@@ -149,7 +149,7 @@ input[type="search"] {
 /*  position: absolute;
   top: 0px;
   bottom: 0px;
-*/  height: 100%;
+*/  height: 60%;
   /*min-height: 100%;*/
   transition: 0.3s;
 }
@@ -166,6 +166,101 @@ input[type="search"] {
   pointer-events: none;
 }
 
+.plots-container {
+  height: 40%;
+  /*box-shadow: 0px 0px 2px rgba(0,0,0,0.1);*/
+  /*overflow-y: scroll;*/
+  transition: 0.3s;
+  z-index: 1;
+}
+
+.plots-list {
+  height: 100%;
+  /*box-shadow: 0px 0px 2px rgba(0,0,0,0.1);*/
+  overflow-y: scroll;
+  transition: 0.3s;
+}
+
+.plots-toolbar {
+  display: flex;
+  align-items: center;
+  background-color: #EFE;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  padding-bottom: 0.25em;
+  padding-top: 0.25em;
+}
+
+.plots-date-scrubber {
+  -webkit-appearance: none;
+  height: 1em;
+  border-radius: 3px;
+  outline: none;
+  background: #0F0;
+}
+.plots-date-scrubber::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 1.5em;
+  width: 3em;
+  border-radius: 3px;
+  cursor: pointer;
+  background: #F00;
+}
+.plots-date-scrubber::-moz-range-thumb {
+  height: 1.5em;
+  width: 3em;
+  border-radius: 3px;
+  cursor: pointer;
+  background: #F00;
+}
+
+.plots-zoom-scrubber {
+  -webkit-appearance: none;
+  height: 1em;
+  border-radius: 0.5em;
+  outline: none;
+  background: #0F0;
+}
+.plots-zoom-scrubber::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 1.5em;
+  width: 1.5em;
+  border-radius: 50%;
+  cursor: pointer;
+  background: #F00;
+}
+.plots-zoom-scrubber::-moz-range-thumb {
+  height: 1.5em;
+  width: 1.5em;
+  border-radius: 50%;
+  cursor: pointer;
+  background: #F00;
+}
+
+.date-axis {
+  height: 2em;
+}
+
+
+.plots-toolbar-button {
+  vertical-align: middle;
+  font-size: large;
+  height: inherit;
+  background-color: inherit;
+  background-color: #EEF;
+  border-radius: 3px;
+  display: inline;
+  /*color: white;*/
+  /*padding: 10px 15px;*/
+  border: none;
+  cursor: pointer;
+  margin-left: 0.25em;
+  margin-right: 0.25em;
+/*  padding: 0px;
+  margin: 0px;
+*/
+  text-align: center;
+}
 
 #main {
   transition: margin-left .3s;
@@ -212,19 +307,38 @@ input[type="search"] {
 <div id="main">
   <div id="googlemap" class="googlemap"></div>
   <!-- <div id="mapOverlayStatic" class="map-overlay-static"></div> -->
-  <!-- <div id="graphs"></div> -->
+  <div id="plots" class="plots-container">
+    <div id="plotsToolbar" class="plots-toolbar">
+        <input type="range" min="-100" max="100" value="0" class="plots-date-scrubber" id="plotsDateScrubber">
+        <button class="plots-toolbar-button" onclick="">now</button>
+        <input type="range" min="-100" max="100" value="0" class="plots-zoom-scrubber" id="plotsZoomScrubber">
+        <button class="plots-toolbar-button" onclick="">day</button>
+        <button class="plots-toolbar-button" onclick="">month</button>
+        <button class="plots-toolbar-button" onclick="">year</button>
+        <button class="plots-toolbar-button" onclick="">↑</button>
+    </div>
+    <div id="date_axis" class="date-axis"></div>
+    <div id="plotList" class="plots-list">Here Be Plots</div>
+  </div>
 </div>
 
 <script src="esdrFeeds.js"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjVZHnH5L8ty50awHChDGdtJ5ZHqCFc-Y"></script>
 <script src="mapOverlay.js"></script>
 
+<script src="../lib/jquery/jquery-1.11.1.min.js" type="text/javascript"></script>
+  <script src="../lib/superagent/superagent.js" type="text/javascript"></script>
+<script src="../lib/bodytrack-grapher/org/bodytrack/grapher/grapher2.nocache.js" type="text/javascript"></script>
+<script src="../lib/plot-manager/org/bodytrack/grapher/PlotManager.js" type="text/javascript"></script>
+  
+  <!-- <script src="https://d3js.org/d3.v4.js"></script> -->
+
 
 <script>
 
 let gMap // google map instance
 let esdr = new ESDR() // interface to ESDR data
-let gSearchResults = {
+let explorer = {
   results: [],
 }
 
@@ -232,17 +346,17 @@ function initMap() {
   // parse the url hash part
   parseUrlParams()
   // execute params
-  if (gSearchResults.showFilters)
+  if (explorer.showFilters)
     showSearchFilters()
-  if (gSearchResults.showResults)
+  if (explorer.showResults)
     showSearchResults()
 
   let mapdiv = document.getElementById('googlemap');
   gMap = new google.maps.Map(
     document.getElementById('googlemap'),
     {
-      zoom: parseInt(gSearchResults.zoom) || 5,
-      center: gSearchResults.center || new google.maps.LatLng(49.35720091782239, -92.91969375610346*0.0),
+      zoom: parseInt(explorer.zoom) || 5,
+      center: explorer.center || new google.maps.LatLng(49.35720091782239, -92.91969375610346*0.0),
 
       streetViewControl: false,
       fullscreenControl: false,
@@ -254,21 +368,21 @@ function initMap() {
     }
   );
 
-  gSearchResults.mapOverlay = new MapOverlay(gMap, mapdiv)
+  explorer.mapOverlay = new MapOverlay(gMap, mapdiv)
 
 
   google.maps.event.addListener(gMap, 'bounds_changed', function() {
    // console.log(`bounds_changed event to ${map.getBounds()}`);
    let center = this.getCenter()
-   gSearchResults.center = center
+   explorer.center = center
    let zoom = this.getZoom()
-   gSearchResults.zoom = zoom
+   explorer.zoom = zoom
 
    updateUrlHash()
   })
 
   google.maps.event.addListener(gMap, 'mousemove', function(event) {
-    let feedIds = gSearchResults.mapOverlay.highlightMarkersAt(event.pixel)
+    let feedIds = explorer.mapOverlay.highlightMarkersAt(event.pixel)
     this.setOptions({
       draggableCursor: (feedIds.length > 0 ? 'default' :  null)
     });
@@ -276,13 +390,13 @@ function initMap() {
   })
 
   google.maps.event.addListener(gMap, 'click', function(event) {
-    gSearchResults.mapOverlay.highlightMarkersAt(event.pixel)
+    explorer.mapOverlay.highlightMarkersAt(event.pixel)
 
 
     let div = document.createElement("div")
     // div.setAttribute("class", "search-result-channel-block")
 
-    let highlightedFeedIds = Array.from(gSearchResults.mapOverlay.markers.highlightedFeeds).sort()
+    let highlightedFeedIds = Array.from(explorer.mapOverlay.markers.highlightedFeeds).sort()
 
     for (let feedId of highlightedFeedIds) {
       let feed = esdr.feeds.get(feedId)
@@ -307,7 +421,7 @@ function initMap() {
       this.infoWindow.close()
 
     if (highlightedFeedIds.length > 0) {
-      let eventGeoCoords = gSearchResults.mapOverlay.viewPixelToGeoCoords(event.pixel)
+      let eventGeoCoords = explorer.mapOverlay.viewPixelToGeoCoords(event.pixel)
       this.infoWindow = new google.maps.InfoWindow({
         content: div,
         position: eventGeoCoords,
@@ -352,36 +466,36 @@ function parseUrlParams() {
   // grapher time limits and cursor
   if (browserParams.has("time")) {
     let times = browserParams.get("time").split(",")
-    gSearchResults.startTime = times[0]
-    gSearchResults.endTime = times[1]
+    explorer.startTime = times[0]
+    explorer.endTime = times[1]
   }
 
   if (browserParams.has("cursor")) {
-    gSearchResults.cursorTime = browserParams.get("cursor")
+    explorer.cursorTime = browserParams.get("cursor")
   }
 
   // map params
   if (browserParams.has("zoom")) {
-    gSearchResults.zoom = browserParams.get("zoom")
+    explorer.zoom = browserParams.get("zoom")
   }
 
   if (browserParams.has("center")) {
     let latlon = browserParams.get("center").split(",")
-    gSearchResults.center = new google.maps.LatLng(latlon[0], latlon[1])
+    explorer.center = new google.maps.LatLng(latlon[0], latlon[1])
   }
 
   // search
   if (browserParams.has("search")) {
     let searchText = browserParams.get("search")
-    gSearchResults.search = {text: searchText}
+    explorer.search = {text: searchText}
   }
 
   // new params for display state
   if (browserParams.has("showFilters")) {
-    gSearchResults.showFilters = browserParams.get("showFilters") == "true"
+    explorer.showFilters = browserParams.get("showFilters") == "true"
   }
   if (browserParams.has("showResults")) {
-    gSearchResults.showResults = browserParams.get("showResults") == "true"
+    explorer.showResults = browserParams.get("showResults") == "true"
   }
 
 }
@@ -393,17 +507,17 @@ function createUrlParams() {
     browserParams.set("channels", esdr.selectedChannelIds.join(','))
   }
 
-  if (gSearchResults.showFilters) {
+  if (explorer.showFilters) {
     browserParams.set("showFilters", "true")
   }
-  if (gSearchResults.showResults) {
+  if (explorer.showResults) {
     browserParams.set("showResults", "true")
   }
-  if (gSearchResults.center) {
-    browserParams.set("center", `${gSearchResults.center.lat()},${gSearchResults.center.lng()}`)
+  if (explorer.center) {
+    browserParams.set("center", `${explorer.center.lat()},${explorer.center.lng()}`)
   }
-  if (gSearchResults.zoom) {
-    browserParams.set("zoom", `${gSearchResults.zoom}`)
+  if (explorer.zoom) {
+    browserParams.set("zoom", `${explorer.zoom}`)
   }
 
   return browserParams
@@ -450,13 +564,13 @@ function toggleSidebar() {
     sidebar.style.left = `0px`
     sidebar.style.marginLeft = `0px`
     mainBlock.style.marginLeft = `calc(${width})`
-    gSearchResults.showResults = true
+    explorer.showResults = true
   }
   else {
     sidebar.style.marginLeft = `calc(0px - (${sidebar.style.width}))`
     // sidebar.style.width = "0px"
     mainBlock.style.marginLeft = "0px"
-    gSearchResults.showResults = false
+    explorer.showResults = false
   }
 
   // make sure top padding exludes search box
@@ -478,12 +592,12 @@ function toggleFilters() {
   if (!filtersBlock.style.height || filtersBlock.style.height === "0px") {
     adjustment = `${filtersBlock.scrollHeight}px`
     filtersBlock.style.height = filtersBlock.scrollHeight + 'px'
-    gSearchResults.showFilters = true
+    explorer.showFilters = true
   }
   else {
     adjustment = `-${filtersBlock.scrollHeight}px`
     filtersBlock.style.height = "0px"
-    gSearchResults.showFilters = false
+    explorer.showFilters = false
   }
 
   adjustSidebarTopPadding(adjustment)
@@ -517,7 +631,7 @@ function updateEsdrLoadProgress(numFeedsReceived, numFeedsTotal) {
 function esdrFeedsReceived(feedIds, progress) {
   updateEsdrLoadProgress(progress.current, progress.total)
 
-  gSearchResults.mapOverlay.setFeeds(Array.from(esdr.feeds.values()))
+  explorer.mapOverlay.setFeeds(Array.from(esdr.feeds.values()))
 }
 
 function processNewSearchResults(newResults, isAppendUpdate) {
@@ -531,10 +645,10 @@ function processNewSearchResults(newResults, isAppendUpdate) {
   // remove previous results on full update
   if (!isAppendUpdate) {
     clearSearchResultsList()
-    gSearchResults.results = []
+    explorer.results = []
   }
 
-  gSearchResults.results = gSearchResults.results.concat(newResults)
+  explorer.results = explorer.results.concat(newResults)
 
   appendSearchResultsListIfNeeded(newResults)
 }
@@ -581,9 +695,9 @@ function appendSearchResultsListBy(results) {
 }
 
 function appendSearchResultsListIfNeeded() {
-  let searchTotal = gSearchResults.results.length
+  let searchTotal = explorer.results.length
 
-  let results = gSearchResults.results.slice(searchResultsList.children.length)
+  let results = explorer.results.slice(searchResultsList.children.length)
 
   // if we have items to be added
   if (results.length > 0)
@@ -678,8 +792,93 @@ function searchResultsDivForChannel(feedId, channelName) {
   return div
 }
 
+
+// bodytrack grapher calls this when it's ready
+window.grapherLoad = function() {
+  let now = Date.now() / 1000;
+  let aWeekAgo = now - 7 * 24 * 60 * 60;
+
+  explorer.plotManager = new org.bodytrack.grapher.PlotManager("date_axis", aWeekAgo, now);
+
+  explorer.plotManager.setWillAutoResizeWidth(true, function() {
+    return document.getElementById("plots").getBoundingClientRect().width
+  });
+
+  explorer.plotManager.getDateAxis().setCursorPosition(now);
+
+  explorer.scrubTimelineDate = function(timestamp) {
+    let oldTimestamp = explorer.scrubTimestamp
+    explorer.scrubTimestamp = timestamp
+
+    if (oldTimestamp) {
+      let dt = timestamp - oldTimestamp
+      let dateAxis = explorer.plotManager.getDateAxis()
+      let currentRange = dateAxis.getRange()
+      let dateDiff = currentRange.max - currentRange.min
+      let dateScrub = dateDiff*dt/1000.0*explorer.scrubSpeed/100.0
+      dateAxis.setRange(currentRange.min + dateScrub, currentRange.max + dateScrub)
+    }
+
+
+    if (explorer.scrubSpeed != 0)
+      window.requestAnimationFrame(explorer.scrubTimelineDate)
+  }
+  explorer.scrubTimelineDateWithSpeed = function(speed) {
+    // if speed was zero, this is a new scrub, so reset timestamp
+    if (explorer.scrubSpeed == 0)
+      explorer.scrubTimestamp = undefined
+    explorer.scrubSpeed = speed
+    window.requestAnimationFrame(explorer.scrubTimelineDate)
+  }
+  explorer.scrubTimelineZoom = function(timestamp) {
+    let oldTimestamp = explorer.scrubTimestamp
+    explorer.scrubTimestamp = timestamp
+
+    if (oldTimestamp) {
+      let dt = timestamp - oldTimestamp
+      let dateAxis = explorer.plotManager.getDateAxis()
+      let currentRange = dateAxis.getRange()
+      let dateDiff = currentRange.max - currentRange.min
+      let dateScrub = dateDiff*dt/1000.0*explorer.scrubSpeed/100.0
+      dateAxis.setRange(currentRange.min + dateScrub, currentRange.max - dateScrub)
+    }
+
+
+    if (explorer.scrubSpeed != 0)
+      window.requestAnimationFrame(explorer.scrubTimelineZoom)
+  }
+  explorer.scrubTimelineZoomWithSpeed = function(speed) {
+    // if speed was zero, this is a new scrub, so reset timestamp
+    if (explorer.scrubSpeed == 0)
+      explorer.scrubTimestamp = undefined
+    explorer.scrubSpeed = speed
+    window.requestAnimationFrame(explorer.scrubTimelineZoom)
+  }
+  explorer.stopScrubbing = function() {
+    explorer.scrubSpeed = 0
+  }
+
+  let plotDateScrubber = document.getElementById("plotsDateScrubber")
+  plotDateScrubber.addEventListener("mouseup", event => {
+    event.target.value = "0"
+    explorer.stopScrubbing()
+  })
+  plotDateScrubber.addEventListener("input", event => {
+    explorer.scrubTimelineDateWithSpeed(event.target.valueAsNumber)
+  })
+  let plotZoomScrubber = document.getElementById("plotsZoomScrubber")
+  plotZoomScrubber.addEventListener("mouseup", event => {
+    event.target.value = "0"
+    explorer.stopScrubbing()
+  })
+  plotZoomScrubber.addEventListener("input", event => {
+    explorer.scrubTimelineZoomWithSpeed(event.target.valueAsNumber)
+  })
+}
+
 // call initMap() as we fully loaded maps api to be able to extend the overlays in mapOverlay.js
 initMap()
+// initPlots()
 
 </script>
    
