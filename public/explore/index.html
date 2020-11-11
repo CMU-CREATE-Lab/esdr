@@ -175,8 +175,9 @@ input[type="search"] {
 }
 
 .plots-list {
-  height: 100%;
+  /*height: calc(100%-2em);*/
   /*box-shadow: 0px 0px 2px rgba(0,0,0,0.1);*/
+  bottom: 0px;
   overflow-y: scroll;
   transition: 0.3s;
 }
@@ -298,7 +299,7 @@ input[type="search"] {
     <div>Filter 2</div>
   </div>
   <div id="progressBlock" class="search-progress-block">
-    <div id="searchProgressText">Lorem Searchum</div>
+    <div id="searchProgressText"></div>
   </div>
 </div>
 
@@ -390,6 +391,9 @@ function initMap() {
   })
 
   google.maps.event.addListener(gMap, 'click', function(event) {
+    if (!explorer.mapOverlay.markers)
+      return
+
     explorer.mapOverlay.highlightMarkersAt(event.pixel)
 
 
@@ -606,19 +610,20 @@ function toggleFilters() {
 
 }
 
-function updateEsdrLoadProgress(numFeedsReceived, numFeedsTotal) {
+explorer.updateProgressText = function(text) {
   let progressBlock = document.getElementById("progressBlock")
   let progressText = document.getElementById("searchProgressText")
-  progressText.textContent = `Loading, received ${numFeedsReceived} of ${numFeedsTotal} feeds…`
-
+  let shouldClose = !text && progressText.textContent
+  let shouldOpen = !progressText.textContent && text
+  progressText.textContent = text
 
   let adjustment = 0
-  if (!progressBlock.style.height || progressBlock.style.height === "0px")
+  if (shouldOpen)
   {
     adjustment = `${progressBlock.scrollHeight}px`
     progressBlock.style.height = progressBlock.scrollHeight + 'px'
   }
-  else if (numFeedsReceived == numFeedsTotal)
+  else if (shouldClose)
   {
     adjustment = `-${progressBlock.scrollHeight}px`
     progressBlock.style.height = "0px"
@@ -626,6 +631,14 @@ function updateEsdrLoadProgress(numFeedsReceived, numFeedsTotal) {
 
   adjustSidebarTopPadding(adjustment)
 
+}
+
+function updateEsdrLoadProgress(numFeedsReceived, numFeedsTotal) {
+
+  if (numFeedsReceived < numFeedsTotal)
+    explorer.updateProgressText(`Loading, received ${numFeedsReceived} of ${numFeedsTotal} feeds…`)
+  else
+    explorer.updateProgressText()
 }
 
 function esdrFeedsReceived(feedIds, progress) {
@@ -650,6 +663,13 @@ function processNewSearchResults(newResults, isAppendUpdate) {
 
   explorer.results = explorer.results.concat(newResults)
 
+
+  // update map markers
+  let resultFeedIds = explorer.results.map(result => result.feedId)
+  explorer.mapOverlay.filterMarkers(resultFeedIds)
+
+  explorer.updateProgressText(`Found ${explorer.results.length} matching feeds.`)
+  // update search results list
   appendSearchResultsListIfNeeded(newResults)
 }
 
@@ -874,6 +894,10 @@ window.grapherLoad = function() {
   plotZoomScrubber.addEventListener("input", event => {
     explorer.scrubTimelineZoomWithSpeed(event.target.valueAsNumber)
   })
+}
+
+explorer.addPlot = function(channelId) {
+
 }
 
 // call initMap() as we fully loaded maps api to be able to extend the overlays in mapOverlay.js

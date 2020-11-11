@@ -823,6 +823,16 @@ _binarySearch(array, predicate) {
     return hi;
 	}
 
+	// takes array or set as input, returns array
+	_xorSets(A,B) {
+		let aryA = Array.isArray(A) ? A : Array.from(A)
+		let aryB = Array.isArray(B) ? B : Array.from(B)
+		let setA = Array.isArray(A) ? new Set(A) : A
+		let setB = Array.isArray(B) ? new Set(B) : B
+		let changedAry = aryA.filter(e => !setB.has(e)).concat(aryB.filter(e => !setA.has(e)))
+		return changedAry
+	}
+
 	highlightMarkersAt(eventPixel) {
 		if (!this.markers)
 			return []
@@ -836,20 +846,14 @@ _binarySearch(array, predicate) {
 
     // console.log(`mousemove ${eventPixel}`)
 
-    let feeds = this.feedsCloseToPixel({x: x, y: y}, 10.0)
+    let feeds = this.feedsCloseToPixel({x: x, y: y}, 10.0).filter(feedId => !this.markers.rejectedFeeds.has(feedId))
 
     // console.log(`feeds ${feeds}`)
 
-    // create set of affected feeds
-    let oldFeedSet = new Set(this.markers.highlightedFeeds)
-    let newFeedSet = new Set(feeds)
-    let oldFeeds = Array.from(this.markers.highlightedFeeds)
+    // changed are only the xor between the two sets
+    let changedFeeds = this._xorSets(this.markers.highlightedFeeds, feeds)
 
-    // changed are only the difference between the two sets
-    let changedFeeds = oldFeeds.filter( e => !newFeedSet.has(e) )
-    changedFeeds = changedFeeds.concat(feeds.filter( e => !oldFeedSet.has(e) ))
-
-    this.markers.highlightedFeeds = newFeedSet
+    this.markers.highlightedFeeds = new Set(feeds)
     this.colorMarkers(changedFeeds)
 
     if (this.gl) {
@@ -859,6 +863,41 @@ _binarySearch(array, predicate) {
 		}
 
 		return feeds
+	}
+
+	filterMarkers(filteredFeeds) {
+		if (!this.markers)
+			return
+
+	  let resultsSet = new Set(filteredFeeds)
+	  let rejectedFeeds = Array.from(this.markers.sortedFeeds.index.keys()).filter(feedId => !resultsSet.has(feedId))
+
+		let changedFeeds = this._xorSets(this.markers.rejectedFeeds, rejectedFeeds)
+		console.log(`filterMarkers changedFeeds = ${changedFeeds.length}`)
+
+		this.markers.rejectedFeeds = new Set(rejectedFeeds)
+		this.colorMarkers(changedFeeds)
+
+		if (this.gl) {
+			let feedIndices = changedFeeds.map(feedId => this.markers.sortedFeeds.index.get(feedId))
+			this._updateMarkerColorBuffers(this.gl, feedIndices)
+			this.glDraw(this.gl)
+		}
+	}
+
+	activateMarkers(activeFeeds) {
+		if (!this.markers)
+			return
+		let changedFeeds = this._xorSets(this.markers.activeFeeds, activeFeeds)
+
+		this.markers.activeFeeds = new Set(activeFeeds)
+		this.colorMarkers(changedFeeds)
+
+		if (this.gl) {
+			let feedIndices = changedFeeds.map(feedId => this.markers.sortedFeeds.index.get(feedId))
+			this._updateMarkerColorBuffers(this.gl, feedIndices)
+			this.glDraw(this.gl)
+		}
 	}
 
 	viewPixelToGeoCoords(px) {
@@ -908,37 +947,49 @@ _binarySearch(array, predicate) {
 
 	}
 
-	colorMarkers(changedFeeds) {
+	colorMarkers(changedFeedIds) {
 		let markers = this.markers
 		if (!markers)
 			return
 
 		// if no change list supplied, color all
-		if (!changedFeeds)
-			changedFeeds = markers.feeds.map(feed => feed.id)
+		if (!changedFeedIds)
+			changedFeedIds = markers.feeds.map(feed => feed.id)
 
-		let fillColors = changedFeeds.map( (feedId) => {
+		let fillColors = changedFeedIds.map( (feedId) => {
 			if (markers.highlightedFeeds.has(feedId))
 				return [0.0,0.2,0.2,0.2]
+			else if (markers.rejectedFeeds.has(feedId))
+				return [0.05,0.05,0.05,0.1]
 			else
 				return [0.0,0.0,0.3,0.3]
+		})
+		let strokeColors = changedFeedIds.map( (feedId) => {
+			if (markers.activeFeeds.has(feedId))
+				return [0.5,0.5,0.5,0.5]
+			else if (markers.rejectedFeeds.has(feedId))
+				return [0.05,0.05,0.05,0.1]
+			else
+				return [0.0,0.0,0.5,0.5]
 		})
 
 		let feedIndices = undefined
 		if (!this.markers.fillColors || (this.markers.fillColors.length == fillColors.length)) {
 			this.markers.fillColors = fillColors
+			this.markers.strokeColors = strokeColors
 		}
 		else
 		{
-			feedIndices = changedFeeds.map(feedId => this.markers.sortedFeeds.index.get(feedId))
+			feedIndices = changedFeedIds.map(feedId => this.markers.sortedFeeds.index.get(feedId))
 			for (let i = 0; i < fillColors.length; i++) {
 				let feedIndex = feedIndices[i]
 				this.markers.fillColors[feedIndex] = fillColors[i]
+				this.markers.strokeColors[feedIndex] = strokeColors[i]
 			}
 		}
 	}
 
-	setFeeds(feeds) {
+	setFeeds(feeds, feedStates) {
 		// feeds to draw as markers
 		// filter out all that don't have lon/lat
 		// accept both strings and numeric values by using parseFloat()
@@ -952,6 +1003,11 @@ _binarySearch(array, predicate) {
 
 		let positions = feeds.map(feed => [parseFloat(feed.longitude), parseFloat(feed.latitude)])
 
+		// look for feed states that determine coloring
+		let highlightedFeeds = feedStates && feedStates.highlightedFeeds ? feedStates.highlightedFeeds : (this.markers && this.markers.highlightedFeeds) || new Set()
+		let rejectedFeeds = feedStates && feedStates.rejectedFeeds ? feedStates.rejectedFeeds : (this.markers && this.markers.rejectedFeeds) || new Set()
+		let activeFeeds = feedStates && feedStates.activeFeeds ? feedStates.activeFeeds : (this.markers && this.markers.activeFeeds) || new Set()
+
 		this.markers = {
 			sortedFeeds: {
 				longitude: longitudeFeeds,
@@ -964,7 +1020,9 @@ _binarySearch(array, predicate) {
 			strokeColors: this.repeatArray([0.0,0.0,0.5,0.5], feeds.length),
 			strokeWidths: this.repeatArray([1.0], feeds.length),
 			markerSizes: this.repeatArray([10.0], feeds.length),
-			highlightedFeeds: new Set(),
+			highlightedFeeds: highlightedFeeds,
+			rejectedFeeds: rejectedFeeds,
+			activeFeeds: activeFeeds,
 		}
 
 		this.colorMarkers()
