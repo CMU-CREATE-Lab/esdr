@@ -9,6 +9,7 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100%;
+  overflow-y: hidden;
 }
 
 input[type="search"] {
@@ -169,16 +170,21 @@ input[type="search"] {
 .plots-container {
   height: 40%;
   /*box-shadow: 0px 0px 2px rgba(0,0,0,0.1);*/
-  /*overflow-y: scroll;*/
+  overflow-y: hidden;
+  display: flex;
+  flex-direction: column;
   transition: 0.3s;
-  z-index: 1;
+  /*z-index: 1;*/
 }
 
 .plots-list {
   /*height: calc(100%-2em);*/
   /*box-shadow: 0px 0px 2px rgba(0,0,0,0.1);*/
+  flex-grow: 1;
+/*  position: relative;
+  top: 0px;
   bottom: 0px;
-  overflow-y: scroll;
+*/  overflow-y: scroll;
   transition: 0.3s;
 }
 
@@ -267,6 +273,7 @@ input[type="search"] {
   transition: margin-left .3s;
   /*padding: 16px;*/
   height: 100%;
+  overflow-y: hidden;
 }
 
 
@@ -320,7 +327,7 @@ input[type="search"] {
         <button class="plots-toolbar-button" onclick="">↑</button>
     </div>
     <div id="date_axis" class="date-axis"></div>
-    <div id="plotList" class="plots-list">Here Be Plots</div>
+    <div id="plotList" class="plots-list"></div>
   </div>
 </div>
 
@@ -342,6 +349,52 @@ let gMap // google map instance
 let esdr = new ESDR() // interface to ESDR data
 let explorer = {
   results: [],
+  plots: [],
+  lineStyle: {
+    "styles": [
+      // {
+      //   "type": "bar",
+      //   "stripPosition": "center",
+      //   "stripWidthSecs": 30,
+      //   "rangedColors": "rgba(210,210,210,.8); 10;rgba(185,185,185,.8); 20;rgba(160,160,160,.8); 30;rgba(135,135,135,.8); 40;rgba(110,110,110,.8); 50;rgba(110,110,110,.8);60;rgba(85,85,85,.8);70;rgba(70,70,70,.8);80;rgba(50,50,50,.8)"
+      // },
+      {
+        "type": "line",
+        "lineWidth": 1,
+        "show": true,
+        "color": "rgba(60,60,60, .8)"
+      }
+    ],
+    "highlight": {
+      "lineWidth": 3,
+      "styles": [{
+          "show": true,
+          "type": "lollipop",
+          "color": "green",
+          "radius": 0,
+          "lineWidth": 1,
+          "fill": false
+        },
+        {
+          "type": "circle",
+          radius: 3,
+          "lineWidth": 0.5,
+          "show": true,
+          "color": "#ff0000",
+          fill: true
+        },
+        {
+          "show": true,
+          "type": "value",
+          "fillColor": "#000000",
+          "marginWidth": 10,
+          "font": "9pt Helvetica,Arial,Verdana,sans-serif",
+          "verticalOffset": 7
+        }
+      ]
+    }
+  },
+
 }
 
 function initMap() {
@@ -547,7 +600,7 @@ function createUrlParams() {
   }
   if (esdr.searchQuery.text)
   {
-    browserParams.set("search", text)
+    browserParams.set("search", esdr.searchQuery.text)
   }
 
   return browserParams
@@ -678,7 +731,7 @@ function processNewSearchResults(newResults, isAppendUpdate) {
   // this function receives a list of search results in the {feedId: , channelNames:} format
   // if isAppendUpdate is true, this is an incremental search result, and results can be appended
   // otherwise clear search results list
-  console.log(`processNewSearchResults(${newResults.length}, ${isAppendUpdate})`)
+  // console.log(`processNewSearchResults(${newResults.length}, ${isAppendUpdate})`)
 
   let searchResultsList = document.getElementById("searchResultsList")
 
@@ -819,10 +872,17 @@ function searchResultsDivForChannel(feedId, channelName) {
   {
     checkbox.checked = true
   }
-  checkbox.onclick = function() {
+  checkbox.onclick = function(event) {
     let checked = this.checked
     let channelId = getChannelIdFromElementId(this.getAttribute("id"))
       esdr.selectChannelWithId(channelId, checked)
+
+    if (checked)
+    {
+      let feedId = parseInt(channelId.slice(0, channelId.indexOf(".")))
+      let channelName = channelId.slice(channelId.indexOf(".")+1)
+      explorer.addPlot(feedId, channelName)
+    }
 
     updateUrlHash()
   }
@@ -923,7 +983,65 @@ window.grapherLoad = function() {
   })
 }
 
-explorer.addPlot = function(channelId) {
+
+explorer.addPlot = function(feedId, channelName) {
+
+  let feed = esdr.feeds.get(feedId)
+
+  let plotNumber = explorer.plots.length
+
+  let channelId = `${feedId}.${channelName}`
+  let channelLabel = feed ? feed.channelLabels[channelName] : channelId
+  let plotName = `plot-${plotNumber}`
+  let yAxisName = `yaxis-${plotNumber}`
+
+  let plotBlock = document.createElement("div")
+  plotBlock.style.height = "5em"
+  plotBlock.style.width = "100%"
+  plotBlock.style.position = "relative"
+
+  let plotDivider = document.createElement("div")
+  plotDivider.setAttribute("id", `divider-${plotNumber}`)
+  plotDivider.style.height = "1px"
+  plotDivider.style.width = "100%"
+  plotDivider.style.position = "absolute"
+  plotDivider.style.backgroundColor = "#000"
+
+  let plotContent = document.createElement("div")
+  plotContent.setAttribute("id", plotName)
+  plotContent.style.position = "absolute"
+  plotContent.style.left = "0px"
+  plotContent.style.top = "0px"
+  plotContent.style.bottom = "0px"
+  // plotContent.style.height = "5em"
+  plotContent.style.right = "2em"
+
+  let yAxis = document.createElement("div")
+  yAxis.setAttribute("id", yAxisName)
+  yAxis.style.position = "absolute"
+  yAxis.style.right = "0px"
+  yAxis.style.top = "0px"
+  yAxis.style.bottom = "0px"
+  // yAxis.style.height = "5em"
+  yAxis.style.width = "2em"
+
+  let labelBlock = document.createElement("div")
+  labelBlock.style.position = "absolute"
+  labelBlock.textContent = channelLabel
+  labelBlock.style.top = "0px"
+  labelBlock.style.left = "0px"
+
+  plotBlock.appendChild(plotDivider)
+  plotBlock.appendChild(plotContent)
+  plotBlock.appendChild(yAxis)
+  plotBlock.appendChild(labelBlock)
+
+  let plotList = document.getElementById("plotList")
+  plotList.appendChild(plotBlock)
+
+  explorer.plots.push(channelLabel)
+
+  explorer.plotManager.addDataSeriesPlot(plotName, esdr.dataSourceForChannel(feedId, channelName), plotName, yAxisName, 0, 100, explorer.lineStyle, false)
 
 }
 

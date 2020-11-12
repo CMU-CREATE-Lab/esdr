@@ -201,7 +201,7 @@ class ESDR {
 	}
 
 	getFeedsFromOffset(feedOffset, callback) {
-	  var request = new XMLHttpRequest();
+	  let request = new XMLHttpRequest();
 	  request.open('GET', `${this.apiUrl}/feeds?offset=${feedOffset}`, true);
 
 	  request.onload = function() {
@@ -245,6 +245,37 @@ class ESDR {
 	isChannelSelected(channelId)
 	{
 		return !!this.selectedChannels_[channelId]
+	}
+
+	dataSourceForChannel(feedId, channelName) {
+		let baseUrl = `${this.apiUrl}/feeds/${feedId}/channels/${channelName}/tiles`
+
+  	return function(level, offset, callback) {
+  		let url = `${baseUrl}/${level}.${offset}`
+
+	  	let request = new XMLHttpRequest();
+		  request.open('GET', url, true);
+
+		  request.onload = function() {
+		    if (this.status >= 200 && this.status < 400) {
+		      // Success!
+		      var responseJson = JSON.parse(this.response);
+
+		      callback(JSON.stringify(responseJson.data))
+		    } else {
+		      // We reached our target server, but it returned an error
+		      console.log(`encountenered ${this.status} as the response status trying to get ESDR tile ${level}.${offset}`)
+		    }
+		  };
+
+		  request.onerror = function() {
+		      console.log(`encountenered an error trying to get ESDR tile ${level}.${offset}`)
+		  };
+
+		  request.send();
+  	}
+
+
 	}
 
 } // class ESDR

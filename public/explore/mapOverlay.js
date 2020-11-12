@@ -896,7 +896,7 @@ _binarySearch(array, predicate) {
 	  let rejectedFeeds = Array.from(this.markers.sortedFeeds.index.keys()).filter(feedId => !resultsSet.has(feedId))
 
 		let changedFeeds = this._xorSets(this.markers.rejectedFeeds, rejectedFeeds)
-		console.log(`filterMarkers changedFeeds = ${changedFeeds.length}`)
+		// console.log(`filterMarkers changedFeeds = ${changedFeeds.length}`)
 
 		this.markers.rejectedFeeds = new Set(rejectedFeeds)
 		this.colorMarkers(changedFeeds)
