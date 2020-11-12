@@ -193,10 +193,11 @@ class ESDR {
 
 	  this.feedIds = this.feedIds.concat(feedIds)
 
-	  // update search results with new feeds
-	  this._updateSearch(feedIds)
-
+	  // feeds received callback first
 	  callback(feedIds, {current: this.feedIds.length, total: feedsJson.totalCount})
+
+	  // update search results with new feeds last
+	  this._updateSearch(feedIds)
 	}
 
 	getFeedsFromOffset(feedOffset, callback) {
