@@ -286,13 +286,14 @@ input[type="search"] {
 
 <div id="searchBlock" class="floaty-search">
   <div class="searchbar">
-  <button class="searchbar-button" onclick="toggleSidebar()">☰</button>
+  <!-- <button class="searchbar-button" onclick="toggleSidebar()">☰</button> -->
+  <button class="searchbar-button" onclick="toggleSidebar()"><img src="hamburger.svg" style="height: 1em; vertical-align: middle;"></img></button>
   <div class="searchbar-divider"></div>
-  <button class="searchbar-button" onclick="toggleFilters()">&gt;</button>
+  <button class="searchbar-button" onclick="toggleFilters()"><img src="filter.svg" style="height: 1em; vertical-align: middle;"></img></button>
   <!-- <div class="searchbar-divider"></div> -->
   <input type="search" id="sensorSearchField" class="search-text" placeholder="search sensor feeds">
   <!-- <div class="searchbar-divider"></div> -->
-  <button class="searchbar-button" onclick="doSensorSearch()">Search</button>
+  <button class="searchbar-button" onclick="doSensorSearch()"><img src="loupe.svg" style="height: 1em; vertical-align: middle;"></img></button>
   </div>
   <div id="filtersBlock" class="search-filters">
     <div><input type="checkbox" id="recentOnlyCheckbox" name="checkbox-recentOnly"><label for="checkbox-recentOnly">Data in last 30 days</label></div>
