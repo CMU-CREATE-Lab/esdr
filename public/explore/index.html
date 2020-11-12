@@ -348,8 +348,12 @@ input[type="search"] {
 let gMap // google map instance
 let esdr = new ESDR() // interface to ESDR data
 let explorer = {
+  statusInfo: {
+    numFeedsReceived: 0,
+    numSearchResults: 0,
+  },
   results: [],
-  plots: [],
+  plots: new Map(),
   lineStyle: {
     "styles": [
       // {
@@ -437,7 +441,7 @@ function initMap() {
   })
 
   google.maps.event.addListener(gMap, 'mousemove', function(event) {
-    let feedIds = explorer.mapOverlay.highlightMarkersAt(event.pixel)
+    let feedIds = explorer.mapOverlay.highlightMarkersAt(event.pixel, true)
     this.setOptions({
       draggableCursor: (feedIds.length > 0 ? 'default' :  null)
     });
@@ -448,7 +452,7 @@ function initMap() {
     if (!explorer.mapOverlay.markers)
       return
 
-    explorer.mapOverlay.highlightMarkersAt(event.pixel)
+    explorer.mapOverlay.highlightMarkersAt(event.pixel, true)
 
 
     let div = document.createElement("div")
@@ -508,7 +512,15 @@ function initMap() {
   // install search results callback
   esdr.searchCallback = (searchResults, isAppendUpdate) => processNewSearchResults(searchResults, isAppendUpdate)
   // start loading feed data
-  esdr.loadFeeds(esdrFeedsReceived)
+  esdr.loadFeeds(explorer.esdrFeedsReceived)
+
+  esdr.channelDataUpdateCallback = (feedId, channelName) => {
+    let channelId = `${feedId}.${channelName}`
+    console.log(`channelDataUpdateCallback(${channelId}`)
+    let plotNumber = explorer.plots.get(channelId)
+    if (plotNumber)
+      explorer.fitPlotYAxisToData(plotNumber)
+  }
 
 
   // install scroll listener
@@ -712,16 +724,32 @@ explorer.updateProgressText = function(text) {
 
 }
 
-function updateEsdrLoadProgress(numFeedsReceived, numFeedsTotal) {
+explorer.updateStatusInfo = function() {
+  let infoText = ""
+  if (explorer.statusInfo.numFeedsTotal === undefined) {
+    infoText = "Loading feeds…"
+  } 
+  else if (explorer.statusInfo.numFeedsReceived < explorer.statusInfo.numFeedsTotal) {
+    let percentComplete = 100.0*explorer.statusInfo.numFeedsReceived/explorer.statusInfo.numFeedsTotal
+    infoText = `${explorer.statusInfo.numSearchResults} matches in ${explorer.statusInfo.numFeedsReceived} feeds (${percentComplete.toFixed(1)}% loaded).`
+  }
+  else {
+    infoText = `${explorer.statusInfo.numSearchResults} matches in ${explorer.statusInfo.numFeedsReceived} feeds.`
+  }
 
-  if (numFeedsReceived < numFeedsTotal)
-    explorer.updateProgressText(`Loading, received ${numFeedsReceived} of ${numFeedsTotal} feeds…`)
-  else
-    explorer.updateProgressText()
+  explorer.updateProgressText(infoText)
 }
 
-function esdrFeedsReceived(feedIds, progress) {
-  updateEsdrLoadProgress(progress.current, progress.total)
+explorer.updateEsdrLoadProgress = function(numFeedsReceived, numFeedsTotal) {
+
+  explorer.statusInfo.numFeedsReceived = numFeedsReceived
+  explorer.statusInfo.numFeedsTotal = numFeedsTotal
+
+  explorer.updateStatusInfo()
+}
+
+explorer.esdrFeedsReceived = function(feedIds, progress) {
+  explorer.updateEsdrLoadProgress(progress.current, progress.total)
 
   // set with all feeds rejected to start with
   explorer.mapOverlay.setFeeds(Array.from(esdr.feeds.values()), {rejectedFeeds: new Set(feedIds)})
@@ -748,7 +776,9 @@ function processNewSearchResults(newResults, isAppendUpdate) {
   let resultFeedIds = explorer.results.map(result => result.feedId)
   explorer.mapOverlay.filterMarkers(resultFeedIds)
 
-  explorer.updateProgressText(`Found ${explorer.results.length} matching feeds.`)
+  explorer.statusInfo.numSearchResults = explorer.results.length
+
+  explorer.updateStatusInfo()
   // update search results list
   appendSearchResultsListIfNeeded(newResults)
 }
@@ -985,23 +1015,30 @@ window.grapherLoad = function() {
 
 
 explorer.addPlot = function(feedId, channelName) {
+  let channelId = `${feedId}.${channelName}`
+
+  if (explorer.plots.has(channelId)) {
+    console.warn(`plot for ${channelId} already exists at number ${explorer.plots.get(channelId)}.`)
+    return
+  }
 
   let feed = esdr.feeds.get(feedId)
 
-  let plotNumber = explorer.plots.length
+  // new plot number is next highest from current plots
+  let plotNumber = Array.from(explorer.plots.values()).reduce((acc, val) => Math.max(acc,val), 0) + 1
 
-  let channelId = `${feedId}.${channelName}`
   let channelLabel = feed ? feed.channelLabels[channelName] : channelId
   let plotName = `plot-${plotNumber}`
   let yAxisName = `yaxis-${plotNumber}`
 
   let plotBlock = document.createElement("div")
+  plotBlock.setAttribute("id", `plot-block-${plotNumber}`)
   plotBlock.style.height = "5em"
   plotBlock.style.width = "100%"
   plotBlock.style.position = "relative"
 
   let plotDivider = document.createElement("div")
-  plotDivider.setAttribute("id", `divider-${plotNumber}`)
+  // plotDivider.setAttribute("id", `divider-${plotNumber}`)
   plotDivider.style.height = "1px"
   plotDivider.style.width = "100%"
   plotDivider.style.position = "absolute"
@@ -1026,6 +1063,7 @@ explorer.addPlot = function(feedId, channelName) {
   yAxis.style.width = "2em"
 
   let labelBlock = document.createElement("div")
+  plotBlock.setAttribute("id", `label-${plotNumber}`)
   labelBlock.style.position = "absolute"
   labelBlock.textContent = channelLabel
   labelBlock.style.top = "0px"
@@ -1039,10 +1077,34 @@ explorer.addPlot = function(feedId, channelName) {
   let plotList = document.getElementById("plotList")
   plotList.appendChild(plotBlock)
 
-  explorer.plots.push(channelLabel)
+  explorer.plots.set(channelId, plotNumber)
 
-  explorer.plotManager.addDataSeriesPlot(plotName, esdr.dataSourceForChannel(feedId, channelName), plotName, yAxisName, 0, 100, explorer.lineStyle, false)
+  explorer.plotManager.addDataSeriesPlot(plotName, esdr.dataSourceForChannel(feedId, channelName), plotName, yAxisName, 0, 100, explorer.lineStyle, range => {
+    let paddedRange = Object.assign({}, range)
+    return paddedRange
+  })
 
+}
+
+explorer.removePlot = function(feedId, channelName) {
+  let channelId = `${feedId}.${channelName}`
+  let plotNumber = explorer.plots.get(channelId)
+
+  explorer.plots.remove(channelId)
+}
+
+explorer.fitPlotYAxisToData = function(plotNumber) {
+  let plotManager = explorer.plotManager
+  let plotName = `plot-${plotNumber}`
+  let yAxisName = `yaxis-${plotNumber}`
+  let plot = plotManager.getPlot(plotName)
+  let yAxis = plotManager.getYAxis(yAxisName)
+
+  let stats = plot.getStatisticsWithinRange(plotManager.getDateAxis().getRange())
+
+  if ((stats.minValue !== null) && (stats.maxValue !== null)) {
+    yAxis.setRange(stats.minValue, stats.maxValue)
+  }
 }
 
 // call initMap() as we fully loaded maps api to be able to extend the overlays in mapOverlay.js

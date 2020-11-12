@@ -28,6 +28,9 @@ class MapOverlay extends google.maps.OverlayView {
   	this.setMap(map)
   	this.canvas = document.createElement("canvas")
 
+  	this.defferedUpdateTimer_ = undefined
+  	this.defferedUpdateContent_ = {}
+
 	}
 
 	onAdd() {
@@ -455,6 +458,77 @@ class MapOverlay extends google.maps.OverlayView {
 
 	}
 
+	_defferedGlUpdateCallback(mapOverlay, gl) {
+		if (gl) {
+			let update = mapOverlay.defferedUpdateContent_
+			let wasUpdated = false
+			if (update.allMarkers)
+			{
+				mapOverlay._updateMarkerBuffers(gl)
+				wasUpdated = true
+			}
+			else
+			{
+				if (update.allIndices) {
+					mapOverlay._updateIndexBuffer(gl)
+					wasUpdated = true
+				}
+
+				if (update.feedColors) {
+					let feedIndices = update.feedColors.map(feedId => mapOverlay.markers.sortedFeeds.index.get(feedId))
+					mapOverlay._updateMarkerColorBuffers(gl, feedIndices)
+					wasUpdated = true
+				}
+			}
+
+			if (wasUpdated)
+				mapOverlay.glDraw(gl)
+
+		}
+
+		// clear timer and content
+		mapOverlay.defferedUpdateTimer_ = undefined
+		mapOverlay.defferedUpdateContent_ = {}
+	}
+
+	_doDefferedGlUpdate(updateContent, isImmediate) {
+		// the updates affect the marker states
+		// allMarkers and allIndices are bools that are ORed
+		// feedColors are lists that are combined
+		if (updateContent.feedColors && this.defferedUpdateContent_.feedColors) {
+			this.defferedUpdateContent_.feedColors = this.defferedUpdateContent_.feedColors.concat(updateContent.feedColors)
+		}
+		else if (updateContent.feedColors) {
+			this.defferedUpdateContent_.feedColors = updateContent.feedColors
+		}
+
+		this.defferedUpdateContent_.allMarkers = this.defferedUpdateContent_.allMarkers || updateContent.allMarkers
+		this.defferedUpdateContent_.allIndices = this.defferedUpdateContent_.allIndices || updateContent.allIndices
+
+		// this.defferedUpdateContent_ = Object.assign(this.defferedUpdateContent_, updateContent)
+
+		// re-trigger timer ...
+		let timer = this.defferedUpdateTimer_
+		// if timer is pending, cancel it
+		if (timer)
+			clearTimeout(timer)
+
+		if (!isImmediate) {
+			// new timeout 300ms from now
+			timer = setTimeout(this._defferedGlUpdateCallback, 300, this, this.gl)
+
+			this.defferedUpdateTimer_ = timer
+
+		}
+		else
+		{
+			// do immediate update from UI triggered changes
+			this._defferedGlUpdateCallback(this, this.gl)
+			this.defferedUpdateTimer_ = undefined
+		}
+
+	}
+
 	glDrawMarkers(gl) {
 
 		if (!this.markers || !this.markers.feeds)
@@ -856,7 +930,7 @@ _binarySearch(array, predicate) {
 		return changedAry
 	}
 
-	highlightMarkersAt(eventPixel) {
+	highlightMarkersAt(eventPixel, isImmediate) {
 		if (!this.markers)
 			return []
 
@@ -879,11 +953,13 @@ _binarySearch(array, predicate) {
     this.markers.highlightedFeeds = new Set(feeds)
     this.colorMarkers(changedFeeds)
 
-    if (this.gl) {
-			let feedIndices = changedFeeds.map(feedId => this.markers.sortedFeeds.index.get(feedId))
-			this._updateMarkerColorBuffers(this.gl, feedIndices)
-			this.glDraw(this.gl)
-		}
+    this._doDefferedGlUpdate({feedColors: changedFeeds}, isImmediate)
+
+  //   if (this.gl) {
+		// 	let feedIndices = changedFeeds.map(feedId => this.markers.sortedFeeds.index.get(feedId))
+		// 	this._updateMarkerColorBuffers(this.gl, feedIndices)
+		// 	this.glDraw(this.gl)
+		// }
 
 		return feeds
 	}
@@ -901,12 +977,13 @@ _binarySearch(array, predicate) {
 		this.markers.rejectedFeeds = new Set(rejectedFeeds)
 		this.colorMarkers(changedFeeds)
 
-		if (this.gl) {
-			let feedIndices = changedFeeds.map(feedId => this.markers.sortedFeeds.index.get(feedId))
-			this._updateIndexBuffer(this.gl)
-			this._updateMarkerColorBuffers(this.gl, feedIndices)
-			this.glDraw(this.gl)
-		}
+		this._doDefferedGlUpdate({feedColors: changedFeeds, allIndices: true})
+		// if (this.gl) {
+		// 	let feedIndices = changedFeeds.map(feedId => this.markers.sortedFeeds.index.get(feedId))
+		// 	this._updateIndexBuffer(this.gl)
+		// 	this._updateMarkerColorBuffers(this.gl, feedIndices)
+		// 	this.glDraw(this.gl)
+		// }
 	}
 
 	activateMarkers(activeFeeds) {
@@ -917,11 +994,12 @@ _binarySearch(array, predicate) {
 		this.markers.activeFeeds = new Set(activeFeeds)
 		this.colorMarkers(changedFeeds)
 
-		if (this.gl) {
-			let feedIndices = changedFeeds.map(feedId => this.markers.sortedFeeds.index.get(feedId))
-			this._updateMarkerColorBuffers(this.gl, feedIndices)
-			this.glDraw(this.gl)
-		}
+		this._doDefferedGlUpdate({feedColors: changedFeeds})
+		// if (this.gl) {
+		// 	let feedIndices = changedFeeds.map(feedId => this.markers.sortedFeeds.index.get(feedId))
+		// 	this._updateMarkerColorBuffers(this.gl, feedIndices)
+		// 	this.glDraw(this.gl)
+		// }
 	}
 
 	viewPixelToGeoCoords(px) {
@@ -1053,10 +1131,11 @@ _binarySearch(array, predicate) {
 
 		this.colorMarkers()
 
-		if (this.gl) {
-			this._updateMarkerBuffers(this.gl)
-			this.glDraw(this.gl)
-		}
+		this._doDefferedGlUpdate({allMarkers: true})
+		// if (this.gl) {
+		// 	this._updateMarkerBuffers(this.gl)
+		// 	this.glDraw(this.gl)
+		// }
 	}
 
 } // class MapOverlay

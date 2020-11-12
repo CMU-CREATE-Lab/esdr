@@ -12,6 +12,8 @@ class ESDR {
 		this.searchQuery_ = undefined
 		this.oldSearchQuery_ = undefined
 		this.searchResults_ = undefined
+		this.dataUpdateTimers = new Map()
+		this.channelDataUpdateCallback = (feedId, channelName) => {}
 	}
 
 	_separateKeywordsInSearchString(text) {
@@ -247,8 +249,28 @@ class ESDR {
 		return !!this.selectedChannels_[channelId]
 	}
 
+	_dataUpdatedForChannel(feedId, channelName) {
+		// this collapses calls in a 300ms window to just one call when no more updates happen
+		let channelId = `${feedId}.${channelName}`
+		let timer = this.dataUpdateTimers.get(channelId)
+
+		if (timer)
+			clearTimeout(timer)
+
+		timer = setTimeout(this._dataUpdateTimeoutCallback, 300, this, channelId, feedId, channelName)
+		this.dataUpdateTimers.set(channelId, timer)
+	}
+
+	_dataUpdateTimeoutCallback(esdr, channelId, feedId, channelName) {
+		// use esdr as `this` is the window because this is a callback for a timer
+		esdr.dataUpdateTimers.delete(channelId)
+
+		esdr.channelDataUpdateCallback(feedId, channelName)
+	}
+
 	dataSourceForChannel(feedId, channelName) {
 		let baseUrl = `${this.apiUrl}/feeds/${feedId}/channels/${channelName}/tiles`
+		let esdr = this
 
   	return function(level, offset, callback) {
   		let url = `${baseUrl}/${level}.${offset}`
@@ -262,6 +284,9 @@ class ESDR {
 		      var responseJson = JSON.parse(this.response);
 
 		      callback(JSON.stringify(responseJson.data))
+
+		      esdr._dataUpdatedForChannel(feedId, channelName)
+
 		    } else {
 		      // We reached our target server, but it returned an error
 		      console.log(`encountenered ${this.status} as the response status trying to get ESDR tile ${level}.${offset}`)
