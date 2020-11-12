@@ -795,7 +795,7 @@
     <TaskOptions isEnabled="true">
       <option name="arguments" value="$FileName$ $FileNameWithoutExtension$.css" />
       <option name="checkSyntaxErrors" value="false" />
-      <option name="description" value="Compiles .scss files into .css files" />
+      <option name="description" />
       <option name="exitCodeBehavior" value="ERROR" />
       <option name="fileExtension" value="scss" />
       <option name="immediateSync" value="true" />
@@ -845,18 +845,8 @@
   </component>
   <component name="dataSourceStorageLocal">
     <data-source name="MySQL - esdr_dev@localhost" uuid="8407a622-3086-4350-85e3-af669192afda">
-      <database-info product="MySQL" version="5.7.19" jdbc-version="4.2" driver-name="MySQL Connector/J" driver-version="mysql-connector-java-8.0.15 (Revision: 79a4336f140499bd22dd07f02b708e163844e3d5)" dbms="MYSQL" exact-version="5.7.19" exact-driver-version="8.0">
-        <extra-name-characters>#@</extra-name-characters>
-        <identifier-quote-string>`</identifier-quote-string>
-      </database-info>
-      <case-sensitivity plain-identifiers="mixed" quoted-identifiers="mixed" />
-      <secret-storage>master_key</secret-storage>
-      <user-name>esdr_dev</user-name>
-      <schema-mapping>
-        <introspection-scope>
-          <node kind="schema" qname="esdr_dev" />
-        </introspection-scope>
-      </schema-mapping>
+      <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" dbms="MYSQL" exact-version="0" />
+      <schema-mapping />
     </data-source>
   </component>
   <component name="libraryTable">
