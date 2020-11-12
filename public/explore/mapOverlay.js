@@ -930,6 +930,21 @@ _binarySearch(array, predicate) {
 		return changedAry
 	}
 
+	highlightMarkers(feeds, isImmediate) {
+		if (!this.markers)
+			return []
+
+    // changed are only the xor between the two sets
+    let changedFeeds = this._xorSets(this.markers.highlightedFeeds, feeds)
+
+    this.markers.highlightedFeeds = new Set(feeds)
+    this.colorMarkers(changedFeeds)
+
+    this._doDefferedGlUpdate({feedColors: changedFeeds}, isImmediate)
+
+		return feeds
+	}
+
 	highlightMarkersAt(eventPixel, isImmediate) {
 		if (!this.markers)
 			return []

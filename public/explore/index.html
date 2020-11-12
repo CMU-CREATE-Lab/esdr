@@ -893,6 +893,9 @@ function searchResultsDivForChannel(feedId, channelName) {
 
   let div = document.createElement("div")
   div.setAttribute("class", "search-result-channel-block")
+  div.addEventListener("mouseover", event => {
+    explorer.mapOverlay.highlightMarkers([feedId], true)
+  })
 
   let checkbox = document.createElement("input")
   checkbox.setAttribute("type", "checkbox")
