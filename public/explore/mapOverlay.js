@@ -214,14 +214,20 @@ class MapOverlay extends google.maps.OverlayView {
 	    	vec2 mercatorPos = geoToMercator(geoVertexPos);
 	    	vec2 pixelPos = mercatorToPixel(mercatorPos, zoomFactor);
 
+	    	// transform to screen-space (large offset) before applying pixel offsets
+	    	// this is to avoid floating-point rounding to mess up the offset shifts
+	    	// because it is adding a very large number (position) to a very small number (offset)
+	    	vec2 screenSpacePos = (modelViewMatrix * vec4(pixelPos, 0.0, 1.0)).xy;
+
+
 	    	// offset vertex by direction and size of marker
 	    	// actual offset is 1px bigger than markerSize to leave room for AA
 	    	vec2 pxOffset = pxVertexOffsetDirection*(0.5*pxMarkerSizeIn + pxStrokeWidthIn + 1.0);
-	    	pixelPos += pxOffset;
+	    	screenSpacePos += pxOffset;
 
 	    	// outputs
 	    	pxCenterOffset = pxOffset;
-	      gl_Position = projectionMatrix * modelViewMatrix * vec4(pixelPos, 0.0, 1.0);
+	      gl_Position = projectionMatrix * vec4(screenSpacePos, 0.0, 1.0);
 	      fillColor = fillColorIn;
 	      strokeColor = strokeColorIn;
 	      pxMarkerSize = pxMarkerSizeIn;
