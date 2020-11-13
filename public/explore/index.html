@@ -412,10 +412,12 @@ function initMap() {
   // parse the url hash part
   parseUrlParams()
   // execute params
-  if (explorer.showFilters)
-    showSearchFilters()
   if (explorer.showResults)
     showSearchResults()
+
+  // FIXME: showSearchFilters() with a small delay, otherwise the margin computation gets confused. maybe this could be done with less hackery?
+  if (explorer.showFilters)
+    setTimeout(showSearchFilters, 100)
 
   let mapdiv = document.getElementById('googlemap');
   gMap = new google.maps.Map(
