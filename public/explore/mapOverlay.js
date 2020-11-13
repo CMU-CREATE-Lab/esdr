@@ -28,8 +28,9 @@ class MapOverlay extends google.maps.OverlayView {
   	this.setMap(map)
   	this.canvas = document.createElement("canvas")
 
-  	this.defferedUpdateTimer_ = undefined
-  	this.defferedUpdateContent_ = {}
+  	this.deferredUpdateTimer_ = undefined
+  	this.deferredUpdateContent_ = {}
+  	this.debug_ = {}
 
 	}
 
@@ -343,6 +344,16 @@ class MapOverlay extends google.maps.OverlayView {
 		// return dst
 	}
 
+	_checkBufferLengths() {
+		if (!this.debug_)
+			return
+
+			console.assert(this.debug_.vertexBufferLength > this.debug_.maxElementIndex)
+			console.assert(this.debug_.fillColorBufferLength > this.debug_.maxElementIndex)
+			console.assert(this.debug_.strokeColorBufferLength > this.debug_.maxElementIndex)
+			console.assert(this.markers.feeds.length == this.debug_.indexBufferLength)
+	}
+
 	_updateMarkerBuffers(gl) {
 		let markers = this.markers
 		if (!markers || !markers.feeds)
@@ -385,6 +396,10 @@ class MapOverlay extends google.maps.OverlayView {
 		this._updateIndexBuffer(gl)
 		this._updateMarkerColorBuffers(gl)
 
+		if (this.debug_)
+			this.debug_.vertexBufferLength = vertices.length
+
+		this._checkBufferLengths()
 	}
 
 	_updateMarkerColorBuffers(gl, changedFeedIndices) {
@@ -408,6 +423,11 @@ class MapOverlay extends google.maps.OverlayView {
 			this.markerShader.strokeColorBuffer = strokeColorBuffer
 			gl.bindBuffer(gl.ARRAY_BUFFER, strokeColorBuffer)
 			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(strokeColors.flat()), gl.DYNAMIC_DRAW)
+
+			if (this.debug_) {
+				this.debug_.fillColorBufferLength = fillColors.length
+				this.debug_.strokeColorBufferLength = strokeColors.length
+			}
 
 		}
 		else
@@ -450,17 +470,25 @@ class MapOverlay extends google.maps.OverlayView {
 			return indicesForQuad(i)
 		})
 
+		if (this.debug_) {
+			this.debug_.maxElementIndex = indices.flat().reduce((acc, val) => Math.max(acc, val), 0)
+			this.debug_.indexBufferLength = indices.length
+		}
+
+		// console.assert(indices.length == (filteredFeeds.length + Array.from(rejectedFeeds).length))
+
 		// upload data to GL buffers
 		const indexBuffer = this.markerShader.indexBuffer || gl.createBuffer()
 		this.markerShader.indexBuffer = indexBuffer
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
-		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(indices.flat()), gl.STATIC_DRAW)
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(indices.flat()), gl.DYNAMIC_DRAW)
 
 	}
 
-	_defferedGlUpdateCallback(mapOverlay, gl) {
+	_deferredGlUpdateCallback(mapOverlay, gl) {
 		if (gl) {
-			let update = mapOverlay.defferedUpdateContent_
+			mapOverlay.glBuffersDirty = false
+			let update = mapOverlay.deferredUpdateContent_
 			let wasUpdated = false
 			if (update.allMarkers)
 			{
@@ -481,50 +509,52 @@ class MapOverlay extends google.maps.OverlayView {
 				}
 			}
 
+			mapOverlay._checkBufferLengths()
+
 			if (wasUpdated)
 				mapOverlay.glDraw(gl)
 
 		}
 
 		// clear timer and content
-		mapOverlay.defferedUpdateTimer_ = undefined
-		mapOverlay.defferedUpdateContent_ = {}
+		mapOverlay.deferredUpdateTimer_ = undefined
+		mapOverlay.deferredUpdateContent_ = {}
 	}
 
-	_doDefferedGlUpdate(updateContent, isImmediate) {
+	_doDeferredGlUpdate(updateContent, isImmediate) {
 		// the updates affect the marker states
 		// allMarkers and allIndices are bools that are ORed
 		// feedColors are lists that are combined
-		if (updateContent.feedColors && this.defferedUpdateContent_.feedColors) {
-			this.defferedUpdateContent_.feedColors = this.defferedUpdateContent_.feedColors.concat(updateContent.feedColors)
+		if (updateContent.feedColors && this.deferredUpdateContent_.feedColors) {
+			this.deferredUpdateContent_.feedColors = this.deferredUpdateContent_.feedColors.concat(updateContent.feedColors)
 		}
 		else if (updateContent.feedColors) {
-			this.defferedUpdateContent_.feedColors = updateContent.feedColors
+			this.deferredUpdateContent_.feedColors = updateContent.feedColors
 		}
 
-		this.defferedUpdateContent_.allMarkers = this.defferedUpdateContent_.allMarkers || updateContent.allMarkers
-		this.defferedUpdateContent_.allIndices = this.defferedUpdateContent_.allIndices || updateContent.allIndices
+		this.deferredUpdateContent_.allMarkers = this.deferredUpdateContent_.allMarkers || updateContent.allMarkers
+		this.deferredUpdateContent_.allIndices = this.deferredUpdateContent_.allIndices || updateContent.allIndices
 
-		// this.defferedUpdateContent_ = Object.assign(this.defferedUpdateContent_, updateContent)
+		// this.deferredUpdateContent_ = Object.assign(this.deferredUpdateContent_, updateContent)
 
 		// re-trigger timer ...
-		let timer = this.defferedUpdateTimer_
+		let timer = this.deferredUpdateTimer_
 		// if timer is pending, cancel it
 		if (timer)
 			clearTimeout(timer)
 
 		if (!isImmediate) {
 			// new timeout 300ms from now
-			timer = setTimeout(this._defferedGlUpdateCallback, 300, this, this.gl)
+			timer = setTimeout(this._deferredGlUpdateCallback, 300, this, this.gl)
 
-			this.defferedUpdateTimer_ = timer
+			this.deferredUpdateTimer_ = timer
 
 		}
 		else
 		{
 			// do immediate update from UI triggered changes
-			this._defferedGlUpdateCallback(this, this.gl)
-			this.defferedUpdateTimer_ = undefined
+			this._deferredGlUpdateCallback(this, this.gl)
+			this.deferredUpdateTimer_ = undefined
 		}
 
 	}
@@ -533,6 +563,7 @@ class MapOverlay extends google.maps.OverlayView {
 
 		if (!this.markers || !this.markers.feeds)
 			return
+
 
 		let pixelScale = window.devicePixelRatio || 1.0
 
@@ -577,6 +608,8 @@ class MapOverlay extends google.maps.OverlayView {
 		if (!shader.indexBuffer)
 			return
 
+		this._checkBufferLengths()
+
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shader.indexBuffer)
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, shader.vertexBuffer)
@@ -609,9 +642,17 @@ class MapOverlay extends google.maps.OverlayView {
 
 	glDraw(gl) {
 
+		// force a buffer update if we're forced to draw while waiting for a deferred update
+		// this also triggers a new glDraw()
+		if (this.glBuffersDirty) {
+			this._doDeferredGlUpdate({}, true)
+			return
+		}
+
 		gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
 		gl.clearColor(0.0, 0.0, 0.0, 0.0)
 		gl.clear(gl.COLOR_BUFFER_BIT)
+
 
 		// this.glDrawGeoGrid(gl)
 		this.glDrawMarkers(gl)
@@ -940,7 +981,7 @@ _binarySearch(array, predicate) {
     this.markers.highlightedFeeds = new Set(feeds)
     this.colorMarkers(changedFeeds)
 
-    this._doDefferedGlUpdate({feedColors: changedFeeds}, isImmediate)
+    this._doDeferredGlUpdate({feedColors: changedFeeds}, isImmediate)
 
 		return feeds
 	}
@@ -968,7 +1009,7 @@ _binarySearch(array, predicate) {
     this.markers.highlightedFeeds = new Set(feeds)
     this.colorMarkers(changedFeeds)
 
-    this._doDefferedGlUpdate({feedColors: changedFeeds}, isImmediate)
+    this._doDeferredGlUpdate({feedColors: changedFeeds}, isImmediate)
 
   //   if (this.gl) {
 		// 	let feedIndices = changedFeeds.map(feedId => this.markers.sortedFeeds.index.get(feedId))
@@ -992,7 +1033,7 @@ _binarySearch(array, predicate) {
 		this.markers.rejectedFeeds = new Set(rejectedFeeds)
 		this.colorMarkers(changedFeeds)
 
-		this._doDefferedGlUpdate({feedColors: changedFeeds, allIndices: true})
+		this._doDeferredGlUpdate({feedColors: changedFeeds, allIndices: true})
 		// if (this.gl) {
 		// 	let feedIndices = changedFeeds.map(feedId => this.markers.sortedFeeds.index.get(feedId))
 		// 	this._updateIndexBuffer(this.gl)
@@ -1009,7 +1050,7 @@ _binarySearch(array, predicate) {
 		this.markers.activeFeeds = new Set(activeFeeds)
 		this.colorMarkers(changedFeeds)
 
-		this._doDefferedGlUpdate({feedColors: changedFeeds})
+		this._doDeferredGlUpdate({feedColors: changedFeeds})
 		// if (this.gl) {
 		// 	let feedIndices = changedFeeds.map(feedId => this.markers.sortedFeeds.index.get(feedId))
 		// 	this._updateMarkerColorBuffers(this.gl, feedIndices)
@@ -1110,21 +1151,24 @@ _binarySearch(array, predicate) {
 		// feeds to draw as markers
 		// filter out all that don't have lon/lat
 		// accept both strings and numeric values by using parseFloat()
-		feeds = feeds.filter(feed => Number.isFinite(parseFloat(feed.longitude)) && Number.isFinite(parseFloat(feed.latitude)))
+		feeds = feeds.filter(feed => feed.latlng)
+
 		let feedIndexMap = new Map(feeds.map((e, i) => [e.id, i]))
 
 		// sort by lon/lat for selection with mouse
-		let longitudeFeeds = feeds.map(feed => [parseFloat(feed.longitude), feed.id]).sort((a,b) => a[0]-b[0])
-		let latitudeFeeds = feeds.map(feed => [parseFloat(feed.latitude), feed.id]).sort((a,b) => a[0]-b[0])
+		let longitudeFeeds = feeds.map(feed => [feed.latlng.lng, feed.id]).sort((a,b) => a[0]-b[0])
+		let latitudeFeeds = feeds.map(feed => [feed.latlng.lat, feed.id]).sort((a,b) => a[0]-b[0])
 
 
-		let positions = feeds.map(feed => [parseFloat(feed.longitude), parseFloat(feed.latitude)])
+		let positions = feeds.map(feed => [feed.latlng.lng, feed.latlng.lat])
 
 		// look for feed states that determine coloring
 		let highlightedFeeds = feedStates && feedStates.highlightedFeeds ? feedStates.highlightedFeeds : (this.markers && this.markers.highlightedFeeds) || new Set()
 		let activeFeeds = feedStates && feedStates.activeFeeds ? feedStates.activeFeeds : (this.markers && this.markers.activeFeeds) || new Set()
 
 		let rejectedFeeds = feedStates && feedStates.rejectedFeeds ? feedStates.rejectedFeeds : (this.markers && this.markers.rejectedFeeds) || new Set()
+
+
 
 
 		this.markers = {
@@ -1146,7 +1190,9 @@ _binarySearch(array, predicate) {
 
 		this.colorMarkers()
 
-		this._doDefferedGlUpdate({allMarkers: true})
+		this.glBuffersDirty = true;
+
+		this._doDeferredGlUpdate({allMarkers: true})
 		// if (this.gl) {
 		// 	this._updateMarkerBuffers(this.gl)
 		// 	this.glDraw(this.gl)

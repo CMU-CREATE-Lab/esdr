@@ -310,8 +310,8 @@ input[type="search"] {
   <button class="searchbar-button" onclick="doSensorSearch()"><img src="loupe.svg" class="button-icon"></img></button>
   </div>
   <div id="filtersBlock" class="search-filters">
-    <div><input type="checkbox" id="recentOnlyCheckbox" name="checkbox-recentOnly"><label for="checkbox-recentOnly">Data in last 30 days</label></div>
-    <div>Filter 2</div>
+    <div><input type="checkbox" id="recentOnlyCheckbox" name="checkbox-recentOnly" title="only show sensors with new data from the last 30 days"><label for="checkbox-recentOnly">Data in last 30 days</label></div>
+    <div><input type="checkbox" id="mapOnlyCheckbox" name="checkbox-mapOnly" title="only show sensors that are on the map area"><label for="checkbox-mapOnly">On Map</label></div>
   </div>
   <div id="progressBlock" class="search-progress-block">
     <div id="searchProgressText"></div>
@@ -440,13 +440,13 @@ function initMap() {
 
 
   google.maps.event.addListener(gMap, 'bounds_changed', function() {
-   // console.log(`bounds_changed event to ${map.getBounds()}`);
-   let center = this.getCenter()
-   explorer.center = center
-   let zoom = this.getZoom()
-   explorer.zoom = zoom
+    // console.log(`bounds_changed event to ${map.getBounds()}`);
 
-   updateUrlHash()
+    if (explorer.deferredMapBoundsUpdateTimer)
+      clearTimeout(explorer.deferredTimelineUpdateTimer)
+
+    explorer.deferredMapBoundsUpdateTimer = setTimeout(explorer.deferredMapBoundsUpdateCallback, 300, gMap)
+
   })
 
   google.maps.event.addListener(gMap, 'mousemove', function(event) {
@@ -501,6 +501,11 @@ function initMap() {
     }
   })
 
+  let bounds = gMap.getBounds()
+  explorer.mapBounds = bounds
+  esdr.updateQuery({mapBounds: bounds})
+
+
   // install search response events
   let searchInput = document.getElementById("sensorSearchField")
   searchInput.addEventListener("change", event => {
@@ -514,6 +519,13 @@ function initMap() {
   recentOnlyCheckbox.addEventListener("change", event => {
     let checked = event.target.checked
     esdr.updateQuery({recentOnly: checked})
+
+    updateUrlHash()
+  })
+  let mapOnlyCheckbox = document.getElementById("mapOnlyCheckbox")
+  mapOnlyCheckbox.addEventListener("change", event => {
+    let checked = event.target.checked
+    esdr.updateQuery({mapOnly: checked})
 
     updateUrlHash()
   })
@@ -537,6 +549,20 @@ function initMap() {
   searchResultsList.addEventListener('scroll', () => {
     appendSearchResultsListIfNeeded()
   })
+}
+
+explorer.deferredMapBoundsUpdateCallback = function(map) {
+  explorer.deferredMapBoundsUpdateTimer = undefined
+
+  let center = map.getCenter()
+  explorer.center = center
+  let zoom = map.getZoom()
+  explorer.zoom = zoom
+  let bounds = map.getBounds()
+  explorer.mapBounds = bounds
+  esdr.updateQuery({mapBounds: bounds})
+
+  updateUrlHash()
 }
 
 
@@ -596,6 +622,12 @@ function parseUrlParams() {
     recentOnlyCheckbox.checked = recentOnly
     esdr.updateQuery({recentOnly: recentOnly})
   }
+  if (browserParams.has("mapOnly")) {
+    let mapOnly = browserParams.get("mapOnly") == "true"
+    let mapOnlyCheckbox = document.getElementById("mapOnlyCheckbox")
+    mapOnlyCheckbox.checked = mapOnly
+    esdr.updateQuery({mapOnly: mapOnly})
+  }
 
   // new params for display state
   if (browserParams.has("showFilters")) {
@@ -633,12 +665,14 @@ function createUrlParams() {
   if (explorer.zoom) {
     browserParams.set("zoom", `${explorer.zoom}`)
   }
-  if (esdr.searchQuery.recentOnly)
-  {
+  if (esdr.searchQuery.recentOnly) {
     browserParams.set("recentOnly", `${esdr.searchQuery.recentOnly}`)
   }
-  if (esdr.searchQuery.text)
-  {
+  if (esdr.searchQuery.mapOnly) {
+    browserParams.set("mapOnly", `${esdr.searchQuery.mapOnly}`)
+  }
+
+  if (esdr.searchQuery.text) {
     browserParams.set("search", esdr.searchQuery.text)
   }
 

@@ -25,6 +25,8 @@ class ESDR {
 	  let now = Date.now() / 1000;
 	  let recentThreshold = now - 30 * 24 * 60 * 60;
 
+	  let mapBounds = (search.mapOnly && search.mapBounds) ? search.mapBounds : undefined;
+
 		let searchText = search.text || ""
 		let keywords = this._separateKeywordsInSearchString(searchText)
 		let searchResults = feedIds.reduce( (results, feedId) => {
@@ -36,6 +38,13 @@ class ESDR {
 				if (feedLastTime < recentThreshold)
 					return results
 			}
+
+			// reject if not on map
+			if (mapBounds && !feed.latlng || (feed.latlng && !mapBounds.contains(feed.latlng)))
+			{
+					return results
+			}
+			
 
 			let feedName = feed.name.toLowerCase()
 			let feedIdString = feedId.toString()
@@ -191,6 +200,12 @@ class ESDR {
 	  	feed.channelNames = this.channelNamesForFeed(feed.id, feed)
 	  	if (feed.channelNames)
 	  		feed.channelLabels = new Map(feed.channelNames.map( name => [name, this.labelForChannel(feed.id, name, feed)] ))
+
+	  	let longitude = parseFloat(feed.longitude)
+	  	let latitude = parseFloat(feed.latitude)
+	  	if (isFinite(longitude) && isFinite(latitude)) {
+	  		feed.latlng = {lat: latitude, lng: longitude}
+	  	}
 
 	  	feedIds.push(feed.id)
 	    this.feeds.set(feed.id, feed)
