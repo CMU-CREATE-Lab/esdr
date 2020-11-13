@@ -131,6 +131,7 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                                               // should be granted access to see the read-write API key.
                                                               passport.authenticate('bearer', function(err, user) {
                                                                  if (err) {
+                                                                    const message = "Error during bearer authentication";
                                                                     log.error(message + ": " + err);
                                                                     return res.jsendServerError(message);
                                                                  }
