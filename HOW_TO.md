@@ -2,7 +2,7 @@
 
 Until I get time to write good API docs, this document will attempt to at least describe how to get data into ESDR, and how to view it with a simple visualization.
 
-Instructions here use `curl` commands, but you could certainly imagine using other tools for making HTTP requests ([Superagent-ls](https://github.com/kmalakoff/superagent-ls) is my current favorite).
+Instructions here use `curl` commands, but you could certainly imagine using other tools (e.g. [Axios](https://www.npmjs.com/package/axios)) for making HTTP requests.
 
 ## Create an Account
 

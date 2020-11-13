@@ -36,8 +36,6 @@
     <orderEntry type="library" name="@types/serve-favicon" level="application" />
     <orderEntry type="library" name="@types/superagent" level="application" />
     <orderEntry type="library" name="@types/express-serve-static-core" level="application" />
-    <orderEntry type="library" name="Generated files" level="project" />
-    <orderEntry type="library" name="should-DefinitelyTyped" level="project" />
     <orderEntry type="library" name="nimble" level="application" />
     <orderEntry type="library" name="@types/bootstrap" level="application" />
     <orderEntry type="library" name="@types/handlebars-helpers" level="application" />
