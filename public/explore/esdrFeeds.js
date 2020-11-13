@@ -1,4 +1,5 @@
 
+
 class ESDR {
 
 	constructor() {
@@ -227,7 +228,7 @@ class ESDR {
 
 
 	  // feeds received callback first
-	  callback(feedIds, this.longitudeSortedFeeds, this.latitudeSortedFeeds, {current: this.feedIds.length, total: feedsJson.totalCount})
+	  callback(feedIds, {current: this.feedIds.length, total: feedsJson.totalCount})
 
 	  // update search results with new feeds last
 	  this._updateSearch(feedIds)

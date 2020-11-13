@@ -1070,6 +1070,10 @@ _binarySearch(array, predicate) {
 	}
 
 	feedsCloseToPixel(pxPos, pxRadius) {
+		// if no data source, no feeds
+		if (!this.feedDataSource)
+			return []
+
 		let pixsw = {x: pxPos.x - pxRadius, y: pxPos.y + pxRadius}
 		let pixne = {x: pxPos.x + pxRadius, y: pxPos.y - pxRadius}
 
@@ -1078,7 +1082,7 @@ _binarySearch(array, predicate) {
 
 		// console.log(`feedsCloseToPixelv ${geosw.lng()} to ${geone.lng()}, ${geosw.lat()} to ${geone.lat()}`)
 
-		let feedIds = esdr.feedsInGeoBox(geosw, geone)
+		let feedIds = this.feedDataSource.feedsInGeoBox(geosw, geone)
 
 		return feedIds
 	}
@@ -1153,11 +1157,11 @@ _binarySearch(array, predicate) {
 		}
 	}
 
-	setFeeds(feeds, longitudeSortedFeeds, latitudeSortedFeeds, feedStates) {
+	setDataSource(feedDataSource, feedStates) {
 		// feeds to draw as markers
 		// filter out all that don't have lon/lat
-		// accept both strings and numeric values by using parseFloat()
-		feeds = feeds.filter(feed => feed.latlng)
+		this.feedDataSource = feedDataSource
+		let feeds = Array.from(feedDataSource.feeds.values()).filter(feed => feed.latlng)
 
 		let feedIndexMap = new Map(feeds.map((e, i) => [e.id, i]))
 
@@ -1174,8 +1178,8 @@ _binarySearch(array, predicate) {
 
 		this.markers = {
 			sortedFeeds: {
-				longitude: longitudeSortedFeeds,
-				latitude: latitudeSortedFeeds,
+				longitude: feedDataSource.longitudeSortedFeeds,
+				latitude: feedDataSource.latitudeSortedFeeds,
 				index: feedIndexMap, // maps feedId -> array index (for updating buffers when the markers change)
 			},
 			feeds: feeds,

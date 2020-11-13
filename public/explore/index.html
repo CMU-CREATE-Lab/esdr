@@ -848,11 +848,11 @@ explorer.updateEsdrLoadProgress = function(numFeedsReceived, numFeedsTotal) {
   explorer.updateStatusInfo()
 }
 
-explorer.esdrFeedsReceived = function(feedIds, longitudeSortedFeeds, latitudeSortedFeeds, progress) {
+explorer.esdrFeedsReceived = function(feedIds, progress) {
   explorer.updateEsdrLoadProgress(progress.current, progress.total)
 
   // set with all feeds rejected to start with
-  explorer.mapOverlay.setFeeds(Array.from(esdr.feeds.values()), longitudeSortedFeeds, latitudeSortedFeeds, {rejectedFeeds: new Set(feedIds)})
+  explorer.mapOverlay.setDataSource(esdr, {rejectedFeeds: new Set(feedIds)})
 
   // update plot labels
   let feedSet = new Set(feedIds)
