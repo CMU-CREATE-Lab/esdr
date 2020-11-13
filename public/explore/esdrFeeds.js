@@ -134,9 +134,12 @@ class ESDR {
 	// feed is optional, if it's empty the feed is looked up
 	// this is so that labels can be generated when receiving feeds
 	labelForFeed(feedId, feed) {
+		// try look up feed if not suppled
 		if (!feed)
-	  	feed = this.feeds.has(feedId) ? `${this.feeds.get(feedId).name} ` : ""
-	  let label = `${feed}(${feedId})`
+	  	feed = this.feeds.get(feedId)
+	  // if feed is still empty, we can't name it
+	  let feedName = feed ? `${feed.name} ` : ""
+	  let label = `${feedName}(${feedId})`
 	  return label
 	}
 
@@ -187,7 +190,7 @@ class ESDR {
 	  	// create channel labels if feed has channels
 	  	feed.channelNames = this.channelNamesForFeed(feed.id, feed)
 	  	if (feed.channelNames)
-	  		feed.channelLabels = feed.channelNames.map( name => this.labelForChannel(feed.id, name, feed) )
+	  		feed.channelLabels = new Map(feed.channelNames.map( name => [name, this.labelForChannel(feed.id, name, feed)] ))
 
 	  	feedIds.push(feed.id)
 	    this.feeds.set(feed.id, feed)

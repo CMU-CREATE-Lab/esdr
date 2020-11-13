@@ -190,6 +190,7 @@ input[type="search"] {
 
 .plots-toolbar {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   background-color: #EFE;
   padding-left: 0.5em;
@@ -269,6 +270,12 @@ input[type="search"] {
   text-align: center;
 }
 
+.button-icon {
+  height: 1em; 
+  vertical-align: middle;
+  cursor: pointer;
+}
+
 #main {
   transition: margin-left .3s;
   /*padding: 16px;*/
@@ -294,13 +301,13 @@ input[type="search"] {
 <div id="searchBlock" class="floaty-search">
   <div class="searchbar">
   <!-- <button class="searchbar-button" onclick="toggleSidebar()">☰</button> -->
-  <button class="searchbar-button" onclick="toggleSidebar()"><img src="hamburger.svg" style="height: 1em; vertical-align: middle;"></img></button>
+  <button class="searchbar-button" onclick="toggleSidebar()"><img src="hamburger.svg" class="button-icon"></img></button>
   <div class="searchbar-divider"></div>
-  <button class="searchbar-button" onclick="toggleFilters()"><img src="filter.svg" style="height: 1em; vertical-align: middle;"></img></button>
+  <button class="searchbar-button" onclick="toggleFilters()"><img src="filter.svg" class="button-icon"></img></button>
   <!-- <div class="searchbar-divider"></div> -->
   <input type="search" id="sensorSearchField" class="search-text" placeholder="search sensor feeds">
   <!-- <div class="searchbar-divider"></div> -->
-  <button class="searchbar-button" onclick="doSensorSearch()"><img src="loupe.svg" style="height: 1em; vertical-align: middle;"></img></button>
+  <button class="searchbar-button" onclick="doSensorSearch()"><img src="loupe.svg" class="button-icon"></img></button>
   </div>
   <div id="filtersBlock" class="search-filters">
     <div><input type="checkbox" id="recentOnlyCheckbox" name="checkbox-recentOnly"><label for="checkbox-recentOnly">Data in last 30 days</label></div>
@@ -467,7 +474,7 @@ function initMap() {
       {
         let channelDivs = []
         for (let channelName in feed.channelBounds.channels) {
-          let chdiv = searchResultsDivForChannel(feedId, channelName)
+          let chdiv = searchResultsDivForChannel(feedId, channelName, "infoWindow")
           channelDivs.push(chdiv)
         }
 
@@ -516,7 +523,7 @@ function initMap() {
 
   esdr.channelDataUpdateCallback = (feedId, channelName) => {
     let channelId = `${feedId}.${channelName}`
-    console.log(`channelDataUpdateCallback(${channelId}`)
+    // console.log(`channelDataUpdateCallback(${channelId}`)
     let plotNumber = explorer.plots.get(channelId)
     if (plotNumber)
       explorer.fitPlotYAxisToData(plotNumber)
@@ -536,21 +543,32 @@ function parseUrlParams() {
 
   // selected channels for plotting
   if (browserParams.has("channels")) {
+    // TODO: add support for pipe separator old-style URLs?
     let channelIds = browserParams.get("channels").split(",").filter((word) => word.length > 0)
     for (channelId of channelIds) {
+      // select channel and add plot
       esdr.selectChannelWithId(channelId, true)
+      // let feedId = parseInt(channelId.slice(0, channelId.indexOf(".")))
+      // let channelName = channelId.slice(channelId.indexOf(".")+1)
+      // explorer.addPlot(feedId, channelName)
     }
   }
 
   // grapher time limits and cursor
   if (browserParams.has("time")) {
     let times = browserParams.get("time").split(",")
-    explorer.startTime = times[0]
-    explorer.endTime = times[1]
-  }
+    let startTime = parseFloat(times[0])
+    if (isFinite(startTime))
+      explorer.startTime = startTime
+    let endTime = parseFloat(times[1])
+    if (isFinite(endTime))
+      explorer.endTime = endTime
+}
 
   if (browserParams.has("cursor")) {
-    explorer.cursorTime = browserParams.get("cursor")
+    let cursorTime = parseFloat(browserParams.get("cursor"))
+    if (isFinite(cursorTime))
+      explorer.cursorTime = cursorTime
   }
 
   // map params
@@ -593,6 +611,13 @@ function createUrlParams() {
   if (esdr.selectedChannelIds.length > 0) {
     browserParams.set("channels", esdr.selectedChannelIds.join(','))
   }
+  if (explorer.startTime || explorer.endTime) {
+    browserParams.set("time", [explorer.startTime.toFixed(3), explorer.endTime.toFixed(3)].join(','))
+  }
+  if (explorer.cursorTime) {
+    browserParams.set("cursor", explorer.cursorTime.toFixed(3))
+  }
+
 
   if (explorer.showFilters) {
     browserParams.set("showFilters", "true")
@@ -753,6 +778,20 @@ explorer.esdrFeedsReceived = function(feedIds, progress) {
 
   // set with all feeds rejected to start with
   explorer.mapOverlay.setFeeds(Array.from(esdr.feeds.values()), {rejectedFeeds: new Set(feedIds)})
+
+  // update plot labels
+  let feedSet = new Set(feedIds)
+  for ([channelId, plotId] of explorer.plots) {
+    let feedId = parseInt(channelId.slice(0, channelId.indexOf(".")))
+    if (feedSet.has(feedId)) {
+      let label = document.getElementById(`plotLabel-${plotId}`)
+      if (label) {
+        let channelName = channelId.slice(channelId.indexOf(".")+1)
+        label.textContent = esdr.feeds.get(feedId).channelLabels.get(channelName)
+      }
+    }
+  }
+
 }
 
 function processNewSearchResults(newResults, isAppendUpdate) {
@@ -804,7 +843,7 @@ function appendSearchResultsListBy(results) {
     {
       let channelDivs = []
       for (let channelName of channelNames) {
-        let chdiv = searchResultsDivForChannel(feedId, channelName)
+        let chdiv = searchResultsDivForChannel(feedId, channelName, "searchResults")
         channelDivs.push(chdiv)
       }
 
@@ -886,7 +925,7 @@ function getChannelIdFromElementId(elementId) {
 }
 
 
-function searchResultsDivForChannel(feedId, channelName) {
+function searchResultsDivForChannel(feedId, channelName, elementIdPrefix) {
   let label = esdr.labelForChannel(feedId, channelName)
   let channelId = `${feedId}.${channelName}`
   let selected = esdr.isChannelSelected(channelId)
@@ -899,25 +938,17 @@ function searchResultsDivForChannel(feedId, channelName) {
 
   let checkbox = document.createElement("input")
   checkbox.setAttribute("type", "checkbox")
-  checkbox.setAttribute("id", `checkbox-${channelId}`)
+  checkbox.setAttribute("id", `${elementIdPrefix}-${channelId}`)
   checkbox.setAttribute("name", `checkbox-${channelId}`)
-  if (selected)
-  {
+  checkbox.setAttribute("title", "Plot Channel")
+  if (selected) {
     checkbox.checked = true
   }
   checkbox.onclick = function(event) {
     let checked = this.checked
     let channelId = getChannelIdFromElementId(this.getAttribute("id"))
-      esdr.selectChannelWithId(channelId, checked)
 
-    if (checked)
-    {
-      let feedId = parseInt(channelId.slice(0, channelId.indexOf(".")))
-      let channelName = channelId.slice(channelId.indexOf(".")+1)
-      explorer.addPlot(feedId, channelName)
-    }
-
-    updateUrlHash()
+    explorer.interactiveSelectChannelWithId(channelId, checked)
   }
   div.appendChild(checkbox)
 
@@ -932,19 +963,45 @@ function searchResultsDivForChannel(feedId, channelName) {
   return div
 }
 
+explorer.interactiveSelectChannelWithId = function(channelId, isSelected) {
+  esdr.selectChannelWithId(channelId, isSelected)
+
+  let feedId = parseInt(channelId.slice(0, channelId.indexOf(".")))
+  let channelName = channelId.slice(channelId.indexOf(".")+1)
+  if (isSelected) {
+    explorer.addPlot(feedId, channelName)
+  }
+  else {
+    explorer.removePlot(feedId, channelName)
+  }
+
+  let resultsCheckbox = document.getElementById(`searchResults-${channelId}`)
+  if (resultsCheckbox)
+    resultsCheckbox.checked = isSelected
+  let infoCheckbox = document.getElementById(`searchResults-${channelId}`)
+  if (infoCheckbox)
+    infoCheckbox.checked = isSelected
+
+  updateUrlHash()
+}
+
 
 // bodytrack grapher calls this when it's ready
 window.grapherLoad = function() {
   let now = Date.now() / 1000;
   let aWeekAgo = now - 7 * 24 * 60 * 60;
 
-  explorer.plotManager = new org.bodytrack.grapher.PlotManager("date_axis", aWeekAgo, now);
+  let startTime = explorer.startTime || aWeekAgo
+  let endTime = explorer.endTime || now
+  let cursorTime = explorer.cursorTime || now
+
+  explorer.plotManager = new org.bodytrack.grapher.PlotManager("date_axis", startTime, endTime);
 
   explorer.plotManager.setWillAutoResizeWidth(true, function() {
     return document.getElementById("plots").getBoundingClientRect().width
   });
 
-  explorer.plotManager.getDateAxis().setCursorPosition(now);
+  explorer.plotManager.getDateAxis().setCursorPosition(cursorTime);
 
   explorer.scrubTimelineDate = function(timestamp) {
     let oldTimestamp = explorer.scrubTimestamp
@@ -1014,6 +1071,31 @@ window.grapherLoad = function() {
   plotZoomScrubber.addEventListener("input", event => {
     explorer.scrubTimelineZoomWithSpeed(event.target.valueAsNumber)
   })
+
+  explorer.plotManager.getDateAxis().addAxisChangeListener(dateAxisProperties => {
+    // do a deferred update
+    if (explorer.deferredTimelineUpdateTimer)
+      clearTimeout(explorer.deferredTimelineUpdateTimer)
+
+    explorer.deferredTimelineUpdateTimer = setTimeout(explorer.deferredTimelineUpdateCallback, 300, dateAxisProperties.min, dateAxisProperties.max, dateAxisProperties.cursorPosition)
+  })
+
+  // add selected plots to plot manager
+  for (let channelId of esdr.selectedChannelIds) {
+    let feedId = parseInt(channelId.slice(0, channelId.indexOf(".")))
+    let channelName = channelId.slice(channelId.indexOf(".")+1)
+    explorer.addPlot(feedId, channelName)
+  }
+}
+
+explorer.deferredTimelineUpdateCallback = function(startTime, endTime, cursorTime) {
+  // console.log(`deferredTimelineUpdateCallback(${startTime}, ${endTime}, ${cursorTime})`)
+  explorer.startTime = startTime
+  explorer.endTime = endTime
+  explorer.cursorTime = cursorTime
+
+  explorer.deferredTimelineUpdateTimer = undefined
+  updateUrlHash()
 }
 
 
@@ -1028,27 +1110,22 @@ explorer.addPlot = function(feedId, channelName) {
   let feed = esdr.feeds.get(feedId)
 
   // new plot number is next highest from current plots
-  let plotNumber = Array.from(explorer.plots.values()).reduce((acc, val) => Math.max(acc,val), 0) + 1
+  let plotId = Array.from(explorer.plots.values()).reduce((acc, val) => Math.max(acc,val), 0) + 1
 
-  let channelLabel = feed ? feed.channelLabels[channelName] : channelId
-  let plotName = `plot-${plotNumber}`
-  let yAxisName = `yaxis-${plotNumber}`
+  let channelLabel = feed ? feed.channelLabels.get(channelName) : channelId
+  let plotName = `plot-${plotId}`
+  let plotContainerName = `plotContainer-${plotId}`
+  let yAxisName = `yaxis-${plotId}`
 
   let plotBlock = document.createElement("div")
-  plotBlock.setAttribute("id", `plot-block-${plotNumber}`)
+  plotBlock.setAttribute("id", `plot-block-${plotId}`)
   plotBlock.style.height = "5em"
   plotBlock.style.width = "100%"
   plotBlock.style.position = "relative"
 
-  let plotDivider = document.createElement("div")
-  // plotDivider.setAttribute("id", `divider-${plotNumber}`)
-  plotDivider.style.height = "1px"
-  plotDivider.style.width = "100%"
-  plotDivider.style.position = "absolute"
-  plotDivider.style.backgroundColor = "#000"
 
   let plotContent = document.createElement("div")
-  plotContent.setAttribute("id", plotName)
+  plotContent.setAttribute("id", plotContainerName)
   plotContent.style.position = "absolute"
   plotContent.style.left = "0px"
   plotContent.style.top = "0px"
@@ -1066,23 +1143,51 @@ explorer.addPlot = function(feedId, channelName) {
   yAxis.style.width = "2em"
 
   let labelBlock = document.createElement("div")
-  plotBlock.setAttribute("id", `label-${plotNumber}`)
+  // labelBlock.setAttribute("id", `plotLabel-${plotId}`)
+  labelBlock.style.display = "flex"
+  labelBlock.style.alignItems = "center"
   labelBlock.style.position = "absolute"
-  labelBlock.textContent = channelLabel
   labelBlock.style.top = "0px"
   labelBlock.style.left = "0px"
+  // labelBlock.style.height = "100%"
+  labelBlock.style.width = "100%"
+  labelBlock.style.fontFamily = "sans-serif"
+  labelBlock.style.fontSize = "smaller"
+  // labelBlock.textContent = channelLabel
 
-  plotBlock.appendChild(plotDivider)
+  let labelClose = document.createElement("img")
+  labelClose.setAttribute("class", "button-icon")
+  labelClose.setAttribute("src", "cross.svg")
+  labelClose.style.marginLeft = "0.25em"
+  labelClose.style.marginRight = "0.25em"
+  labelClose.addEventListener("click", () => explorer.interactiveSelectChannelWithId(channelId, false))
+
+  let labelName = document.createElement("div")
+  labelName.setAttribute("id", `plotLabel-${plotId}`)
+  labelName.textContent = channelLabel
+
+  labelBlock.appendChild(labelClose)
+  labelBlock.appendChild(labelName)
+
+  let plotDivider = document.createElement("div")
+  // plotDivider.setAttribute("id", `divider-${plotId}`)
+  plotDivider.style.bottom = "0px"
+  plotDivider.style.height = "1px"
+  plotDivider.style.width = "100%"
+  plotDivider.style.position = "absolute"
+  plotDivider.style.backgroundColor = "#000"
+
   plotBlock.appendChild(plotContent)
   plotBlock.appendChild(yAxis)
   plotBlock.appendChild(labelBlock)
+  plotBlock.appendChild(plotDivider)
 
   let plotList = document.getElementById("plotList")
   plotList.appendChild(plotBlock)
 
-  explorer.plots.set(channelId, plotNumber)
+  explorer.plots.set(channelId, plotId)
 
-  explorer.plotManager.addDataSeriesPlot(plotName, esdr.dataSourceForChannel(feedId, channelName), plotName, yAxisName, 0, 100, explorer.lineStyle, range => {
+  explorer.plotManager.addDataSeriesPlot(plotId, esdr.dataSourceForChannel(feedId, channelName), plotContainerName, yAxisName, 0, 100, explorer.lineStyle, range => {
     let paddedRange = Object.assign({}, range)
     return paddedRange
   })
@@ -1091,16 +1196,37 @@ explorer.addPlot = function(feedId, channelName) {
 
 explorer.removePlot = function(feedId, channelName) {
   let channelId = `${feedId}.${channelName}`
-  let plotNumber = explorer.plots.get(channelId)
+  let plotId = explorer.plots.get(channelId)
 
-  explorer.plots.remove(channelId)
+  // if it didn't exist in the first place, don't bother
+  if (!explorer.plots.has(channelId))
+    return
+
+  let plotName = `plot-${plotId}`
+  let plotContainerName = `plotContainer-${plotId}`
+  let yAxisName = `yaxis-${plotId}`
+
+  let plot = explorer.plotManager.getPlot(plotId)
+
+
+  let plotContainer = explorer.plotManager.getPlotContainer(plotContainerName)
+  plotContainer.removePlot(plot)
+  explorer.plotManager.removePlotContainer(plotContainerName)
+
+  let plotBlock = document.getElementById(`plot-block-${plotId}`)
+  if (plotBlock)
+    plotBlock.remove()
+
+
+  explorer.plots.delete(channelId)
+
 }
 
-explorer.fitPlotYAxisToData = function(plotNumber) {
+explorer.fitPlotYAxisToData = function(plotId) {
   let plotManager = explorer.plotManager
-  let plotName = `plot-${plotNumber}`
-  let yAxisName = `yaxis-${plotNumber}`
-  let plot = plotManager.getPlot(plotName)
+  let plotName = `plot-${plotId}`
+  let yAxisName = `yaxis-${plotId}`
+  let plot = plotManager.getPlot(plotId)
   let yAxis = plotManager.getYAxis(yAxisName)
 
   let stats = plot.getStatisticsWithinRange(plotManager.getDateAxis().getRange())
