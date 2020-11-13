@@ -40,7 +40,7 @@ class ESDR {
 			}
 
 			// reject if not on map
-			if (mapBounds && !feed.latlng || (feed.latlng && !mapBounds.contains(feed.latlng)))
+			if (mapBounds && ((feed.latlng && !mapBounds.contains(feed.latlng)) || !feed.latlng))
 			{
 					return results
 			}
