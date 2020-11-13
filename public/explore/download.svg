@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" version="1.1" xmlns:xl="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" viewBox="1290.4726 524.40946 225.35405 255.11812" width="225.35405" height="255.11812">
+  <defs/>
+  <metadata> Produced by OmniGraffle 7.17.5\n2020-11-13 05:56:06 +0000</metadata>
+  <g id="Canvas_1" stroke-opacity="1" stroke-dasharray="none" stroke="none" fill="none" fill-opacity="1">
+    <title>Canvas 1</title>
+    <g id="Canvas_1_Layer_1">
+      <title>Layer 1</title>
+      <g id="Graphic_51"/>
+      <g id="Line_50">
+        <line x1="1403.1496" y1="538.5827" x2="1403.1496" y2="666.14175" stroke="black" stroke-linecap="square" stroke-linejoin="round" stroke-width="21.2598"/>
+      </g>
+      <g id="Line_49">
+        <path d="M 1318.1103 694.4882 L 1318.1103 737.0079 L 1488.189 737.0079 L 1488.189 694.4882" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="21.2598"/>
+      </g>
+      <g id="Line_48">
+        <path d="M 1445.6693 637.7953 L 1403.1496 680.315 L 1360.63 637.7953" stroke="black" stroke-linecap="square" stroke-linejoin="miter" stroke-width="21.2598"/>
+      </g>
+    </g>
+  </g>
+</svg>

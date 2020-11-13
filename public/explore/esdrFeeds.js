@@ -27,10 +27,14 @@ class ESDR {
 
 	  let mapBounds = (search.mapOnly && search.mapBounds) ? search.mapBounds : undefined;
 
+	  // pre filter if we're filtering by map bounds
+	  if (mapBounds && feedIds)
+	  	feedIds = this.feedsInGeoBox(mapBounds.getSouthWest(), mapBounds.getNorthEast())
+
 		let searchText = search.text || ""
 		let keywords = this._separateKeywordsInSearchString(searchText)
 		let searchResults = feedIds.reduce( (results, feedId) => {
-			let feed = this.feeds.get(feedId)
+		let feed = this.feeds.get(feedId)
 
 			// filter out feeds that are older
 			if (search.recentOnly) {
@@ -213,11 +217,63 @@ class ESDR {
 
 	  this.feedIds = this.feedIds.concat(feedIds)
 
+	  // create map area pre-filtering structures, so that dragging things around the map aren't sluggish when filtering for map area is enabled
+	  let mappedFeeds = Array.from(this.feeds.values()).filter(feed => feed.latlng)
+
+		this.longitudeSortedFeeds = mappedFeeds.map(feed => [feed.latlng.lng, feed.id]).sort((a,b) => a[0]-b[0])
+		this.latitudeSortedFeeds = mappedFeeds.map(feed => [feed.latlng.lat, feed.id]).sort((a,b) => a[0]-b[0])
+
+
+
+
 	  // feeds received callback first
-	  callback(feedIds, {current: this.feedIds.length, total: feedsJson.totalCount})
+	  callback(feedIds, this.longitudeSortedFeeds, this.latitudeSortedFeeds, {current: this.feedIds.length, total: feedsJson.totalCount})
 
 	  // update search results with new feeds last
 	  this._updateSearch(feedIds)
+	}
+
+	/**
+	 * Return 0 <= i <= array.length such that !predicate(array[i - 1]) && predicate(array[i]).
+	 */
+	_binarySearch(array, predicate) {
+    let lo = -1
+    let hi = array.length
+    while (1 + lo < hi) {
+        const mi = lo + ((hi - lo) >> 1)
+        if (predicate(array[mi])) {
+            hi = mi;
+        } else {
+            lo = mi;
+        }
+    }
+    return hi;
+	}
+
+	feedsInGeoBox(sw, ne) {
+
+		// binsearch lng/lat to find range covered in box
+		let latArray = this.latitudeSortedFeeds || []
+		let latLo = this._binarySearch(latArray, e => e[0] >= sw.lat())
+		let latHi = this._binarySearch(latArray, e => e[0] > ne.lat())
+
+		if (latLo >= latHi) // same indices indicate nothing found
+			return []
+
+		let lngArray = this.longitudeSortedFeeds || []
+		let lngLo = this._binarySearch(lngArray, e => e[0] >= sw.lng())
+		let lngHi = this._binarySearch(lngArray, e => e[0] > ne.lng())
+
+		if (lngLo >= lngHi)
+			return []
+
+		// find intersection of lat/lng results, eg. only those that have both
+		let lngSet = new Set(lngArray.slice(lngLo, lngHi).map(e => e[1]))
+		let intersectArray = latArray.slice(latLo, latHi).map(e => e[1]).filter(e => lngSet.has(e))
+
+		// return only the feedIds
+		return intersectArray
+
 	}
 
 	getFeedsFromOffset(feedOffset, callback) {

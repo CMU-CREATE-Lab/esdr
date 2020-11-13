@@ -12,6 +12,11 @@ html, body {
   overflow-y: hidden;
 }
 
+hr {
+  border: none;
+  border-top: 1px solid rgba(0,0,0,0.2);
+}
+
 input[type="search"] {
   -webkit-appearance: textfield;
 }
@@ -103,6 +108,10 @@ input[type="search"] {
   text-align: center;
 }
 
+.in-the-middle {
+  vertical-align: middle;
+}
+
 .searchbar-divider {
   display: inline-block;
   height: 1.5em;
@@ -125,9 +134,12 @@ input[type="search"] {
 }
 
 .search-progress-block {
+  /*padding-top: 0.5em;*/
+  padding-bottom: 0px;
   height: 0px;
   overflow: hidden;
-  transition: 0.3s
+  transition: 0.3s;
+  background-color: transparent;
 }
 
 .search-result-feed-block {
@@ -197,6 +209,12 @@ input[type="search"] {
   padding-right: 0.5em;
   padding-bottom: 0.25em;
   padding-top: 0.25em;
+}
+
+.toolbar-spacer {
+  flex-shrink: 1;
+  flex-grow: 1;
+  width: 1em;
 }
 
 .plots-date-scrubber {
@@ -274,6 +292,8 @@ input[type="search"] {
   height: 1em; 
   vertical-align: middle;
   cursor: pointer;
+  margin-left: 0px;
+  margin-right: 0px;
 }
 
 #main {
@@ -306,12 +326,14 @@ input[type="search"] {
   <button class="searchbar-button" onclick="toggleFilters()"><img src="filter.svg" class="button-icon"></img></button>
   <!-- <div class="searchbar-divider"></div> -->
   <input type="search" id="sensorSearchField" class="search-text" placeholder="search sensor feeds">
-  <!-- <div class="searchbar-divider"></div> -->
   <button class="searchbar-button" onclick="doSensorSearch()"><img src="loupe.svg" class="button-icon"></img></button>
+  <div class="searchbar-divider"></div>
+  <button class="searchbar-button" onclick="showHelp()">?</button>
   </div>
   <div id="filtersBlock" class="search-filters">
-    <div><input type="checkbox" id="recentOnlyCheckbox" name="checkbox-recentOnly" title="only show sensors with new data from the last 30 days"><label for="checkbox-recentOnly">Data in last 30 days</label></div>
-    <div><input type="checkbox" id="mapOnlyCheckbox" name="checkbox-mapOnly" title="only show sensors that are on the map area"><label for="checkbox-mapOnly">On Map</label></div>
+    <div><input type="checkbox" id="recentOnlyCheckbox" name="checkbox-recentOnly" title="only show sensors with new data from the last 30 days" class="in-the-middle"><label for="checkbox-recentOnly" class="in-the-middle"><span class="in-the-middle">Data in last 30 days</span></label></div>
+    <div><input type="checkbox" id="mapOnlyCheckbox" name="checkbox-mapOnly" title="only show sensors that are on the map area" class="in-the-middle"><label for="checkbox-mapOnly" class="in-the-middle"><span class="in-the-middle">On Map</span></label></div>
+    <hr></hr>
   </div>
   <div id="progressBlock" class="search-progress-block">
     <div id="searchProgressText"></div>
@@ -327,11 +349,16 @@ input[type="search"] {
     <div id="plotsToolbar" class="plots-toolbar">
         <input type="range" min="-100" max="100" value="0" class="plots-date-scrubber" id="plotsDateScrubber">
         <button class="plots-toolbar-button" onclick="">now</button>
+        <div class="toolbar-spacer"></div>
         <input type="range" min="-100" max="100" value="0" class="plots-zoom-scrubber" id="plotsZoomScrubber">
-        <button class="plots-toolbar-button" onclick="">day</button>
-        <button class="plots-toolbar-button" onclick="">month</button>
-        <button class="plots-toolbar-button" onclick="">year</button>
+        <button class="plots-toolbar-button" onclick="explorer.zoomTimelineToSize(24*60*60)">day</button>
+        <button class="plots-toolbar-button" onclick="explorer.zoomTimelineToSize(31*24*60*60)">month</button>
+        <button class="plots-toolbar-button" onclick="explorer.zoomTimelineToSize(365*24*60*60)">year</button>
+        <div class="toolbar-spacer"></div>
+        <button class="plots-toolbar-button" onclick="">↓</button>
         <button class="plots-toolbar-button" onclick="">↑</button>
+        <div class="toolbar-spacer"></div>
+        <button class="plots-toolbar-button" onclick=""><img height="1em" src="download.svg" class="button-icon"></img></button>
     </div>
     <div id="date_axis" class="date-axis"></div>
     <div id="plotList" class="plots-list"></div>
@@ -442,10 +469,21 @@ function initMap() {
   google.maps.event.addListener(gMap, 'bounds_changed', function() {
     // console.log(`bounds_changed event to ${map.getBounds()}`);
 
+    let mapBounds = gMap.getBounds()
+
+    if (mapBounds == explorer.prevMapBounds) {
+      // do nothing if bounds didn't really change
+      return
+    }
+
+    // console.log(`bounds_changed ${mapBounds}`)
+
+    explorer.prevMapBounds = mapBounds
+
     if (explorer.deferredMapBoundsUpdateTimer)
       clearTimeout(explorer.deferredTimelineUpdateTimer)
 
-    explorer.deferredMapBoundsUpdateTimer = setTimeout(explorer.deferredMapBoundsUpdateCallback, 300, gMap)
+    explorer.deferredMapBoundsUpdateTimer = setTimeout(explorer.deferredMapBoundsUpdateCallback, 500, gMap)
 
   })
 
@@ -770,14 +808,15 @@ explorer.updateProgressText = function(text) {
   progressText.textContent = text
 
   let adjustment = 0
+  let progressStyle = window.getComputedStyle(progressBlock)
   if (shouldOpen)
   {
-    adjustment = `${progressBlock.scrollHeight}px`
-    progressBlock.style.height = progressBlock.scrollHeight + 'px'
+    adjustment = `calc(${progressBlock.scrollHeight}px - ${progressStyle.paddingTop})`
+    progressBlock.style.height = adjustment
   }
   else if (shouldClose)
   {
-    adjustment = `-${progressBlock.scrollHeight}px`
+    adjustment = `calc(-${progressBlock.scrollHeight}px + ${progressStyle.paddingTop})`
     progressBlock.style.height = "0px"
   }
 
@@ -809,11 +848,11 @@ explorer.updateEsdrLoadProgress = function(numFeedsReceived, numFeedsTotal) {
   explorer.updateStatusInfo()
 }
 
-explorer.esdrFeedsReceived = function(feedIds, progress) {
+explorer.esdrFeedsReceived = function(feedIds, longitudeSortedFeeds, latitudeSortedFeeds, progress) {
   explorer.updateEsdrLoadProgress(progress.current, progress.total)
 
   // set with all feeds rejected to start with
-  explorer.mapOverlay.setFeeds(Array.from(esdr.feeds.values()), {rejectedFeeds: new Set(feedIds)})
+  explorer.mapOverlay.setFeeds(Array.from(esdr.feeds.values()), longitudeSortedFeeds, latitudeSortedFeeds, {rejectedFeeds: new Set(feedIds)})
 
   // update plot labels
   let feedSet = new Set(feedIds)
@@ -1022,6 +1061,7 @@ explorer.interactiveSelectChannelWithId = function(channelId, isSelected) {
 }
 
 
+
 // bodytrack grapher calls this when it's ready
 window.grapherLoad = function() {
   let now = Date.now() / 1000;
@@ -1073,7 +1113,9 @@ window.grapherLoad = function() {
       let currentRange = dateAxis.getRange()
       let dateDiff = currentRange.max - currentRange.min
       let dateScrub = dateDiff*dt/1000.0*explorer.scrubSpeed/100.0
-      dateAxis.setRange(currentRange.min + dateScrub, currentRange.max - dateScrub)
+      let targetSize = dateDiff - 2*dateScrub
+      explorer.zoomTimelineToSize(targetSize)
+      // dateAxis.setRange(currentRange.min + dateScrub, currentRange.max - dateScrub)
     }
 
 
@@ -1122,6 +1164,21 @@ window.grapherLoad = function() {
     let channelName = channelId.slice(channelId.indexOf(".")+1)
     explorer.addPlot(feedId, channelName)
   }
+}
+
+explorer.zoomTimelineToSize = function(zoomTargetSize) {
+  let dateAxis = explorer.plotManager.getDateAxis()
+  let currentRange = dateAxis.getRange()
+  let cursor = dateAxis.getCursorPosition()
+
+  let zoomCenter = ((cursor >= currentRange.min) && (cursor <= currentRange.max)) ? cursor : 0.5*(currentRange.max + currentRange.min)
+
+  let rangeDiff = currentRange.max - currentRange.min
+  let loDiff = zoomCenter - currentRange.min
+  let hiDiff = currentRange.max - zoomCenter
+  let zoomScale = zoomTargetSize/rangeDiff
+  dateAxis.setRange(zoomCenter - loDiff*zoomScale, zoomCenter + hiDiff*zoomScale)
+
 }
 
 explorer.deferredTimelineUpdateCallback = function(startTime, endTime, cursorTime) {

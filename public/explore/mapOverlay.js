@@ -950,7 +950,7 @@ class MapOverlay extends google.maps.OverlayView {
 
 	}
 
-	/**
+/**
  * Return 0 <= i <= array.length such that !predicate(array[i - 1]) && predicate(array[i]).
  */
 _binarySearch(array, predicate) {
@@ -1078,38 +1078,38 @@ _binarySearch(array, predicate) {
 
 		// console.log(`feedsCloseToPixelv ${geosw.lng()} to ${geone.lng()}, ${geosw.lat()} to ${geone.lat()}`)
 
-		let feedIds = this.feedsInGeoBox(geosw, geone)
+		let feedIds = esdr.feedsInGeoBox(geosw, geone)
 
 		return feedIds
 	}
 
-	feedsInGeoBox(sw, ne) {
-		if (!this.markers)
-			return []
+	// feedsInGeoBox(sw, ne) {
+	// 	if (!this.markers)
+	// 		return []
 
-		// binsearch lng/lat to find range covered in box
-		let latArray = this.markers.sortedFeeds.latitude
-		let latLo = this._binarySearch(latArray, e => e[0] >= sw.lat())
-		let latHi = this._binarySearch(latArray, e => e[0] > ne.lat())
+	// 	// binsearch lng/lat to find range covered in box
+	// 	let latArray = this.markers.sortedFeeds.latitude
+	// 	let latLo = this._binarySearch(latArray, e => e[0] >= sw.lat())
+	// 	let latHi = this._binarySearch(latArray, e => e[0] > ne.lat())
 
-		if (latLo >= latHi) // same indices indicate nothing found
-			return []
+	// 	if (latLo >= latHi) // same indices indicate nothing found
+	// 		return []
 
-		let lngArray = this.markers.sortedFeeds.longitude
-		let lngLo = this._binarySearch(lngArray, e => e[0] >= sw.lng())
-		let lngHi = this._binarySearch(lngArray, e => e[0] > ne.lng())
+	// 	let lngArray = this.markers.sortedFeeds.longitude
+	// 	let lngLo = this._binarySearch(lngArray, e => e[0] >= sw.lng())
+	// 	let lngHi = this._binarySearch(lngArray, e => e[0] > ne.lng())
 
-		if (lngLo >= lngHi)
-			return []
+	// 	if (lngLo >= lngHi)
+	// 		return []
 
-		// find intersection of lat/lng results, eg. only those that have both
-		let lngSet = new Set(lngArray.slice(lngLo, lngHi).map(e => e[1]))
-		let intersectArray = latArray.slice(latLo, latHi).map(e => e[1]).filter(e => lngSet.has(e))
+	// 	// find intersection of lat/lng results, eg. only those that have both
+	// 	let lngSet = new Set(lngArray.slice(lngLo, lngHi).map(e => e[1]))
+	// 	let intersectArray = latArray.slice(latLo, latHi).map(e => e[1]).filter(e => lngSet.has(e))
 
-		// return only the feedIds
-		return intersectArray
+	// 	// return only the feedIds
+	// 	return intersectArray
 
-	}
+	// }
 
 	colorMarkers(changedFeedIds) {
 		let markers = this.markers
@@ -1153,18 +1153,13 @@ _binarySearch(array, predicate) {
 		}
 	}
 
-	setFeeds(feeds, feedStates) {
+	setFeeds(feeds, longitudeSortedFeeds, latitudeSortedFeeds, feedStates) {
 		// feeds to draw as markers
 		// filter out all that don't have lon/lat
 		// accept both strings and numeric values by using parseFloat()
 		feeds = feeds.filter(feed => feed.latlng)
 
 		let feedIndexMap = new Map(feeds.map((e, i) => [e.id, i]))
-
-		// sort by lon/lat for selection with mouse
-		let longitudeFeeds = feeds.map(feed => [feed.latlng.lng, feed.id]).sort((a,b) => a[0]-b[0])
-		let latitudeFeeds = feeds.map(feed => [feed.latlng.lat, feed.id]).sort((a,b) => a[0]-b[0])
-
 
 		let positions = feeds.map(feed => [feed.latlng.lng, feed.latlng.lat])
 
@@ -1179,8 +1174,8 @@ _binarySearch(array, predicate) {
 
 		this.markers = {
 			sortedFeeds: {
-				longitude: longitudeFeeds,
-				latitude: latitudeFeeds,
+				longitude: longitudeSortedFeeds,
+				latitude: latitudeSortedFeeds,
 				index: feedIndexMap, // maps feedId -> array index (for updating buffers when the markers change)
 			},
 			feeds: feeds,
