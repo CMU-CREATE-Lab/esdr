@@ -315,6 +315,10 @@ input[type="search"] {
   text-align: center;
 }
 
+.plots-toolbar-button:disabled {
+  opacity: 0.5;
+}
+
 .plots-toolbar-group-left {
   margin-right: 0em;
   border: none;
@@ -409,9 +413,9 @@ input[type="search"] {
 
 
 <div id="main">
-  <div id="googlemap" class="googlemap"></div>
+  <div id="googlemap" class="googlemap" style="height:60%"></div>
   <!-- <div id="mapOverlayStatic" class="map-overlay-static"></div> -->
-  <div id="plots" class="plots-container">
+  <div id="plots" class="plots-container" style="height:40%">
     <div id="plotsToolbar" class="plots-toolbar">
         <input type="range" min="-100" max="100" value="0" class="plots-date-scrubber" id="plotsDateScrubber">
         <button class="plots-toolbar-button" onclick="">now</button>
@@ -426,14 +430,14 @@ input[type="search"] {
 <!--         <input type="image" class="plots-toolbar-img" onclick="" src="yshrink.svg" height=18 width=14></input>
         <input type="image" class="plots-toolbar-img" onclick="" src="ygrow.svg" height="18" width="14"></input>
  --> 
-        <button class="plots-toolbar-button plots-toolbar-group-left" onclick=""><img src="ylower.svg" class="button-icon" width=14 height=18></img></button>
+        <button id="decreasePlotAreaHeightButton" class="plots-toolbar-button plots-toolbar-group-left" onclick="explorer.decreasePlotAreaHeight()"><img src="ylower.svg" class="button-icon" width=14 height=18></img></button>
         <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
-        <button class="plots-toolbar-button plots-toolbar-group-right" onclick=""><img src="yraise.svg" class="button-icon" width=14 height=18></img></button>
-        <div class="toolbar-spacer"></div>
-        <button class="plots-toolbar-button plots-toolbar-group-left" onclick=""><img src="yshrink.svg" class="button-icon" width=14 height=18></img></button>
+        <button id="increasePlotAreaHeightButton" class="plots-toolbar-button plots-toolbar-group-right" onclick="explorer.increasePlotAreaHeight()"><img src="yraise.svg" class="button-icon" width=14 height=18></img></button>
+        <!-- <div class="toolbar-spacer"></div> -->
+        <button id="decreasePlotHeightButton" class="plots-toolbar-button plots-toolbar-group-left" onclick="explorer.decreasePlotHeight()"><img src="yshrink.svg" class="button-icon" width=14 height=18></img></button>
         <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
-        <button class="plots-toolbar-button plots-toolbar-group-right" onclick=""><img src="ygrow.svg" class="button-icon" width=14 height=18></img></button>
-        <div class="toolbar-spacer"></div>
+        <button id="increasePlotHeightButton" class="plots-toolbar-button plots-toolbar-group-right" onclick="explorer.increasePlotHeight()"><img src="ygrow.svg" class="button-icon" width=14 height=18></img></button>
+        <!-- <div class="toolbar-spacer"></div> -->
         <button class="plots-toolbar-button" onclick=""><img src="download.svg" class="button-icon"></img></button>
     </div>
     <!-- this insanity with the iframes here is because we use them to capture resize events of the plots pane, so that the grapher plots are correctly resized when the page layout changes -->
@@ -474,6 +478,7 @@ let explorer = {
   },
   results: [],
   plots: new Map(),
+  plotHeight: 5,
   lineStyle: {
     "styles": [
       // {
@@ -1326,7 +1331,7 @@ explorer.addPlot = function(feedId, channelName) {
 
   let plotBlock = document.createElement("div")
   plotBlock.setAttribute("id", `plot-block-${plotId}`)
-  plotBlock.style.height = "5em"
+  // plotBlock.style.height = "5em"
   plotBlock.style.width = "100%"
   plotBlock.style.position = "relative"
   plotBlock.style.display = "flex"
@@ -1394,6 +1399,8 @@ explorer.addPlot = function(feedId, channelName) {
 
   explorer.plotManager.addDataSeriesPlot(plotId, esdr.dataSourceForChannel(feedId, channelName), plotContainerName, yAxisName, 0, 100, explorer.lineStyle)
 
+  explorer.setPlotToHeight(plotId, explorer.plotHeight*explorer.plotBaseSize())
+
   // FIXME: remove border from plotContainer that is added by CREATE grapher
   plotContent.style.border = "none"
 
@@ -1441,6 +1448,120 @@ explorer.fitPlotYAxisToData = function(plotId) {
 
   if (isFinite(stats.min) && isFinite(stats.max)) {
     yAxis.setRange(stats.min, stats.max)
+  }
+}
+
+explorer.increasePlotAreaHeight = function() {
+  let plotArea = document.getElementById("plots")
+  let mapArea = document.getElementById("googlemap")
+  let decreaseButton = document.getElementById("decreasePlotAreaHeightButton")
+  let increaseButton = document.getElementById("increasePlotAreaHeightButton")
+  if (plotArea.style.height == "20%") {
+    plotArea.style.height = "40%"
+    googlemap.style.height = "60%"
+    decreaseButton.disabled = false
+  }
+  else if (plotArea.style.height == "40%") {
+    plotArea.style.height = "60%"
+    googlemap.style.height = "40%"
+  }
+  else if (plotArea.style.height == "60%") {
+    plotArea.style.height = "80%"
+    googlemap.style.height = "20%"
+    increaseButton.disabled = true
+  }
+}
+explorer.decreasePlotAreaHeight = function() {
+  let plotArea = document.getElementById("plots")
+  let mapArea = document.getElementById("googlemap")
+  let decreaseButton = document.getElementById("decreasePlotAreaHeightButton")
+  let increaseButton = document.getElementById("increasePlotAreaHeightButton")
+  if (plotArea.style.height == "80%") {
+    plotArea.style.height = "60%"
+    googlemap.style.height = "40%"
+    increaseButton.disabled = false
+  }
+  else if (plotArea.style.height == "60%") {
+    plotArea.style.height = "40%"
+    googlemap.style.height = "60%"
+  }
+  else if (plotArea.style.height == "40%") {
+    plotArea.style.height = "20%"
+    googlemap.style.height = "80%"
+    decreaseButton.disabled = true
+  }
+}
+
+explorer.setPlotToHeight = function(plotId, height) {
+  let plotContainerName = `plotContainer-${plotId}`
+  let plotContainerElement = document.getElementById(plotContainerName)
+  explorer.plotManager.getPlotContainer(plotContainerName).setHeight(height)
+}
+
+explorer.setPlotsToHeight = function(height) {
+  for ([channelId, plotId] of explorer.plots) {
+    let plotContainerName = `plotContainer-${plotId}`
+    let plotContainerElement = document.getElementById(plotContainerName)
+
+    explorer.plotManager.getPlotContainer(plotContainerName).setHeight(height)
+  }
+}
+
+explorer.plotBaseSize = function() {
+  let plotsContainerElement = document.getElementById("plotList")
+  let lineSize = parseFloat(getComputedStyle(plotsContainerElement).fontSize);
+  return lineSize
+}
+
+explorer.increasePlotHeight = function() {
+
+  let lineSize = explorer.plotBaseSize();
+
+  let decreaseButton = document.getElementById("decreasePlotHeightButton")
+  let increaseButton = document.getElementById("increasePlotHeightButton")
+  if (explorer.plotHeight == 2) {
+    explorer.plotHeight = 5
+    decreaseButton.disabled = false
+    explorer.setPlotsToHeight(lineSize*5)
+  }
+  else if (explorer.plotHeight == 5) {
+    explorer.plotHeight = 8
+    explorer.setPlotsToHeight(lineSize*8)
+  }
+  else if (explorer.plotHeight == 8) {
+    explorer.plotHeight = 12
+    explorer.setPlotsToHeight(lineSize*12)
+  }
+  else if (explorer.plotHeight == 12) {
+    explorer.plotHeight = 20
+    explorer.setPlotsToHeight(lineSize*20)
+    increaseButton.disabled = true
+  }
+}
+
+explorer.decreasePlotHeight = function() {
+
+  let lineSize = explorer.plotBaseSize();
+
+  let decreaseButton = document.getElementById("decreasePlotHeightButton")
+  let increaseButton = document.getElementById("increasePlotHeightButton")
+  if (explorer.plotHeight == 20) {
+    explorer.plotHeight = 12
+    increaseButton.disabled = false
+    explorer.setPlotsToHeight(lineSize*explorer.plotHeight)
+  }
+  else if (explorer.plotHeight == 12) {
+    explorer.plotHeight = 8
+    explorer.setPlotsToHeight(lineSize*explorer.plotHeight)
+  }
+  else if (explorer.plotHeight == 8) {
+    explorer.plotHeight = 5
+    explorer.setPlotsToHeight(lineSize*explorer.plotHeight)
+  }
+  else if (explorer.plotHeight == 5) {
+    explorer.plotHeight = 2
+    explorer.setPlotsToHeight(lineSize*explorer.plotHeight)
+    decreaseButton.disabled = true
   }
 }
 
