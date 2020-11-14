@@ -17,6 +17,13 @@ hr {
   border-top: 1px solid rgba(0,0,0,0.2);
 }
 
+canvas {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+}
+
 input[type="search"] {
   -webkit-appearance: textfield;
 }
@@ -265,8 +272,16 @@ input[type="search"] {
 
 .date-axis {
   height: 2em;
+  width: calc(100%-2em);
 }
 
+.plot-corner {
+  width: 2em;
+  height: 2em;
+  background: #770;
+  flex-shrink: 0;
+  flex-grow: 0;
+}
 
 .plots-toolbar-button {
   vertical-align: middle;
@@ -360,8 +375,16 @@ input[type="search"] {
         <div class="toolbar-spacer"></div>
         <button class="plots-toolbar-button" onclick=""><img height="1em" src="download.svg" class="button-icon"></img></button>
     </div>
-    <div id="date_axis" class="date-axis"></div>
-    <div id="plotList" class="plots-list"></div>
+    <!-- this insanity with the iframes here is because we use them to capture resize events of the plots pane, so that the grapher plots are correctly resized when the page layout changes -->
+    <iframe id="plotWidthIframe" style="height:0px; width:100%; border:none;"></iframe>
+    <div style="display: flex; flex-direction: row; flex-grow: 0; flex-shrink: 0; overflow-y: hidden">
+      <div id="date_axis" class="date-axis"></div>
+      <div id="plotCorner" class="plot-corner"></div>
+    </div>
+    <div style="display: flex; flex-direction: row; flex-grow: 1; flex-shrink: 1; overflow-y: scroll">
+      <iframe id="plotHeightIframe" style="height:100%; width:0px; border:none; float:left;"></iframe>
+      <div id="plotList" class="plots-list"></div>
+    </div>
   </div>
 </div>
 
@@ -370,8 +393,10 @@ input[type="search"] {
 <script src="mapOverlay.js"></script>
 
 <script src="../lib/jquery/jquery-1.11.1.min.js" type="text/javascript"></script>
-  <script src="../lib/superagent/superagent.js" type="text/javascript"></script>
-<script src="../lib/bodytrack-grapher/org/bodytrack/grapher/grapher2.nocache.js" type="text/javascript"></script>
+<script src="../lib/jquery-mousewheel/jquery.mousewheel.min.js"></script>
+<script src="../lib/superagent/superagent.js" type="text/javascript"></script>
+<script src="../lib/createlab-grapher/grapher.min.js"></script>
+<!-- <script src="../lib/bodytrack-grapher/org/bodytrack/grapher/grapher2.nocache.js" type="text/javascript"></script> -->
 <script src="../lib/plot-manager/org/bodytrack/grapher/PlotManager.js" type="text/javascript"></script>
   
   <!-- <script src="https://d3js.org/d3.v4.js"></script> -->
@@ -401,10 +426,18 @@ let explorer = {
         "lineWidth": 1,
         "show": true,
         "color": "rgba(60,60,60, .8)"
-      }
+      },
+      {
+        "type": "circle",
+        "radius": 1,
+        "lineWidth": 1,
+        "show": true,
+        "color": "#000000",
+        "fill": false
+      },
     ],
     "highlight": {
-      "lineWidth": 3,
+      "lineWidth": 2,
       "styles": [{
           "show": true,
           "type": "lollipop",
@@ -415,11 +448,11 @@ let explorer = {
         },
         {
           "type": "circle",
-          radius: 3,
+          "radius": 3,
           "lineWidth": 0.5,
           "show": true,
           "color": "#ff0000",
-          fill: true
+          "fill": true
         },
         {
           "show": true,
@@ -469,16 +502,6 @@ function initMap() {
   google.maps.event.addListener(gMap, 'bounds_changed', function() {
     // console.log(`bounds_changed event to ${map.getBounds()}`);
 
-    let mapBounds = gMap.getBounds()
-
-    if (mapBounds == explorer.prevMapBounds) {
-      // do nothing if bounds didn't really change
-      return
-    }
-
-    // console.log(`bounds_changed ${mapBounds}`)
-
-    explorer.prevMapBounds = mapBounds
 
     if (explorer.deferredMapBoundsUpdateTimer)
       clearTimeout(explorer.deferredTimelineUpdateTimer)
@@ -548,7 +571,7 @@ function initMap() {
   let searchInput = document.getElementById("sensorSearchField")
   searchInput.addEventListener("change", event => {
     let searchText = event.target.value
-    console.log(searchText)
+    // console.log(searchText)
     esdr.updateQuery({text: searchText})
 
     updateUrlHash()
@@ -576,9 +599,10 @@ function initMap() {
   esdr.channelDataUpdateCallback = (feedId, channelName) => {
     let channelId = `${feedId}.${channelName}`
     // console.log(`channelDataUpdateCallback(${channelId}`)
-    let plotNumber = explorer.plots.get(channelId)
-    if (plotNumber)
-      explorer.fitPlotYAxisToData(plotNumber)
+    // no need to do fit with autoscaling enabled
+    // let plotNumber = explorer.plots.get(channelId)
+    // if (plotNumber)
+    //   explorer.fitPlotYAxisToData(plotNumber)
   }
 
 
@@ -590,15 +614,31 @@ function initMap() {
 }
 
 explorer.deferredMapBoundsUpdateCallback = function(map) {
+  // console.log("deferredMapBoundsUpdateCallback")
   explorer.deferredMapBoundsUpdateTimer = undefined
 
+  let mapBounds = gMap.getBounds()
+
+  // need this elaborate comparison because simple equality tests dont work to determine if the bounds actually changed:(
+  // if the bounds didn't really change, then we can just do nothing
+  if (ESDR.areMapBoundsEqual(explorer.prevMapBounds, mapBounds))
+  if (explorer.prevMapBounds && (mapBounds.getSouthWest().lng() == explorer.prevMapBounds.getSouthWest().lng()) && (mapBounds.getNorthEast().lng() == explorer.prevMapBounds.getNorthEast().lng()) && (mapBounds.getSouthWest().lat() == explorer.prevMapBounds.getSouthWest().lat()) && (mapBounds.getNorthEast().lat() == explorer.prevMapBounds.getNorthEast().lat())) {
+    return
+  }
+
+  // console.log(`bounds_changed ${mapBounds}`)
+
+  explorer.prevMapBounds = mapBounds
+
+  // console.log(`deferredMapBoundsUpdateCallback for real ${mapBounds}`)
+
+  // update the persistent states for map bounds
   let center = map.getCenter()
   explorer.center = center
   let zoom = map.getZoom()
   explorer.zoom = zoom
-  let bounds = map.getBounds()
-  explorer.mapBounds = bounds
-  esdr.updateQuery({mapBounds: bounds})
+  explorer.mapBounds = mapBounds
+  esdr.updateQuery({mapBounds: mapBounds})
 
   updateUrlHash()
 }
@@ -1073,10 +1113,6 @@ window.grapherLoad = function() {
 
   explorer.plotManager = new org.bodytrack.grapher.PlotManager("date_axis", startTime, endTime);
 
-  explorer.plotManager.setWillAutoResizeWidth(true, function() {
-    return document.getElementById("plots").getBoundingClientRect().width
-  });
-
   explorer.plotManager.getDateAxis().setCursorPosition(cursorTime);
 
   explorer.scrubTimelineDate = function(timestamp) {
@@ -1115,7 +1151,6 @@ window.grapherLoad = function() {
       let dateScrub = dateDiff*dt/1000.0*explorer.scrubSpeed/100.0
       let targetSize = dateDiff - 2*dateScrub
       explorer.zoomTimelineToSize(targetSize)
-      // dateAxis.setRange(currentRange.min + dateScrub, currentRange.max - dateScrub)
     }
 
 
@@ -1164,6 +1199,19 @@ window.grapherLoad = function() {
     let channelName = channelId.slice(channelId.indexOf(".")+1)
     explorer.addPlot(feedId, channelName)
   }
+
+  let widthIFrame = document.getElementById("plotWidthIframe")
+  let cornerElement = document.getElementById("plotCorner")
+  widthIFrame.contentWindow.addEventListener('resize', function(event) {
+    // console.log(`plotWidthIframe resize`)
+    // resize plot frames
+    explorer.plotManager.setWidth(widthIFrame.clientWidth - plotCorner.clientWidth)
+
+  })
+  let heightIFrame = document.getElementById("plotHeightIframe")
+  widthIFrame.contentWindow.addEventListener('resize', function(event) {
+    // console.log(`plotHeightIframe resize`)
+  } )
 }
 
 explorer.zoomTimelineToSize = function(zoomTargetSize) {
@@ -1215,25 +1263,30 @@ explorer.addPlot = function(feedId, channelName) {
   plotBlock.style.height = "5em"
   plotBlock.style.width = "100%"
   plotBlock.style.position = "relative"
+  plotBlock.style.display = "flex"
+  plotBlock.style.flexDirection = "row"
+  plotBlock.style.borderBottom = "0.5px solid black"
 
 
   let plotContent = document.createElement("div")
   plotContent.setAttribute("id", plotContainerName)
-  plotContent.style.position = "absolute"
-  plotContent.style.left = "0px"
-  plotContent.style.top = "0px"
-  plotContent.style.bottom = "0px"
-  // plotContent.style.height = "5em"
-  plotContent.style.right = "2em"
+  plotContent.style.height = "5em"
+
+  // invisible plot overlay to prevent scroll events from happening
+  let plotOverlay = document.createElement("div")
+  plotOverlay.setAttribute("id", `plotOverlay-${plotId}`)
+  plotOverlay.style.width = "calc(100% - 2em)"
+  plotOverlay.style.height = "100%"
+  plotOverlay.style.position = "absolute"
+  plotOverlay.style.zIndex = "1"
+
+  plotContent.appendChild(plotOverlay)
 
   let yAxis = document.createElement("div")
   yAxis.setAttribute("id", yAxisName)
-  yAxis.style.position = "absolute"
-  yAxis.style.right = "0px"
-  yAxis.style.top = "0px"
-  yAxis.style.bottom = "0px"
-  // yAxis.style.height = "5em"
+  yAxis.style.height = "5em"
   yAxis.style.width = "2em"
+  yAxis.style.flexShrink = "0"
 
   let labelBlock = document.createElement("div")
   // labelBlock.setAttribute("id", `plotLabel-${plotId}`)
@@ -1246,7 +1299,8 @@ explorer.addPlot = function(feedId, channelName) {
   labelBlock.style.width = "100%"
   labelBlock.style.fontFamily = "sans-serif"
   labelBlock.style.fontSize = "smaller"
-  // labelBlock.textContent = channelLabel
+  labelBlock.style.zIndex = "2"
+// labelBlock.textContent = channelLabel
 
   let labelClose = document.createElement("img")
   labelClose.setAttribute("class", "button-icon")
@@ -1262,28 +1316,23 @@ explorer.addPlot = function(feedId, channelName) {
   labelBlock.appendChild(labelClose)
   labelBlock.appendChild(labelName)
 
-  let plotDivider = document.createElement("div")
-  // plotDivider.setAttribute("id", `divider-${plotId}`)
-  plotDivider.style.bottom = "0px"
-  plotDivider.style.height = "1px"
-  plotDivider.style.width = "100%"
-  plotDivider.style.position = "absolute"
-  plotDivider.style.backgroundColor = "#000"
-
   plotBlock.appendChild(plotContent)
   plotBlock.appendChild(yAxis)
   plotBlock.appendChild(labelBlock)
-  plotBlock.appendChild(plotDivider)
 
   let plotList = document.getElementById("plotList")
   plotList.appendChild(plotBlock)
 
   explorer.plots.set(channelId, plotId)
 
-  explorer.plotManager.addDataSeriesPlot(plotId, esdr.dataSourceForChannel(feedId, channelName), plotContainerName, yAxisName, 0, 100, explorer.lineStyle, range => {
-    let paddedRange = Object.assign({}, range)
-    return paddedRange
-  })
+
+  explorer.plotManager.addDataSeriesPlot(plotId, esdr.dataSourceForChannel(feedId, channelName), plotContainerName, yAxisName, 0, 100, explorer.lineStyle)
+
+  // FIXME: remove border from plotContainer that is added by CREATE grapher
+  plotContent.style.border = "none"
+
+
+  explorer.plotManager.getPlotContainer(plotContainerName).setAutoScaleEnabled(true, true)
 
 }
 
@@ -1303,7 +1352,7 @@ explorer.removePlot = function(feedId, channelName) {
 
 
   let plotContainer = explorer.plotManager.getPlotContainer(plotContainerName)
-  plotContainer.removePlot(plot)
+  plotContainer.removeAllPlots()
   explorer.plotManager.removePlotContainer(plotContainerName)
 
   let plotBlock = document.getElementById(`plot-block-${plotId}`)
@@ -1324,8 +1373,8 @@ explorer.fitPlotYAxisToData = function(plotId) {
 
   let stats = plot.getStatisticsWithinRange(plotManager.getDateAxis().getRange())
 
-  if ((stats.minValue !== null) && (stats.maxValue !== null)) {
-    yAxis.setRange(stats.minValue, stats.maxValue)
+  if (isFinite(stats.min) && isFinite(stats.max)) {
+    yAxis.setRange(stats.min, stats.max)
   }
 }
 

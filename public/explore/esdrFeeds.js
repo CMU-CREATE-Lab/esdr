@@ -30,23 +30,29 @@ class ESDR {
 
 	  // pre filter if we're filtering by map bounds
 	  if (mapBounds && feedIds)
+	  {
 	  	feedIds = this.feedsInGeoBox(mapBounds.getSouthWest(), mapBounds.getNorthEast())
+	  	// rejectedFeedIds = this.feedsOutsideGeoBox(mapBounds.getSouthWest(), mapBounds.getNorthEast())
+	  }
 
 		let searchText = search.text || ""
 		let keywords = this._separateKeywordsInSearchString(searchText)
 		let searchResults = feedIds.reduce( (results, feedId) => {
-		let feed = this.feeds.get(feedId)
+			let feed = this.feeds.get(feedId)
 
 			// filter out feeds that are older
 			if (search.recentOnly) {
 				let feedLastTime = parseFloat(feed.maxTimeSecs || 0.0)
-				if (feedLastTime < recentThreshold)
+				if (feedLastTime < recentThreshold) {
+					results.rejectedFeedIds.push(feedId)
 					return results
+				}
 			}
 
 			// reject if not on map
 			if (mapBounds && ((feed.latlng && !mapBounds.contains(feed.latlng)) || !feed.latlng))
 			{
+					results.rejectedFeedIds.push(feedId)
 					return results
 			}
 			
@@ -59,20 +65,40 @@ class ESDR {
 			// if the feed matches the search, return a result with all channels
 			if (feedMatches)
 			{
-				results.push({feedId: feedId, channels: feed.channelNames})
+				results.found.push({feedId: feedId, channels: feed.channelNames})
 				return results
 			}
 			let channelMatches = feed.channelNames ? feed.channelNames.filter(name => keywords.some(word => name.toLowerCase().indexOf(word) > -1)) : []
 
 			if (channelMatches.length > 0)
 			{
-				results.push({feedId: feedId, channels: channelMatches})
+				results.found.push({feedId: feedId, channels: channelMatches})
 			}
 
 			return results
 
-		}, [])
-		return searchResults
+		}, {found: [], rejectedFeedIds: []})
+		return searchResults.found
+	}
+
+	static areMapBoundsEqual(a, b) {
+	  return (a && b && (a.getSouthWest().lng() == b.getSouthWest().lng()) && (a.getNorthEast().lng() == b.getNorthEast().lng()) && (a.getSouthWest().lat() == b.getSouthWest().lat()) && (a.getNorthEast().lat() == b.getNorthEast().lat()))
+	 }
+
+	static hasSearchQueryChanged(oldQuery, newQuery) {
+		// if we didn't have an old query, but have a new one, yes it changed
+		if (!oldQuery && newQuery)
+			return true
+
+		let mapBoundsChanged = ESDR.areMapBoundsEqual(oldQuery.mapBounds, newQuery.mapBounds)
+		let mapOnlyChanged = oldQuery.mapOnly == newQuery.mapOnly
+		// map filter only changed if mapOnly changes, or mapOnly is now active and bounds change
+		let mapFilterChanged = (mapOnly && mapBoundsChanged) || mapOnlyChanged
+
+		let recentOnlyChanged = oldQuery.recentOnly == newQuery.recentOnly
+		let searchTextChanged = oldQuery.text == newQuery.text
+
+		return mapFilterChanged || recentOnlyChanged || searchTextChanged
 	}
 
 	_updateSearch(appendedFeedIds) {
@@ -97,13 +123,13 @@ class ESDR {
 			this.searchResults_ = searchResults
 			this.searchCallback_(searchResults, appendedFeedIds !== undefined);
 		}
-		else if (this.oldSearchQuery_ == this.searchQuery_ && appendedFeedIds)
+		else if (!ESDR.hasSearchQueryChanged(this.oldSearchQuery_, this.searchQuery_) && appendedFeedIds)
 		{
 			// search only appended feeds
 			this.searchResults = this._performSearchOn(appendedFeedIds, this.searchQuery_)
 			this.searchCallback_(this.searchResults, false);
 		}
-		else if (this.oldSearchQuery_ != this.searchQuery_)
+		else if (ESDR.hasSearchQueryChanged(this.oldSearchQuery_, this.searchQuery_))
 		{
 			this.searchResults = this._performSearchOn(Array.from(this.feeds.keys()), this.searchQuery_)
 			this.searchCallback_(this.searchResults, false);
