@@ -478,7 +478,12 @@ let explorer = {
   },
   results: [],
   plots: new Map(),
+  plotAreaHeightPercent: 40,
+  minPlotAreaHeightPercent: 20,
+  maxPlotAreaHeightPercent: 80,
   plotHeight: 5,
+  minPlotHeight: 2,
+  maxPlotHeight: 20,
   lineStyle: {
     "styles": [
       // {
@@ -794,6 +799,9 @@ function createUrlParams() {
   }
   if (explorer.cursorTime) {
     browserParams.set("cursor", explorer.cursorTime.toFixed(3))
+  }
+  if (explorer.plotHeight) {
+    browserParams.set("plotHeight", explorer.plotHeight.toFixed(3))
   }
 
 
@@ -1456,40 +1464,30 @@ explorer.increasePlotAreaHeight = function() {
   let mapArea = document.getElementById("googlemap")
   let decreaseButton = document.getElementById("decreasePlotAreaHeightButton")
   let increaseButton = document.getElementById("increasePlotAreaHeightButton")
-  if (plotArea.style.height == "20%") {
-    plotArea.style.height = "40%"
-    googlemap.style.height = "60%"
-    decreaseButton.disabled = false
-  }
-  else if (plotArea.style.height == "40%") {
-    plotArea.style.height = "60%"
-    googlemap.style.height = "40%"
-  }
-  else if (plotArea.style.height == "60%") {
-    plotArea.style.height = "80%"
-    googlemap.style.height = "20%"
-    increaseButton.disabled = true
-  }
+
+  explorer.plotAreaHeightPercent = Math.min(explorer.plotAreaHeightPercent+20, explorer.maxPlotAreaHeightPercent)
+
+  plotArea.style.height = `${explorer.plotAreaHeightPercent}%`
+  mapArea.style.height = `${100-explorer.plotAreaHeightPercent}%`
+
+  increaseButton.disabled = (explorer.plotAreaHeightPercent >= explorer.maxPlotAreaHeightPercent)
+  decreaseButton.disabled = (explorer.plotAreaHeightPercent <= explorer.minPlotAreaHeightPercent)
+
 }
 explorer.decreasePlotAreaHeight = function() {
   let plotArea = document.getElementById("plots")
   let mapArea = document.getElementById("googlemap")
   let decreaseButton = document.getElementById("decreasePlotAreaHeightButton")
   let increaseButton = document.getElementById("increasePlotAreaHeightButton")
-  if (plotArea.style.height == "80%") {
-    plotArea.style.height = "60%"
-    googlemap.style.height = "40%"
-    increaseButton.disabled = false
-  }
-  else if (plotArea.style.height == "60%") {
-    plotArea.style.height = "40%"
-    googlemap.style.height = "60%"
-  }
-  else if (plotArea.style.height == "40%") {
-    plotArea.style.height = "20%"
-    googlemap.style.height = "80%"
-    decreaseButton.disabled = true
-  }
+
+  explorer.plotAreaHeightPercent = Math.max(explorer.plotAreaHeightPercent-20, explorer.minPlotAreaHeightPercent)
+
+  plotArea.style.height = `${explorer.plotAreaHeightPercent}%`
+  mapArea.style.height = `${100-explorer.plotAreaHeightPercent}%`
+
+  increaseButton.disabled = (explorer.plotAreaHeightPercent >= explorer.maxPlotAreaHeightPercent)
+  decreaseButton.disabled = (explorer.plotAreaHeightPercent <= explorer.minPlotAreaHeightPercent)
+
 }
 
 explorer.setPlotToHeight = function(plotId, height) {
@@ -1537,6 +1535,11 @@ explorer.increasePlotHeight = function() {
     explorer.setPlotsToHeight(lineSize*20)
     increaseButton.disabled = true
   }
+
+  increaseButton.disabled = (explorer.plotHeight >= explorer.maxPlotHeight)
+  decreaseButton.disabled = (explorer.plotHeight <= explorer.minPlotHeight)
+
+  updateUrlHash()
 }
 
 explorer.decreasePlotHeight = function() {
@@ -1563,6 +1566,11 @@ explorer.decreasePlotHeight = function() {
     explorer.setPlotsToHeight(lineSize*explorer.plotHeight)
     decreaseButton.disabled = true
   }
+
+  increaseButton.disabled = (explorer.plotHeight >= explorer.maxPlotHeight)
+  decreaseButton.disabled = (explorer.plotHeight <= explorer.minPlotHeight)
+
+  updateUrlHash()
 }
 
 // call initMap() as we fully loaded maps api to be able to extend the overlays in mapOverlay.js
