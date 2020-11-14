@@ -211,6 +211,7 @@ input[type="search"] {
   display: flex;
   flex-shrink: 0;
   align-items: center;
+  font-size: large;
   background-color: #EFE;
   padding-left: 0.5em;
   padding-right: 0.5em;
@@ -261,6 +262,7 @@ input[type="search"] {
   border-radius: 50%;
   cursor: pointer;
   background: #F00;
+  flex-shrink: 1;
 }
 .plots-zoom-scrubber::-moz-range-thumb {
   height: 1.5em;
@@ -268,24 +270,33 @@ input[type="search"] {
   border-radius: 50%;
   cursor: pointer;
   background: #F00;
+  flex-shrink: 1;
 }
 
 .date-axis {
-  height: 2em;
+  /*box-sizing: border-box;*/
+  height: calc(2em-0.0px);
   width: calc(100%-2em);
 }
 
 .plot-corner {
   width: 2em;
-  height: 2em;
-  background: #770;
+  height: calc(2em - 0.5px);
+  padding: 0px;
+  margin: 0px;
+  box-sizing: border-box;
+  border-bottom: 0.5px solid black;
+  border-left: 0.5px solid black;
+  /*background: #770;*/
   flex-shrink: 0;
   flex-grow: 0;
 }
 
 .plots-toolbar-button {
+  font-size: inherit;
   vertical-align: middle;
-  font-size: large;
+  flex-shrink: 0;
+  flex-grow: 0;
   height: inherit;
   background-color: inherit;
   background-color: #EEF;
@@ -297,18 +308,58 @@ input[type="search"] {
   cursor: pointer;
   margin-left: 0.25em;
   margin-right: 0.25em;
+  /*content-fit: cover;*/
 /*  padding: 0px;
   margin: 0px;
 */
   text-align: center;
 }
 
+.plots-toolbar-group-left {
+  margin-right: 0em;
+  border: none;
+  border-radius: 3px 0px 0px 3px;
+  /*border-right: 1px solid gray;*/
+}
+.plots-toolbar-group-right {
+  margin-left: 0em;
+  border-radius: 0px 3px 3px 0px;
+}
+.plots-toolbar-group-center {
+  margin-right: 0em;
+  margin-left: 0em;
+  border-radius: 0px;
+}
+
+.plots-toolbar-group-divider {
+  padding-right: 0em;
+  padding-left: 0em;
+  margin-left: 0px;
+  margin-right: 0px;
+  border-radius: 0px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  /*width: 0px;*/
+  overflow-x: visible;
+}
+
+.plots-toolbar-group-divider-content {
+  vertical-align: middle;
+  height: 1em;
+  width: 1px;
+  /*left: -0.5px;*/
+  background-color: rgba(0,0,0,0.2);
+}
+
 .button-icon {
+  font-size: inherit;
   height: 1em; 
+  width: 0.777778em;
   vertical-align: middle;
   cursor: pointer;
   margin-left: 0px;
   margin-right: 0px;
+  /*object-fit: contain;*/
 }
 
 #main {
@@ -366,14 +417,24 @@ input[type="search"] {
         <button class="plots-toolbar-button" onclick="">now</button>
         <div class="toolbar-spacer"></div>
         <input type="range" min="-100" max="100" value="0" class="plots-zoom-scrubber" id="plotsZoomScrubber">
-        <button class="plots-toolbar-button" onclick="explorer.zoomTimelineToSize(24*60*60)">day</button>
-        <button class="plots-toolbar-button" onclick="explorer.zoomTimelineToSize(31*24*60*60)">month</button>
-        <button class="plots-toolbar-button" onclick="explorer.zoomTimelineToSize(365*24*60*60)">year</button>
+        <button class="plots-toolbar-button plots-toolbar-group-left" onclick="explorer.zoomTimelineToSize(24*60*60)">day</button>
+        <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
+        <button class="plots-toolbar-button plots-toolbar-group-center" onclick="explorer.zoomTimelineToSize(31*24*60*60)">month</button>
+        <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
+        <button class="plots-toolbar-button plots-toolbar-group-right" onclick="explorer.zoomTimelineToSize(365*24*60*60)">year</button>
         <div class="toolbar-spacer"></div>
-        <button class="plots-toolbar-button" onclick="">↓</button>
-        <button class="plots-toolbar-button" onclick="">↑</button>
+<!--         <input type="image" class="plots-toolbar-img" onclick="" src="yshrink.svg" height=18 width=14></input>
+        <input type="image" class="plots-toolbar-img" onclick="" src="ygrow.svg" height="18" width="14"></input>
+ --> 
+        <button class="plots-toolbar-button plots-toolbar-group-left" onclick=""><img src="ylower.svg" class="button-icon" width=14 height=18></img></button>
+        <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
+        <button class="plots-toolbar-button plots-toolbar-group-right" onclick=""><img src="yraise.svg" class="button-icon" width=14 height=18></img></button>
         <div class="toolbar-spacer"></div>
-        <button class="plots-toolbar-button" onclick=""><img height="1em" src="download.svg" class="button-icon"></img></button>
+        <button class="plots-toolbar-button plots-toolbar-group-left" onclick=""><img src="yshrink.svg" class="button-icon" width=14 height=18></img></button>
+        <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
+        <button class="plots-toolbar-button plots-toolbar-group-right" onclick=""><img src="ygrow.svg" class="button-icon" width=14 height=18></img></button>
+        <div class="toolbar-spacer"></div>
+        <button class="plots-toolbar-button" onclick=""><img src="download.svg" class="button-icon"></img></button>
     </div>
     <!-- this insanity with the iframes here is because we use them to capture resize events of the plots pane, so that the grapher plots are correctly resized when the page layout changes -->
     <iframe id="plotWidthIframe" style="height:0px; width:100%; border:none;"></iframe>
@@ -1114,6 +1175,11 @@ window.grapherLoad = function() {
   explorer.plotManager = new org.bodytrack.grapher.PlotManager("date_axis", startTime, endTime);
 
   explorer.plotManager.getDateAxis().setCursorPosition(cursorTime);
+
+  // FIXME: remove border from axis that is added by CREATE grapher
+  let dateAxisElement = document.getElementById("date_axis")
+  dateAxisElement.style.border = "none"
+
 
   explorer.scrubTimelineDate = function(timestamp) {
     let oldTimestamp = explorer.scrubTimestamp
