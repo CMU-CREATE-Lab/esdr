@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xl="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="552.7559 524.4094 198.42523 255.11818" width="198.42523" height="255.11818">
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" version="1.1" xmlns:xl="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" viewBox="5 126 14 18" width="14" height="18">
   <defs/>
-  <metadata> Produced by OmniGraffle 7.17.5\n2020-11-12 00:56:08 +0000</metadata>
-  <g id="Canvas_1" fill="none" stroke="none" stroke-opacity="1" fill-opacity="1" stroke-dasharray="none">
+  <metadata> Produced by OmniGraffle 7.17.5\n2020-11-14 21:16:59 +0000</metadata>
+  <g id="Canvas_1" stroke-opacity="1" stroke-dasharray="none" stroke="none" fill="none" fill-opacity="1">
     <title>Canvas 1</title>
     <g id="Canvas_1_Layer_1">
       <title>Layer 1</title>
       <g id="Graphic_24"/>
       <g id="Graphic_22"/>
       <g id="Graphic_28">
-        <path d="M 697.92715 549.317 C 664.71724 516.1069 610.8734 516.1069 577.6635 549.317 C 544.4534 582.5269 544.4534 636.3708 577.6635 669.5807 C 610.8734 702.7908 664.71724 702.7908 697.92715 669.5807 C 731.1372 636.3708 731.1372 582.5269 697.92715 549.317 M 687.9052 559.33896 C 715.5802 587.0139 715.5802 631.8838 687.9052 659.5587 C 660.23025 687.2338 615.3604 687.2338 587.68545 659.5587 C 560.0104 631.8838 560.0104 587.0139 587.68545 559.33896 C 615.3604 531.6639 660.23025 531.6639 687.9052 559.33896" fill="black"/>
+        <path d="M 15.242634 127.75737 C 12.899491 125.41421 9.100509 125.41421 6.757366 127.75737 C 4.4142113 130.10051 4.4142113 133.89949 6.757366 136.24263 C 9.100509 138.58579 12.899491 138.58579 15.242634 136.24263 C 17.585789 133.89949 17.585789 130.10051 15.242634 127.75737 M 14.535528 128.46447 C 16.488157 130.41709 16.488157 133.58291 14.535528 135.53553 C 12.582909 137.48816 9.417091 137.48816 7.464472 135.53553 C 5.511843 133.58291 5.511843 130.41709 7.464472 128.46447 C 9.417091 126.51184 12.582909 126.51184 14.535528 128.46447" fill="black"/>
       </g>
       <g id="Line_23">
-        <line x1="683.4606" y1="681.2086" x2="737.0079" y2="765.35435" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="28.3465"/>
+        <line x1="14.22194" y1="137.06305" x2="18" y2="143" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
       </g>
     </g>
   </g>

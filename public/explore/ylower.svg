@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" version="1.1" xmlns:xl="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" viewBox="-24 104 14 18" width="14" height="18">
+  <defs/>
+  <metadata> Produced by OmniGraffle 7.17.5\n2020-11-14 21:33:08 +0000</metadata>
+  <g id="ylower" stroke-opacity="1" stroke-dasharray="none" stroke="none" fill="none" fill-opacity="1">
+    <title>ylower</title>
+    <g id="ylower_Layer_1">
+      <title>Layer 1</title>
+      <g id="Graphic_4">
+        <path d="M -23 114 L -11.000006 114 C -10.447721 114 -10.000006 114.44772 -10.000006 115 L -10.000006 119 C -10.000006 119.55228 -10.447721 120 -11.000006 120 L -23 120 C -23.552285 120 -24 119.55228 -24 119 L -24 115 C -24 114.44772 -23.552285 114 -23 114 Z" fill="black"/>
+      </g>
+      <g id="Line_3">
+        <line x1="-17" y1="105" x2="-17" y2="111" stroke="black" stroke-linecap="square" stroke-linejoin="round" stroke-width="1.3999986"/>
+      </g>
+      <g id="Line_2">
+        <path d="M -14 109 L -17 112 L -20 109" stroke="black" stroke-linecap="square" stroke-linejoin="miter" stroke-width="1.3999986"/>
+      </g>
+    </g>
+  </g>
+</svg>
