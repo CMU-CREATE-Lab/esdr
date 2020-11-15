@@ -13,8 +13,11 @@ class ESDR {
 		this.searchQuery_ = undefined
 		this.oldSearchQuery_ = undefined
 		this.searchResults_ = undefined
+
+		// tile fetching related things
 		this.dataUpdateTimers = new Map()
 		this.channelDataUpdateCallback = (feedId, channelName) => {}
+		this.tileCache = new Map()
 	}
 
 	_separateKeywordsInSearchString(text) {
@@ -373,12 +376,42 @@ class ESDR {
 		esdr.channelDataUpdateCallback(feedId, channelName)
 	}
 
+	computeDataTileLevel(range) {
+		let width = range.max - range.min;
+		return width > 0 ? Math.floor(Math.log2(width / 512)) : undefined
+	};
+
+	computeDataTileOffset(time, level) {
+		let tileWidth = Math.pow(2, level) * 512;
+		return Math.floor(time / tileWidth);
+	};
+
+
+
+
 	dataSourceForChannel(feedId, channelName) {
 		let baseUrl = `${this.apiUrl}/feeds/${feedId}/channels/${channelName}/tiles`
 		let esdr = this
 
+		// create new cache data structures as necessary
+		let feedCache = this.tileCache.get(feedId) || new Map
+		let channelCache = feedCache.get(channelName) || new Map
+		feedCache.set(channelName, channelCache)
+		this.tileCache.set(feedId, feedCache)
+
+
   	return function(level, offset, callback) {
-  		let url = `${baseUrl}/${level}.${offset}`
+  		let tileId = `${level}.${offset}`
+
+  		// check if it's already cached, in that case no fetching
+  		let cachedTileData = esdr.tileCache.get(feedId).get(channelName).get(tileId)
+  		if (cachedTileData) {
+  			callback(JSON.stringify(cachedTileData))
+  			return
+  		}
+
+
+  		let url = `${baseUrl}/${tileId}`
 
 	  	let request = new XMLHttpRequest();
 		  request.open('GET', url, true);
@@ -388,7 +421,10 @@ class ESDR {
 		      // Success!
 		      var responseJson = JSON.parse(this.response);
 
-		      callback(JSON.stringify(responseJson.data))
+		      esdr.tileCache.get(feedId).get(channelName).set(tileId, responseJson.data)
+
+		      callback(responseJson.data)
+		      // callback(JSON.stringify(responseJson.data))
 
 		      esdr._dataUpdatedForChannel(feedId, channelName)
 
