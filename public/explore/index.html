@@ -308,6 +308,7 @@ input[type="search"] {
   cursor: pointer;
   margin-left: 0.25em;
   margin-right: 0.25em;
+  padding: 0.25em 0.5em;
   /*content-fit: cover;*/
 /*  padding: 0px;
   margin: 0px;
@@ -341,8 +342,9 @@ input[type="search"] {
   margin-left: 0px;
   margin-right: 0px;
   border-radius: 0px;
-  padding-top: 4px;
+/*  padding-top: 4px;
   padding-bottom: 4px;
+*/
   /*width: 0px;*/
   overflow-x: visible;
 }
@@ -351,6 +353,8 @@ input[type="search"] {
   vertical-align: middle;
   height: 1em;
   width: 1px;
+  padding: 0;
+  margin: 0;
   /*left: -0.5px;*/
   background-color: rgba(0,0,0,0.2);
 }
@@ -430,13 +434,13 @@ input[type="search"] {
 <!--         <input type="image" class="plots-toolbar-img" onclick="" src="yshrink.svg" height=18 width=14></input>
         <input type="image" class="plots-toolbar-img" onclick="" src="ygrow.svg" height="18" width="14"></input>
  --> 
-        <button id="decreasePlotAreaHeightButton" class="plots-toolbar-button plots-toolbar-group-left" onclick="explorer.decreasePlotAreaHeight()"><img src="ylower.svg" class="button-icon" width=14 height=18></img></button>
+        <button id="decreasePlotAreaHeightButton" class="plots-toolbar-button plots-toolbar-group-left" onclick="explorer.decreasePlotAreaHeight()"><img src="ylower.svg" class="button-icon"></img></button>
         <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
-        <button id="increasePlotAreaHeightButton" class="plots-toolbar-button plots-toolbar-group-right" onclick="explorer.increasePlotAreaHeight()"><img src="yraise.svg" class="button-icon" width=14 height=18></img></button>
+        <button id="increasePlotAreaHeightButton" class="plots-toolbar-button plots-toolbar-group-right" onclick="explorer.increasePlotAreaHeight()"><img src="yraise.svg" class="button-icon"></img></button>
         <!-- <div class="toolbar-spacer"></div> -->
-        <button id="decreasePlotHeightButton" class="plots-toolbar-button plots-toolbar-group-left" onclick="explorer.decreasePlotHeight()"><img src="yshrink.svg" class="button-icon" width=14 height=18></img></button>
+        <button id="decreasePlotHeightButton" class="plots-toolbar-button plots-toolbar-group-left" onclick="explorer.decreasePlotHeight()"><img src="yshrink.svg" class="button-icon"></img></button>
         <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
-        <button id="increasePlotHeightButton" class="plots-toolbar-button plots-toolbar-group-right" onclick="explorer.increasePlotHeight()"><img src="ygrow.svg" class="button-icon" width=14 height=18></img></button>
+        <button id="increasePlotHeightButton" class="plots-toolbar-button plots-toolbar-group-right" onclick="explorer.increasePlotHeight()"><img src="ygrow.svg" class="button-icon"></img></button>
         <!-- <div class="toolbar-spacer"></div> -->
         <button class="plots-toolbar-button" onclick=""><img src="download.svg" class="button-icon"></img></button>
     </div>
@@ -740,7 +744,21 @@ function parseUrlParams() {
     let endTime = parseFloat(times[1])
     if (isFinite(endTime))
       explorer.endTime = endTime
-}
+  }
+  if (browserParams.has("plotAreaHeight")) {
+    let height = parseFloat(browserParams.get("plotAreaHeight"))
+    if (isFinite(height)) {
+      explorer.setPlotAreaHeight(height)
+    }
+  }
+
+  if (browserParams.has("plotHeight")) {
+    let height = parseFloat(browserParams.get("plotHeight"))
+    if (isFinite(height)) {
+      explorer.plotHeight = Math.min(Math.max(height, explorer.minPlotHeight), explorer.maxPlotHeight)
+      explorer.setPlotsToHeight(explorer.plotHeight*explorer.plotBaseSize())
+    }
+  }
 
   if (browserParams.has("cursor")) {
     let cursorTime = parseFloat(browserParams.get("cursor"))
@@ -750,7 +768,7 @@ function parseUrlParams() {
 
   // map params
   if (browserParams.has("zoom")) {
-    explorer.zoom = browserParams.get("zoom")
+    explorer.zoom = parseFloat(browserParams.get("zoom"))
   }
 
   if (browserParams.has("center")) {
@@ -802,6 +820,9 @@ function createUrlParams() {
   }
   if (explorer.plotHeight) {
     browserParams.set("plotHeight", explorer.plotHeight.toFixed(3))
+  }
+  if (explorer.plotAreaHeightPercent) {
+    browserParams.set("plotAreaHeight", explorer.plotAreaHeightPercent.toFixed(3))
   }
 
 
@@ -1459,35 +1480,29 @@ explorer.fitPlotYAxisToData = function(plotId) {
   }
 }
 
-explorer.increasePlotAreaHeight = function() {
+explorer.setPlotAreaHeight = function(heightPercent) {
+  explorer.plotAreaHeightPercent = Math.min(Math.max(heightPercent, explorer.minPlotAreaHeightPercent), explorer.maxPlotAreaHeightPercent)
+
   let plotArea = document.getElementById("plots")
   let mapArea = document.getElementById("googlemap")
-  let decreaseButton = document.getElementById("decreasePlotAreaHeightButton")
-  let increaseButton = document.getElementById("increasePlotAreaHeightButton")
-
-  explorer.plotAreaHeightPercent = Math.min(explorer.plotAreaHeightPercent+20, explorer.maxPlotAreaHeightPercent)
 
   plotArea.style.height = `${explorer.plotAreaHeightPercent}%`
   mapArea.style.height = `${100-explorer.plotAreaHeightPercent}%`
+
+  let decreaseButton = document.getElementById("decreasePlotAreaHeightButton")
+  let increaseButton = document.getElementById("increasePlotAreaHeightButton")
 
   increaseButton.disabled = (explorer.plotAreaHeightPercent >= explorer.maxPlotAreaHeightPercent)
   decreaseButton.disabled = (explorer.plotAreaHeightPercent <= explorer.minPlotAreaHeightPercent)
 
 }
+
+explorer.increasePlotAreaHeight = function() {
+  explorer.setPlotAreaHeight(explorer.plotAreaHeightPercent+20)
+}
+
 explorer.decreasePlotAreaHeight = function() {
-  let plotArea = document.getElementById("plots")
-  let mapArea = document.getElementById("googlemap")
-  let decreaseButton = document.getElementById("decreasePlotAreaHeightButton")
-  let increaseButton = document.getElementById("increasePlotAreaHeightButton")
-
-  explorer.plotAreaHeightPercent = Math.max(explorer.plotAreaHeightPercent-20, explorer.minPlotAreaHeightPercent)
-
-  plotArea.style.height = `${explorer.plotAreaHeightPercent}%`
-  mapArea.style.height = `${100-explorer.plotAreaHeightPercent}%`
-
-  increaseButton.disabled = (explorer.plotAreaHeightPercent >= explorer.maxPlotAreaHeightPercent)
-  decreaseButton.disabled = (explorer.plotAreaHeightPercent <= explorer.minPlotAreaHeightPercent)
-
+  explorer.setPlotAreaHeight(explorer.plotAreaHeightPercent-20)
 }
 
 explorer.setPlotToHeight = function(plotId, height) {
