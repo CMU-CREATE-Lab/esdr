@@ -172,9 +172,10 @@ input[type="search"] {
 }
 
 .search-result-feed-block {
-  font-size: medium;
+  font-size: small;
+  font-weight: bold;
   padding: 0.1em 0.25em;
-  margin: 0.25em 0em;
+  margin: 0.5em 0em;
   background-color: var(--feed-block-color);
   /*box-shadow: 1px 1px 2px rgba(0,0,0,0.1);*/
   box-shadow: 0px 1px 1px rgba(0,0,0,0.1);
@@ -183,6 +184,7 @@ input[type="search"] {
 .search-result-channel-block {
   background-color: var(--channel-block-color);
   font-size: smaller;
+  font-weight: normal;
 }
 
 .graphs {
@@ -245,18 +247,27 @@ input[type="search"] {
   align-items: center;
   font-size: large;
   background-color: var(--plot-toolbar-color);
-  padding-left: 0.5em;
-  padding-right: 0.5em;
+  padding-left: 0.25em;
+  padding-right: 0.52em;
   padding-bottom: 0.25em;
   padding-top: 0.25em;
 }
 
 .toolbar-spacer {
-  flex-shrink: 1;
+  flex-shrink: 3;
   flex-grow: 1;
-  min-width: 0px
+  min-width: 0px;
   width: 1em;
 }
+
+.toolbar-group-spacer {
+  flex-shrink: 3;
+  flex-grow: 1;
+  min-width: 0px;
+  max-width: 2em;
+  width: 1em;
+}
+
 
 .plots-date-scrubber {
   -webkit-appearance: none;
@@ -490,7 +501,7 @@ input[type="search"] {
   <iframe id="plotWidthIframe" style="height:0px; border:none;"></iframe>
   <div id="plots" class="plots-container" style="height:40%">
     <div id="plotsToolbar" class="plots-toolbar">
-      <div class="toolbar-spacer"></div>
+      <div class="toolbar-spacer" style="flex-grow: 1;"></div>
       <div class="plots-shadow-group">
         <button class="plots-toolbar-button plots-toolbar-group-left" onclick="explorer.moveTimelineByFactor(0.25)" style="padding-right: 0.25em;">
           <img src="goleft.svg" class="button-icon"></img>
@@ -504,7 +515,7 @@ input[type="search"] {
         <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
         <button class="plots-toolbar-button" onclick="explorer.moveTimelineTo(Date.now() * 0.001, 0.9)"><img src="gonow.svg" class="button-icon"></img></button>
       </div>
-      <div class="toolbar-spacer"></div>
+      <div class="toolbar-group-spacer"></div>
       <div class="plots-shadow-group">
         <button class="plots-toolbar-button plots-toolbar-group-left" onclick="explorer.zoomTimelineByFactor(1.4142135624)" style="padding-right: 0.25em;">
           <img src="minus.svg" class="button-icon"></img>
@@ -522,7 +533,7 @@ input[type="search"] {
         <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
         <button class="plots-toolbar-button plots-toolbar-group-right" onclick="explorer.zoomTimelineToSize(365*24*60*60)">year</button>
       </div>
-      <div class="toolbar-spacer"></div>
+      <div class="toolbar-group-spacer"></div>
       <div class="plots-shadow-group">
         <button id="decreasePlotAreaHeightButton" class="plots-toolbar-button plots-toolbar-group-left" onclick="explorer.decreasePlotAreaHeight()"><img src="ylower.svg" class="button-icon"></img></button>
         <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
@@ -534,7 +545,7 @@ input[type="search"] {
         <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
         <button id="increasePlotHeightButton" class="plots-toolbar-button plots-toolbar-group-right" onclick="explorer.increasePlotHeight()"><img src="ygrow.svg" class="button-icon"></img></button>
       </div>
-        <!-- <div class="toolbar-spacer"></div> -->
+        <div class="toolbar-group-spacer"></div>
       <div class="plots-shadow-group">
         <button class="plots-toolbar-button" onclick=""><img src="download.svg" class="button-icon"></img></button>
       </div>
