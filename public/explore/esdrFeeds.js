@@ -405,9 +405,27 @@ class ESDR {
 
   		// check if it's already cached, in that case no fetching
   		let cachedTileData = esdr.tileCache.get(feedId).get(channelName).get(tileId)
-  		if (cachedTileData) {
+  		if (typeof cachedTileData == "function") {
+  			// we have a function from a previous call waiting on the data
+  			// just add our callback and wait together!
+  			cachedTileData(callback)
+  			return
+  		}
+  		else if (cachedTileData) {
   			callback(JSON.stringify(cachedTileData))
   			return
+  		}
+  		else {
+  			// we have no request in progress, so lets start keeping a list of callbacks
+  			// cacheFun captures the callbacks variable and adds subsequent calls to it
+  			let callbacks = [callback]
+  			let cacheFun = function(aCallback) {
+  				if (aCallback)
+  					callbacks.push(aCallback)
+
+  				return callbacks
+  			}
+  			esdr.tileCache.get(feedId).get(channelName).set(tileId, cacheFun)
   		}
 
 
@@ -421,9 +439,13 @@ class ESDR {
 		      // Success!
 		      var responseJson = JSON.parse(this.response);
 
+		      // get and execute the cacheFun to retrieve the list of callbacks
+		      let callbacks = esdr.tileCache.get(feedId).get(channelName).get(tileId)()
+
+		      // replace callback with actual data
 		      esdr.tileCache.get(feedId).get(channelName).set(tileId, responseJson.data)
 
-		      callback(responseJson.data)
+		      callbacks.forEach( storedCallback => storedCallback(responseJson.data) )
 		      // callback(JSON.stringify(responseJson.data))
 
 		      esdr._dataUpdatedForChannel(feedId, channelName)
