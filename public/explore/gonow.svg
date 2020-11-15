@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" version="1.1" xmlns:xl="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" viewBox="-24 104 14 18" width="14" height="18">
+  <defs/>
+  <metadata> Produced by OmniGraffle 7.17.5\n2020-11-15 04:29:28 +0000</metadata>
+  <g id="gonow" stroke-opacity="1" stroke-dasharray="none" stroke="none" fill="none" fill-opacity="1">
+    <title>gonow</title>
+    <g id="gonow_Layer_1">
+      <title>Layer 1</title>
+      <g id="Line_2">
+        <path d="M -23 117 L -19 113 L -23 109" stroke="black" stroke-linecap="round" stroke-linejoin="miter" stroke-width="1.3999986"/>
+      </g>
+      <g id="Line_3">
+        <path d="M -18 117 L -14 113 L -18 109" stroke="black" stroke-linecap="round" stroke-linejoin="miter" stroke-width="1.3999986"/>
+      </g>
+      <g id="Line_4">
+        <line x1="-11" y1="117" x2="-11" y2="109" stroke="black" stroke-linecap="round" stroke-linejoin="miter" stroke-width="1.3999986"/>
+      </g>
+    </g>
+  </g>
+</svg>

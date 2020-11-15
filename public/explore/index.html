@@ -5,6 +5,26 @@
 <meta charset="UTF-8">
 <style>
 
+/*color definitions*/
+:root {
+  --light-sky-blue: #F1F8FF;  /* HSB 210 5% 100% */
+  --medium-sky-blue: #E6F3FF; /* HSB 210 10% 100% */
+  --dark-sky-blue: #D9EDFF;   /* HSB 210 15% 100% */
+  --light-baby-blue: #CDE7FF; /* HSB 210 20% 100% */
+  --medium-baby-blue: #B1DAFF; /* HSB 210 30% 100% */
+  /*--dark-baby-blue: #7FBFFF;  /* HSB 210 50% 100% */
+  --dark-baby-blue: #84BBF2;  /* HSB 210 45% 95% */
+
+  --search-block-color: var(--light-sky-blue);
+  --plot-toolbar-color: var(--light-sky-blue);
+  --plot-button-color: var(--light-baby-blue);
+  --sidebar-color: var(--dark-sky-blue);
+  --feed-block-color: var(--light-sky-blue);
+  --channel-block-color: var(--light-sky-blue);
+  --scrubber-color: var(--medium-sky-blue);
+  --scrubber-button-color: var(--dark-baby-blue);
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -29,6 +49,8 @@ input[type="search"] {
 }
 
 .sidebar {
+  /*font-size: large;*/
+  box-sizing: border-box;
 
   width: 0px;
   position: fixed;
@@ -37,7 +59,7 @@ input[type="search"] {
   top: 0;
   bottom: 0;
   left: 0;
-  background-color: #EEE;
+  background-color: var(--sidebar-color);
   font-family: sans-serif;
   overflow-x: hidden;
   /*overflow-y: scroll;*/
@@ -47,9 +69,9 @@ input[type="search"] {
 }
 
 .sidebar .search-results {
-  font-size: small;
   padding-left: 0.5em;
   padding-right: 0.5em;
+  /*font-size: large;*/
   overflow-y: scroll;
   height: 100%;
 }
@@ -78,7 +100,7 @@ input[type="search"] {
   float: right;
   /*display: table-row;*/
   /*font-size: 20px;*/
-  background-color: #e7f3ff;
+  background-color: var(--search-block-color);
   color: black;
   padding: 5px 5px;
   /*border-width: 1px;*/
@@ -150,10 +172,16 @@ input[type="search"] {
 }
 
 .search-result-feed-block {
-  background-color: #FDD;
+  font-size: medium;
+  padding: 0.1em 0.25em;
+  margin: 0.25em 0em;
+  background-color: var(--feed-block-color);
+  /*box-shadow: 1px 1px 2px rgba(0,0,0,0.1);*/
+  box-shadow: 0px 1px 1px rgba(0,0,0,0.1);
+  border-radius: 3px;
 }
 .search-result-channel-block {
-  background-color: #FDF;
+  background-color: var(--channel-block-color);
   font-size: smaller;
 }
 
@@ -166,12 +194,13 @@ input[type="search"] {
 
 .googlemap {
   /*display: inline-block;*/
-/*  position: absolute;
-  top: 0px;
-  bottom: 0px;
-*/  height: 60%;
+  /*position: absolute;*/
+  /*top: 0px;*/
+  height: 60%;
+  /*width:100%;*/
   /*min-height: 100%;*/
   transition: 0.3s;
+  box-shadow: 0px 1px 1px rgba(0,0,0,0.1);
 }
 
 .map-overlay-static {
@@ -188,7 +217,9 @@ input[type="search"] {
 
 .plots-container {
   height: 40%;
-  /*box-shadow: 0px 0px 2px rgba(0,0,0,0.1);*/
+  position: absolute;
+  bottom: 0px;
+  box-shadow: 0px -1px 1px rgba(0,0,0,0.1);
   overflow-y: hidden;
   display: flex;
   flex-direction: column;
@@ -208,11 +239,12 @@ input[type="search"] {
 }
 
 .plots-toolbar {
+  box-shadow: 0px 1px 1px rgba(0,0,0,0.1);
   display: flex;
   flex-shrink: 0;
   align-items: center;
   font-size: large;
-  background-color: #EFE;
+  background-color: var(--plot-toolbar-color);
   padding-left: 0.5em;
   padding-right: 0.5em;
   padding-bottom: 0.25em;
@@ -222,38 +254,50 @@ input[type="search"] {
 .toolbar-spacer {
   flex-shrink: 1;
   flex-grow: 1;
+  min-width: 0px
   width: 1em;
 }
 
 .plots-date-scrubber {
   -webkit-appearance: none;
   height: 1em;
+  width: 100%;
+  min-width: 4em;
   border-radius: 3px;
+  margin: 0.5em 0.25em;
   outline: none;
-  background: #0F0;
+  background: var(--scrubber-color);
+  box-shadow: 0px 1px 1px rgba(0,0,0,0.1) inset;
+
 }
 .plots-date-scrubber::-webkit-slider-thumb {
   -webkit-appearance: none;
   height: 1.5em;
-  width: 3em;
+  width: 2em;
   border-radius: 3px;
   cursor: pointer;
-  background: #F00;
+  background: var(--scrubber-button-color);
+  box-shadow: 0px 1px 1px rgba(0,0,0,0.1);
 }
 .plots-date-scrubber::-moz-range-thumb {
   height: 1.5em;
   width: 3em;
   border-radius: 3px;
   cursor: pointer;
-  background: #F00;
+  background: var(--scrubber-button-color);
+  box-shadow: 0px 1px 1px rgba(0,0,0,0.1);
 }
 
 .plots-zoom-scrubber {
   -webkit-appearance: none;
   height: 1em;
+  width: 100%;
+  min-width: 4em;
+  margin: 0.5em 0.25em;
   border-radius: 0.5em;
   outline: none;
-  background: #0F0;
+  background: var(--scrubber-color);
+  box-shadow: 0px 1px 1px rgba(0,0,0,0.1) inset;
 }
 .plots-zoom-scrubber::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -261,16 +305,16 @@ input[type="search"] {
   width: 1.5em;
   border-radius: 50%;
   cursor: pointer;
-  background: #F00;
-  flex-shrink: 1;
+  background: var(--scrubber-button-color);
+  box-shadow: 0px 1px 1px rgba(0,0,0,0.1);
 }
 .plots-zoom-scrubber::-moz-range-thumb {
   height: 1.5em;
   width: 1.5em;
   border-radius: 50%;
   cursor: pointer;
-  background: #F00;
-  flex-shrink: 1;
+  background: var(--scrubber-button-color);
+  box-shadow: 0px 1px 1px rgba(0,0,0,0.1);
 }
 
 .date-axis {
@@ -297,18 +341,27 @@ input[type="search"] {
   vertical-align: middle;
   flex-shrink: 0;
   flex-grow: 0;
-  height: inherit;
-  background-color: inherit;
-  background-color: #EEF;
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+
+  background-color: transparent;
+  /*background-color: #e0e7f7;*/
+
   border-radius: 3px;
-  display: inline;
+  /*display: inline;*/
   /*color: white;*/
   /*padding: 10px 15px;*/
   border: none;
   cursor: pointer;
-  margin-left: 0.25em;
+/*  margin-left: 0.25em;
   margin-right: 0.25em;
-  padding: 0.25em 0.5em;
+*/
+  margin:0;
+  padding: 0em 0.5em;
+  height: 1.5em;
+  /*height: inherit;*/
+  box-sizing: border-box;
   /*content-fit: cover;*/
 /*  padding: 0px;
   margin: 0px;
@@ -318,6 +371,17 @@ input[type="search"] {
 
 .plots-toolbar-button:disabled {
   opacity: 0.5;
+}
+
+.plots-shadow-group {
+  display: flex;
+  flex-shrink: 1;
+  align-items: center;
+  box-shadow: 0px 0px 1px rgba(0,0,0,0.2);
+  background-color: var(--plot-button-color);
+  margin: 0.0em 0.25em;
+  padding: 0.0em 0em;
+  border-radius: 3px;
 }
 
 .plots-toolbar-group-left {
@@ -362,7 +426,7 @@ input[type="search"] {
 .button-icon {
   font-size: inherit;
   height: 1em; 
-  width: 0.777778em;
+  /*width: 0.777778em;*/
   vertical-align: middle;
   cursor: pointer;
   margin-left: 0px;
@@ -371,6 +435,10 @@ input[type="search"] {
 }
 
 #main {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  box-sizing: border-box;
   transition: margin-left .3s;
   /*padding: 16px;*/
   height: 100%;
@@ -405,8 +473,8 @@ input[type="search"] {
   <button class="searchbar-button" onclick="showHelp()">?</button>
   </div>
   <div id="filtersBlock" class="search-filters">
-    <div><input type="checkbox" id="recentOnlyCheckbox" name="checkbox-recentOnly" title="only show sensors with new data from the last 30 days" class="in-the-middle"><label for="checkbox-recentOnly" class="in-the-middle"><span class="in-the-middle">Data in last 30 days</span></label></div>
-    <div><input type="checkbox" id="mapOnlyCheckbox" name="checkbox-mapOnly" title="only show sensors that are on the map area" class="in-the-middle"><label for="checkbox-mapOnly" class="in-the-middle"><span class="in-the-middle">On Map</span></label></div>
+    <div><input type="checkbox" id="recentOnlyCheckbox" name="checkbox-recentOnly" title="only show sensors with new data from the last 30 days" class="in-the-middle" /><label for="checkbox-recentOnly" class="in-the-middle"><span class="in-the-middle">Data in last 30 days</span></label></div>
+    <div><input type="checkbox" id="mapOnlyCheckbox" name="checkbox-mapOnly" title="only show sensors that are on the map area" class="in-the-middle" /><label for="checkbox-mapOnly" class="in-the-middle"><span class="in-the-middle">On Map</span></label></div>
     <hr></hr>
   </div>
   <div id="progressBlock" class="search-progress-block">
@@ -419,33 +487,59 @@ input[type="search"] {
 <div id="main">
   <div id="googlemap" class="googlemap" style="height:60%"></div>
   <!-- <div id="mapOverlayStatic" class="map-overlay-static"></div> -->
+  <iframe id="plotWidthIframe" style="height:0px; border:none;"></iframe>
   <div id="plots" class="plots-container" style="height:40%">
     <div id="plotsToolbar" class="plots-toolbar">
-        <input type="range" min="-100" max="100" value="0" class="plots-date-scrubber" id="plotsDateScrubber">
-        <button class="plots-toolbar-button" onclick="">now</button>
-        <div class="toolbar-spacer"></div>
-        <input type="range" min="-100" max="100" value="0" class="plots-zoom-scrubber" id="plotsZoomScrubber">
+      <div class="toolbar-spacer"></div>
+      <div class="plots-shadow-group">
+        <button class="plots-toolbar-button plots-toolbar-group-left" onclick="explorer.moveTimelineByFactor(0.25)" style="padding-right: 0.25em;">
+          <img src="goleft.svg" class="button-icon"></img>
+        </button>
+        <div class="plots-toolbar-button plots-toolbar-group-center" style="padding-left: 0;padding-right: 0; flex-shrink: 1; flex-basis: 10em;">
+          <input type="range" min="-100" max="100" value="0" class="plots-date-scrubber" id="plotsDateScrubber" />
+        </div>
+        <button class="plots-toolbar-button plots-toolbar-group-right" onclick="explorer.moveTimelineByFactor(-0.25)" style="padding-left: 0.25em;">
+          <img src="goright.svg" class="button-icon"></img>
+        </button>
+        <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
+        <button class="plots-toolbar-button" onclick="explorer.moveTimelineTo(Date.now() * 0.001, 0.9)"><img src="gonow.svg" class="button-icon"></img></button>
+      </div>
+      <div class="toolbar-spacer"></div>
+      <div class="plots-shadow-group">
+        <button class="plots-toolbar-button plots-toolbar-group-left" onclick="explorer.zoomTimelineByFactor(1.4142135624)" style="padding-right: 0.25em;">
+          <img src="minus.svg" class="button-icon"></img>
+        </button>
+        <div class="plots-toolbar-button plots-toolbar-group-center" style="padding-left: 0;padding-right: 0;  flex-shrink: 1; flex-basis: 10em;">
+          <input type="range" min="-100" max="100" value="0" class="plots-zoom-scrubber" id="plotsZoomScrubber" />
+        </div>
+        <button class="plots-toolbar-button plots-toolbar-group-right" onclick="explorer.zoomTimelineByFactor(0.7071067812)" style="padding-left: 0.25em;">
+          <img src="plus.svg" class="button-icon"></img>
+        </button>
+        <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
         <button class="plots-toolbar-button plots-toolbar-group-left" onclick="explorer.zoomTimelineToSize(24*60*60)">day</button>
         <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
         <button class="plots-toolbar-button plots-toolbar-group-center" onclick="explorer.zoomTimelineToSize(31*24*60*60)">month</button>
         <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
         <button class="plots-toolbar-button plots-toolbar-group-right" onclick="explorer.zoomTimelineToSize(365*24*60*60)">year</button>
-        <div class="toolbar-spacer"></div>
-<!--         <input type="image" class="plots-toolbar-img" onclick="" src="yshrink.svg" height=18 width=14></input>
-        <input type="image" class="plots-toolbar-img" onclick="" src="ygrow.svg" height="18" width="14"></input>
- --> 
+      </div>
+      <div class="toolbar-spacer"></div>
+      <div class="plots-shadow-group">
         <button id="decreasePlotAreaHeightButton" class="plots-toolbar-button plots-toolbar-group-left" onclick="explorer.decreasePlotAreaHeight()"><img src="ylower.svg" class="button-icon"></img></button>
         <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
         <button id="increasePlotAreaHeightButton" class="plots-toolbar-button plots-toolbar-group-right" onclick="explorer.increasePlotAreaHeight()"><img src="yraise.svg" class="button-icon"></img></button>
+      </div>
         <!-- <div class="toolbar-spacer"></div> -->
+      <div class="plots-shadow-group">
         <button id="decreasePlotHeightButton" class="plots-toolbar-button plots-toolbar-group-left" onclick="explorer.decreasePlotHeight()"><img src="yshrink.svg" class="button-icon"></img></button>
         <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
         <button id="increasePlotHeightButton" class="plots-toolbar-button plots-toolbar-group-right" onclick="explorer.increasePlotHeight()"><img src="ygrow.svg" class="button-icon"></img></button>
+      </div>
         <!-- <div class="toolbar-spacer"></div> -->
+      <div class="plots-shadow-group">
         <button class="plots-toolbar-button" onclick=""><img src="download.svg" class="button-icon"></img></button>
+      </div>
     </div>
     <!-- this insanity with the iframes here is because we use them to capture resize events of the plots pane, so that the grapher plots are correctly resized when the page layout changes -->
-    <iframe id="plotWidthIframe" style="height:0px; width:100%; border:none;"></iframe>
     <div style="display: flex; flex-direction: row; flex-grow: 0; flex-shrink: 0; overflow-y: hidden">
       <div id="date_axis" class="date-axis"></div>
       <div id="plotCorner" class="plot-corner"></div>
@@ -1300,8 +1394,13 @@ window.grapherLoad = function() {
     explorer.addPlot(feedId, channelName)
   }
 
+  // the iframe madness is for making sure the plots are resized right when the plot pane size changes
+
   let widthIFrame = document.getElementById("plotWidthIframe")
   let cornerElement = document.getElementById("plotCorner")
+  // call setWidth at least once
+  explorer.plotManager.setWidth(widthIFrame.clientWidth - plotCorner.clientWidth)
+
   widthIFrame.contentWindow.addEventListener('resize', function(event) {
     // console.log(`plotWidthIframe resize`)
     // resize plot frames
@@ -1328,6 +1427,41 @@ explorer.zoomTimelineToSize = function(zoomTargetSize) {
   dateAxis.setRange(zoomCenter - loDiff*zoomScale, zoomCenter + hiDiff*zoomScale)
 
 }
+
+explorer.zoomTimelineByFactor = function(zoomScale) {
+  let dateAxis = explorer.plotManager.getDateAxis()
+  let currentRange = dateAxis.getRange()
+  let cursor = dateAxis.getCursorPosition()
+
+  let zoomCenter = ((cursor >= currentRange.min) && (cursor <= currentRange.max)) ? cursor : 0.5*(currentRange.max + currentRange.min)
+
+  let rangeDiff = currentRange.max - currentRange.min
+  let loDiff = zoomCenter - currentRange.min
+  let hiDiff = currentRange.max - zoomCenter
+  dateAxis.setRange(zoomCenter - loDiff*zoomScale, zoomCenter + hiDiff*zoomScale)
+
+}
+
+explorer.moveTimelineByFactor = function(moveFactor) {
+  let dateAxis = explorer.plotManager.getDateAxis()
+  let currentRange = dateAxis.getRange()
+
+  let rangeDiff = currentRange.max - currentRange.min
+  dateAxis.setRange(currentRange.min - rangeDiff*moveFactor, currentRange.max - rangeDiff*moveFactor)
+
+}
+
+explorer.moveTimelineTo = function(timestamp, positionInView) {
+  let dateAxis = explorer.plotManager.getDateAxis()
+  let currentRange = dateAxis.getRange()
+
+  let rangeDiff = currentRange.max - currentRange.min
+  let loDiff = rangeDiff*(positionInView)
+  let hiDiff = rangeDiff*(1.0-positionInView)
+  dateAxis.setRange(timestamp - loDiff, timestamp + hiDiff)
+
+}
+
 
 explorer.deferredTimelineUpdateCallback = function(startTime, endTime, cursorTime) {
   // console.log(`deferredTimelineUpdateCallback(${startTime}, ${endTime}, ${cursorTime})`)

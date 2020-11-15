@@ -2,19 +2,19 @@
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg xmlns:dc="http://purl.org/dc/elements/1.1/" version="1.1" xmlns:xl="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" viewBox="-24 104 14 18" width="14" height="18">
   <defs/>
-  <metadata> Produced by OmniGraffle 7.17.5\n2020-11-14 23:02:52 +0000</metadata>
+  <metadata> Produced by OmniGraffle 7.17.5\n2020-11-15 02:17:43 +0000</metadata>
   <g id="yshrink" stroke-opacity="1" stroke-dasharray="none" stroke="none" fill="none" fill-opacity="1">
     <title>yshrink</title>
     <g id="yshrink_Layer_1">
       <title>Layer 1</title>
       <g id="Line_4">
-        <path d="M -14 118 L -17 115 L -20 118" stroke="black" stroke-linecap="square" stroke-linejoin="miter" stroke-width="1.3999986"/>
+        <path d="M -14 119 L -17 116 L -20 119" stroke="black" stroke-linecap="square" stroke-linejoin="miter" stroke-width="1.3999986"/>
       </g>
       <g id="Graphic_3">
-        <path d="M -23 111 L -11 111 C -10.447715 111 -10 111.44772 -10 112 L -10 112 C -10 112.55228 -10.447715 113 -11 113 L -23 113 C -23.552284 113 -24 112.55228 -24 112 L -24 112 C -24 111.44772 -23.552284 111 -23 111 Z" fill="black"/>
+        <path d="M -23 112 L -11 112 C -10.447715 112 -10 112.44772 -10 113 L -10 113 C -10 113.55228 -10.447715 114 -11 114 L -23 114 C -23.552284 114 -24 113.55228 -24 113 L -24 113 C -24 112.44772 -23.552284 112 -23 112 Z" fill="black"/>
       </g>
       <g id="Line_2">
-        <path d="M -14 106 L -17 109 L -20 106" stroke="black" stroke-linecap="square" stroke-linejoin="miter" stroke-width="1.3999986"/>
+        <path d="M -14 107 L -17 110 L -20 107" stroke="black" stroke-linecap="square" stroke-linejoin="miter" stroke-width="1.3999986"/>
       </g>
     </g>
   </g>

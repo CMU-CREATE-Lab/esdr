@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns:dc="http://purl.org/dc/elements/1.1/" version="1.1" xmlns:xl="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" viewBox="-20 160 14 18" width="14" height="18">
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" version="1.1" xmlns:xl="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" viewBox="-24 104 16 18" width="16" height="18">
   <defs/>
-  <metadata> Produced by OmniGraffle 7.17.5\n2020-11-14 21:15:21 +0000</metadata>
-  <g id="Canvas_1" stroke-opacity="1" stroke-dasharray="none" stroke="none" fill="none" fill-opacity="1">
-    <title>Canvas 1</title>
-    <g id="Canvas_1_Layer_1">
+  <metadata> Produced by OmniGraffle 7.17.5\n2020-11-15 02:22:13 +0000</metadata>
+  <g id="hamburger" stroke-opacity="1" stroke-dasharray="none" stroke="none" fill="none" fill-opacity="1">
+    <title>hamburger</title>
+    <g id="hamburger_Layer_1">
       <title>Layer 1</title>
-      <g id="Graphic_42"/>
-      <g id="Graphic_41">
-        <path d="M -19.000002 162 L -6.999998 162 C -6.447714 162 -6 162.44771 -6 163 L -6 163 C -6 163.55229 -6.447714 164 -6.999998 164 L -19.000002 164 C -19.552286 164 -20 163.55229 -20 163 L -20 163 C -20 162.44771 -19.552286 162 -19.000002 162 Z" fill="black"/>
+      <g id="Graphic_7">
+        <path d="M -23.000002 107 L -8.999998 107 C -8.447714 107 -8 107.44771 -8 108 L -8 108 C -8 108.55229 -8.447714 109 -8.999998 109 L -23.000002 109 C -23.552286 109 -24 108.55229 -24 108 L -24 108 C -24 107.44771 -23.552286 107 -23.000002 107 Z" fill="black"/>
       </g>
-      <g id="Graphic_40">
-        <path d="M -19.000002 168 L -6.999998 168 C -6.447714 168 -6 168.44771 -6 169 L -6 169 C -6 169.55229 -6.447714 170 -6.999998 170 L -19.000002 170 C -19.552286 170 -20 169.55229 -20 169 L -20 169 C -20 168.44771 -19.552286 168 -19.000002 168 Z" fill="black"/>
+      <g id="Graphic_6">
+        <path d="M -23.000002 112 L -8.999998 112 C -8.447714 112 -8 112.44771 -8 113 L -8 113 C -8 113.55229 -8.447714 114 -8.999998 114 L -23.000002 114 C -23.552286 114 -24 113.55229 -24 113 L -24 113 C -24 112.44771 -23.552286 112 -23.000002 112 Z" fill="black"/>
       </g>
-      <g id="Graphic_39">
-        <path d="M -19.000002 174 L -6.999998 174 C -6.447714 174 -6 174.44771 -6 175 L -6 175 C -6 175.55229 -6.447714 176 -6.999998 176 L -19.000002 176 C -19.552286 176 -20 175.55229 -20 175 L -20 175 C -20 174.44771 -19.552286 174 -19.000002 174 Z" fill="black"/>
+      <g id="Graphic_5">
+        <path d="M -23.000002 117 L -8.999998 117 C -8.447714 117 -8 117.44771 -8 118 L -8 118 C -8 118.55229 -8.447714 119 -8.999998 119 L -23.000002 119 C -23.552286 119 -24 118.55229 -24 118 L -24 118 C -24 117.44771 -23.552286 117 -23.000002 117 Z" fill="black"/>
       </g>
     </g>
   </g>
