@@ -746,6 +746,12 @@ function initMap() {
   explorer.mapBounds = bounds
   esdr.updateQuery({mapBounds: bounds})
 
+  // inform mapOverlay of selected items
+  for (channelId of esdr.selectedChannelIds) {
+    let feedId = parseInt(channelId.slice(0, channelId.indexOf(".")))
+    explorer.mapOverlay.selectFeed(feedId, true)
+  }
+
 
   // install search response events
   let searchInput = document.getElementById("sensorSearchField")
@@ -1279,10 +1285,13 @@ function searchResultsDivForChannel(feedId, channelName, elementIdPrefix) {
 }
 
 explorer.interactiveSelectChannelWithId = function(channelId, isSelected) {
-  esdr.selectChannelWithId(channelId, isSelected)
 
   let feedId = parseInt(channelId.slice(0, channelId.indexOf(".")))
   let channelName = channelId.slice(channelId.indexOf(".")+1)
+
+  esdr.selectChannelWithId(channelId, isSelected)
+  explorer.mapOverlay.selectFeed(feedId, isSelected, true)
+
   if (isSelected) {
     explorer.addPlot(feedId, channelName)
   }
@@ -1580,6 +1589,11 @@ explorer.addPlot = function(feedId, channelName) {
 
 
   explorer.plotManager.getPlotContainer(plotContainerName).setAutoScaleEnabled(true, true)
+
+  // TODO: data point listener only gets mouse events, but we have to block mouse events from grapher, otherwise we can't scroll
+  // explorer.plotManager.getPlotContainer(plotContainerName).getPlot(plotId).addDataPointListener(function(value) {
+  //     console.log(`plot-${plotId} value = ${value}`)
+  // })
 
 }
 

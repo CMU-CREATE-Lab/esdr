@@ -977,6 +977,37 @@ _binarySearch(array, predicate) {
 		return changedAry
 	}
 
+	selectFeed(feedId, isSelected, isImmediate) {
+		if (!this.markers)
+			return []
+		let feedIds = new Set(this.markers.selectedFeeds)
+		if (isSelected) {
+			feedIds.add(feedId)
+		}
+		else {
+			feedIds.delete(feedId)
+		}
+
+		this.selectMarkers(feedIds, isImmediate)
+
+	}
+
+	selectMarkers(feeds, isImmediate) {
+		if (!this.markers)
+			return []
+
+    // changed are only the xor between the two sets
+    let changedFeeds = this._xorSets(this.markers.selectedFeeds, feeds)
+
+    this.markers.selectedFeeds = new Set(feeds)
+    this.colorMarkers(changedFeeds)
+
+    this._doDeferredGlUpdate({feedColors: changedFeeds}, isImmediate)
+
+		return feeds
+	}
+
+
 	highlightMarkers(feeds, isImmediate) {
 		if (!this.markers)
 			return []
@@ -1133,6 +1164,8 @@ _binarySearch(array, predicate) {
 				return [0.0,0.0,0.3,0.3]
 		})
 		let strokeColors = changedFeedIds.map( (feedId) => {
+			if (markers.selectedFeeds.has(feedId))
+				return [1.0, 0.667, 0.0, 1.0]
 			if (markers.activeFeeds.has(feedId))
 				return [0.5,0.5,0.5,0.5]
 			else if (markers.rejectedFeeds.has(feedId))
@@ -1168,6 +1201,8 @@ _binarySearch(array, predicate) {
 		let positions = feeds.map(feed => [feed.latlng.lng, feed.latlng.lat])
 
 		// look for feed states that determine coloring
+		// FIXME: selectedFeeds is fetched from data source here, but interactive selections need to be done through selectFeed() to be visible
+		let selectedFeeds = feedDataSource.selectedFeeds()
 		let highlightedFeeds = feedStates && feedStates.highlightedFeeds ? feedStates.highlightedFeeds : (this.markers && this.markers.highlightedFeeds) || new Set()
 		let activeFeeds = feedStates && feedStates.activeFeeds ? feedStates.activeFeeds : (this.markers && this.markers.activeFeeds) || new Set()
 
@@ -1191,6 +1226,7 @@ _binarySearch(array, predicate) {
 			highlightedFeeds: highlightedFeeds,
 			rejectedFeeds: rejectedFeeds,
 			activeFeeds: activeFeeds,
+			selectedFeeds: selectedFeeds,
 		}
 
 		this.colorMarkers()

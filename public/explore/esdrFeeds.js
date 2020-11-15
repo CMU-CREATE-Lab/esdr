@@ -345,6 +345,10 @@ class ESDR {
 		}
 	}
 
+	selectedFeeds() {
+		return new Set(this.selectedChannelIds.map(channelId => parseInt(channelId.slice(0, channelId.indexOf(".")))))
+	}
+
 	isChannelSelected(channelId)
 	{
 		return !!this.selectedChannels_[channelId]
