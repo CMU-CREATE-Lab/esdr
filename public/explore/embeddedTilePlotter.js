@@ -419,6 +419,31 @@ class ETP {
 
 	}
 
+	getPrevPositionToConnectToTile(tileIndex) {
+		let tile = this.tiles[(tileIndex + this.NUM_TILES) % this.NUM_TILES]
+		let prevTile = this.tiles[(tileIndex-1 + this.NUM_TILES) % this.NUM_TILES]
+		if ((tile.level == prevTile.level) || (prevTile.offset == tile.offset-1) || (prevTile.data.length > 0))
+			return prevTile.data.slice(-1).map(s => [s[0] - this.timestampOffset, s[1]])
+		else
+			return [[NaN, NaN]]
+	}
+
+	getNextPositionToConnectToTile(tileIndex) {
+		let tile = this.tiles[(tileIndex + this.NUM_TILES) % this.NUM_TILES]
+		let nextTile = this.tiles[(tileIndex+1 + this.NUM_TILES) % this.NUM_TILES]
+		if ((tile.level == nextTile.level) || (nextTile.offset == tile.offset+1) || (nextTile.data.length > 0))
+			return nextTile.data.slice(0,1).map(s => [s[0] - this.timestampOffset, s[1]])
+		else
+			return [[NaN, NaN]]
+	}
+
+
+	isTilePositionDirty(tileIndex) {
+		let tile = this.tiles[(tileIndex + this.NUM_TILES) % this.NUM_TILES]
+		return (tile.level == this.tileLevel) && tile.isPositionDirty
+
+	}
+
 	_updateGlBuffers(gl) {
 
 		if (this.timestampOffsetDirty) {
@@ -463,7 +488,10 @@ class ETP {
 
 			let indexOffset = tileIndex*this.NUM_SAMPLES_PER_TILE*this.NUM_VERTICES_PER_SAMPLE
 
-			if (tile.isPositionDirty && tile.data) {
+			// check if neighbouring tiles have been dirtied, which means we have to redo the beginning/end segments
+			let isPositionDirty = tile.isPositionDirty || this.isTilePositionDirty(tileIndex-1) || this.isTilePositionDirty(tileIndex+1)
+
+			if (isPositionDirty && tile.data) {
 
 				let samples = tile.data
 				tile.positions = samples.map(sample => [sample[0] - this.timestampOffset, sample[1]])
@@ -489,7 +517,7 @@ class ETP {
 					tile.indices = tile.positions.map( (position, i) => [4*i + 0, 4*i + 1, 4*i + 2, 4*i + 2, 4*i + 3, 4*i + 0].map(k => k + indexOffset) )
 				}
 				else {
-					tile.indices = tile.positions.map( (position, i) => [4*i + 0, 4*i + 1, 4*i + 2, 4*i + 3].map(k => k + indexOffset) )
+					tile.indices = (tile.positions.map( (position, i) => [4*i + 0, 4*i + 1, 4*i + 2, 4*i + 3].map(k => k + indexOffset) ))
 				}
 
 				tile.indexTimes = tile.data.map( sample => sample[0] )
@@ -531,7 +559,10 @@ class ETP {
 
 				} 
 				else {
-					let positions = tile.positions
+					let prevPos = this.getPrevPositionToConnectToTile(tileIndex)
+					let nextPos = this.getNextPositionToConnectToTile(tileIndex)
+
+					let positions = prevPos.concat(tile.positions, nextPos)
 					let segments = positions.slice(0, positions.length-1).map( (p, i) =>
 						[positions[i+1][0] - positions[i][0], positions[i+1][1] - positions[i][1]]
 					)
@@ -546,11 +577,11 @@ class ETP {
 							[-d[0],-d[1]],
 							[ d[0], d[1]],
 							[-d[0],-d[1]],
-						].flat()
-					})
+						]
+					}).flat()
 
-					// pad the ends with NaNs, while we don't stitch across tiles
-					offsets = [[NaN, NaN, NaN, NaN]].concat(offsets, [[NaN, NaN, NaN, NaN]])
+					// remove the two ends
+					offsets = offsets.slice(2,-2)
 
 
 					gl.bindBuffer(gl.ARRAY_BUFFER, buffers.offsetBuffer)
