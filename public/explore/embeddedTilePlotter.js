@@ -40,7 +40,7 @@
 	vertex quads were easy, as there is no neighbour interaction
 
 	the simples line drawing is to ignore the joints, and treat each segment separately, for now.
-	lines are drawn with triangle strips instead of triangles, still 6 elements per line
+	lines are drawn with triangle strips instead of triangles, at 4 elements per line segment. The number of vertices is still the same.
 
 	
 */
@@ -380,9 +380,11 @@ class ETL {
 
 			// we actually have a new tile 
 			tile = {
+				index: tileIndex,
 				level: level,
 				offset: offset,
-				data: tileJson.data,
+				// filter rows of [time, mean, stdev, count] so that only count > 0 is kept
+				data: tileJson.data.filter(sample => sample[3] > 0),
 				isPositionDirty: true,
 				areIndicesDirty: true,
 				areAttributesDirty: true,
@@ -437,15 +439,23 @@ class ETL {
 		let indicesDirty = false
 
 		// find out which order the tiles are in, in time
+		// since tiles are always ordered right, we just need to find the 1st
+		let activeTiles = this.tiles.filter(tile => tile.level == this.tileLevel)
+		let {index: firstTileIndex} = activeTiles.reduce((acc, tile, i) => {
+			if (tile.offset < acc.offset)
+				return {offset: tile.offset, index: tile.index}
+			else
+				return acc
+		}, {offset: Infinity, index: -1})
+
 		// 1. map to [offset, tileIndex]
 		// 2. sort by offset
 		// 3. create map with {tileIndex, order}
-		let tileOrderMap = new Map(this.tiles.map((tile, i) => [tile.offset, i]).sort((a,b) => a[0] - b[0]).map( (e, order) => [e[1], order]))
+		// let tileOrderMap = new Map(this.tiles.map((tile, i) => [tile.offset, i]).sort((a,b) => a[0] - b[0]).map( (e, order) => [e[1], order]))
 
-		this.tiles.forEach((tile, tileIndex) => {
-			if (tile.level != this.tileLevel)
-				return
-
+		activeTiles.forEach(tile => {
+			// do this only for ACTIVE tiles that match our tileLevel
+			let tileIndex = tile.index
 
 			let indexOffset = tileIndex*this.NUM_SAMPLES_PER_TILE*this.NUM_VERTICES_PER_SAMPLE
 
@@ -485,9 +495,10 @@ class ETL {
 				tile.areIndicesDirty = false
 			}
 
-			indices[tileOrderMap.get(tileIndex)] = tile.indices
-			indexTimes[tileOrderMap.get(tileIndex)] = tile.indexTimes
-			indexValues[tileOrderMap.get(tileIndex)] = tile.indexValues
+			let orderedIndex = (tileIndex - firstTileIndex + this.tiles.length) % this.tiles.length
+			indices[orderedIndex] = tile.indices
+			indexTimes[orderedIndex] = tile.indexTimes
+			indexValues[orderedIndex] = tile.indexValues
 
 			if (tile.areAttributesDirty) {
 
