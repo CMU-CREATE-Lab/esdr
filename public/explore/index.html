@@ -563,6 +563,7 @@ input[type="search"] {
 </div>
 
 <script src="esdrFeeds.js"></script>
+<script src="embeddedTilePlotter.js"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjVZHnH5L8ty50awHChDGdtJ5ZHqCFc-Y"></script>
 <script src="mapOverlay.js"></script>
 
@@ -684,7 +685,7 @@ function initMap() {
 
 
     if (explorer.deferredMapBoundsUpdateTimer)
-      clearTimeout(explorer.deferredTimelineUpdateTimer)
+      clearTimeout(explorer.deferredMapBoundsUpdateTimer)
 
     explorer.deferredMapBoundsUpdateTimer = setTimeout(explorer.deferredMapBoundsUpdateCallback, 500, gMap)
 
@@ -915,6 +916,12 @@ function parseUrlParams() {
     explorer.showResults = browserParams.get("showResults") == "true"
   }
 
+  // on-map sparklines
+  if (browserParams.has("showSparklines")) {
+    explorer.showSparklines = browserParams.get("showSparklines") == "true"
+  }
+
+
 }
 
 function createUrlParams() {
@@ -936,6 +943,9 @@ function createUrlParams() {
     browserParams.set("plotAreaHeight", explorer.plotAreaHeightPercent.toFixed(3))
   }
 
+  if (explorer.showSparklines) {
+    browserParams.set("showSparklines", "true")
+  }
 
   if (explorer.showFilters) {
     browserParams.set("showFilters", "true")
@@ -1294,9 +1304,12 @@ explorer.interactiveSelectChannelWithId = function(channelId, isSelected) {
 
   if (isSelected) {
     explorer.addPlot(feedId, channelName)
+    if (explorer.showSparklines)
+      explorer.mapOverlay.addSparklinePlot(feedId, channelId)
   }
   else {
     explorer.removePlot(feedId, channelName)
+    explorer.mapOverlay.removeSparklinePlot(feedId, channelId)
   }
 
   let resultsCheckbox = document.getElementById(`searchResults-${channelId}`)
@@ -1404,14 +1417,29 @@ window.grapherLoad = function() {
     if (explorer.deferredTimelineUpdateTimer)
       clearTimeout(explorer.deferredTimelineUpdateTimer)
 
+    if (explorer.showSparklines) {
+      window.requestAnimationFrame(timestamp => {
+        explorer.mapOverlay.updateSparklineTimeRange({min: dateAxisProperties.min, max: dateAxisProperties.max})
+        explorer.mapOverlay.draw()
+      })
+    }
+
     explorer.deferredTimelineUpdateTimer = setTimeout(explorer.deferredTimelineUpdateCallback, 300, dateAxisProperties.min, dateAxisProperties.max, dateAxisProperties.cursorPosition)
   })
+
+  // setup datasource before adding sparklines, so that dataSource is in place
+  explorer.mapOverlay.setDataSource(esdr, {})
+
 
   // add selected plots to plot manager
   for (let channelId of esdr.selectedChannelIds) {
     let feedId = parseInt(channelId.slice(0, channelId.indexOf(".")))
     let channelName = channelId.slice(channelId.indexOf(".")+1)
     explorer.addPlot(feedId, channelName)
+
+    if (explorer.showSparklines) {
+      explorer.mapOverlay.addSparklinePlot(feedId, channelName)
+    }
   }
 
   // the iframe madness is for making sure the plots are resized right when the plot pane size changes
@@ -1745,6 +1773,10 @@ explorer.decreasePlotHeight = function() {
   decreaseButton.disabled = (explorer.plotHeight <= explorer.minPlotHeight)
 
   updateUrlHash()
+}
+
+explorer.sparklineAnimation = function() {
+
 }
 
 // call initMap() as we fully loaded maps api to be able to extend the overlays in mapOverlay.js

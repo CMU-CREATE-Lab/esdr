@@ -376,17 +376,20 @@ class ESDR {
 		esdr.channelDataUpdateCallback(feedId, channelName)
 	}
 
-	computeDataTileLevel(range) {
-		let width = range.max - range.min;
+	static computeDataTileLevel(range) {
+		let width = range.max - range.min
 		return width > 0 ? Math.floor(Math.log2(width / 512)) : undefined
-	};
+	}
 
-	computeDataTileOffset(time, level) {
-		let tileWidth = Math.pow(2, level) * 512;
-		return Math.floor(time / tileWidth);
-	};
+	static computeDataTileOffset(time, level) {
+		let tileWidth = Math.pow(2, level + 9)
+		return Math.floor(time / tileWidth)
+	}
 
-
+	static computeDataTileStartTime(level, offset) {
+		// +9 because 2^9 = 512, the number of samples per tile
+		return Math.pow(2, level + 9) * offset
+	}
 
 
 	dataSourceForChannel(feedId, channelName) {
@@ -406,13 +409,14 @@ class ESDR {
   		// check if it's already cached, in that case no fetching
   		let cachedTileData = esdr.tileCache.get(feedId).get(channelName).get(tileId)
   		if (typeof cachedTileData == "function") {
-  			// we have a function from a previous call waiting on the data
+  			// we have a closure from a previous call waiting on the data
   			// just add our callback and wait together!
   			cachedTileData(callback)
   			return
   		}
   		else if (cachedTileData) {
-  			callback(JSON.stringify(cachedTileData))
+  			// the cachedTileData was not a function, so it's the actual data, we can just deliver it immediately
+  			callback(cachedTileData)
   			return
   		}
   		else {

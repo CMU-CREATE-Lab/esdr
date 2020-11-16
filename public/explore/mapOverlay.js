@@ -29,8 +29,11 @@ class MapOverlay extends google.maps.OverlayView {
   	this.canvas = document.createElement("canvas")
 
   	this.deferredUpdateTimer_ = undefined
-  	this.deferredUpdateContent_ = {}
+  	this.deferredUpdateContent_ = {allMarkers: true, allIndices: true}
   	this.debug_ = {}
+
+  	// data plotting
+  	this.sparkLines = new Map()
 
 	}
 
@@ -47,7 +50,8 @@ class MapOverlay extends google.maps.OverlayView {
 		this.canvas.style.display = "block"
 		// this.canvas.style.zIndex = "1"
 
-		this._initGl()
+		if (!this.gl)
+			this._initGl()
 
 		const panes = this.getPanes()
 		panes.overlayLayer.appendChild(this.canvas)
@@ -107,6 +111,9 @@ class MapOverlay extends google.maps.OverlayView {
 
 			// ctx.fillStyle = 'rgb(0, 200, 0)';
 			// ctx.fillText('overlayLayer', 10, 50);
+
+			if (!this.gl)
+				this._initGl()
 
 			this.glDraw(this.gl)
 		}
@@ -354,15 +361,15 @@ class MapOverlay extends google.maps.OverlayView {
 		if (!this.debug_)
 			return
 
-			console.assert(this.debug_.vertexBufferLength > this.debug_.maxElementIndex)
-			console.assert(this.debug_.fillColorBufferLength > this.debug_.maxElementIndex)
-			console.assert(this.debug_.strokeColorBufferLength > this.debug_.maxElementIndex)
+			console.assert(this.debug_.vertexBufferLength && (this.debug_.vertexBufferLength > this.debug_.maxElementIndex))
+			console.assert(this.debug_.fillColorBufferLength && (this.debug_.fillColorBufferLength > this.debug_.maxElementIndex))
+			console.assert(this.debug_.strokeColorBufferLength && (this.debug_.strokeColorBufferLength > this.debug_.maxElementIndex))
 			console.assert(this.markers.feeds.length == this.debug_.indexBufferLength)
 	}
 
 	_updateMarkerBuffers(gl) {
 		let markers = this.markers
-		if (!markers || !markers.feeds)
+		if (!markers || !markers.feeds || (markers.feeds.length <= 0))
 			return
 
 
@@ -476,6 +483,8 @@ class MapOverlay extends google.maps.OverlayView {
 			return indicesForQuad(i)
 		})
 
+		console.assert(this.markers.feeds.length == indices.length)
+
 		if (this.debug_) {
 			this.debug_.maxElementIndex = indices.flat().reduce((acc, val) => Math.max(acc, val), 0)
 			this.debug_.indexBufferLength = indices.length
@@ -492,7 +501,7 @@ class MapOverlay extends google.maps.OverlayView {
 	}
 
 	_deferredGlUpdateCallback(mapOverlay, gl) {
-		if (gl) {
+		if (gl && mapOverlay.markers && (mapOverlay.markers.feeds.length > 0)) {
 			mapOverlay.glBuffersDirty = false
 			let update = mapOverlay.deferredUpdateContent_
 			let wasUpdated = false
@@ -531,6 +540,7 @@ class MapOverlay extends google.maps.OverlayView {
 		// the updates affect the marker states
 		// allMarkers and allIndices are bools that are ORed
 		// feedColors are lists that are combined
+
 		if (updateContent.feedColors && this.deferredUpdateContent_.feedColors) {
 			this.deferredUpdateContent_.feedColors = this.deferredUpdateContent_.feedColors.concat(updateContent.feedColors)
 		}
@@ -644,6 +654,8 @@ class MapOverlay extends google.maps.OverlayView {
 		// draw vertices for debugging purposes
 		// gl.pointSize(40)
 		// gl.drawArrays(gl.POINTS, 0, vertices.length/2)
+
+		this.drawSparkLines(gl, PM)
 	}
 
 	glDraw(gl) {
@@ -1100,6 +1112,10 @@ _binarySearch(array, predicate) {
 		return geo
 	}
 
+	geoCoordsToCanvasPixel(geo) {
+		return {x: this.longitudeToCanvasPixel(geo.lng), y: this.latitudeToCanvasPixel(geo.lat)}
+	}
+
 	feedsCloseToPixel(pxPos, pxRadius) {
 		// if no data source, no feeds
 		if (!this.feedDataSource)
@@ -1165,7 +1181,7 @@ _binarySearch(array, predicate) {
 		})
 		let strokeColors = changedFeedIds.map( (feedId) => {
 			if (markers.selectedFeeds.has(feedId))
-				return [1.0, 0.667, 0.0, 1.0]
+				return [1.0, 0.0, 0.0, 1.0]
 			if (markers.activeFeeds.has(feedId))
 				return [0.5,0.5,0.5,0.5]
 			else if (markers.rejectedFeeds.has(feedId))
@@ -1238,6 +1254,47 @@ _binarySearch(array, predicate) {
 		// 	this._updateMarkerBuffers(this.gl)
 		// 	this.glDraw(this.gl)
 		// }
+	}
+
+	updateSparklineTimeRange(range) {
+		for (let plotter of this.sparkLines.values()) {
+			plotter.setPlotRange(range)
+		}
+	}
+
+	removeSparklinePlot(feedId, channelName) {
+		this.sparkLines.delete(`${feedId}.${channelName}`)
+	}
+
+	addSparklinePlot(feedId, channelName) {
+
+		let tileSource = this.feedDataSource.dataSourceForChannel(feedId, channelName)
+
+		let plotter = new ETL(tileSource)
+
+		this.sparkLines.set(`${feedId}.${channelName}`, plotter)
+
+		return plotter
+	}
+
+	drawSparkLines(gl, PM) {
+		for (let [channelId, plotter] of this.sparkLines) {
+			let feedId = parseInt(channelId.slice(0, channelId.indexOf('.')))
+			let feed = this.feedDataSource.feeds.get(feedId)
+			// feed might not be loaded, yet, in which case we don't know its position
+			if (!feed)
+				continue
+
+			let pxOffset = this.geoCoordsToCanvasPixel(feed.latlng)
+			// FIXME: this is to canvas coords, which are scaled wrong, and upside down
+			let pixelScale = window.devicePixelRatio || 1.0
+			pxOffset.x *= 1.0/pixelScale
+			pxOffset.y = this.canvas.height - pxOffset.y
+			pxOffset.y *= 1.0/pixelScale
+
+			plotter.glDraw(gl, pxOffset, PM)
+		}
+
 	}
 
 } // class MapOverlay
