@@ -33,17 +33,28 @@
 
 	So, at level 0, this is a range of ± 2^23 seconds, or in general 
 		offsetRange = 2^(level+23) seconds
+
+
+	*** triangle strips for lines
+
+	vertex quads were easy, as there is no neighbour interaction
+
+	the simples line drawing is to ignore the joints, and treat each segment separately, for now.
+	lines are drawn with triangle strips instead of triangles, still 6 elements per line
+
 	
 */
 
 class ETL {
 
 	constructor(tileDataSource) {
+		this.drawPoints = false
+
 		this.NUM_SAMPLES_PER_TILE 		= 512
 		this.NUM_TILES								= 3
 
 		this.NUM_VERTICES_PER_SAMPLE 	= 4
-		this.NUM_INDICES_PER_SAMPLE 	= 6
+		this.NUM_INDICES_PER_SAMPLE 	= this.drawPoints ? 6 : 4
 
 		this.NUM_POSITION_ELEMENTS		= 2
 		this.NUM_OFFSET_ELEMENTS			= 2
@@ -58,6 +69,7 @@ class ETL {
 
 		this.tileDataSource = tileDataSource
 		this.timestampOffsetDirty = true
+
 	}
 
 	_loadShader(gl, type, source) {
@@ -145,6 +157,50 @@ class ETL {
 	      pxStrokeWidth = pxStrokeWidthIn;
 	    }
   	`
+		const lineVertexShader = `
+
+	    attribute vec2 pxVertexPos;
+	    attribute vec2 pxVertexOffsetDirection;
+	    attribute float pxMarkerSizeIn;
+	    attribute float pxStrokeWidthIn;
+	    attribute vec4 fillColorIn;
+	    attribute vec4 strokeColorIn;
+
+	    uniform mat4 modelViewMatrix;
+	    uniform mat4 projectionMatrix;
+
+	    varying vec2 pxCenterOffset; 
+	    varying float pxMarkerSize;
+	    varying float pxStrokeWidth;
+	    varying vec4 fillColor;
+	    varying vec4 strokeColor;
+
+	    void main() {
+
+	    	vec2 screenSpacePos = (modelViewMatrix * vec4(pxVertexPos, 0.0, 1.0)).xy;
+
+	    	// for line drawing, we have to account for non-uniform x/y scaling
+	    	vec2 xyScale = vec2(1.0/modelViewMatrix[0][0], 1.0/modelViewMatrix[1][1]);
+	    	float xyScaleLength = length(xyScale);
+	    	float preLength = length(pxVertexOffsetDirection);
+	    	vec2 vertexOffsetDirection = xyScale*pxVertexOffsetDirection;
+	    	float postLength = length(vertexOffsetDirection);
+	    	vertexOffsetDirection *= preLength/postLength;
+
+	    	// offset vertex by direction and size of marker
+	    	// actual offset is 1px bigger than markerSize to leave room for AA
+	    	vec2 pxOffset = vertexOffsetDirection*(0.5*pxMarkerSizeIn + pxStrokeWidthIn + 1.0);
+	    	screenSpacePos += pxOffset;
+
+	    	// outputs
+	    	pxCenterOffset = pxOffset;
+	      gl_Position = projectionMatrix * vec4(screenSpacePos, 0.0, 1.0);
+	      fillColor = fillColorIn;
+	      strokeColor = strokeColorIn;
+	      pxMarkerSize = pxMarkerSizeIn;
+	      pxStrokeWidth = pxStrokeWidthIn;
+	    }
+  	`
 
 	  const markerFragmentShader = `
 	  	precision mediump float;
@@ -169,7 +225,7 @@ class ETL {
   	`
 
   	this.markerShader = {
-  		shaderProgram: this._initShaderProgram(gl, markerVertexShader, markerFragmentShader),
+  		shaderProgram: this._initShaderProgram(gl, this.drawPoints ? markerVertexShader : lineVertexShader, markerFragmentShader),
   	}
   	this.markerShader.attribLocations = {
   		pxVertexPos: 							gl.getAttribLocation(this.markerShader.shaderProgram, "pxVertexPos"),
@@ -342,7 +398,7 @@ class ETL {
 	_tileReceived(tileIndex) {
 		let tile = this.tiles[tileIndex]
 
-		console.log(`ETL received tile ${tile.level}.${tile.offset} at #${tileIndex} with ${tile.data.length} samples`)
+		// console.log(`ETL received tile ${tile.level}.${tile.offset} at #${tileIndex} with ${tile.data.length} samples`)
 
 		// if the new tile is outside of the current offset range, we have to recompute vertex positions
 		if (!this.timestampOffsetDirty) {
@@ -409,12 +465,19 @@ class ETL {
 				let dstByteOffset = indexOffset*this.NUM_POSITION_ELEMENTS*Float32Array.BYTES_PER_ELEMENT
 				gl.bufferSubData(gl.ARRAY_BUFFER, dstByteOffset, new Float32Array(positions.flat()))
 
+
 				tile.isPositionDirty = false
 			}
 
 			if (tile.areIndicesDirty) {
 
-				tile.indices = tile.positions.map( (position, i) => [4*i + 0, 4*i + 1, 4*i + 2, 4*i + 2, 4*i + 3, 4*i + 0].map(k => k + indexOffset) )
+				if (this.drawPoints) {
+					tile.indices = tile.positions.map( (position, i) => [4*i + 0, 4*i + 1, 4*i + 2, 4*i + 2, 4*i + 3, 4*i + 0].map(k => k + indexOffset) )
+				}
+				else {
+					tile.indices = tile.positions.map( (position, i) => [4*i + 0, 4*i + 1, 4*i + 2, 4*i + 3].map(k => k + indexOffset) )
+				}
+
 				tile.indexTimes = tile.data.map( sample => sample[0] )
 				tile.indexValues = tile.data.map( sample => sample[1] )
 
@@ -428,23 +491,59 @@ class ETL {
 
 			if (tile.areAttributesDirty) {
 
-				let offsets = (new Array(tile.positions.length)).fill([
-					-1.0, 1.0,
-					-1.0,-1.0,
-					 1.0,-1.0,
-					 1.0, 1.0,
-				])
+				let pixelScale = window.devicePixelRatio || 1.0
 
 				let sizes = (new Array(tile.positions.length)).fill((new Array(4)).fill(1.0))
 
 				let strokeWidths = (new Array(tile.positions.length)).fill((new Array(4)).fill(0.0))
 
-				let fillColors = (new Array(tile.positions.length)).fill((new Array(4)).fill([0.5,0.0,0.0,0.5]).flat())
+				let fillColors = (new Array(tile.positions.length)).fill((new Array(4)).fill([1.0,0.0,0.0,1.0]).flat())
 				let strokeColors = (new Array(tile.positions.length)).fill((new Array(4)).fill([0.0,0.0,0.0,0.0]).flat())
 
-				gl.bindBuffer(gl.ARRAY_BUFFER, buffers.offsetBuffer)
-				let offsetsDstByte = indexOffset*this.NUM_POSITION_ELEMENTS*Float32Array.BYTES_PER_ELEMENT
-				gl.bufferSubData(gl.ARRAY_BUFFER, offsetsDstByte, new Float32Array(offsets.flat()))
+				if (this.drawPoints)
+				{
+					// points are simple
+					let offsets = (new Array(tile.positions.length)).fill([
+						-1.0, 1.0,
+						-1.0,-1.0,
+						 1.0,-1.0,
+						 1.0, 1.0,
+					])
+
+					gl.bindBuffer(gl.ARRAY_BUFFER, buffers.offsetBuffer)
+					let offsetsDstByte = indexOffset*this.NUM_POSITION_ELEMENTS*Float32Array.BYTES_PER_ELEMENT
+					gl.bufferSubData(gl.ARRAY_BUFFER, offsetsDstByte, new Float32Array(offsets.flat()))
+
+				} 
+				else {
+					let positions = tile.positions
+					let segments = positions.slice(0, positions.length-1).map( (p, i) =>
+						[positions[i+1][0] - positions[i][0], positions[i+1][1] - positions[i][1]]
+					)
+					let normals = segments.map(s => {
+						let ss = s[0]*s[0] + s[1]*s[1]
+						let sqrt = 1.0/Math.sqrt(ss)
+						return [-s[1]*sqrt, s[0]*sqrt]
+					})
+					let offsets = normals.map(d => {
+						return [
+							[ d[0], d[1]],
+							[-d[0],-d[1]],
+							[ d[0], d[1]],
+							[-d[0],-d[1]],
+						].flat()
+					})
+
+					// pad the ends with NaNs, while we don't stitch across tiles
+					offsets = [[NaN, NaN, NaN, NaN]].concat(offsets, [[NaN, NaN, NaN, NaN]])
+
+
+					gl.bindBuffer(gl.ARRAY_BUFFER, buffers.offsetBuffer)
+					let offsetsDstByte = indexOffset*this.NUM_POSITION_ELEMENTS*Float32Array.BYTES_PER_ELEMENT
+					gl.bufferSubData(gl.ARRAY_BUFFER, offsetsDstByte, new Float32Array(offsets.flat()))
+
+				}
+
 
 				gl.bindBuffer(gl.ARRAY_BUFFER, buffers.sizeBuffer)
 				let sizesDstByte = indexOffset*this.NUM_SIZE_ELEMENTS*Float32Array.BYTES_PER_ELEMENT
@@ -474,7 +573,7 @@ class ETL {
 			this.indexTimes = indexTimes.flat()
 			this.indexValues = indexValues.flat()
 
-			console.log(`ready to show  ${this.drawIndices.length} indices`)
+			// console.log(`ready to show  ${this.drawIndices.length} indices`)
 
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indexBuffer)
 			gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER, 0, new Uint32Array(this.drawIndices.flat()))
@@ -502,18 +601,22 @@ class ETL {
 
 	minMaxValueInRange(range) {
 		if (!this.indexTimes)
-			return
+			return {min: -1.0, max: 1.0}
 
 		let startIndex = this._binarySearch(this.indexTimes, t => t >= range.min)
 		let endIndex = this._binarySearch(this.indexTimes, t => t > range.max)
 
 		// no drawing if we can't find the times
 		if (startIndex >= this.indexTimes.length)
-			return {min: 0.0, max: 0.0}
+			return {min: -1.0, max: 1.0}
 
+		let min = Math.min(...this.indexValues.slice(startIndex, endIndex))
+		let max = Math.max(...this.indexValues.slice(startIndex, endIndex))
+		let center = 0.5*(max+min)
+		let diff = Math.max(0.001, max-min)
 		return {
-			min: Math.min(...this.indexValues.slice(startIndex, endIndex)),
-			max: Math.max(...this.indexValues.slice(startIndex, endIndex)),
+			min: center - 0.5*diff,
+			max: center + 0.5*diff,
 		}
 	}
 
@@ -530,7 +633,7 @@ class ETL {
 
 		let numElements = endIndex - startIndex
 
-		gl.drawElements(gl.TRIANGLES, numElements*this.NUM_INDICES_PER_SAMPLE, gl.UNSIGNED_INT, startIndex*this.NUM_INDICES_PER_SAMPLE*Uint32Array.BYTES_PER_ELEMENT)
+		gl.drawElements(this.drawPoints ? gl.TRIANGLES : gl.TRIANGLE_STRIP, numElements*this.NUM_INDICES_PER_SAMPLE, gl.UNSIGNED_INT, startIndex*this.NUM_INDICES_PER_SAMPLE*Uint32Array.BYTES_PER_ELEMENT)
 
 	}
 
