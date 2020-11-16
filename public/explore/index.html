@@ -484,8 +484,8 @@ input[type="search"] {
   <button class="searchbar-button" onclick="showHelp()">?</button>
   </div>
   <div id="filtersBlock" class="search-filters">
-    <div><input type="checkbox" id="recentOnlyCheckbox" name="checkbox-recentOnly" title="only show sensors with new data from the last 30 days" class="in-the-middle" /><label for="checkbox-recentOnly" class="in-the-middle"><span class="in-the-middle">Data in last 30 days</span></label></div>
-    <div><input type="checkbox" id="mapOnlyCheckbox" name="checkbox-mapOnly" title="only show sensors that are on the map area" class="in-the-middle" /><label for="checkbox-mapOnly" class="in-the-middle"><span class="in-the-middle">On Map</span></label></div>
+    <div><input type="checkbox" id="recentOnlyCheckbox" name="checkbox-recentOnly" title="only show sensors with new data from the last 30 days" class="in-the-middle" /><label for="recentOnlyCheckbox" class="in-the-middle"><span class="in-the-middle">Data in last 30 days</span></label></div>
+    <div><input type="checkbox" id="mapOnlyCheckbox" name="checkbox-mapOnly" title="only show sensors that are on the map area" class="in-the-middle" /><label for="mapOnlyCheckbox" class="in-the-middle"><span class="in-the-middle">On Map</span></label></div>
     <hr></hr>
   </div>
   <div id="progressBlock" class="search-progress-block">
@@ -1288,7 +1288,7 @@ function searchResultsDivForChannel(feedId, channelName, elementIdPrefix) {
 
 
   let labelElement = document.createElement("label")
-  labelElement.setAttribute("for", `checkbox-${channelId}`)
+  labelElement.setAttribute("for", `${elementIdPrefix}-${channelId}`)
   labelElement.setAttribute("id", `label-${channelId}`)
   labelElement.innerText = label
 
