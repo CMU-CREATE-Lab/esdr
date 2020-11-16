@@ -378,13 +378,17 @@ class ETP {
 				return
 			}
 
+			// filter rows of [time, mean, stdev, count] so that only count > 0 is kept
+			// replace mean with NaN to get a line break
+			// let tileData tileJson.data.filter(sample => sample[3] > 0)
+			let tileData = tileJson.data.map(sample => sample[3] > 0 ? sample : [sample[0], NaN, sample[2], sample[3]])
+
 			// we actually have a new tile 
 			tile = {
 				index: tileIndex,
 				level: level,
 				offset: offset,
-				// filter rows of [time, mean, stdev, count] so that only count > 0 is kept
-				data: tileJson.data.filter(sample => sample[3] > 0),
+				data: tileData,
 				isPositionDirty: true,
 				areIndicesDirty: true,
 				areAttributesDirty: true,
@@ -621,8 +625,11 @@ class ETP {
 		if (startIndex >= this.indexTimes.length)
 			return {min: -1.0, max: 1.0}
 
-		let min = Math.min(...this.indexValues.slice(startIndex, endIndex))
-		let max = Math.max(...this.indexValues.slice(startIndex, endIndex))
+		// filter out any non-finite numbers that could screw up the min/max
+		let validValues = this.indexValues.slice(startIndex, endIndex).filter(y => isFinite(y))
+
+		let min = Math.min(...validValues)
+		let max = Math.max(...validValues)
 		let center = 0.5*(max+min)
 		let diff = Math.max(0.001, max-min)
 		return {
