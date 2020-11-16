@@ -588,6 +588,8 @@ let explorer = {
   },
   results: [],
   plots: new Map(),
+  showFilters: true,
+  showResults: true,
   plotAreaHeightPercent: 40,
   minPlotAreaHeightPercent: 20,
   maxPlotAreaHeightPercent: 80,
@@ -947,11 +949,12 @@ function createUrlParams() {
     browserParams.set("showSparklines", "true")
   }
 
+  // explicitly set both showFilters and showResults because the default is to show
   if (explorer.showFilters) {
-    browserParams.set("showFilters", "true")
+    browserParams.set("showFilters", explorer.showFilters ? "true" : "false")
   }
   if (explorer.showResults) {
-    browserParams.set("showResults", "true")
+    browserParams.set("showResults", explorer.showResults ? "true" : "false")
   }
   if (explorer.center) {
     browserParams.set("center", `${explorer.center.lat()},${explorer.center.lng()}`)
@@ -1773,10 +1776,6 @@ explorer.decreasePlotHeight = function() {
   decreaseButton.disabled = (explorer.plotHeight <= explorer.minPlotHeight)
 
   updateUrlHash()
-}
-
-explorer.sparklineAnimation = function() {
-
 }
 
 // call initMap() as we fully loaded maps api to be able to extend the overlays in mapOverlay.js
