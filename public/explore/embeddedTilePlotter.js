@@ -45,7 +45,7 @@
 	
 */
 
-class ETL {
+class ETP {
 
 	constructor(tileDataSource) {
 		this.drawPoints = false
@@ -319,16 +319,16 @@ class ETL {
 
 		if (this.tileLevel != level) {
 			// all new tiles, simple
-			return ETL._genTiles(level, startOffset, endOffset)
+			return ETP._genTiles(level, startOffset, endOffset)
 		}
 		else {
 			// we already have tiles at this level
 			// so figure out which we have to get
 			if (startOffset < this.tileStartOffset) {
-				return ETL._genTiles(level, startOffset, Math.min(endOffset, this.tileStartOffset))
+				return ETP._genTiles(level, startOffset, Math.min(endOffset, this.tileStartOffset))
 			}
 			else if (endOffset >= this.tileEndOffset) {
-				return ETL._genTiles(level, Math.max(startOffset, this.tileEndOffset), endOffset)
+				return ETP._genTiles(level, Math.max(startOffset, this.tileEndOffset), endOffset)
 			}
 			else {
 				return []
@@ -400,7 +400,7 @@ class ETL {
 	_tileReceived(tileIndex) {
 		let tile = this.tiles[tileIndex]
 
-		// console.log(`ETL received tile ${tile.level}.${tile.offset} at #${tileIndex} with ${tile.data.length} samples`)
+		// console.log(`ETP received tile ${tile.level}.${tile.offset} at #${tileIndex} with ${tile.data.length} samples`)
 
 		// if the new tile is outside of the current offset range, we have to recompute vertex positions
 		if (!this.timestampOffsetDirty) {
@@ -699,4 +699,4 @@ class ETL {
 		this._drawMarkersInRange(gl, this.plotRange)
 	}
 
-} // class ETL
+} // class ETP

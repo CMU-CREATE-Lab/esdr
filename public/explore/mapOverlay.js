@@ -1270,7 +1270,7 @@ _binarySearch(array, predicate) {
 
 		let tileSource = this.feedDataSource.dataSourceForChannel(feedId, channelName)
 
-		let plotter = new ETL(tileSource)
+		let plotter = new ETP(tileSource)
 
 		this.sparkLines.set(`${feedId}.${channelName}`, plotter)
 
