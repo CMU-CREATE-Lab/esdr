@@ -422,19 +422,21 @@ class ETP {
 	getPrevPositionToConnectToTile(tileIndex) {
 		let tile = this.tiles[(tileIndex + this.NUM_TILES) % this.NUM_TILES]
 		let prevTile = this.tiles[(tileIndex-1 + this.NUM_TILES) % this.NUM_TILES]
-		if ((tile.level == prevTile.level) || (prevTile.offset == tile.offset-1) || (prevTile.data.length > 0))
+		if ((tile.level == prevTile.level) && (prevTile.offset == tile.offset-1) && (prevTile.data.length > 0))
 			return prevTile.data.slice(-1).map(s => [s[0] - this.timestampOffset, s[1]])
-		else
+		else {
 			return [[NaN, NaN]]
+		}
 	}
 
 	getNextPositionToConnectToTile(tileIndex) {
 		let tile = this.tiles[(tileIndex + this.NUM_TILES) % this.NUM_TILES]
 		let nextTile = this.tiles[(tileIndex+1 + this.NUM_TILES) % this.NUM_TILES]
-		if ((tile.level == nextTile.level) || (nextTile.offset == tile.offset+1) || (nextTile.data.length > 0))
+		if ((tile.level == nextTile.level) && (nextTile.offset == tile.offset+1) && (nextTile.data.length > 0))
 			return nextTile.data.slice(0,1).map(s => [s[0] - this.timestampOffset, s[1]])
-		else
+		else {
 			return [[NaN, NaN]]
+		}
 	}
 
 
@@ -489,7 +491,10 @@ class ETP {
 			let indexOffset = tileIndex*this.NUM_SAMPLES_PER_TILE*this.NUM_VERTICES_PER_SAMPLE
 
 			// check if neighbouring tiles have been dirtied, which means we have to redo the beginning/end segments
-			let isPositionDirty = tile.isPositionDirty || this.isTilePositionDirty(tileIndex-1) || this.isTilePositionDirty(tileIndex+1)
+			// and this means attributes (as offsets that have to be recomputed for the connecting segments are attributes)
+			let areNeighbourPositionsDirty = this.isTilePositionDirty(tileIndex-1) || this.isTilePositionDirty(tileIndex+1)
+			let isPositionDirty = tile.isPositionDirty
+			let areAttributesDirty = tile.areAttributesDirty || areNeighbourPositionsDirty
 
 			if (isPositionDirty && tile.data) {
 
@@ -507,8 +512,6 @@ class ETP {
 				let dstByteOffset = indexOffset*this.NUM_POSITION_ELEMENTS*Float32Array.BYTES_PER_ELEMENT
 				gl.bufferSubData(gl.ARRAY_BUFFER, dstByteOffset, new Float32Array(positions.flat()))
 
-
-				tile.isPositionDirty = false
 			}
 
 			if (tile.areIndicesDirty) {
@@ -524,7 +527,6 @@ class ETP {
 				tile.indexValues = tile.data.map( sample => sample[1] )
 
 				indicesDirty = true
-				tile.areIndicesDirty = false
 			}
 
 			let orderedIndex = (tileIndex - firstTileIndex + this.tiles.length) % this.tiles.length
@@ -532,7 +534,7 @@ class ETP {
 			indexTimes[orderedIndex] = tile.indexTimes
 			indexValues[orderedIndex] = tile.indexValues
 
-			if (tile.areAttributesDirty) {
+			if (areAttributesDirty) {
 
 				let pixelScale = window.devicePixelRatio || 1.0
 
@@ -608,9 +610,15 @@ class ETP {
 				gl.bufferSubData(gl.ARRAY_BUFFER, strokeColorDstByte, new Float32Array(strokeColors.flat()))
 
 
-				tile.areAttributesDirty = false
 			}
 
+		})
+
+		// remove dirty flags AFTER the update loop, as neighbouring tiles check on each other for connecting segment updates
+		activeTiles.forEach(tile => {
+			tile.areAttributesDirty = false
+			tile.areIndicesDirty = false
+			tile.isPositionDirty = false
 		})
 
 		if (indicesDirty) {
