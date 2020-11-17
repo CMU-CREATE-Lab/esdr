@@ -1282,7 +1282,7 @@ _binarySearch(array, predicate) {
 			let feedId = parseInt(channelId.slice(0, channelId.indexOf('.')))
 			let feed = this.feedDataSource.feeds.get(feedId)
 			// feed might not be loaded, yet, in which case we don't know its position
-			if (!feed)
+			if (!feed || !feed.latlng)
 				continue
 
 			let pxOffset = this.geoCoordsToCanvasPixel(feed.latlng)

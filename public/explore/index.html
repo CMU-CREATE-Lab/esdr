@@ -1312,11 +1312,11 @@ explorer.interactiveSelectChannelWithId = function(channelId, isSelected) {
   if (isSelected) {
     explorer.addPlot(feedId, channelName)
     if (explorer.showSparklines)
-      explorer.mapOverlay.addSparklinePlot(feedId, channelId)
+      explorer.mapOverlay.addSparklinePlot(feedId, channelName)
   }
   else {
     explorer.removePlot(feedId, channelName)
-    explorer.mapOverlay.removeSparklinePlot(feedId, channelId)
+    explorer.mapOverlay.removeSparklinePlot(feedId, channelName)
   }
 
   let resultsCheckbox = document.getElementById(`searchResults-${channelId}`)
