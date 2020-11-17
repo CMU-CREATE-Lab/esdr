@@ -1262,6 +1262,15 @@ _binarySearch(array, predicate) {
 		}
 	}
 
+	sparklineColorMap(feedId, channelName) {
+		if (channelName.indexOf("tVOC") == 0) {
+			return {texture: "colorscale-rainbow.png", range: {min: 0.0, max: 2000.0}}
+		}
+		else {
+			return {texture: undefined, range: undefined}
+		}
+	}
+
 	removeSparklinePlot(feedId, channelName) {
 		this.sparkLines.delete(`${feedId}.${channelName}`)
 	}
@@ -1270,7 +1279,9 @@ _binarySearch(array, predicate) {
 
 		let tileSource = this.feedDataSource.dataSourceForChannel(feedId, channelName)
 
-		let plotter = new ETP(tileSource)
+		let {texture: colorMapTexture, range: colorMapRange} = this.sparklineColorMap(feedId, channelName)
+
+		let plotter = new ETP(tileSource, colorMapTexture, colorMapRange)
 
 		this.sparkLines.set(`${feedId}.${channelName}`, plotter)
 

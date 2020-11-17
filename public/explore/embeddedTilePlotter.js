@@ -47,7 +47,7 @@
 
 class ETP {
 
-	constructor(tileDataSource) {
+	constructor(tileDataSource, colorMapTexture, colorMapYRange) {
 		this.drawPoints = false
 
 		this.NUM_SAMPLES_PER_TILE 		= 512
@@ -70,6 +70,14 @@ class ETP {
 		this.tileDataSource = tileDataSource
 		this.timestampOffsetDirty = true
 
+		if (colorMapTexture !== undefined)
+			this.fillColor = [1.0, 1.0, 1.0, 1.0] // white color when color mapped
+		else
+			this.fillColor = [1.0, 0.0, 0.0, 1.0] // red otherwise
+
+		this.colorMapTexture = colorMapTexture
+
+		this.colorMapYRange = colorMapYRange || {min: 0.0, max: 100.0}
 	}
 
 	_loadShader(gl, type, source) {
@@ -108,6 +116,87 @@ class ETP {
 	  return shaderProgram
 	}
 
+	//
+	// Initialize a texture and load an image.
+	// When the image finished loading copy it into the texture.
+	//
+	loadTexture(gl, url) {
+		function isPowerOf2(value) {
+		  return (value & (value - 1)) == 0;
+		}
+
+	  const texture = gl.createTexture();
+	  gl.bindTexture(gl.TEXTURE_2D, texture);
+
+	  // Because images have to be downloaded over the internet
+	  // they might take a moment until they are ready.
+	  // Until then put a single pixel in the texture so we can
+	  // use it immediately. When the image has finished downloading
+	  // we'll update the texture with the contents of the image.
+	  const level = 0;
+	  const internalFormat = gl.RGBA;
+	  const width = 2;
+	  const height = 1;
+	  const border = 0;
+	  const srcFormat = gl.RGBA;
+	  const srcType = gl.UNSIGNED_BYTE;
+	  const pixel = new Uint8Array([0, 0, 0, 0, 255, 255, 255, 255]); 
+	  gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+	                width, height, border, srcFormat, srcType,
+	                pixel);
+
+	  const image = new Image()
+
+	  image.onload = function() {
+	    gl.bindTexture(gl.TEXTURE_2D, texture)
+	    gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, image)
+
+	    // // WebGL1 has different requirements for power of 2 images
+	    // // vs non power of 2 images so check if the image is a
+	    // // power of 2 in both dimensions.
+	    // if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
+	    //    // Yes, it's a power of 2. Generate mips.
+	    //    gl.generateMipmap(gl.TEXTURE_2D);
+	    // } else {
+				// No, it's not a power of 2. Turn off mips and set
+				// wrapping to clamp to edge
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	    // }
+	  }
+	  image.src = url
+
+	  return texture;
+	}
+
+	whiteTexture(gl) {
+	  const texture = gl.createTexture();
+	  gl.bindTexture(gl.TEXTURE_2D, texture);
+
+	  // Because images have to be downloaded over the internet
+	  // they might take a moment until they are ready.
+	  // Until then put a single pixel in the texture so we can
+	  // use it immediately. When the image has finished downloading
+	  // we'll update the texture with the contents of the image.
+	  const level = 0;
+	  const internalFormat = gl.RGBA;
+	  const width = 2;
+	  const height = 2;
+	  const border = 0;
+	  const srcFormat = gl.RGBA;
+	  const srcType = gl.UNSIGNED_BYTE;
+	  const pixel = new Uint8Array([255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255]); 
+	  gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+	                width, height, border, srcFormat, srcType,
+	                pixel);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+
+	  return texture;
+	}
+
 	_initGl(gl) {
 
 		// check that element indices can be UINT32, for we would like to address more than 65k vertices at a time
@@ -120,6 +209,12 @@ class ETP {
 		// if WebGL context has been successfully setup, assign it to an ivar for later use
 		this.gl = gl
 
+		// load colormap
+		if (this.colorMapTexture === undefined)
+			this.colorMapTexture = this.whiteTexture(gl)
+		else if (typeof this.colorMapTexture === "string")
+			this.colorMapTexture = this.loadTexture(gl, this.colorMapTexture)
+
 		const markerVertexShader = `
 
 	    attribute vec2 pxVertexPos;
@@ -131,12 +226,14 @@ class ETP {
 
 	    uniform mat4 modelViewMatrix;
 	    uniform mat4 projectionMatrix;
+	    uniform vec2 colorMapYRange;
 
 	    varying vec2 pxCenterOffset; 
 	    varying float pxMarkerSize;
 	    varying float pxStrokeWidth;
 	    varying vec4 fillColor;
 	    varying vec4 strokeColor;
+	    varying float colorMapValue;
 
 	    void main() {
 
@@ -155,6 +252,7 @@ class ETP {
 	      strokeColor = strokeColorIn;
 	      pxMarkerSize = pxMarkerSizeIn;
 	      pxStrokeWidth = pxStrokeWidthIn;
+	      colorMapValue = (pxVertexPos.y - colorMapYRange[0])/(colorMapYRange[1]-colorMapYRange[0]);
 	    }
   	`
 		const lineVertexShader = `
@@ -168,12 +266,14 @@ class ETP {
 
 	    uniform mat4 modelViewMatrix;
 	    uniform mat4 projectionMatrix;
+	    uniform vec2 colorMapYRange;
 
 	    varying vec2 pxCenterOffset; 
 	    varying float pxMarkerSize;
 	    varying float pxStrokeWidth;
 	    varying vec4 fillColor;
 	    varying vec4 strokeColor;
+	    varying float colorMapValue;
 
 	    void main() {
 
@@ -199,6 +299,7 @@ class ETP {
 	      strokeColor = strokeColorIn;
 	      pxMarkerSize = pxMarkerSizeIn;
 	      pxStrokeWidth = pxStrokeWidthIn;
+	      colorMapValue = (pxVertexPos.y - colorMapYRange[0])/(colorMapYRange[1]-colorMapYRange[0]);
 	    }
   	`
 
@@ -210,12 +311,16 @@ class ETP {
 	  	varying float pxStrokeWidth;
 	  	varying vec4 fillColor;
 	  	varying vec4 strokeColor;
+	    varying float colorMapValue;
+
+	    uniform sampler2D colorMapSampler;
 
 	    void main() {
 	    	float r = length(pxCenterOffset);
 	    	float rd = (0.5*pxMarkerSize - r);
 	    	float fillCoverage = clamp(0.5 + 2.0*(rd - 0.5*pxStrokeWidth), 0.0, 1.0);
-	    	vec4 fill = vec4(fillColor.rgb, fillColor.a)*fillCoverage;
+	    	vec4 mappedColor = texture2D(colorMapSampler, vec2(colorMapValue, 0.5));
+	    	vec4 fill = mappedColor*vec4(fillColor.rgb, fillColor.a)*fillCoverage;
 	    	float strokeCoverage = clamp(0.5 - 2.0*(rd - 0.5*pxStrokeWidth), 0.0, 1.0)*clamp(0.5 + 2.0*(rd + 0.5*pxStrokeWidth), 0.0, 1.0);
 	    	vec4 stroke = strokeColor*strokeCoverage;
 	      gl_FragColor = fill + stroke;
@@ -238,6 +343,8 @@ class ETP {
   	this.markerShader.uniformLocations = {
   		modelViewMatrix: 	gl.getUniformLocation(this.markerShader.shaderProgram, "modelViewMatrix"),
   		projectionMatrix: 	gl.getUniformLocation(this.markerShader.shaderProgram, "projectionMatrix"),
+  		colorMapYRange: 	gl.getUniformLocation(this.markerShader.shaderProgram, "colorMapYRange"),
+  		colorMapSampler: 	gl.getUniformLocation(this.markerShader.shaderProgram, "colorMapSampler"),
 
   	}
 
@@ -542,7 +649,7 @@ class ETP {
 
 				let strokeWidths = (new Array(tile.positions.length)).fill((new Array(4)).fill(0.0))
 
-				let fillColors = (new Array(tile.positions.length)).fill((new Array(4)).fill([1.0,0.0,0.0,1.0]).flat())
+				let fillColors = (new Array(tile.positions.length)).fill((new Array(4)).fill(this.fillColor).flat())
 				let strokeColors = (new Array(tile.positions.length)).fill((new Array(4)).fill([0.0,0.0,0.0,0.0]).flat())
 
 				if (this.drawPoints)
@@ -739,6 +846,11 @@ class ETP {
 		gl.useProgram(shader.shaderProgram)
 		gl.uniformMatrix4fv(shader.uniformLocations.modelViewMatrix, false, MV)
 		gl.uniformMatrix4fv(shader.uniformLocations.projectionMatrix, false, PM)
+		gl.uniform2fv(shader.uniformLocations.colorMapYRange, [this.colorMapYRange.min, this.colorMapYRange.max])
+
+		gl.activeTexture(gl.TEXTURE0);
+		gl.bindTexture(gl.TEXTURE_2D, this.colorMapTexture)
+		gl.uniform1i(shader.uniformLocations.colorMapSampler, 0)
 
 		this.bindGlBuffers(gl, shader)
 
