@@ -60,6 +60,7 @@ class ETP {
 		this.NUM_OFFSET_ELEMENTS			= 2
 		this.NUM_SIZE_ELEMENTS				= 1
 		this.NUM_STROKEWIDTH_ELEMENTS	= 1
+		this.NUM_COLORMAPVALUE_ELEMENTS	= 1
 		this.NUM_FILLCOLOR_ELEMENTS		= 4
 		this.NUM_STROKECOLOR_ELEMENTS	= 4
 
@@ -221,6 +222,7 @@ class ETP {
 	    attribute vec2 pxVertexOffsetDirection;
 	    attribute float pxMarkerSizeIn;
 	    attribute float pxStrokeWidthIn;
+	    attribute float colorMapValueIn;
 	    attribute vec4 fillColorIn;
 	    attribute vec4 strokeColorIn;
 
@@ -252,7 +254,7 @@ class ETP {
 	      strokeColor = strokeColorIn;
 	      pxMarkerSize = pxMarkerSizeIn;
 	      pxStrokeWidth = pxStrokeWidthIn;
-	      colorMapValue = (pxVertexPos.y - colorMapYRange[0])/(colorMapYRange[1]-colorMapYRange[0]);
+	      colorMapValue = (colorMapValueIn - colorMapYRange[0])/(colorMapYRange[1]-colorMapYRange[0]);
 	    }
   	`
 		const lineVertexShader = `
@@ -261,6 +263,7 @@ class ETP {
 	    attribute vec2 pxVertexOffsetDirection;
 	    attribute float pxMarkerSizeIn;
 	    attribute float pxStrokeWidthIn;
+	    attribute float colorMapValueIn;
 	    attribute vec4 fillColorIn;
 	    attribute vec4 strokeColorIn;
 
@@ -299,7 +302,7 @@ class ETP {
 	      strokeColor = strokeColorIn;
 	      pxMarkerSize = pxMarkerSizeIn;
 	      pxStrokeWidth = pxStrokeWidthIn;
-	      colorMapValue = (pxVertexPos.y - colorMapYRange[0])/(colorMapYRange[1]-colorMapYRange[0]);
+	      colorMapValue = (colorMapValueIn - colorMapYRange[0])/(colorMapYRange[1]-colorMapYRange[0]);
 	    }
   	`
 
@@ -337,6 +340,7 @@ class ETP {
   		pxVertexOffsetDirection: 	gl.getAttribLocation(this.markerShader.shaderProgram, "pxVertexOffsetDirection"),
   		pxMarkerSize: 						gl.getAttribLocation(this.markerShader.shaderProgram, "pxMarkerSizeIn"),
   		pxStrokeWidth: 						gl.getAttribLocation(this.markerShader.shaderProgram, "pxStrokeWidthIn"),
+  		colorMapValue: 						gl.getAttribLocation(this.markerShader.shaderProgram, "colorMapValueIn"),
   		fillColor: 								gl.getAttribLocation(this.markerShader.shaderProgram, "fillColorIn"),
   		strokeColor: 							gl.getAttribLocation(this.markerShader.shaderProgram, "strokeColorIn"),  		
   	}
@@ -373,6 +377,10 @@ class ETP {
 		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.strokeWidthBuffer)
 		gl.bufferData(gl.ARRAY_BUFFER, bufferBase*this.NUM_STROKEWIDTH_ELEMENTS, gl.STATIC_DRAW)
 
+		buffers.colorMapValueBuffer = buffers.colorMapValueBuffer || gl.createBuffer()
+		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.colorMapValueBuffer)
+		gl.bufferData(gl.ARRAY_BUFFER, bufferBase*this.NUM_COLORMAPVALUE_ELEMENTS, gl.STATIC_DRAW)
+
 		buffers.fillColorBuffer = buffers.fillColorBuffer || gl.createBuffer()
 		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.fillColorBuffer)
 		gl.bufferData(gl.ARRAY_BUFFER, bufferBase*this.NUM_FILLCOLOR_ELEMENTS, gl.STATIC_DRAW)
@@ -403,6 +411,9 @@ class ETP {
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.strokeWidthBuffer)
 		gl.vertexAttribPointer(shader.attribLocations.pxStrokeWidth, this.NUM_STROKEWIDTH_ELEMENTS, gl.FLOAT, false, 0, 0)
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.colorMapValueBuffer)
+		gl.vertexAttribPointer(shader.attribLocations.colorMapValue, this.NUM_COLORMAPVALUE_ELEMENTS, gl.FLOAT, false, 0, 0)
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.fillColorBuffer)
 		gl.vertexAttribPointer(shader.attribLocations.fillColor, this.NUM_FILLCOLOR_ELEMENTS, gl.FLOAT, false, 0, 0)
@@ -618,6 +629,13 @@ class ETP {
 				// make sure to put vertices into the alloted window, even if its not filled
 				let dstByteOffset = indexOffset*this.NUM_POSITION_ELEMENTS*Float32Array.BYTES_PER_ELEMENT
 				gl.bufferSubData(gl.ARRAY_BUFFER, dstByteOffset, new Float32Array(positions.flat()))
+
+				// colormap based on y-value
+				let colorMapValues = tile.positions.map(pos => [pos[1], pos[1], pos[1], pos[1]]).flat()
+				
+				gl.bindBuffer(gl.ARRAY_BUFFER, buffers.colorMapValueBuffer)
+				let dstByteColor = indexOffset*this.NUM_COLORMAPVALUE_ELEMENTS*Float32Array.BYTES_PER_ELEMENT
+				gl.bufferSubData(gl.ARRAY_BUFFER, dstByteColor, new Float32Array(colorMapValues.flat()))
 
 			}
 
