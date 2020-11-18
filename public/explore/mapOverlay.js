@@ -1272,11 +1272,11 @@ _binarySearch(array, predicate) {
 		else if (channelName.indexOf("SO2_PPM") == 0) {
 			return {texture: "colorscale-rainbow.png", range: {min: 0.0, max: 13.0}}
 		}
-		else if (channelName.indexOf("SO2") == 0) {
-			return {texture: "colorscale-rainbow.png", range: {min: 0.0, max: 13.0}}
-		}
 		else if (channelName.indexOf("SO2_PPB") == 0) {
 			return {texture: "colorscale-rainbow.png", range: {min: 0.0, max: 13000.0}}
+		}
+		else if (channelName.indexOf("SO2") == 0) {
+			return {texture: "colorscale-rainbow.png", range: {min: 0.0, max: 13.0}}
 		}
 		else {
 			return {texture: undefined, range: undefined}
