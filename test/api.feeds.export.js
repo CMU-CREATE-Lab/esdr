@@ -510,6 +510,26 @@ describe("REST API", function() {
                         }, done);
             });
 
+            it("Should fail to export if timezone is invalid (CSV)", function(done) {
+               doExport({
+                           url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage,conductivity,temperature,annotation/export?timezone=bogus",
+                           expectedHttpStatus : httpStatus.UNPROCESSABLE_ENTITY,
+                           expectedStatusText : 'error',
+                           expectedResponseData : { timezone : "Invalid timezone" },
+                           willIgnoreText : true
+                        }, done);
+            });
+
+            it("Should fail to export if timezone is invalid (JSON)", function(done) {
+               doExport({
+                           url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage,conductivity,temperature,annotation/export?timezone=bogus&format=json",
+                           expectedHttpStatus : httpStatus.UNPROCESSABLE_ENTITY,
+                           expectedStatusText : 'error',
+                           expectedResponseData : { timezone : "Invalid timezone" },
+                           willIgnoreText : true
+                        }, done);
+            });
+
             it("Should fail to export a non-existent feed (CSV)", function(done) {
                doExport({
                            url : ESDR_FEEDS_API_URL + "/-1/channels/battery_voltage,conductivity,temperature,annotation/export",
@@ -527,6 +547,72 @@ describe("REST API", function() {
                            expectedStatusText : 'error',
                            expectedResponseData : null,
                            willIgnoreText : true
+                        }, done);
+            });
+
+            it("Should be able to export feed for America/New_York time zone (CSV)", function(done) {
+               const maxTime = 1380556691;
+               doExport({
+                           url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage/export?timezone=America/New_York&to=" + maxTime,
+                           expectedFileName : 'export_of_feed_' + feed1.id + '_to_time_' + maxTime + '.csv',
+                           expectedHttpStatus : httpStatus.OK,
+                           expectedStatusText : 'success',
+                           hasEmptyBody : true,
+                           expectedResponseText : 'Iso8601Time,' + feed1.userId + '.feed_' + feed1.id + '.battery_voltage\n' +
+                                                  '2013-09-27T06:04:39.100000-04:00,3.85\n' +
+                                                  '2013-09-29T06:13:22.000000-04:00,3.84\n' +
+                                                  '2013-09-29T12:32:37.000000-04:00,3.84\n' +
+                                                  '2013-09-30T11:58:10.000000-04:00,3.84\n'
+                        }, done);
+            });
+
+            it("Should be able to export feed for UTC time zone (CSV)", function(done) {
+               const maxTime = 1380556691;
+               doExport({
+                           url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage/export?timezone=UTC&to=" + maxTime,
+                           expectedFileName : 'export_of_feed_' + feed1.id + '_to_time_' + maxTime + '.csv',
+                           expectedHttpStatus : httpStatus.OK,
+                           expectedStatusText : 'success',
+                           hasEmptyBody : true,
+                           expectedResponseText : 'Iso8601Time,' + feed1.userId + '.feed_' + feed1.id + '.battery_voltage\n' +
+                                                  '2013-09-27T10:04:39.100000+00:00,3.85\n' +
+                                                  '2013-09-29T10:13:22.000000+00:00,3.84\n' +
+                                                  '2013-09-29T16:32:37.000000+00:00,3.84\n' +
+                                                  '2013-09-30T15:58:10.000000+00:00,3.84\n'
+                        }, done);
+            });
+
+            it("Should be able to export feed for America/New_York time zone (JSON)", function(done) {
+               const maxTime = 1380556691;
+               doExport({
+                           url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage/export?format=json&timezone=America/New_York&to=" + maxTime,
+                           expectedFileName : 'export_of_feed_' + feed1.id + '_to_time_' + maxTime + '.json',
+                           expectedHttpStatus : httpStatus.OK,
+                           expectedStatusText : 'success',
+                           hasEmptyBody : true,
+                           expectedResponseText : '{"channel_names":["' + feed1.userId + '.feed_' + feed1.id + '.battery_voltage"],"data":[\n' +
+                                                  '["2013-09-27T06:04:39.100000-04:00",3.85],\n' +
+                                                  '["2013-09-29T06:13:22.000000-04:00",3.84],\n' +
+                                                  '["2013-09-29T12:32:37.000000-04:00",3.84],\n' +
+                                                  '["2013-09-30T11:58:10.000000-04:00",3.84]\n' +
+                                                  ']}\n'
+                        }, done);
+            });
+
+            it("Should be able to export feed for UTC time zone (JSON)", function(done) {
+               const maxTime = 1380556691;
+               doExport({
+                           url : ESDR_FEEDS_API_URL + "/" + feed1.id + "/channels/battery_voltage/export?format=json&timezone=UTC&to=" + maxTime,
+                           expectedFileName : 'export_of_feed_' + feed1.id + '_to_time_' + maxTime + '.json',
+                           expectedHttpStatus : httpStatus.OK,
+                           expectedStatusText : 'success',
+                           hasEmptyBody : true,
+                           expectedResponseText : '{"channel_names":["' + feed1.userId + '.feed_' + feed1.id + '.battery_voltage"],"data":[\n' +
+                                                  '["2013-09-27T10:04:39.100000+00:00",3.85],\n' +
+                                                  '["2013-09-29T10:13:22.000000+00:00",3.84],\n' +
+                                                  '["2013-09-29T16:32:37.000000+00:00",3.84],\n' +
+                                                  '["2013-09-30T15:58:10.000000+00:00",3.84]\n' +
+                                                  ']}\n'
                         }, done);
             });
 

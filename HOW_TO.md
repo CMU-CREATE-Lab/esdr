@@ -391,9 +391,11 @@ You can currently export one or more channels from a single feed to CSV (the def
 
 Here's the format:
 
-    https://esdr.cmucreatelab.org/api/v1/feeds/FEED_ID_OR_API_KEY/channels/ONE_OR_MORE_CHANNELS_COMMA_DELIMITED/export?from=UNIX_TIME_SECS&to=UNIX_TIME_SECS&format=[csv|json]
+    https://esdr.cmucreatelab.org/api/v1/feeds/FEED_ID_OR_API_KEY/channels/ONE_OR_MORE_CHANNELS_COMMA_DELIMITED/export?from=UNIX_TIME_SECS&to=UNIX_TIME_SECS&format=[csv|json]&timezone=IANA_TIMEZONE
 
-The "from", "to", and "format" filters are all optional.
+The "from", "to", "format", and "timezone" parameters are all optional.  
+
+Timestamps of exported data will be in UNIX epoch time if no timezone is specified.  If a timezone parameter is specified, timestamps will be ISO8601 format for the given timezone.  The value of the timezone parameter is case-sensitive and must be a name from the [IANA time zone database](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) (e.g. "UTC", "America/New_York", etc).
 
 Examples:
 
@@ -401,9 +403,8 @@ Examples:
    
     https://esdr.cmucreatelab.org/api/v1/feeds/1/channels/PM25B_UG_M3_daily_mean/export?from=1420088400&to=1451624399&format=json
     
-Multi-feed export is coming soon.
-
-
+    https://esdr.cmucreatelab.org/api/v1/feeds/1/channels/PM25B_UG_M3_daily_mean/export?from=1420088400&to=1451624399&format=csv&timezone=America/New_York
+    
 ## Queries
 
 Querying over clients, products, devices, and feeds is fairly robust.  You can do where clauses joined by AND or OR (or both), order by (ASC or DESC), limit, offset, and specify which fields you want to select.  Where clauses also support comparison with =, <>, <, <=, >, >=, is null, and is not null.  Detailed examples will be coming soon.  Some simple examples:

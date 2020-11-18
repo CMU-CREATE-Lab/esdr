@@ -7,6 +7,7 @@ const JSendError = require('jsend-utils').JSendError;
 const ValidationError = require('../../lib/errors').ValidationError;
 const isPositiveIntString = require('../../lib/typeUtils').isPositiveIntString;
 const isString = require('data-type-utils').isString;
+const isNonEmptyString = require('data-type-utils').isNonEmptyString;
 const isFeedApiKey = require('../../lib/typeUtils').isFeedApiKey;
 
 module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
@@ -263,6 +264,10 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                     return isNew;
                  });
 
+                 // Pick out the timezone, if any.  I won't bother doing validation here other than verifying that it's
+                 // a non-empty string since node-bodytrack-datastore does its own validation.
+                 const timezone = isNonEmptyString(req.query.timezone) ? req.query.timezone : null;
+
                  // parse the min and max times
                  const parseTimeString = function(str) {
                     if (isString(str)) {
@@ -323,7 +328,8 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                                                        {
                                                                           minTime : minTime,
                                                                           maxTime : maxTime,
-                                                                          format : format
+                                                                          format : format,
+                                                                          timezone : timezone
                                                                        },
                                                                        function(err, eventEmitter) {
                                                                           if (err) {

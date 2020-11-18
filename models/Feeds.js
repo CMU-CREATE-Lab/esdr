@@ -660,15 +660,14 @@ module.exports = function(databaseHelper) {
    };
 
    /**
-    * Exports the specified feed channels, optionally filtered with the given filter.  Data is returned to the callback
-    * via an EventEmitter.
+    * Exports the specified feed channels, with the given options. Data is returned to the callback via an EventEmitter.
     *
     * @param {Array} feedAndChannelsObjects - array of objects of the form <code>{feed: FEED_OBJ, channels: ["CHANNEL_1",...]}</code>
-    * @param {Object} filter
+    * @param {Object} options
     * @param {function} callback
     */
-   this.exportData = function(feedAndChannelsObjects, filter, callback) {
-      filter = filter || {};
+   this.exportData = function(feedAndChannelsObjects, options, callback) {
+      options = options || {};
       const userIdDeviceChannelObjects = [];
       feedAndChannelsObjects.forEach(function(feedAndChannels) {
          userIdDeviceChannelObjects.push({
@@ -679,9 +678,10 @@ module.exports = function(databaseHelper) {
       });
       datastore.exportData(userIdDeviceChannelObjects,
                            {
-                              minTime : filter.minTime,
-                              maxTime : filter.maxTime,
-                              format : filter.format
+                              minTime : options.minTime,
+                              maxTime : options.maxTime,
+                              format : options.format,
+                              timezone : options.timezone
                            },
                            callback);
    };
