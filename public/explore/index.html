@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta charset="UTF-8">
+  <title>Explore ESDR</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
 <style>
 
 /*color definitions*/
@@ -16,11 +17,17 @@
   --dark-baby-blue: #84BBF2;  /* HSB 210 45% 95% */
 
   --search-block-color: var(--light-sky-blue);
-  --plot-toolbar-color: var(--light-sky-blue);
-  --plot-button-color: var(--light-baby-blue);
+  --search-button-color: var(--light-sky-blue);
+  --search-active-button-color: var(--light-baby-blue);
+  --search-groupbox-color: var(--light-baby-blue);
+  --search-groupcontent-color: var(--light-sky-blue);
+
   --sidebar-color: var(--dark-sky-blue);
   --feed-block-color: var(--light-sky-blue);
   --channel-block-color: var(--light-sky-blue);
+  
+  --plot-toolbar-color: var(--light-sky-blue);
+  --plot-button-color: var(--light-baby-blue);
   --scrubber-color: var(--medium-sky-blue);
   --scrubber-button-color: var(--dark-baby-blue);
 }
@@ -111,30 +118,33 @@ input[type="search"] {
 }
 
 .searchbar {
+  font-size: large;
   display: flex;
   align-items: center;
   /*background-color: #777;*/
 }
 
 .searchbar-button {
-  /*float: left;*/
+  height: 1.5em;
   vertical-align: middle;
-/*  font-size: 20px;
-  cursor: pointer;
-*/  
-  font-size: large;
-  height: inherit;
-  background-color: inherit;
+  margin: 0em 0.1em;
+  padding: 0em 0.333em;
+  font-size: inherit;
+  /*background-color: inherit;*/
   /*background-color: #EEE;*/
-  display: inline;
-  /*color: white;*/
-  /*padding: 10px 15px;*/
+  background-color: var(--search-button-color);
+  display: flex;
+  align-items: center;
   border: none;
   cursor: pointer;
-/*  padding: 0px;
-  margin: 0px;
-*/
+  border-radius: 3px;
+  box-shadow: 0px 1px 2px rgba(0,0,0,0.15);
   text-align: center;
+}
+
+.active-searchbar-button {
+  background-color: var(--search-active-button-color);
+  border-radius: 3px;
 }
 
 .in-the-middle {
@@ -149,17 +159,47 @@ input[type="search"] {
 }
 
 .search-text {
+  height: 1.5em;
   border-radius: 3px;
   border: 0px solid rgba(0,0,0,0.2);
-  box-shadow: 0px 0px 1px rgba(0,0,0,0.1);
+  box-shadow: 0px 1px 2px rgba(0,0,0,0.15);
   font-size: large;
 }
 
-.search-filters {
-  height: 0px;
+.search-groupbox-title {
+  margin: 0.25em 0.5em;
+}
+
+.search-group-content {
+  background-color: var(--search-groupcontent-color);
+  border-radius: 3px;
+  padding: 0.25em;
+  margin: 0.25em;
   overflow: hidden;
   /*display: none;*/
   transition: 0.3s;
+  box-shadow: 0px 1px 1px rgba(0,0,0,0.1) inset;
+}
+
+.search-groupbox {
+  height: 0px;
+  background-color: var(--search-groupbox-color);
+  border-radius: 3px;
+  /*padding: 0.25em;*/
+  margin: 0.5em 0.1em;
+  overflow: hidden;
+  /*display: none;*/
+  box-shadow: 0px 1px 1px rgba(0,0,0,0.1);
+  transition: 0.3s;
+}
+
+.search-input-row {
+  display: flex;
+  align-items: center;
+}
+.search-input-row {
+  display: flex;
+  align-items: center;
 }
 
 .search-progress-block {
@@ -474,19 +514,30 @@ input[type="search"] {
 <div id="searchBlock" class="floaty-search">
   <div class="searchbar">
   <!-- <button class="searchbar-button" onclick="toggleSidebar()">☰</button> -->
-  <button class="searchbar-button" onclick="toggleSidebar()"><img src="hamburger.svg" class="button-icon"></img></button>
-  <div class="searchbar-divider"></div>
-  <button class="searchbar-button" onclick="toggleFilters()"><img src="filter.svg" class="button-icon"></img></button>
+  <button class="searchbar-button" id="showSearchResultsButton" onclick="explorer.toggleSidebar()"><img src="hamburger.svg" class="button-icon"></img></button>
+  <!-- <div class="searchbar-divider"></div> -->
+  <button class="searchbar-button" id="showDataFiltersButton" onclick="explorer.toggleFilters()"><img src="filter.svg" class="button-icon"></img></button>
+  <!-- <div class="searchbar-divider"></div> -->
+  <button class="searchbar-button" id="showSettingsButton" onclick="explorer.toggleSettings()"><img src="settings.svg" class="button-icon"></img></button>
   <!-- <div class="searchbar-divider"></div> -->
   <input type="search" id="sensorSearchField" class="search-text" placeholder="search sensor feeds">
   <button class="searchbar-button" onclick="doSensorSearch()"><img src="loupe.svg" class="button-icon"></img></button>
-  <div class="searchbar-divider"></div>
+  <!-- <div class="searchbar-divider"></div> -->
   <button class="searchbar-button" onclick="showHelp()">?</button>
   </div>
-  <div id="filtersBlock" class="search-filters">
-    <div><input type="checkbox" id="recentOnlyCheckbox" name="checkbox-recentOnly" title="only show sensors with new data from the last 30 days" class="in-the-middle" /><label for="recentOnlyCheckbox" class="in-the-middle"><span class="in-the-middle">Data in last 30 days</span></label></div>
-    <div><input type="checkbox" id="mapOnlyCheckbox" name="checkbox-mapOnly" title="only show sensors that are on the map area" class="in-the-middle" /><label for="mapOnlyCheckbox" class="in-the-middle"><span class="in-the-middle">On Map</span></label></div>
-    <hr></hr>
+  <div id="filtersBlock" class="search-groupbox">
+    <div class="search-groupbox-title">Data Filters</div>
+    <div class="search-group-content">
+      <div><input type="checkbox" id="recentOnlyCheckbox" name="checkbox-recentOnly" title="only show sensors with new data from the last 30 days" class="in-the-middle" /><label for="recentOnlyCheckbox" class="in-the-middle"><span class="in-the-middle">Data in Last 30 Days</span></label></div>
+      <div><input type="checkbox" id="mapOnlyCheckbox" name="checkbox-mapOnly" title="only show sensors that are on the map area" class="in-the-middle" /><label for="mapOnlyCheckbox" class="in-the-middle"><span class="in-the-middle">On Map</span></label></div>
+    </div>
+  </div>
+  <div id="settingsBlock" class="search-groupbox">
+    <div class="search-groupbox-title">Settings</div>
+    <div class="search-group-content">
+      <div class="search-input-row"><input type="checkbox" id="showSparklinesCheckbox" name="checkbox-showSparklines" title="Show Sparklines" /><label for="recentOnlyCheckbox">Sparklines on Map</label></div>
+
+    </div>
   </div>
   <div id="progressBlock" class="search-progress-block">
     <div id="searchProgressText"></div>
@@ -590,6 +641,7 @@ let explorer = {
   plots: new Map(),
   showFilters: true,
   showResults: true,
+  showSettings: true,
   plotAreaHeightPercent: 40,
   minPlotAreaHeightPercent: 20,
   maxPlotAreaHeightPercent: 80,
@@ -660,7 +712,10 @@ function initMap() {
 
   // FIXME: showSearchFilters() with a small delay, otherwise the margin computation gets confused. maybe this could be done with less hackery?
   if (explorer.showFilters)
-    setTimeout(showSearchFilters, 100)
+    setTimeout(explorer.showSearchFilters, 100)
+
+  if (explorer.showSettings)
+    setTimeout(explorer.showSearchSettings, 200)
 
   let mapdiv = document.getElementById('googlemap');
   gMap = new google.maps.Map(
@@ -914,6 +969,9 @@ function parseUrlParams() {
   if (browserParams.has("showFilters")) {
     explorer.showFilters = browserParams.get("showFilters") == "true"
   }
+  if (browserParams.has("showSettings")) {
+    explorer.showSettings = browserParams.get("showSettings") == "true"
+  }
   if (browserParams.has("showResults")) {
     explorer.showResults = browserParams.get("showResults") == "true"
   }
@@ -952,6 +1010,9 @@ function createUrlParams() {
   // explicitly set both showFilters and showResults because the default is to show
   if (explorer.showFilters) {
     browserParams.set("showFilters", explorer.showFilters ? "true" : "false")
+  }
+  if (explorer.showSettings) {
+    browserParams.set("showFilters", explorer.showSettings ? "true" : "false")
   }
   if (explorer.showResults) {
     browserParams.set("showResults", explorer.showResults ? "true" : "false")
@@ -998,11 +1059,11 @@ function adjustSidebarTopPadding(adjustment) {
 function showSearchResults() {
   let sidebar = document.getElementById("searchSidebar")
   if (!sidebar.style.width || sidebar.style.marginLeft !== "0px") {
-    toggleSidebar()
+    explorer.toggleSidebar()
   }
 }
 
-function toggleSidebar() {
+explorer.toggleSidebar = function() {
   let searchBlock = document.getElementById("searchBlock")
   let searchStyle = window.getComputedStyle(searchBlock)
   let sidebar = document.getElementById("searchSidebar")
@@ -1018,12 +1079,14 @@ function toggleSidebar() {
     sidebar.style.marginLeft = `0px`
     mainBlock.style.marginLeft = `calc(${width})`
     explorer.showResults = true
+    document.getElementById("showSearchResultsButton").classList.add("active-searchbar-button")
   }
   else {
     sidebar.style.marginLeft = `calc(0px - (${sidebar.style.width}))`
     // sidebar.style.width = "0px"
     mainBlock.style.marginLeft = "0px"
     explorer.showResults = false
+    document.getElementById("showSearchResultsButton").classList.remove("active-searchbar-button")
   }
 
   // make sure top padding exludes search box
@@ -1032,25 +1095,56 @@ function toggleSidebar() {
   updateUrlHash()
 }
 
-function showSearchFilters() {
+explorer.showSearchFilters = function() {
   let filtersBlock = document.getElementById("filtersBlock")
   if (!filtersBlock.style.height || filtersBlock.style.height === "0px") {
-    toggleFilters()
+    explorer.toggleFilters()
   }
 }
 
-function toggleFilters() {
+explorer.toggleFilters = function() {
   let filtersBlock = document.getElementById("filtersBlock")
   let adjustment = 0
   if (!filtersBlock.style.height || filtersBlock.style.height === "0px") {
     adjustment = `${filtersBlock.scrollHeight}px`
     filtersBlock.style.height = filtersBlock.scrollHeight + 'px'
     explorer.showFilters = true
+    document.getElementById("showDataFiltersButton").classList.add("active-searchbar-button")
   }
   else {
     adjustment = `-${filtersBlock.scrollHeight}px`
     filtersBlock.style.height = "0px"
     explorer.showFilters = false
+    document.getElementById("showDataFiltersButton").classList.remove("active-searchbar-button")
+  }
+
+  adjustSidebarTopPadding(adjustment)
+
+  updateUrlHash()
+
+}
+
+explorer.showSearchSettings = function() {
+  let groupBlock = document.getElementById("settingsBlock")
+  if (!groupBlock.style.height || groupBlock.style.height === "0px") {
+    explorer.toggleSettings()
+  }
+}
+
+explorer.toggleSettings = function() {
+  let groupBlock = document.getElementById("settingsBlock")
+  let adjustment = 0
+  if (!groupBlock.style.height || groupBlock.style.height === "0px") {
+    adjustment = `${groupBlock.scrollHeight}px`
+    groupBlock.style.height = groupBlock.scrollHeight + 'px'
+    explorer.showSettings = true
+    document.getElementById("showSettingsButton").classList.add("active-searchbar-button")
+  }
+  else {
+    adjustment = `-${groupBlock.scrollHeight}px`
+    groupBlock.style.height = "0px"
+    explorer.showSettings = false
+    document.getElementById("showSettingsButton").classList.remove("active-searchbar-button")
   }
 
   adjustSidebarTopPadding(adjustment)

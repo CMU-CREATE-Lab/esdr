@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" version="1.1" xmlns:xl="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" viewBox="-24 104 16 18" width="16" height="18">
+  <defs/>
+  <metadata> Produced by OmniGraffle 7.17.5\n2020-11-16 15:34:42 +0000</metadata>
+  <g id="settings" stroke-opacity="1" stroke-dasharray="none" stroke="none" fill="none" fill-opacity="1">
+    <title>settings</title>
+    <g id="settings_Layer_1">
+      <title>Layer 1</title>
+      <g id="Graphic_7">
+        <path d="M -23.000002 107 L -8.999998 107 C -8.447714 107 -8 107.44771 -8 108 L -8 108 C -8 108.55229 -8.447714 109 -8.999998 109 L -23.000002 109 C -23.552286 109 -24 108.55229 -24 108 L -24 108 C -24 107.44771 -23.552286 107 -23.000002 107 Z" fill="black"/>
+      </g>
+      <g id="Graphic_6">
+        <path d="M -23.000002 112 L -8.999998 112 C -8.447714 112 -8 112.44771 -8 113 L -8 113 C -8 113.55229 -8.447714 114 -8.999998 114 L -23.000002 114 C -23.552286 114 -24 113.55229 -24 113 L -24 113 C -24 112.44771 -23.552286 112 -23.000002 112 Z" fill="black"/>
+      </g>
+      <g id="Graphic_5">
+        <path d="M -23.000002 117 L -8.999998 117 C -8.447714 117 -8 117.44771 -8 118 L -8 118 C -8 118.55229 -8.447714 119 -8.999998 119 L -23.000002 119 C -23.552286 119 -24 118.55229 -24 118 L -24 118 C -24 117.44771 -23.552286 117 -23.000002 117 Z" fill="black"/>
+      </g>
+      <g id="Graphic_8">
+        <circle cx="-20.5" cy="108" r="1.50000239685284" fill="white"/>
+        <circle cx="-20.5" cy="108" r="1.50000239685284" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_9">
+        <circle cx="-12.5" cy="113" r="1.50000239685284" fill="white"/>
+        <circle cx="-12.5" cy="113" r="1.50000239685284" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_10">
+        <circle cx="-18.5" cy="118" r="1.50000239685285" fill="white"/>
+        <circle cx="-18.5" cy="118" r="1.50000239685285" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+    </g>
+  </g>
+</svg>
