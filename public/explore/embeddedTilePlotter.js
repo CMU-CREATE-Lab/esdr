@@ -49,12 +49,14 @@ class ETP {
 
 	constructor(tileDataSource, colorMapTexture, colorMapYRange) {
 		this.drawPoints = false
+		this.drawLines = false
+		this.drawBars = true
 
 		this.NUM_SAMPLES_PER_TILE 		= 512
 		this.NUM_TILES								= 3
 
 		this.NUM_VERTICES_PER_SAMPLE 	= 4
-		this.NUM_INDICES_PER_SAMPLE 	= this.drawPoints ? 6 : 4
+		this.NUM_INDICES_PER_SAMPLE 	= (this.drawPoints || this.drawBars) ? 6 : 4
 
 		this.NUM_POSITION_ELEMENTS		= 2
 		this.NUM_OFFSET_ELEMENTS			= 2
@@ -98,13 +100,14 @@ class ETP {
 	  return shader;
 	}
 
-	_initShaderProgram(gl, vsSource, fsSource) {
+	_initShaderProgram(gl, vsSource, fsSource, attribLocations) {
 		const vertexShader = this._loadShader(gl, gl.VERTEX_SHADER, vsSource)
 		const fragmentShader = this._loadShader(gl, gl.FRAGMENT_SHADER, fsSource)
 
 		const shaderProgram = gl.createProgram()
 		gl.attachShader(shaderProgram, vertexShader)
 		gl.attachShader(shaderProgram, fragmentShader)
+
 		gl.linkProgram(shaderProgram)
 
 		if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
@@ -137,14 +140,17 @@ class ETP {
 	  const level = 0;
 	  const internalFormat = gl.RGBA;
 	  const width = 2;
-	  const height = 1;
+	  const height = 2;
 	  const border = 0;
 	  const srcFormat = gl.RGBA;
 	  const srcType = gl.UNSIGNED_BYTE;
-	  const pixel = new Uint8Array([0, 0, 0, 0, 255, 255, 255, 255]); 
+	  const pixel = new Uint8Array([255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255]); 
 	  gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
 	                width, height, border, srcFormat, srcType,
 	                pixel);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 
 	  const image = new Image()
 
@@ -229,6 +235,7 @@ class ETP {
 	    uniform mat4 modelViewMatrix;
 	    uniform mat4 projectionMatrix;
 	    uniform vec2 colorMapYRange;
+	  	uniform float markerScale;
 
 	    varying vec2 pxCenterOffset; 
 	    varying float pxMarkerSize;
@@ -244,7 +251,7 @@ class ETP {
 
 	    	// offset vertex by direction and size of marker
 	    	// actual offset is 1px bigger than markerSize to leave room for AA
-	    	vec2 pxOffset = pxVertexOffsetDirection*(0.5*pxMarkerSizeIn + pxStrokeWidthIn + 1.0);
+	    	vec2 pxOffset = pxVertexOffsetDirection*(0.5*pxMarkerSizeIn*markerScale + pxStrokeWidthIn + 1.0);
 	    	screenSpacePos += pxOffset;
 
 	    	// outputs
@@ -252,7 +259,7 @@ class ETP {
 	      gl_Position = projectionMatrix * vec4(screenSpacePos, 0.0, 1.0);
 	      fillColor = fillColorIn;
 	      strokeColor = strokeColorIn;
-	      pxMarkerSize = pxMarkerSizeIn;
+	      pxMarkerSize = pxMarkerSizeIn*markerScale;
 	      pxStrokeWidth = pxStrokeWidthIn;
 	      colorMapValue = (colorMapValueIn - colorMapYRange[0])/(colorMapYRange[1]-colorMapYRange[0]);
 	    }
@@ -270,6 +277,7 @@ class ETP {
 	    uniform mat4 modelViewMatrix;
 	    uniform mat4 projectionMatrix;
 	    uniform vec2 colorMapYRange;
+	  	uniform float markerScale;
 
 	    varying vec2 pxCenterOffset; 
 	    varying float pxMarkerSize;
@@ -292,7 +300,7 @@ class ETP {
 
 	    	// offset vertex by direction and size of marker
 	    	// actual offset is 1px bigger than markerSize to leave room for AA
-	    	vec2 pxOffset = vertexOffsetDirection*(0.5*pxMarkerSizeIn + pxStrokeWidthIn + 1.0);
+	    	vec2 pxOffset = vertexOffsetDirection*(0.5*pxMarkerSizeIn*markerScale + pxStrokeWidthIn + 1.0);
 	    	screenSpacePos += pxOffset;
 
 	    	// outputs
@@ -300,7 +308,7 @@ class ETP {
 	      gl_Position = projectionMatrix * vec4(screenSpacePos, 0.0, 1.0);
 	      fillColor = fillColorIn;
 	      strokeColor = strokeColorIn;
-	      pxMarkerSize = pxMarkerSizeIn;
+	      pxMarkerSize = pxMarkerSizeIn*markerScale;
 	      pxStrokeWidth = pxStrokeWidthIn;
 	      colorMapValue = (colorMapValueIn - colorMapYRange[0])/(colorMapYRange[1]-colorMapYRange[0]);
 	    }
@@ -325,15 +333,15 @@ class ETP {
 	    	vec4 mappedColor = texture2D(colorMapSampler, vec2(colorMapValue, 0.5));
 	    	vec4 fill = mappedColor*vec4(fillColor.rgb, fillColor.a)*fillCoverage;
 	    	float strokeCoverage = clamp(0.5 - 2.0*(rd - 0.5*pxStrokeWidth), 0.0, 1.0)*clamp(0.5 + 2.0*(rd + 0.5*pxStrokeWidth), 0.0, 1.0);
-	    	vec4 stroke = strokeColor*strokeCoverage;
+	    	vec4 stroke = mappedColor*strokeColor*strokeCoverage;
 	      gl_FragColor = fill + stroke;
-	      // gl_FragColor = color;
+	      // gl_FragColor = mappedColor;
 	      // gl_FragColor = vec4(0.0,0.0,0.0,0.5);
 	    }
   	`
 
   	this.markerShader = {
-  		shaderProgram: this._initShaderProgram(gl, this.drawPoints ? markerVertexShader : lineVertexShader, markerFragmentShader),
+  		shaderProgram: this._initShaderProgram(gl, (this.drawPoints || this.drawBars) ? markerVertexShader : lineVertexShader, markerFragmentShader),
   	}
   	this.markerShader.attribLocations = {
   		pxVertexPos: 							gl.getAttribLocation(this.markerShader.shaderProgram, "pxVertexPos"),
@@ -344,12 +352,16 @@ class ETP {
   		fillColor: 								gl.getAttribLocation(this.markerShader.shaderProgram, "fillColorIn"),
   		strokeColor: 							gl.getAttribLocation(this.markerShader.shaderProgram, "strokeColorIn"),  		
   	}
+
+  	let maxAttributes = gl.getParameter(gl.MAX_VERTEX_ATTRIBS)
+  	console.assert(maxAttributes >= 7)
+
   	this.markerShader.uniformLocations = {
   		modelViewMatrix: 	gl.getUniformLocation(this.markerShader.shaderProgram, "modelViewMatrix"),
   		projectionMatrix: 	gl.getUniformLocation(this.markerShader.shaderProgram, "projectionMatrix"),
   		colorMapYRange: 	gl.getUniformLocation(this.markerShader.shaderProgram, "colorMapYRange"),
   		colorMapSampler: 	gl.getUniformLocation(this.markerShader.shaderProgram, "colorMapSampler"),
-
+  		markerScale: 	gl.getUniformLocation(this.markerShader.shaderProgram, "markerScale"),
   	}
 
 		this.allocateGlBuffers(gl)
@@ -398,28 +410,36 @@ class ETP {
 	bindGlBuffers(gl, shader) {
 		let buffers = this.glBuffers
 
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indexBuffer)
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.positionBuffer)
+		gl.enableVertexAttribArray(shader.attribLocations.pxVertexPos)
 		gl.vertexAttribPointer(shader.attribLocations.pxVertexPos, this.NUM_POSITION_ELEMENTS, gl.FLOAT, false, 0, 0)
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.offsetBuffer)
+		gl.enableVertexAttribArray(shader.attribLocations.pxVertexOffsetDirection)
 		gl.vertexAttribPointer(shader.attribLocations.pxVertexOffsetDirection, this.NUM_OFFSET_ELEMENTS, gl.FLOAT, false, 0, 0)
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.sizeBuffer)
+		gl.enableVertexAttribArray(shader.attribLocations.pxMarkerSize)
 		gl.vertexAttribPointer(shader.attribLocations.pxMarkerSize, this.NUM_SIZE_ELEMENTS, gl.FLOAT, false, 0, 0)
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.strokeWidthBuffer)
+		gl.enableVertexAttribArray(shader.attribLocations.pxStrokeWidth)
 		gl.vertexAttribPointer(shader.attribLocations.pxStrokeWidth, this.NUM_STROKEWIDTH_ELEMENTS, gl.FLOAT, false, 0, 0)
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.colorMapValueBuffer)
+		gl.enableVertexAttribArray(shader.attribLocations.colorMapValue)
 		gl.vertexAttribPointer(shader.attribLocations.colorMapValue, this.NUM_COLORMAPVALUE_ELEMENTS, gl.FLOAT, false, 0, 0)
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.fillColorBuffer)
+		gl.enableVertexAttribArray(shader.attribLocations.fillColor)
 		gl.vertexAttribPointer(shader.attribLocations.fillColor, this.NUM_FILLCOLOR_ELEMENTS, gl.FLOAT, false, 0, 0)
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.strokeColorBuffer)
-		gl.vertexAttribPointer(shader.attribLocations.strokeColor, this.NUM_FILLCOLOR_ELEMENTS, gl.FLOAT, false, 0, 0)
+		gl.enableVertexAttribArray(shader.attribLocations.strokeColor)
+		gl.vertexAttribPointer(shader.attribLocations.strokeColor, this.NUM_STROKECOLOR_ELEMENTS, gl.FLOAT, false, 0, 0)
+
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indexBuffer)
 
 	}
 
@@ -576,7 +596,7 @@ class ETP {
 
 			// dirty all tiles' positions, as their positions have to be updated for new offset
 			this.tiles.forEach(tile => tile.isPositionDirty = true)
-			this.timestampOffsetDirty = false
+			this.tiles.forEach(tile => tile.areAttributesDirty = true)
 
 		}
 
@@ -623,7 +643,8 @@ class ETP {
 				// tile.positions = samples.map((sample, i) => [levelScale*(512*tileIndex + i), i])
 				// tile.positions = samples.map((sample, i) => [sample[0] - this.timestampOffset, i])
 
-				let positions = tile.positions.map(pos => [pos, pos, pos, pos]).flat()
+				let positions = (this.drawPoints || this.drawLines) ? tile.positions.map(pos => [pos, pos, pos, pos]).flat() : tile.positions.map(pos => [pos, [pos[0], 0.0], pos, [pos[0], 0.0]]).flat()
+				// let positions = tile.positions.map(pos => [pos, pos, pos, pos]).flat()
 
 				gl.bindBuffer(gl.ARRAY_BUFFER, buffers.positionBuffer)
 				// make sure to put vertices into the alloted window, even if its not filled
@@ -632,7 +653,7 @@ class ETP {
 
 				// colormap based on y-value
 				let colorMapValues = tile.positions.map(pos => [pos[1], pos[1], pos[1], pos[1]]).flat()
-				
+
 				gl.bindBuffer(gl.ARRAY_BUFFER, buffers.colorMapValueBuffer)
 				let dstByteColor = indexOffset*this.NUM_COLORMAPVALUE_ELEMENTS*Float32Array.BYTES_PER_ELEMENT
 				gl.bufferSubData(gl.ARRAY_BUFFER, dstByteColor, new Float32Array(colorMapValues.flat()))
@@ -644,7 +665,10 @@ class ETP {
 				if (this.drawPoints) {
 					tile.indices = tile.positions.map( (position, i) => [4*i + 0, 4*i + 1, 4*i + 2, 4*i + 2, 4*i + 3, 4*i + 0].map(k => k + indexOffset) )
 				}
-				else {
+				else if (this.drawBars) {
+					tile.indices = tile.positions.map( (position, i) => [4*i + 0, 4*i + 1, 4*i + 2, 4*i + 2, 4*i + 1, 4*i + 3].map(k => k + indexOffset) )
+				}
+				else if (this.drawLines) {
 					tile.indices = (tile.positions.map( (position, i) => [4*i + 0, 4*i + 1, 4*i + 2, 4*i + 3].map(k => k + indexOffset) ))
 				}
 
@@ -661,14 +685,31 @@ class ETP {
 
 			if (areAttributesDirty) {
 
-				let pixelScale = window.devicePixelRatio || 1.0
+				// let pixelScale = window.devicePixelRatio || 1.0
+				// half spacing between samples
+				let sampleSpacing = Math.pow(2, tile.level)
+				let sizes = []
 
-				let sizes = (new Array(tile.positions.length)).fill((new Array(4)).fill(1.0))
+				if ((tile.positions.length > 1 ) && this.drawBars) {
+					// let tileStart = (ESDR.computeDataTileStartTime(tile.level, tile.offset) - this.timestampOffset)
+					// let tileEnd = (ESDR.computeDataTileStartTime(tile.level, tile.offset+1) - this.timestampOffset)
+					let xspacings = tile.positions.slice(0,-1).map((pos, i) => 0.5*(tile.positions[i+1][0] - pos[0]))
+					// add beginning and end spacings
+					let xspacings1 = [xspacings[0]].concat(xspacings)
+					let xspacings2 = xspacings.concat(xspacings.slice(-1))
+					let minspacings = xspacings1.map((s, i) => 2.0*Math.min(xspacings1[i], xspacings2[i]))
+					sizes =  minspacings.map(s => [s, s, s, s])
+				}
+				else {
+					let sizes = (new Array(tile.positions.length)).fill((new Array(4)).fill(1.0))
+				}
 
-				let strokeWidths = (new Array(tile.positions.length)).fill((new Array(4)).fill(0.0))
+
+				let strokeWidths = (new Array(tile.positions.length)).fill((new Array(4)).fill(0.5))
 
 				let fillColors = (new Array(tile.positions.length)).fill((new Array(4)).fill(this.fillColor).flat())
-				let strokeColors = (new Array(tile.positions.length)).fill((new Array(4)).fill([0.0,0.0,0.0,0.0]).flat())
+				// make stroke and fill the same for proper blend even with zero stroke width
+				let strokeColors = fillColors
 
 				if (this.drawPoints)
 				{
@@ -685,7 +726,23 @@ class ETP {
 					gl.bufferSubData(gl.ARRAY_BUFFER, offsetsDstByte, new Float32Array(offsets.flat()))
 
 				} 
-				else {
+				else if (this.drawBars)
+				{
+					// bars are simple, going left to right
+					// y component has to be zero for interpolation of offset distance to work right for fragment shader
+					let offsets = (new Array(tile.positions.length)).fill([
+						-1.0, 0.0,
+						-1.0,-0.0,
+						 1.0, 0.0,
+						 1.0,-0.0,
+					])
+
+					gl.bindBuffer(gl.ARRAY_BUFFER, buffers.offsetBuffer)
+					let offsetsDstByte = indexOffset*this.NUM_POSITION_ELEMENTS*Float32Array.BYTES_PER_ELEMENT
+					gl.bufferSubData(gl.ARRAY_BUFFER, offsetsDstByte, new Float32Array(offsets.flat()))
+
+				} 
+				else if (this.drawLines) {
 					let prevPos = this.getPrevPositionToConnectToTile(tileIndex)
 					let nextPos = this.getNextPositionToConnectToTile(tileIndex)
 
@@ -745,6 +802,7 @@ class ETP {
 			tile.areIndicesDirty = false
 			tile.isPositionDirty = false
 		})
+		this.timestampOffsetDirty = false
 
 		if (indicesDirty) {
 
@@ -815,7 +873,7 @@ class ETP {
 
 		let numElements = endIndex - startIndex
 
-		gl.drawElements(this.drawPoints ? gl.TRIANGLES : gl.TRIANGLE_STRIP, numElements*this.NUM_INDICES_PER_SAMPLE, gl.UNSIGNED_INT, startIndex*this.NUM_INDICES_PER_SAMPLE*Uint32Array.BYTES_PER_ELEMENT)
+		gl.drawElements((this.drawPoints || this.drawBars) ? gl.TRIANGLES : gl.TRIANGLE_STRIP, numElements*this.NUM_INDICES_PER_SAMPLE, gl.UNSIGNED_INT, startIndex*this.NUM_INDICES_PER_SAMPLE*Uint32Array.BYTES_PER_ELEMENT)
 
 	}
 
@@ -861,10 +919,19 @@ class ETP {
 			xshift, yshift, 0, 1
 		]
 
+		let sampleSpacing = 1.0 // Math.pow(2, this.tileLevel)
+		let markerScale = this.drawBars ? sparkWidth*sampleSpacing*1.0 / timeScale : 1.0
+
+		// gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+		gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+		gl.enable(gl.BLEND)
+		gl.disable(gl.DEPTH_TEST)
+
 		gl.useProgram(shader.shaderProgram)
 		gl.uniformMatrix4fv(shader.uniformLocations.modelViewMatrix, false, MV)
 		gl.uniformMatrix4fv(shader.uniformLocations.projectionMatrix, false, PM)
 		gl.uniform2fv(shader.uniformLocations.colorMapYRange, [this.colorMapYRange.min, this.colorMapYRange.max])
+		gl.uniform1f(shader.uniformLocations.markerScale, markerScale)
 
 		gl.activeTexture(gl.TEXTURE0);
 		gl.bindTexture(gl.TEXTURE_2D, this.colorMapTexture)
