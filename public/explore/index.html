@@ -28,6 +28,7 @@
   
   --plot-toolbar-color: var(--light-sky-blue);
   --plot-button-color: var(--light-baby-blue);
+  --toolbar-active-button-color: var(--dark-baby-blue);
   --scrubber-color: var(--medium-sky-blue);
   --scrubber-button-color: var(--dark-baby-blue);
 }
@@ -144,7 +145,6 @@ input[type="search"] {
 
 .active-searchbar-button {
   background-color: var(--search-active-button-color);
-  border-radius: 3px;
 }
 
 .in-the-middle {
@@ -263,6 +263,7 @@ input[type="search"] {
   bottom: 0px;
   box-shadow: 0px -1px 1px rgba(0,0,0,0.1);
   overflow-y: hidden;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   transition: 0.3s;
@@ -277,6 +278,7 @@ input[type="search"] {
   top: 0px;
   bottom: 0px;
 */  overflow-y: scroll;
+  overflow-x: hidden;
   transition: 0.3s;
 }
 
@@ -386,6 +388,14 @@ input[type="search"] {
   flex-shrink: 0;
   flex-grow: 0;
 }
+.plot-extension {
+  width: 0px;
+  padding: 0px;
+  margin: 0px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  flex-grow: 0;
+}
 
 .plots-toolbar-button {
   font-size: inherit;
@@ -422,6 +432,10 @@ input[type="search"] {
 
 .plots-toolbar-button:disabled {
   opacity: 0.5;
+}
+
+.active-toolbar-button {
+  background-color: var(--toolbar-active-button-color);
 }
 
 .plots-shadow-group {
@@ -598,13 +612,14 @@ input[type="search"] {
       </div>
         <div class="toolbar-group-spacer"></div>
       <div class="plots-shadow-group">
-        <button class="plots-toolbar-button" onclick=""><img src="download.svg" class="button-icon"></img></button>
+        <button id="showDataDownloadsButton" class="plots-toolbar-button" onclick="explorer.toggleDataDownloads()"><img src="download.svg" class="button-icon"></img></button>
       </div>
     </div>
     <!-- this insanity with the iframes here is because we use them to capture resize events of the plots pane, so that the grapher plots are correctly resized when the page layout changes -->
     <div style="display: flex; flex-direction: row; flex-grow: 0; flex-shrink: 0; overflow-y: hidden">
       <div id="date_axis" class="date-axis"></div>
       <div id="plotCorner" class="plot-corner"></div>
+      <div id="plotCornerExtension" class="plot-extension"></div>
     </div>
     <div style="display: flex; flex-direction: row; flex-grow: 1; flex-shrink: 1; overflow-y: scroll">
       <iframe id="plotHeightIframe" style="height:100%; width:0px; border:none; float:left;"></iframe>
@@ -1153,6 +1168,27 @@ explorer.toggleSettings = function() {
 
 }
 
+explorer.toggleDataDownloads = function() {
+  let groupBlock = document.getElementById("plotCornerExtension")
+  let adjustment = 0
+  if (!groupBlock.style.width || groupBlock.style.width === "0px") {
+    let widthIFrame = document.getElementById("plotWidthIframe")
+    groupBlock.style.width = 0.5*widthIFrame.clientWidth + 'px'
+    explorer.showDataDownloads = true
+    document.getElementById("showDataDownloadsButton").classList.add("active-toolbar-button")
+  }
+  else {
+    groupBlock.style.width = "0px"
+    explorer.showDataDownloads = false
+    document.getElementById("showDataDownloadsButton").classList.remove("active-toolbar-button")
+  }
+
+  explorer.resizePlotWidth()
+
+  updateUrlHash()
+
+}
+
 explorer.updateProgressText = function(text) {
   let progressBlock = document.getElementById("progressBlock")
   let progressText = document.getElementById("searchProgressText")
@@ -1545,21 +1581,24 @@ window.grapherLoad = function() {
 
   // the iframe madness is for making sure the plots are resized right when the plot pane size changes
 
-  let widthIFrame = document.getElementById("plotWidthIframe")
-  let cornerElement = document.getElementById("plotCorner")
   // call setWidth at least once
-  explorer.plotManager.setWidth(widthIFrame.clientWidth - plotCorner.clientWidth)
+  explorer.resizePlotWidth
 
-  widthIFrame.contentWindow.addEventListener('resize', function(event) {
-    // console.log(`plotWidthIframe resize`)
-    // resize plot frames
-    explorer.plotManager.setWidth(widthIFrame.clientWidth - plotCorner.clientWidth)
+  let widthIFrame = document.getElementById("plotWidthIframe")
+  widthIFrame.contentWindow.addEventListener('resize', explorer.resizePlotWidth)
 
-  })
   let heightIFrame = document.getElementById("plotHeightIframe")
   widthIFrame.contentWindow.addEventListener('resize', function(event) {
     // console.log(`plotHeightIframe resize`)
   } )
+}
+
+explorer.resizePlotWidth = function() {
+  let widthIFrame = document.getElementById("plotWidthIframe")
+  let cornerElement = document.getElementById("plotCorner")
+  let extensionElement = document.getElementById("plotCornerExtension")
+
+  explorer.plotManager.setWidth(widthIFrame.clientWidth - plotCorner.clientWidth - plotCornerExtension.clientWidth)
 }
 
 explorer.zoomTimelineToSize = function(zoomTargetSize) {
