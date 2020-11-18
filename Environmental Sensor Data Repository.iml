@@ -42,5 +42,7 @@
     <orderEntry type="library" name="bootstrap" level="application" />
     <orderEntry type="library" name="handlebars.js" level="application" />
     <orderEntry type="library" name="jquery" level="application" />
+    <orderEntry type="library" name="Generated files" level="project" />
+    <orderEntry type="library" name="should-DefinitelyTyped" level="project" />
   </component>
 </module>
