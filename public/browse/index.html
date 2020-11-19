@@ -1071,6 +1071,8 @@
           timezoneString += TIMEZONE_SELECTOR_LOOKUP[0];
         } else if ($this.val() == "utc") {
           timezoneString += TIMEZONE_SELECTOR_LOOKUP[1];
+        } else {
+          timezoneString = "";
         }
         var $exportLinks = $(this).parents(".file-info").find("a");
         $exportLinks.each(function(idx, elm) {
@@ -1597,8 +1599,8 @@
         menuDiv.push('&emsp;&emsp;&emsp;&emsp;')
         menuDiv.push('<a href=' + url + '&format=json' + ' download>Download Link (.json)</a>');
         menuDiv.push('&emsp;&emsp;&emsp;&emsp;')
-        menuDiv.push('<span><label for="timezone" class="timezone-selector-label">Timezone Format: </label>');
-        menuDiv.push('<select name="timezone" class="timezone-selector" id="feed-' + feedIDs[i] + '-timezone-selector"><option value="local">Your Local Time</option><option value="utc">UTC Time</option></select></span>');
+        menuDiv.push('<span><label for="timezone" class="timezone-selector-label">Time Format: </label>');
+        menuDiv.push('<select name="timezone" class="timezone-selector" id="feed-' + feedIDs[i] + '-timezone-selector"><option value="local">Your Local Time</option><option value="utc">UTC Time</option><option value="epoch">Unix (Epoch) Time</option></select></span>');
         menuDiv.push('</div>');
         menuDiv.push('<hr>');
       }
