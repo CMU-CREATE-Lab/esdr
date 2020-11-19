@@ -913,6 +913,8 @@ function initMap() {
       draggableCursor: (feedIds.length > 0 ? 'default' :  null)
     });
 
+    explorer.highlightPlotsForFeeds(feedIds)
+
   })
 
   google.maps.event.addListener(gMap, 'click', function(event) {
@@ -1955,6 +1957,10 @@ explorer.addPlot = function(feedId, channelName) {
   plotOverlay.style.position = "absolute"
   plotOverlay.style.zIndex = "1"
 
+  plotOverlay.addEventListener("mouseover", event => {
+    explorer.mapOverlay.highlightMarkers([feedId], true)
+  })
+
   plotContent.appendChild(plotOverlay)
 
   let yAxis = document.createElement("div")
@@ -1964,7 +1970,7 @@ explorer.addPlot = function(feedId, channelName) {
   yAxis.style.flexShrink = "0"
 
   let labelBlock = document.createElement("div")
-  // labelBlock.setAttribute("id", `plotLabel-${plotId}`)
+  labelBlock.setAttribute("id", `plotLabelBlock-${plotId}`)
   labelBlock.style.padding = "0.1em"
   labelBlock.style.display = "flex"
   labelBlock.style.alignItems = "center"
@@ -2145,6 +2151,20 @@ explorer.removePlot = function(feedId, channelName) {
 
   explorer.plots.delete(channelId)
 
+}
+
+explorer.highlightPlotsForFeeds = function(feedIds) {
+  let feedIdsSet = new Set(feedIds)
+  for (let [channelId, plotId] of explorer.plots) {
+    let plotFeedId = parseInt(channelId.slice(0, channelId.indexOf(".")))
+    let labelElement = document.getElementById(`plotLabelBlock-${plotId}`)
+    if (feedIdsSet.has(plotFeedId)) {
+      labelElement.style.backgroundColor = "hsla(210,100%,90%,0.8)"
+    }
+    else {
+      labelElement.style.backgroundColor = "hsla(0,0%,100%,0.8)"
+    }
+  }
 }
 
 explorer.fitPlotYAxisToData = function(plotId) {
