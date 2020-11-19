@@ -1795,7 +1795,7 @@ explorer.updateDataDownloadLinks = function() {
     let csvLink = esdr.getExportLink(feedId, channelName, explorer.startTime, explorer.endTime, "csv", tz.length > 0 ? tz : undefined)
     document.getElementById(`plotlink_csv-${plotId}`).setAttribute("href", csvLink)
     let jsonLink = esdr.getExportLink(feedId, channelName, explorer.startTime, explorer.endTime, "json", tz.length > 0 ? tz : undefined)
-    document.getElementById(`plotlink_csv-${plotId}`).setAttribute("href", jsonLink)
+    document.getElementById(`plotlink_json-${plotId}`).setAttribute("href", jsonLink)
   }
 }
 
@@ -2014,7 +2014,7 @@ explorer.addPlot = function(feedId, channelName) {
     let jsonButtonGroup = document.createElement("a")
     jsonButtonGroup.setAttribute("id", `plotlink_json-${plotId}`)
     jsonButtonGroup.setAttribute("class", "plots-shadow-group")
-    jsonButtonGroup.setAttribute("href", "https://foo.bar")
+    jsonButtonGroup.setAttribute("href", "")
     jsonButtonGroup.style.flexGrow = 0
 
     let jsonDownloadButton = document.createElement("div")
