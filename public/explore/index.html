@@ -662,9 +662,9 @@ input[type="search"] {
             <option disabled class="selector-separator"></option>
           </select>
    -->
-          <input type="text" name="timezoneInput" id="timezoneSelectorInput" list="timezoneDatalist" placeholder="UNIX Epoch Timestamp" autocomplete="off" onchange="explorer.downloadTimezoneChanged(event)" />
+          <input type="text" name="timezoneInput" id="timezoneSelectorInput" list="timezoneDatalist" placeholder="Current Browser Timezone" autocomplete="off" onchange="explorer.downloadTimezoneChanged(event)" />
           <datalist id="timezoneDatalist">
-            <option value="Current Timezone" />
+            <option value="Current Browser Timezone" />
             <option value="UTC" />
             <option value="UNIX Epoch Timestamp" />
           </datalist>
@@ -1821,8 +1821,13 @@ explorer.updateDataDownloadLinks = function() {
   let tz = document.getElementById("timezoneSelectorInput").value
 
   // get current timezone from browser
-  if (tz == "Current Timezone") {
+  if (tz == "Current Browser Timezone") {
     tz = moment.tz.guess(true)
+  }
+
+  // if we don't have a timerange to work with, don't even bother
+  if (!explorer.startTime || !explorer.endTime) {
+    return
   }
 
   for (let [channelId, plotId] of explorer.plots) {
