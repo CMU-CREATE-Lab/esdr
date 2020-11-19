@@ -1714,16 +1714,50 @@ window.grapherLoad = function() {
   plotDateScrubber.addEventListener("mouseup", event => {
     event.target.value = "0"
     explorer.stopScrubbing()
+    // FIXME: this is a hack for Firefox, which sends an input even after mouseup, thus preventing the slider to be properly reset in this callback
+    // also add timeout to clear the flag so that we can subsequently click on slider again to make things move
+    explorer.hasDateMoveScrubberMouseUpJustHappened = true
+    if (explorer.dateMoveScrubberMouseUpTimer)
+      clearTimeout(explorer.dateMoveScrubberMouseUpTimer)
+    explorer.dateMoveScrubberMouseUpTimer = setTimeout(
+      timestamp => explorer.hasDateMoveScrubberMouseUpJustHappened = false, 
+      100
+    )
+  })
+  plotDateScrubber.addEventListener("mouseDown", event => {
+    explorer.hasDateMoveScrubberMouseUpJustHappened = false
   })
   plotDateScrubber.addEventListener("input", event => {
-    explorer.scrubTimelineDateWithSpeed(event.target.valueAsNumber)
+    if (explorer.hasDateMoveScrubberMouseUpJustHappened) {
+      explorer.hasDateMoveScrubberMouseUpJustHappened = false
+      event.target.value = "0"      
+    } 
+    else {
+      explorer.scrubTimelineDateWithSpeed(event.target.valueAsNumber)
+    }
   })
   let plotZoomScrubber = document.getElementById("plotsZoomScrubber")
   plotZoomScrubber.addEventListener("mouseup", event => {
     event.target.value = "0"
     explorer.stopScrubbing()
+    // FIXME: this is a hack for Firefox, which sends an input even after mouseup, thus preventing the slider to be properly reset in this callback
+    // also add timeout to clear the flag so that we can subsequently click on slider again to make things move
+    explorer.hasDateZoomScrubberMouseUpJustHappened = true
+    if (explorer.dateZoomScrubberMouseUpTimer)
+      clearTimeout(explorer.dateZoomScrubberMouseUpTimer)
+    explorer.dateZoomScrubberMouseUpTimer = setTimeout(
+      timestamp => explorer.hasDateZoomScrubberMouseUpJustHappened = false, 
+      100
+    )
+  })
+  plotZoomScrubber.addEventListener("mouseDown", event => {
+    explorer.hasDateZoomScrubberMouseUpJustHappened = false
   })
   plotZoomScrubber.addEventListener("input", event => {
+    if (explorer.hasDateZoomScrubberMouseUpJustHappened) {
+      explorer.hasDateZoomScrubberMouseUpJustHappened = false
+      event.target.value = "0"      
+    } 
     explorer.scrubTimelineZoomWithSpeed(event.target.valueAsNumber)
   })
 
