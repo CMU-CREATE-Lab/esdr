@@ -973,14 +973,39 @@ function initMap() {
 
 
   // install search response events
+  // onchange is when user presses enter
   let searchInput = document.getElementById("sensorSearchField")
   searchInput.addEventListener("change", event => {
     let searchText = event.target.value
     // console.log(searchText)
     esdr.updateQuery({text: searchText})
 
+    // if a delayed update was pending, cancel it
+    if (explorer.searchUpdateTimer) {
+      clearTimeout(explorer.searchUpdateTimer)
+      explorer.searchUpdateTimer = undefined
+    }
+
     updateUrlHash()
   })
+  // oninput happens every time a character is entered, so let's add a delay
+  searchInput.addEventListener("input", event => {
+    let searchText = event.target.value
+
+    if (explorer.searchUpdateTimer) {
+      clearTimeout(explorer.searchUpdateTimer)
+    }
+
+    explorer.searchUpdateTimer = setTimeout(timestamp => {
+      esdr.updateQuery({text: searchText})
+
+      updateUrlHash()
+
+      explorer.searchUpdateTimer = undefined
+    }, 500)
+
+  })
+
   let recentOnlyCheckbox = document.getElementById("recentOnlyCheckbox")
   recentOnlyCheckbox.addEventListener("change", event => {
     let checked = event.target.checked
