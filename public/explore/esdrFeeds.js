@@ -470,4 +470,19 @@ class ESDR {
 
 	}
 
+	getExportLink(feedId, channelName, fromTime, toTime, format, timezone) {
+		let baseUrl = `${this.apiUrl}/feeds/${feedId}/channels/${channelName}/export?`
+  	let browserParams = new URLSearchParams()
+  	browserParams.set("from", fromTime.toFixed(3))
+  	browserParams.set("to", toTime.toFixed(3))
+  	// timezone optional, no timezone means unix epoch timestamps
+  	if (timezone)
+  		browserParams.set("timezone", timezone)
+  	browserParams.set("format", format)
+
+  	return baseUrl + browserParams.toString()
+	}
+
+
+
 } // class ESDR

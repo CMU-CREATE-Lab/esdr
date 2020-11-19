@@ -18,7 +18,7 @@
 
   --search-block-color: var(--light-sky-blue);
   --search-button-color: var(--light-sky-blue);
-  --search-active-button-color: var(--light-baby-blue);
+  --search-active-button-color: var(--dark-baby-blue);
   --search-groupbox-color: var(--light-baby-blue);
   --search-groupcontent-color: var(--light-sky-blue);
 
@@ -31,6 +31,8 @@
   --toolbar-active-button-color: var(--dark-baby-blue);
   --scrubber-color: var(--medium-sky-blue);
   --scrubber-button-color: var(--dark-baby-blue);
+  --plot-extension-color: var(--light-sky-blue);
+
 }
 
 html, body {
@@ -38,6 +40,10 @@ html, body {
   padding: 0;
   height: 100%;
   overflow-y: hidden;
+}
+
+body {
+  font-family: sans-serif;
 }
 
 hr {
@@ -68,7 +74,6 @@ input[type="search"] {
   bottom: 0;
   left: 0;
   background-color: var(--sidebar-color);
-  font-family: sans-serif;
   overflow-x: hidden;
   /*overflow-y: scroll;*/
   box-shadow: 1px 0px 1px rgba(0,0,0, 0.1);
@@ -193,10 +198,6 @@ input[type="search"] {
   transition: 0.3s;
 }
 
-.search-input-row {
-  display: flex;
-  align-items: center;
-}
 .search-input-row {
   display: flex;
   align-items: center;
@@ -376,25 +377,51 @@ input[type="search"] {
   width: calc(100%-2em);
 }
 
+.plot-options-row {
+  display: flex;
+  align-items: center;
+  height: 0px;
+  transition: 0.3s;
+  overflow-y: hidden;
+  overflow-x: hidden;
+}
+
 .plot-corner {
   width: 2em;
-  height: calc(2em - 0.5px);
+  height: calc(2em - 0.0px);
   padding: 0px;
   margin: 0px;
   box-sizing: border-box;
-  border-bottom: 0.5px solid black;
+/*  border-bottom: 0.5px solid black;
   border-left: 0.5px solid black;
-  /*background: #770;*/
+*/  /*background: #770;*/
   flex-shrink: 0;
   flex-grow: 0;
 }
 .plot-extension {
   width: 0px;
+  /*height: 2em;*/
   padding: 0px;
   margin: 0px;
   box-sizing: border-box;
+  border-left: 0.5px solid black;
   flex-shrink: 0;
   flex-grow: 0;
+/*  display: flex;
+  align-items: center;
+*/  white-space: nowrap;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  background-color: var(--plot-extension-color);
+}
+
+.plot-extension-box {
+  display: flex; 
+  flex-direction: row; 
+  align-items: stretch; 
+  flex-grow: 0; 
+  flex-shrink: 0; 
+  overflow-y: hidden;
 }
 
 .plots-toolbar-button {
@@ -442,7 +469,7 @@ input[type="search"] {
   display: flex;
   flex-shrink: 1;
   align-items: center;
-  box-shadow: 0px 0px 1px rgba(0,0,0,0.2);
+  box-shadow: 0px 1px 2px rgba(0,0,0,0.15);
   background-color: var(--plot-button-color);
   margin: 0.0em 0.25em;
   padding: 0.0em 0em;
@@ -563,6 +590,7 @@ input[type="search"] {
 <div id="main">
   <div id="googlemap" class="googlemap" style="height:60%"></div>
   <!-- <div id="mapOverlayStatic" class="map-overlay-static"></div> -->
+  <!-- this insanity with the iframe here is because we use them to capture resize events of the plots pane, so that the grapher plots are correctly resized when the page layout changes -->
   <iframe id="plotWidthIframe" style="height:0px; border:none;"></iframe>
   <div id="plots" class="plots-container" style="height:40%">
     <div id="plotsToolbar" class="plots-toolbar">
@@ -610,16 +638,37 @@ input[type="search"] {
         <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
         <button id="increasePlotHeightButton" class="plots-toolbar-button plots-toolbar-group-right" onclick="explorer.increasePlotHeight()"><img src="ygrow.svg" class="button-icon"></img></button>
       </div>
-        <div class="toolbar-group-spacer"></div>
+      <div class="toolbar-group-spacer"></div>
       <div class="plots-shadow-group">
         <button id="showDataDownloadsButton" class="plots-toolbar-button" onclick="explorer.toggleDataDownloads()"><img src="download.svg" class="button-icon"></img></button>
       </div>
     </div>
-    <!-- this insanity with the iframes here is because we use them to capture resize events of the plots pane, so that the grapher plots are correctly resized when the page layout changes -->
-    <div style="display: flex; flex-direction: row; flex-grow: 0; flex-shrink: 0; overflow-y: hidden">
+    <div id="plotOptions" class="plot-options-row">
+      here be options
+    </div>
+    <div class="plot-extension-box">
       <div id="date_axis" class="date-axis"></div>
-      <div id="plotCorner" class="plot-corner"></div>
-      <div id="plotCornerExtension" class="plot-extension"></div>
+      <div id="plotCorner" class="plot-corner">
+        <div style="box-sizing: border-box; border-left: 0.5px solid black; border-bottom: 0.5px solid black; width: 100%; height: 100%;"></div>
+      </div>
+      <div id="plotCornerExtension" class="plot-extension">
+        <div style="box-sizing: border-box; padding: 0.0em 0.25em; height: 2em; display: inline-flex; align-items: center; border-bottom: 0.5px solid black;">
+          <label for="exportTimezoneSelector" style="font-size: small;">Download Time Format:</label>
+  <!--         <select id="exportTimezoneSelector">
+            <option value=local>Local Time</option>
+            <option value="utc">UTC</option>
+            <option value="epoch">Unix Epoch</option>
+            <option disabled class="selector-separator"></option>
+          </select>
+   -->
+          <input type="text" name="timezoneInput" id="timezoneSelectorInput" list="timezoneDatalist" placeholder="UNIX Epoch Timestamp" autocomplete="off" onchange="explorer.downloadTimezoneChanged(event)" />
+          <datalist id="timezoneDatalist">
+            <option value="Current Timezone" />
+            <option value="UTC" />
+            <option value="UNIX Epoch Timestamp" />
+          </datalist>
+        </div>
+      </div>
     </div>
     <div style="display: flex; flex-direction: row; flex-grow: 1; flex-shrink: 1; overflow-y: scroll">
       <iframe id="plotHeightIframe" style="height:100%; width:0px; border:none; float:left;"></iframe>
@@ -642,6 +691,10 @@ input[type="search"] {
   
   <!-- <script src="https://d3js.org/d3.v4.js"></script> -->
 
+<!-- timezone selection support -->
+<script src="https://momentjs.com/downloads/moment.min.js" type="text/javascript"></script>
+<script src="https://momentjs.com/downloads/moment-timezone-with-data-10-year-range.min.js" type="text/javascript"></script>
+
 
 <script>
 
@@ -657,6 +710,7 @@ let explorer = {
   showFilters: true,
   showResults: true,
   showSettings: true,
+  showSparklines: true,
   plotAreaHeightPercent: 40,
   minPlotAreaHeightPercent: 20,
   maxPlotAreaHeightPercent: 80,
@@ -727,10 +781,10 @@ function initMap() {
 
   // FIXME: showSearchFilters() with a small delay, otherwise the margin computation gets confused. maybe this could be done with less hackery?
   if (explorer.showFilters)
-    setTimeout(explorer.showSearchFilters, 100)
+    setTimeout(explorer.showSearchFilters, 300)
 
   if (explorer.showSettings)
-    setTimeout(explorer.showSearchSettings, 200)
+    setTimeout(explorer.showSearchSettings, 600)
 
   let mapdiv = document.getElementById('googlemap');
   gMap = new google.maps.Map(
@@ -994,6 +1048,8 @@ function parseUrlParams() {
   // on-map sparklines
   if (browserParams.has("showSparklines")) {
     explorer.showSparklines = browserParams.get("showSparklines") == "true"
+    let sparklinesCheckbox = document.getElementById("showSparklinesCheckbox")
+    sparklinesCheckbox.checked = explorer.showSparklines
   }
 
 
@@ -1027,10 +1083,13 @@ function createUrlParams() {
     browserParams.set("showFilters", explorer.showFilters ? "true" : "false")
   }
   if (explorer.showSettings) {
-    browserParams.set("showFilters", explorer.showSettings ? "true" : "false")
+    browserParams.set("showSettings", explorer.showSettings ? "true" : "false")
   }
   if (explorer.showResults) {
     browserParams.set("showResults", explorer.showResults ? "true" : "false")
+  }
+  if (explorer.showSparklines) {
+    browserParams.set("showSparklines", explorer.showSparklines ? "true" : "false")
   }
   if (explorer.center) {
     browserParams.set("center", `${explorer.center.lat()},${explorer.center.lng()}`)
@@ -1168,22 +1227,51 @@ explorer.toggleSettings = function() {
 
 }
 
+
 explorer.toggleDataDownloads = function() {
+
+  let optionsBlock = document.getElementById("plotOptions")
   let groupBlock = document.getElementById("plotCornerExtension")
-  let adjustment = 0
+  let widthIFrame = document.getElementById("plotWidthIframe")
+
+  let transitionTime = 300
+  let transitionTargetWidth = 0
+  let transitionStartWidth = 0
+
+  let maxWidth = Array.from(document.querySelectorAll(".plot-extension")).reduce((acc, element) => Math.max(acc, element.scrollWidth || 1.0), 0.0)
+
   if (!groupBlock.style.width || groupBlock.style.width === "0px") {
-    let widthIFrame = document.getElementById("plotWidthIframe")
-    groupBlock.style.width = 0.5*widthIFrame.clientWidth + 'px'
+    transitionTargetWidth = maxWidth
+    // transitionTargetWidth = 0.5*widthIFrame.clientWidth
+    transitionStartWidth = 0
     explorer.showDataDownloads = true
     document.getElementById("showDataDownloadsButton").classList.add("active-toolbar-button")
   }
   else {
-    groupBlock.style.width = "0px"
+    transitionTargetWidth = 0
+    transitionStartWidth = maxWidth
     explorer.showDataDownloads = false
     document.getElementById("showDataDownloadsButton").classList.remove("active-toolbar-button")
   }
 
-  explorer.resizePlotWidth()
+  let startTime = performance.now()
+
+  let transitionAnimation = function(time) {
+    let u = Math.min((time - startTime)/transitionTime, 1.0)
+    let width = transitionStartWidth*(1.0-u) + transitionTargetWidth*(u)
+    let widthString = width + 'px'
+    groupBlock.style.width = widthString
+
+    document.querySelectorAll(".plot-extension").forEach((element) => element.style.width = widthString)
+
+    explorer.resizePlotWidth()
+    if (time - startTime < transitionTime)
+      window.requestAnimationFrame(transitionAnimation)
+  }
+
+  window.requestAnimationFrame(transitionAnimation)
+
+
 
   updateUrlHash()
 
@@ -1591,6 +1679,38 @@ window.grapherLoad = function() {
   widthIFrame.contentWindow.addEventListener('resize', function(event) {
     // console.log(`plotHeightIframe resize`)
   } )
+
+  // timezones support
+  let timezones = moment.tz.names()
+
+  let timezoneDatalist = document.getElementById("timezoneDatalist")
+  timezones.forEach(tz => {
+    let opt = document.createElement("option")
+    opt.value = tz
+    timezoneDatalist.appendChild(opt)
+  })
+}
+
+explorer.updateDataDownloadLinks = function() {
+  let tz = document.getElementById("timezoneSelectorInput").value
+
+  // get current timezone from browser
+  if (tz == "Current Timezone") {
+    tz = moment.tz.guess(true)
+  }
+
+  for (let [channelId, plotId] of explorer.plots) {
+    let feedId = parseInt(channelId.slice(0, channelId.indexOf(".")))
+    let channelName = channelId.slice(channelId.indexOf(".")+1)
+    let csvLink = esdr.getExportLink(feedId, channelName, explorer.startTime, explorer.endTime, "csv", tz.length > 0 ? tz : undefined)
+    document.getElementById(`plotlink_csv-${plotId}`).setAttribute("href", csvLink)
+    let jsonLink = esdr.getExportLink(feedId, channelName, explorer.startTime, explorer.endTime, "json", tz.length > 0 ? tz : undefined)
+    document.getElementById(`plotlink_csv-${plotId}`).setAttribute("href", jsonLink)
+  }
+}
+
+explorer.downloadTimezoneChanged = function(event) {
+  explorer.updateDataDownloadLinks()
 }
 
 explorer.resizePlotWidth = function() {
@@ -1598,7 +1718,13 @@ explorer.resizePlotWidth = function() {
   let cornerElement = document.getElementById("plotCorner")
   let extensionElement = document.getElementById("plotCornerExtension")
 
-  explorer.plotManager.setWidth(widthIFrame.clientWidth - plotCorner.clientWidth - plotCornerExtension.clientWidth)
+  let plotWidth = widthIFrame.clientWidth - plotCorner.clientWidth - plotCornerExtension.clientWidth
+
+  // resize plot overlays
+  document.querySelectorAll(".plot-overlay").forEach((element) => element.style.width = plotWidth + 'px')
+
+
+  explorer.plotManager.setWidth(plotWidth)
 }
 
 explorer.zoomTimelineToSize = function(zoomTargetSize) {
@@ -1659,6 +1785,7 @@ explorer.deferredTimelineUpdateCallback = function(startTime, endTime, cursorTim
 
   explorer.deferredTimelineUpdateTimer = undefined
   updateUrlHash()
+  explorer.updateDataDownloadLinks();
 }
 
 
@@ -1687,6 +1814,7 @@ explorer.addPlot = function(feedId, channelName) {
   plotBlock.style.position = "relative"
   plotBlock.style.display = "flex"
   plotBlock.style.flexDirection = "row"
+  plotBlock.style.alignItems = "stretch"
   plotBlock.style.borderBottom = "0.5px solid black"
 
 
@@ -1696,6 +1824,7 @@ explorer.addPlot = function(feedId, channelName) {
 
   // invisible plot overlay to prevent scroll events from happening
   let plotOverlay = document.createElement("div")
+  plotOverlay.setAttribute("class", "plot-overlay")
   plotOverlay.setAttribute("id", `plotOverlay-${plotId}`)
   plotOverlay.style.width = "calc(100% - 2em)"
   plotOverlay.style.height = "100%"
@@ -1712,13 +1841,16 @@ explorer.addPlot = function(feedId, channelName) {
 
   let labelBlock = document.createElement("div")
   // labelBlock.setAttribute("id", `plotLabel-${plotId}`)
+  labelBlock.style.padding = "0.1em"
   labelBlock.style.display = "flex"
   labelBlock.style.alignItems = "center"
   labelBlock.style.position = "absolute"
   labelBlock.style.top = "0px"
   labelBlock.style.left = "0px"
+  labelBlock.style.backgroundColor = "rgba(255,255,255,0.8)"
   // labelBlock.style.height = "100%"
-  labelBlock.style.width = "100%"
+  // labelBlock.style.width = "100%"
+  labelBlock.style.width = "max-content"
   labelBlock.style.fontFamily = "sans-serif"
   labelBlock.style.fontSize = "smaller"
   labelBlock.style.zIndex = "2"
@@ -1733,7 +1865,96 @@ explorer.addPlot = function(feedId, channelName) {
 
   let labelName = document.createElement("div")
   labelName.setAttribute("id", `plotLabel-${plotId}`)
+  labelName.style.whiteSpace = "nowrap"
+
   labelName.textContent = channelLabel
+
+  let extensionsBlock = document.createElement("div")
+  extensionsBlock.setAttribute("id", `plot-extension-${plotId}`)
+  extensionsBlock.setAttribute("class", "plot-extension")
+  extensionsBlock.style.width = document.getElementById("plotCornerExtension").style.width
+  // extensionsBlock.textContent = "here be downloads"
+
+  let extensionsBox = document.createElement("div")
+  extensionsBox.setAttribute("class", "plot-extension-box")
+  extensionsBox.style.alignItems = "center"
+  extensionsBox.style.height = "100%"
+
+  {
+    let spacer = document.createElement("div")
+    spacer.style.flexGrow = 1
+    spacer.style.width = "0px"
+    extensionsBox.appendChild(spacer)
+  }
+
+  {
+    let csvButtonGroup = document.createElement("a")
+    csvButtonGroup.setAttribute("id", `plotlink_csv-${plotId}`)
+    csvButtonGroup.setAttribute("class", "plots-shadow-group")
+    csvButtonGroup.setAttribute("href", "https://foo.bar")
+    csvButtonGroup.style.flexGrow = 0
+
+    let csvDownloadButton = document.createElement("div")
+    csvDownloadButton.setAttribute("class", "plots-toolbar-button plots-toolbar-group-left")
+    csvDownloadButton.class = "plots-toolbar-button"
+    csvDownloadButton.style.paddingRight = "0px"
+
+    let csvDownloadIcon = document.createElement("img")
+    csvDownloadIcon.setAttribute("class", "button-icon")
+    csvDownloadIcon.src = "download.svg"
+
+    let csvDownloadButton1 = document.createElement("div")
+    csvDownloadButton1.setAttribute("class", "plots-toolbar-button plots-toolbar-group-right")
+    csvDownloadButton1.textContent = "CSV"
+
+    csvDownloadButton.appendChild(csvDownloadIcon)
+    csvButtonGroup.appendChild(csvDownloadButton)
+    csvButtonGroup.appendChild(csvDownloadButton1)
+    extensionsBox.appendChild(csvButtonGroup)
+  }
+
+  {
+    let spacer = document.createElement("div")
+    spacer.style.flexGrow = 1
+    spacer.style.width = "0px"
+    extensionsBox.appendChild(spacer)
+  }
+
+  {
+    let jsonButtonGroup = document.createElement("a")
+    jsonButtonGroup.setAttribute("id", `plotlink_json-${plotId}`)
+    jsonButtonGroup.setAttribute("class", "plots-shadow-group")
+    jsonButtonGroup.setAttribute("href", "https://foo.bar")
+    jsonButtonGroup.style.flexGrow = 0
+
+    let jsonDownloadButton = document.createElement("div")
+    jsonDownloadButton.setAttribute("class", "plots-toolbar-button plots-toolbar-group-left")
+    jsonDownloadButton.class = "plots-toolbar-button"
+    jsonDownloadButton.style.paddingRight = "0px"
+
+    let jsonDownloadIcon = document.createElement("img")
+    jsonDownloadIcon.setAttribute("class", "button-icon")
+    jsonDownloadIcon.src = "download.svg"
+
+    let jsonDownloadButton1 = document.createElement("div")
+    jsonDownloadButton1.setAttribute("class", "plots-toolbar-button plots-toolbar-group-right")
+    jsonDownloadButton1.textContent = "JSON"
+
+    jsonDownloadButton.appendChild(jsonDownloadIcon)
+    jsonButtonGroup.appendChild(jsonDownloadButton)
+    jsonButtonGroup.appendChild(jsonDownloadButton1)
+    extensionsBox.appendChild(jsonButtonGroup)
+  }
+
+  {
+    let spacer = document.createElement("div")
+    spacer.style.flexGrow = 1
+    spacer.style.width = "0px"
+    extensionsBox.appendChild(spacer)
+  }
+
+  extensionsBlock.appendChild(extensionsBox)
+
 
   labelBlock.appendChild(labelClose)
   labelBlock.appendChild(labelName)
@@ -1741,6 +1962,9 @@ explorer.addPlot = function(feedId, channelName) {
   plotBlock.appendChild(plotContent)
   plotBlock.appendChild(yAxis)
   plotBlock.appendChild(labelBlock)
+  plotBlock.appendChild(extensionsBlock)
+
+
 
   let plotList = document.getElementById("plotList")
   plotList.appendChild(plotBlock)
@@ -1755,8 +1979,14 @@ explorer.addPlot = function(feedId, channelName) {
   // FIXME: remove border from plotContainer that is added by CREATE grapher
   plotContent.style.border = "none"
 
+  let axisCanvas = document.getElementById("date_axis-x-axis-canvas")
+  axisCanvas.style.position = "relative"
+
 
   explorer.plotManager.getPlotContainer(plotContainerName).setAutoScaleEnabled(true, true)
+
+  // update download links in new plot (by being lazy and just updating them all)
+  explorer.updateDataDownloadLinks()
 
   // TODO: data point listener only gets mouse events, but we have to block mouse events from grapher, otherwise we can't scroll
   // explorer.plotManager.getPlotContainer(plotContainerName).getPlot(plotId).addDataPointListener(function(value) {
