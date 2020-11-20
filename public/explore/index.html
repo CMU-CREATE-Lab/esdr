@@ -597,13 +597,13 @@ input[type="search"] {
     <div id="plotsToolbar" class="plots-toolbar">
       <div class="toolbar-spacer" style="flex-grow: 1;"></div>
       <div class="plots-shadow-group">
-        <button class="plots-toolbar-button plots-toolbar-group-left" onclick="explorer.moveTimelineByFactor(0.25)" style="padding-right: 0.25em;">
+        <button class="plots-toolbar-button plots-toolbar-group-left" onclick="explorer.moveTimelineByFactorAnimated(-0.25)" style="padding-right: 0.25em;">
           <img src="goleft.svg" class="button-icon"></img>
         </button>
         <div class="plots-toolbar-button plots-toolbar-group-center" style="padding-left: 0;padding-right: 0; flex-shrink: 1; flex-basis: 10em;">
           <input type="range" min="-100" max="100" value="0" class="plots-date-scrubber" id="plotsDateScrubber" />
         </div>
-        <button class="plots-toolbar-button plots-toolbar-group-right" onclick="explorer.moveTimelineByFactor(-0.25)" style="padding-left: 0.25em;">
+        <button class="plots-toolbar-button plots-toolbar-group-right" onclick="explorer.moveTimelineByFactorAnimated(0.25)" style="padding-left: 0.25em;">
           <img src="goright.svg" class="button-icon"></img>
         </button>
         <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
@@ -611,13 +611,13 @@ input[type="search"] {
       </div>
       <div class="toolbar-group-spacer"></div>
       <div class="plots-shadow-group">
-        <button class="plots-toolbar-button plots-toolbar-group-left" onclick="explorer.zoomTimelineByFactor(1.4142135624)" style="padding-right: 0.25em;">
+        <button class="plots-toolbar-button plots-toolbar-group-left" onclick="explorer.zoomTimelineByFactorAnimated(1.4142135624)" style="padding-right: 0.25em;">
           <img src="minus.svg" class="button-icon"></img>
         </button>
         <div class="plots-toolbar-button plots-toolbar-group-center" style="padding-left: 0;padding-right: 0;  flex-shrink: 1; flex-basis: 10em;">
           <input type="range" min="-100" max="100" value="0" class="plots-zoom-scrubber" id="plotsZoomScrubber" />
         </div>
-        <button class="plots-toolbar-button plots-toolbar-group-right" onclick="explorer.zoomTimelineByFactor(0.7071067812)" style="padding-left: 0.25em;">
+        <button class="plots-toolbar-button plots-toolbar-group-right" onclick="explorer.zoomTimelineByFactorAnimated(0.7071067812)" style="padding-left: 0.25em;">
           <img src="plus.svg" class="button-icon"></img>
         </button>
         <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
@@ -1883,6 +1883,11 @@ explorer.resizePlotWidth = function() {
   explorer.plotManager.setWidth(plotWidth)
 }
 
+function animateNormalizedParameter(dt, start, now) {
+  let u = Math.min(Math.max((now - start)/dt, 0.0), 1.0)
+  return u
+}
+
 explorer.zoomTimelineToSize = function(zoomTargetSize) {
   let dateAxis = explorer.plotManager.getDateAxis()
   let currentRange = dateAxis.getRange()
@@ -1912,12 +1917,113 @@ explorer.zoomTimelineByFactor = function(zoomScale) {
 
 }
 
+
+explorer.zoomTimelineByFactorAnimated = function(zoomScale) {
+  let dateAxis = explorer.plotManager.getDateAxis()
+  let srcRange = dateAxis.getRange()
+  // let cursor = dateAxis.getCursorPosition()
+
+  // let zoomCenter = ((cursor >= currentRange.min) && (cursor <= currentRange.max)) ? cursor : 0.5*(currentRange.max + currentRange.min)
+
+  let rangeDiff = srcRange.max - srcRange.min
+
+  if (explorer.timelineZoomAnimationDstRangeSize) {
+    explorer.timelineZoomAnimationSrcRangeSize = rangeDiff
+    rangeDiff = explorer.timelineZoomAnimationDstRangeSize
+  }
+  else
+    explorer.timelineZoomAnimationSrcRangeSize = rangeDiff
+
+  explorer.timelineZoomAnimationDstRangeSize = rangeDiff*zoomScale
+
+  if (explorer.timelineZoomAnimationRequest) {
+    window.cancelAnimationFrame(explorer.timelineZoomAnimationRequest)
+  }
+
+  let startTime = performance.now()
+  let transitionTime = 300
+
+  let animationFun = function(timestamp) {
+    let u = animateNormalizedParameter(transitionTime, startTime, timestamp)
+    let currentRange = dateAxis.getRange()
+    let currentRangeSize = currentRange.max - currentRange.min
+    let cursor = dateAxis.getCursorPosition()
+    let newRangeSize = explorer.timelineZoomAnimationSrcRangeSize*(1.0-u) + explorer.timelineZoomAnimationDstRangeSize*u
+
+    let zoomCenter = ((cursor >= currentRange.min) && (cursor <= currentRange.max)) ? cursor : 0.5*(currentRange.max + currentRange.min)
+
+    let loDiff = (zoomCenter - currentRange.min)/currentRangeSize
+    let hiDiff = (currentRange.max - zoomCenter)/currentRangeSize
+    dateAxis.setRange(zoomCenter - loDiff*newRangeSize, zoomCenter + hiDiff*newRangeSize)
+
+    if (u < 1.0) {
+      explorer.timelineZoomAnimationRequest = window.requestAnimationFrame(animationFun)
+    }
+    else {
+      explorer.timelineZoomAnimationSrcRangeSize = undefined
+      explorer.timelineZoomAnimationDstRangeSize = undefined
+      explorer.timelineZoomAnimationRequest = undefined
+    }
+  }
+
+  explorer.timelineZoomAnimationRequest = window.requestAnimationFrame(animationFun)
+
+
+}
+
 explorer.moveTimelineByFactor = function(moveFactor) {
   let dateAxis = explorer.plotManager.getDateAxis()
   let currentRange = dateAxis.getRange()
 
   let rangeDiff = currentRange.max - currentRange.min
   dateAxis.setRange(currentRange.min - rangeDiff*moveFactor, currentRange.max - rangeDiff*moveFactor)
+
+}
+
+explorer.moveTimelineByFactorAnimated = function(moveFactor) {
+  let dateAxis = explorer.plotManager.getDateAxis()
+  let srcRange = dateAxis.getRange()
+
+  let srcRangeMin = srcRange.min
+  let srcRangeSize = srcRange.max - srcRange.min
+
+
+  if (explorer.timelineMoveAnimationDstRangeStart) {
+    explorer.timelineMoveAnimationSrcRangeStart = srcRangeMin
+    srcRangeMin = explorer.timelineMoveAnimationDstRangeStart
+  }
+  else
+    explorer.timelineMoveAnimationSrcRangeStart = srcRangeMin
+
+  explorer.timelineMoveAnimationDstRangeStart = srcRangeMin + srcRangeSize*moveFactor
+
+  if (explorer.timelineMoveAnimationRequest) {
+    window.cancelAnimationFrame(explorer.timelineMoveAnimationRequest)
+  }
+
+  let startTime = performance.now()
+  let transitionTime = 300
+
+  let animationFun = function(timestamp) {
+    let u = animateNormalizedParameter(transitionTime, startTime, timestamp)
+    let currentRange = dateAxis.getRange()
+    let currentRangeSize = currentRange.max - currentRange.min
+
+    let newRangeMin = explorer.timelineMoveAnimationSrcRangeStart*(1.0-u) + explorer.timelineMoveAnimationDstRangeStart*u
+
+    dateAxis.setRange(newRangeMin, newRangeMin + currentRangeSize)
+
+    if (u < 1.0) {
+      explorer.timelineMoveAnimationRequest = window.requestAnimationFrame(animationFun)
+    }
+    else {
+      explorer.timelineMoveAnimationSrcRangeStart = undefined
+      explorer.timelineMoveAnimationDstRangeStart = undefined
+      explorer.timelineMoveAnimationRequest = undefined
+    }
+  }
+
+  explorer.timelineMoveAnimationRequest = window.requestAnimationFrame(animationFun)
 
 }
 
