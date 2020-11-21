@@ -1,0 +1,236 @@
+class GLTextTexturer {
+  constructor() {
+    this.canvas = document.createElement("canvas")
+    this.ctx = this.canvas.getContext('2d')
+
+    this.backgroundColor = "rgb(0,255,0)"
+    this.color = "rgba(0,0,255,1.0)"
+    this.fontFamily = "sans-serif"
+  }
+
+
+  /**
+    Draw text with a given optional font size
+
+    @param {string} text - string to draw
+    @param {string} fontSize - CSS font size specifier
+  */
+  drawText(text, fontSize = "100%") {
+    let ctx = this.ctx
+
+    this.text = text
+
+    // let fontSize = this.getFontSizeInPx('medium sans-serif');
+    let pixelScale = window.devicePixelRatio || 1.0
+
+    let font = `calc(${pixelScale} * ${fontSize}) ${this.fontFamily}`
+    ctx.font = font
+    ctx.textBaseline = "top"
+    let textMetric = ctx.measureText(text)
+
+    this.baselineOffset = -textMetric.alphabeticBaseline + textMetric.actualBoundingBoxAscent
+
+    this.canvas.width = Math.ceil(textMetric.actualBoundingBoxRight) - Math.floor(textMetric.actualBoundingBoxLeft)
+    this.canvas.height = Math.ceil(textMetric.actualBoundingBoxDescent) + Math.ceil(textMetric.actualBoundingBoxAscent)
+
+    ctx.fillStyle = this.backgroundColor
+    ctx.fillRect(0,0, this.canvas.width, this.canvas.height)
+
+    ctx.font = font
+    ctx.textBaseline = "top"
+
+    ctx.fillStyle = this.color
+    ctx.fillText(text, textMetric.actualBoundingBoxLeft, textMetric.actualBoundingBoxAscent)
+  }
+
+}
+
+/**
+  Create an OpenGL texture from the contents of the canvas
+  @param {WebGLRenderingContext} gl - WebGL rendering context to create the texture for
+  @param {Canvas} canvas - canvas to create texture from.
+
+  @return {Object} Information about the created texture
+*/
+export const createTextureFromCanvas = function(gl, canvas) {
+  let texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+
+  const level = 0;
+  const internalFormat = gl.RGBA;
+  const srcFormat = gl.RGBA;
+  const srcType = gl.UNSIGNED_BYTE;
+  gl.texImage2D(
+    gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, canvas
+  )
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+
+  let pixelScale = window.devicePixelRatio || 1.0
+
+  return {texture: texture, width: canvas.width, height: canvas.height, scale: pixelScale}
+}
+
+
+export const createTextTexture = function(gl, text, fontSizeRef) {
+
+  if (fontSizeRef instanceof Element)
+    fontSizeRef = window.getComputedStyle(fontSizeRef).fontSize
+
+  let texturer = new GLTextTexturer()
+  texturer.drawText(text, fontSizeRef)
+
+  let texture = createTextureFromCanvas(gl, texturer.canvas)
+  texture.baseline = texturer.baselineOffset;
+  return texture
+}
+
+
+export class GLCanvasBase {
+  constructor(div, isAutoResizeEnabled = true) {
+
+    this.div = div
+    div.style.display       = "flex"
+    div.style.flexDirection = "row"
+    div.style.flexWrap      = "nowrap"
+    div.style.alignItems    = "stretch"
+
+    let heightIFrame = document.createElement("iframe")
+    heightIFrame.style.height = "100%"
+    heightIFrame.style.width = "0px"
+    heightIFrame.style.border = "none"
+    this.heightIFrame = heightIFrame
+
+    this.vdiv = document.createElement("div")
+    // this.vdiv.width = "100%"
+    this.vdiv.style.display       = "flex"
+    this.vdiv.style.flexDirection = "column"
+    this.vdiv.style.flexWrap      = "nowrap"
+    this.vdiv.style.alignItems    = "stretch"
+
+    let widthIFrame = document.createElement("iframe")
+    widthIFrame.style.width = "100%"
+    widthIFrame.style.height = "0px"
+    widthIFrame.style.border = "none"
+    this.widthIFrame = widthIFrame
+
+    this.canvas = document.createElement("canvas")
+    this.canvas.style.width = "100%"
+    this.canvas.style.height = "100%"
+
+    this.vdiv.appendChild(widthIFrame)
+    this.vdiv.appendChild(this.canvas)
+
+    div.appendChild(heightIFrame)
+    div.appendChild(this.vdiv)
+
+    this.resizeEventListener = () => this.updateCanvasSize()
+
+    this.enableAutoResize(isAutoResizeEnabled)
+  }
+
+  enableAutoResize(isEnabled) {
+
+    if (isEnabled) {
+      this.heightIFrame.contentWindow.addEventListener('resize', this.resizeEventListener)
+      this.widthIFrame.contentWindow.addEventListener('resize', this.resizeEventListener)
+    }
+    else {
+      this.heightIFrame.contentWindow.removeEventListener('resize', this.resizeEventListener)
+      this.widthIFrame.contentWindow.removeEventListener('resize', this.resizeEventListener)
+    }
+
+  }
+
+  /**
+    call to update canvas size to match div's size for 1:1 pixel mapping
+  */
+  updateCanvasSize() {
+    let pixelScale = window.devicePixelRatio || 1.0
+
+    let clientBounds = this.div.getBoundingClientRect()
+    this.canvas.width = clientBounds.width*pixelScale
+    this.canvas.height = clientBounds.height*pixelScale
+
+    this.glDraw()
+  }
+
+  loadShader(gl, type, source) {
+    const shader = gl.createShader(type);
+
+    gl.shaderSource(shader, source);
+
+    gl.compileShader(shader);
+
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
+      gl.deleteShader(shader);
+      throw "Unable to compile shader."
+      return undefined;
+    }
+
+    return shader;
+  }
+
+  /**
+    Compile and link a shader program, and get its attribute and uniform locations.
+    @param {WebGLRenderingContext} gl
+    @param {string} vsSource - Vertex shader source.
+    @param {string} fsSource - Fragment shader source.
+    @param {Object} attributes - Shader attribute name mapping.
+    @param {Object} uniforms - Shader uniform name mapping.
+    @return {Object} returns {shaderProgram, attribLocations, uniformLocations}
+  */
+  initShaderProgram(gl, vsSource, fsSource, attributes, uniforms) {
+    const vertexShader = this.loadShader(gl, gl.VERTEX_SHADER, vsSource)
+    const fragmentShader = this.loadShader(gl, gl.FRAGMENT_SHADER, fsSource)
+
+    const shaderProgram = gl.createProgram()
+    gl.attachShader(shaderProgram, vertexShader)
+    gl.attachShader(shaderProgram, fragmentShader)
+    gl.linkProgram(shaderProgram)
+
+    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+      alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram))
+      gl.deleteProgram(shaderProgram)
+      throw "Unable to link shader program."
+      return undefined
+    }
+
+    for (let name in attributes) {
+      attributes[name] = gl.getAttribLocation(shaderProgram, attributes[name])
+    }
+    for (let name in uniforms) {
+      uniforms[name] = gl.getUniformLocation(shaderProgram, uniforms[name])
+    }
+
+    return {shaderProgram: shaderProgram, attribLocations: attributes, uniformLocations: uniforms}
+  }
+
+  /**
+    Initializes WebGL context for use
+    @return {WebGLRenderingContext} WebGL context
+  */
+  initGlBase() {
+    const gl = this.canvas.getContext("webgl")
+
+    if (gl == null) {
+      alert("Cannot initialize WebGL.")
+      return undefined
+    }
+
+
+    // check that element indices can be UINT32, for we would like to address more than 65k vertices at a time
+    var ext = gl.getExtension('OES_element_index_uint');
+    if (!ext) {
+      alert("OES_element_index_uint is not supported.")
+      return undefined
+    }
+
+    // if WebGL context has been successfully setup, assign it to an ivar for later use
+    this.gl = gl
+    return gl
+  }
+}
