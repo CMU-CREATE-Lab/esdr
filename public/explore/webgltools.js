@@ -78,16 +78,30 @@ export const createTextureFromCanvas = function(gl, canvas) {
 }
 
 
+export const computeFontSizingForReferenceElement = function(element) {
+    let style = window.getComputedStyle(element).fontSize
+    let fontSize = style.fontSize
+    let lineHeight = style.lineHeight
+    return {fontSize: fontSize, lineHeight: lineHeight}
+}
+
 export const createTextTexture = function(gl, text, fontSizeRef) {
 
-  if (fontSizeRef instanceof Element)
-    fontSizeRef = window.getComputedStyle(fontSizeRef).fontSize
+  let lineHeight = undefined
+  if (fontSizeRef instanceof Element) {
+    let style = window.getComputedStyle(fontSizeRef).fontSize
+    fontSizeRef = style.fontSize
+    lineHeight = style.lineHeight
+  }
 
   let texturer = new GLTextTexturer()
   texturer.drawText(text, fontSizeRef)
 
   let texture = createTextureFromCanvas(gl, texturer.canvas)
   texture.baseline = texturer.baselineOffset;
+  // provide line height and font size in texture object for reference in placing it
+  texture.fontSize = fontSizeRef
+  texture.lineHeight = lineHeight
   return texture
 }
 
@@ -100,7 +114,7 @@ export const resizeArrayBuffer = function(gl, buffer, numVertices, numElements, 
 }
 
 
-export const resizeArrayElementBuffer = function(gl, buffer, numElements, hint = gl.STATIC_DRAW) {
+export const resizeElementArrayBuffer = function(gl, buffer, numElements, hint = gl.STATIC_DRAW) {
     buffer = buffer || gl.createBuffer()
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer)
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, numElements*Uint32Array.BYTES_PER_ELEMENT, gl.STATIC_DRAW)

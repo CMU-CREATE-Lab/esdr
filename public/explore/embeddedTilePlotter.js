@@ -340,71 +340,40 @@ class ETP {
 
 		let bufferBase = this.NUM_SAMPLES_PER_TILE*this.NUM_TILES*this.NUM_VERTICES_PER_SAMPLE*Float32Array.BYTES_PER_ELEMENT
 
-		buffers.positionBuffer = buffers.positionBuffer || gl.createBuffer()
-		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.positionBuffer)
-		gl.bufferData(gl.ARRAY_BUFFER, bufferBase*this.NUM_POSITION_ELEMENTS, gl.STATIC_DRAW)
+		buffers.positionBuffer = gltools.resizeArrayBuffer(gl, buffers.positionBuffer, bufferBase, this.NUM_POSITION_ELEMENTS)
 
-		buffers.offsetBuffer = buffers.offsetBuffer || gl.createBuffer()
-		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.offsetBuffer)
-		gl.bufferData(gl.ARRAY_BUFFER, bufferBase*this.NUM_OFFSET_ELEMENTS, gl.STATIC_DRAW)
+		buffers.offsetBuffer = gltools.resizeArrayBuffer(gl, buffers.offsetBuffer, bufferBase, this.NUM_OFFSET_ELEMENTS)
 
-		buffers.sizeBuffer = buffers.sizeBuffer || gl.createBuffer()
-		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.sizeBuffer)
-		gl.bufferData(gl.ARRAY_BUFFER, bufferBase*this.NUM_SIZE_ELEMENTS, gl.STATIC_DRAW)
+		buffers.sizeBuffer = gltools.resizeArrayBuffer(gl, buffers.sizeBuffer, bufferBase, this.NUM_SIZE_ELEMENTS)
 
-		buffers.strokeWidthBuffer = buffers.strokeWidthBuffer || gl.createBuffer()
-		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.strokeWidthBuffer)
-		gl.bufferData(gl.ARRAY_BUFFER, bufferBase*this.NUM_STROKEWIDTH_ELEMENTS, gl.STATIC_DRAW)
+		buffers.strokeWidthBuffer = gltools.resizeArrayBuffer(gl, buffers.strokeWidthBuffer, bufferBase, this.NUM_STROKEWIDTH_ELEMENTS)
 
-		buffers.colorMapValueBuffer = buffers.colorMapValueBuffer || gl.createBuffer()
-		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.colorMapValueBuffer)
-		gl.bufferData(gl.ARRAY_BUFFER, bufferBase*this.NUM_COLORMAPVALUE_ELEMENTS, gl.STATIC_DRAW)
+		buffers.colorMapValueBuffer = gltools.resizeArrayBuffer(gl, buffers.colorMapValueBuffer, bufferBase, this.NUM_COLORMAPVALUE_ELEMENTS)
 
-		buffers.fillColorBuffer = buffers.fillColorBuffer || gl.createBuffer()
-		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.fillColorBuffer)
-		gl.bufferData(gl.ARRAY_BUFFER, bufferBase*this.NUM_FILLCOLOR_ELEMENTS, gl.STATIC_DRAW)
+		buffers.fillColorBuffer = gltools.resizeArrayBuffer(gl, buffers.fillColorBuffer, bufferBase, this.NUM_FILLCOLOR_ELEMENTS)
 
-		buffers.strokeColorBuffer = buffers.strokeColorBuffer || gl.createBuffer()
-		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.strokeColorBuffer)
-		gl.bufferData(gl.ARRAY_BUFFER, bufferBase*this.NUM_STROKECOLOR_ELEMENTS, gl.STATIC_DRAW)
+		buffers.strokeColorBuffer = gltools.resizeArrayBuffer(gl, buffers.strokeColorBuffer, bufferBase, this.NUM_STROKECOLOR_ELEMENTS)
 
-		buffers.indexBuffer = buffers.indexBuffer || gl.createBuffer()
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indexBuffer)
-		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.NUM_SAMPLES_PER_TILE*this.NUM_TILES*this.NUM_INDICES_PER_SAMPLE*Uint32Array.BYTES_PER_ELEMENT, gl.STATIC_DRAW)
+		buffers.indexBuffer = gltools.resizeElementArrayBuffer(gl, buffers.indexBuffer, this.NUM_SAMPLES_PER_TILE*this.NUM_TILES*this.NUM_INDICES_PER_SAMPLE)
 	}
 
 
 	bindGlBuffers(gl, shader) {
 		let buffers = this.glBuffers
 
+		gltools.bindArrayBuffer(gl, buffers.positionBuffer, shader.attribLocations.pxVertexPos, this.NUM_POSITION_ELEMENTS)
 
-		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.positionBuffer)
-		gl.enableVertexAttribArray(shader.attribLocations.pxVertexPos)
-		gl.vertexAttribPointer(shader.attribLocations.pxVertexPos, this.NUM_POSITION_ELEMENTS, gl.FLOAT, false, 0, 0)
+		gltools.bindArrayBuffer(gl, buffers.offsetBuffer, shader.attribLocations.pxVertexOffsetDirection, this.NUM_OFFSET_ELEMENTS)
 
-		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.offsetBuffer)
-		gl.enableVertexAttribArray(shader.attribLocations.pxVertexOffsetDirection)
-		gl.vertexAttribPointer(shader.attribLocations.pxVertexOffsetDirection, this.NUM_OFFSET_ELEMENTS, gl.FLOAT, false, 0, 0)
+		gltools.bindArrayBuffer(gl, buffers.sizeBuffer, shader.attribLocations.pxMarkerSize, this.NUM_SIZE_ELEMENTS)
 
-		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.sizeBuffer)
-		gl.enableVertexAttribArray(shader.attribLocations.pxMarkerSize)
-		gl.vertexAttribPointer(shader.attribLocations.pxMarkerSize, this.NUM_SIZE_ELEMENTS, gl.FLOAT, false, 0, 0)
+		gltools.bindArrayBuffer(gl, buffers.strokeWidthBuffer, shader.attribLocations.pxStrokeWidth, this.NUM_STROKEWIDTH_ELEMENTS)
 
-		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.strokeWidthBuffer)
-		gl.enableVertexAttribArray(shader.attribLocations.pxStrokeWidth)
-		gl.vertexAttribPointer(shader.attribLocations.pxStrokeWidth, this.NUM_STROKEWIDTH_ELEMENTS, gl.FLOAT, false, 0, 0)
+		gltools.bindArrayBuffer(gl, buffers.colorMapValueBuffer, shader.attribLocations.colorMapValue, this.NUM_COLORMAPVALUE_ELEMENTS)
 
-		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.colorMapValueBuffer)
-		gl.enableVertexAttribArray(shader.attribLocations.colorMapValue)
-		gl.vertexAttribPointer(shader.attribLocations.colorMapValue, this.NUM_COLORMAPVALUE_ELEMENTS, gl.FLOAT, false, 0, 0)
+		gltools.bindArrayBuffer(gl, buffers.fillColorBuffer, shader.attribLocations.fillColor, this.NUM_FILLCOLOR_ELEMENTS)
 
-		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.fillColorBuffer)
-		gl.enableVertexAttribArray(shader.attribLocations.fillColor)
-		gl.vertexAttribPointer(shader.attribLocations.fillColor, this.NUM_FILLCOLOR_ELEMENTS, gl.FLOAT, false, 0, 0)
-
-		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.strokeColorBuffer)
-		gl.enableVertexAttribArray(shader.attribLocations.strokeColor)
-		gl.vertexAttribPointer(shader.attribLocations.strokeColor, this.NUM_STROKECOLOR_ELEMENTS, gl.FLOAT, false, 0, 0)
+		gltools.bindArrayBuffer(gl, buffers.strokeColorBuffer, shader.attribLocations.strokeColor, this.NUM_STROKECOLOR_ELEMENTS)
 
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indexBuffer)
 
