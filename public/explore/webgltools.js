@@ -91,12 +91,14 @@ export const createTextTexture = function(gl, text, fontSizeRef) {
   return texture
 }
 
+
 export const resizeArrayBuffer = function(gl, buffer, numVertices, numElements, hint = gl.STATIC_DRAW) {
     buffer = buffer || gl.createBuffer()
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
     gl.bufferData(gl.ARRAY_BUFFER, numVertices*numElements*Float32Array.BYTES_PER_ELEMENT, gl.STATIC_DRAW)
     return buffer
 }
+
 
 export const resizeArrayElementBuffer = function(gl, buffer, numElements, hint = gl.STATIC_DRAW) {
     buffer = buffer || gl.createBuffer()
@@ -105,11 +107,67 @@ export const resizeArrayElementBuffer = function(gl, buffer, numElements, hint =
     return buffer
 }
 
+
 export const bindArrayBuffer = function(gl, buffer, loc, numElements) {
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
     gl.enableVertexAttribArray(loc)
     gl.vertexAttribPointer(loc, numElements, gl.FLOAT, false, 0, 0)
 }
+
+
+export const loadShader = function(gl, type, source) {
+  const shader = gl.createShader(type);
+
+  gl.shaderSource(shader, source);
+
+  gl.compileShader(shader);
+
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
+    gl.deleteShader(shader);
+    throw "Unable to compile shader."
+    return undefined;
+  }
+
+  return shader;
+}
+
+
+/**
+  Compile and link a shader program, and get its attribute and uniform locations.
+  @param {WebGLRenderingContext} gl
+  @param {string} vsSource - Vertex shader source.
+  @param {string} fsSource - Fragment shader source.
+  @param {Object} attributes - Shader attribute name mapping.
+  @param {Object} uniforms - Shader uniform name mapping.
+  @return {Object} returns {shaderProgram, attribLocations, uniformLocations}
+*/
+export const initShaderProgram = function(gl, vsSource, fsSource, attributes, uniforms) {
+  const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource)
+  const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource)
+
+  const shaderProgram = gl.createProgram()
+  gl.attachShader(shaderProgram, vertexShader)
+  gl.attachShader(shaderProgram, fragmentShader)
+  gl.linkProgram(shaderProgram)
+
+  if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+    alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram))
+    gl.deleteProgram(shaderProgram)
+    throw "Unable to link shader program."
+    return undefined
+  }
+
+  for (let name in attributes) {
+    attributes[name] = gl.getAttribLocation(shaderProgram, attributes[name])
+  }
+  for (let name in uniforms) {
+    uniforms[name] = gl.getUniformLocation(shaderProgram, uniforms[name])
+  }
+
+  return {shaderProgram: shaderProgram, attribLocations: attributes, uniformLocations: uniforms}
+}
+
 
 export class GLCanvasBase {
   constructor(div, isAutoResizeEnabled = true) {
@@ -180,57 +238,6 @@ export class GLCanvasBase {
     this.glDraw()
   }
 
-  loadShader(gl, type, source) {
-    const shader = gl.createShader(type);
-
-    gl.shaderSource(shader, source);
-
-    gl.compileShader(shader);
-
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
-      gl.deleteShader(shader);
-      throw "Unable to compile shader."
-      return undefined;
-    }
-
-    return shader;
-  }
-
-  /**
-    Compile and link a shader program, and get its attribute and uniform locations.
-    @param {WebGLRenderingContext} gl
-    @param {string} vsSource - Vertex shader source.
-    @param {string} fsSource - Fragment shader source.
-    @param {Object} attributes - Shader attribute name mapping.
-    @param {Object} uniforms - Shader uniform name mapping.
-    @return {Object} returns {shaderProgram, attribLocations, uniformLocations}
-  */
-  initShaderProgram(gl, vsSource, fsSource, attributes, uniforms) {
-    const vertexShader = this.loadShader(gl, gl.VERTEX_SHADER, vsSource)
-    const fragmentShader = this.loadShader(gl, gl.FRAGMENT_SHADER, fsSource)
-
-    const shaderProgram = gl.createProgram()
-    gl.attachShader(shaderProgram, vertexShader)
-    gl.attachShader(shaderProgram, fragmentShader)
-    gl.linkProgram(shaderProgram)
-
-    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-      alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram))
-      gl.deleteProgram(shaderProgram)
-      throw "Unable to link shader program."
-      return undefined
-    }
-
-    for (let name in attributes) {
-      attributes[name] = gl.getAttribLocation(shaderProgram, attributes[name])
-    }
-    for (let name in uniforms) {
-      uniforms[name] = gl.getUniformLocation(shaderProgram, uniforms[name])
-    }
-
-    return {shaderProgram: shaderProgram, attribLocations: attributes, uniformLocations: uniforms}
-  }
 
   /**
     Initializes WebGL context for use

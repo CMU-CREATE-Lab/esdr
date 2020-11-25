@@ -46,6 +46,7 @@
 */
 
 import {ESDR} from "./esdrFeeds.js"
+import * as gltools from "./webgltools.js"
 
 class ETP {
 
@@ -83,43 +84,6 @@ class ETP {
 		this.colorMapTexture = colorMapTexture
 
 		this.colorMapYRange = colorMapYRange || {min: 0.0, max: 100.0}
-	}
-
-	_loadShader(gl, type, source) {
-	  const shader = gl.createShader(type);
-
-	  gl.shaderSource(shader, source);
-
-	  gl.compileShader(shader);
-
-	  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-	    alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
-	    gl.deleteShader(shader);
-			throw "Unable to compile shader."
-	    return undefined;
-	  }
-
-	  return shader;
-	}
-
-	_initShaderProgram(gl, vsSource, fsSource, attribLocations) {
-		const vertexShader = this._loadShader(gl, gl.VERTEX_SHADER, vsSource)
-		const fragmentShader = this._loadShader(gl, gl.FRAGMENT_SHADER, fsSource)
-
-		const shaderProgram = gl.createProgram()
-		gl.attachShader(shaderProgram, vertexShader)
-		gl.attachShader(shaderProgram, fragmentShader)
-
-		gl.linkProgram(shaderProgram)
-
-		if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-		  alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram))
-			gl.deleteProgram(shaderProgram)
-			throw "Unable to link shader program."
-		  return undefined
-	  }
-
-	  return shaderProgram
 	}
 
 	//
@@ -342,29 +306,30 @@ class ETP {
 	    }
   	`
 
-  	this.markerShader = {
-  		shaderProgram: this._initShaderProgram(gl, (this.drawPoints || this.drawBars) ? markerVertexShader : lineVertexShader, markerFragmentShader),
-  	}
-  	this.markerShader.attribLocations = {
-  		pxVertexPos: 							gl.getAttribLocation(this.markerShader.shaderProgram, "pxVertexPos"),
-  		pxVertexOffsetDirection: 	gl.getAttribLocation(this.markerShader.shaderProgram, "pxVertexOffsetDirection"),
-  		pxMarkerSize: 						gl.getAttribLocation(this.markerShader.shaderProgram, "pxMarkerSizeIn"),
-  		pxStrokeWidth: 						gl.getAttribLocation(this.markerShader.shaderProgram, "pxStrokeWidthIn"),
-  		colorMapValue: 						gl.getAttribLocation(this.markerShader.shaderProgram, "colorMapValueIn"),
-  		fillColor: 								gl.getAttribLocation(this.markerShader.shaderProgram, "fillColorIn"),
-  		strokeColor: 							gl.getAttribLocation(this.markerShader.shaderProgram, "strokeColorIn"),  		
-  	}
+  	this.markerShader = gltools.initShaderProgram(
+  		gl, (this.drawPoints || this.drawBars) ? markerVertexShader : lineVertexShader, markerFragmentShader,
+  		{
+  			pxVertexPos: "pxVertexPos",
+  			pxVertexOffsetDirection: "pxVertexOffsetDirection",
+  			pxMarkerSize: "pxMarkerSizeIn",
+  			pxStrokeWidth: "pxStrokeWidthIn",
+  			colorMapValue: "colorMapValueIn",
+  			fillColor: "fillColorIn",
+  			strokeColor: "strokeColorIn",
+  		},
+  		{
+  			colorMapYRange: "colorMapYRange",
+  			colorMapSampler: "colorMapSampler",
+  			markerScale: "markerScale",
+  			modelViewMatrix: "modelViewMatrix",
+  			projectionMatrix: "projectionMatrix",
+  		},
+  	)
 
-  	let maxAttributes = gl.getParameter(gl.MAX_VERTEX_ATTRIBS)
-  	console.assert(maxAttributes >= 7)
 
-  	this.markerShader.uniformLocations = {
-  		modelViewMatrix: 	gl.getUniformLocation(this.markerShader.shaderProgram, "modelViewMatrix"),
-  		projectionMatrix: 	gl.getUniformLocation(this.markerShader.shaderProgram, "projectionMatrix"),
-  		colorMapYRange: 	gl.getUniformLocation(this.markerShader.shaderProgram, "colorMapYRange"),
-  		colorMapSampler: 	gl.getUniformLocation(this.markerShader.shaderProgram, "colorMapSampler"),
-  		markerScale: 	gl.getUniformLocation(this.markerShader.shaderProgram, "markerScale"),
-  	}
+
+  	// let maxAttributes = gl.getParameter(gl.MAX_VERTEX_ATTRIBS)
+  	// console.assert(maxAttributes >= 7)
 
 		this.allocateGlBuffers(gl)
 
