@@ -1,5 +1,6 @@
 
 
+
 class ESDR {
 
 	constructor() {
@@ -486,3 +487,6 @@ class ESDR {
 
 
 } // class ESDR
+
+export {ESDR}
+

@@ -21,6 +21,9 @@ The pipeline is
 
 */
 
+import {ETP} from "./embeddedTilePlotter.js"
+
+
 class MapOverlay extends google.maps.OverlayView {
 	constructor(map, mapDiv) {
 		super()
@@ -1321,3 +1324,5 @@ _binarySearch(array, predicate) {
 	}
 
 } // class MapOverlay
+
+export {MapOverlay}

@@ -45,6 +45,8 @@
 	
 */
 
+import {ESDR} from "./esdrFeeds.js"
+
 class ETP {
 
 	constructor(tileDataSource, colorMapTexture, colorMapYRange) {
@@ -923,7 +925,7 @@ class ETP {
 		let markerScale = this.drawBars ? sparkWidth*sampleSpacing*1.0 / timeScale : 1.0
 
 		// gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-		gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+		gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
 		gl.enable(gl.BLEND)
 		gl.disable(gl.DEPTH_TEST)
 
@@ -943,3 +945,5 @@ class ETP {
 	}
 
 } // class ETP
+
+export {ETP}

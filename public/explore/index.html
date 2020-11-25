@@ -679,10 +679,10 @@ input[type="search"] {
   </div>
 </div>
 
-<script src="esdrFeeds.js"></script>
-<script src="embeddedTilePlotter.js"></script>
+<!-- <script src="esdrFeeds.js"></script> -->
+<!-- <script src="embeddedTilePlotter.js"></script> -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjVZHnH5L8ty50awHChDGdtJ5ZHqCFc-Y"></script>
-<script src="mapOverlay.js"></script>
+<!-- <script src="mapOverlay.js"></script> -->
 
 <script src="../lib/jquery/jquery-1.11.1.min.js" type="text/javascript"></script>
 <script src="../lib/jquery-mousewheel/jquery.mousewheel.min.js"></script>
@@ -698,7 +698,12 @@ input[type="search"] {
 <script src="https://momentjs.com/downloads/moment-timezone-with-data-10-year-range.min.js" type="text/javascript"></script>
 
 
-<script>
+<script type="module">
+
+import {MapOverlay} from "./mapOverlay.js"
+import {ETP} from "./embeddedTilePlotter.js"
+import {ESDR} from "./esdrFeeds.js"
+
 
 let gMap // google map instance
 let esdr = new ESDR() // interface to ESDR data
@@ -967,7 +972,7 @@ function initMap() {
   esdr.updateQuery({mapBounds: bounds})
 
   // inform mapOverlay of selected items
-  for (channelId of esdr.selectedChannelIds) {
+  for (let channelId of esdr.selectedChannelIds) {
     let feedId = parseInt(channelId.slice(0, channelId.indexOf(".")))
     explorer.mapOverlay.selectFeed(feedId, true)
   }
@@ -1082,7 +1087,7 @@ function parseUrlParams() {
   if (browserParams.has("channels")) {
     // TODO: add support for pipe separator old-style URLs?
     let channelIds = browserParams.get("channels").split(",").filter((word) => word.length > 0)
-    for (channelId of channelIds) {
+    for (let channelId of channelIds) {
       // select channel and add plot
       esdr.selectChannelWithId(channelId, true)
       // let feedId = parseInt(channelId.slice(0, channelId.indexOf(".")))
@@ -1451,7 +1456,7 @@ explorer.esdrFeedsReceived = function(feedIds, progress) {
 
   // update plot labels
   let feedSet = new Set(feedIds)
-  for ([channelId, plotId] of explorer.plots) {
+  for (let [channelId, plotId] of explorer.plots) {
     let feedId = parseInt(channelId.slice(0, channelId.indexOf(".")))
     if (feedSet.has(feedId)) {
       let label = document.getElementById(`plotLabel-${plotId}`)
@@ -1527,7 +1532,7 @@ function appendSearchResultsListBy(results) {
 
   let searchResultsList = document.getElementById("searchResultsList")
 
-  for (div of feedDivs)
+  for (let div of feedDivs)
   {
     searchResultsList.appendChild(div)
   }
@@ -2350,7 +2355,7 @@ explorer.setPlotToHeight = function(plotId, height) {
 }
 
 explorer.setPlotsToHeight = function(height) {
-  for ([channelId, plotId] of explorer.plots) {
+  for (let [channelId, plotId] of explorer.plots) {
     let plotContainerName = `plotContainer-${plotId}`
     let plotContainerElement = document.getElementById(plotContainerName)
 
