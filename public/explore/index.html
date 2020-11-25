@@ -571,11 +571,11 @@ input[type="search"] {
 <div id="searchBlock" class="floaty-search">
   <div class="searchbar">
   <!-- <button class="searchbar-button" onclick="toggleSidebar()">☰</button> -->
-  <button class="searchbar-button" id="showSearchResultsButton" onclick="explorer.toggleSidebar()"><img src="hamburger.svg" class="button-icon"></img></button>
+  <button class="searchbar-button" id="showSearchResultsButton" onclick="window.explorer.toggleSidebar()"><img src="hamburger.svg" class="button-icon"></img></button>
   <!-- <div class="searchbar-divider"></div> -->
-  <button class="searchbar-button" id="showDataFiltersButton" onclick="explorer.toggleFilters()"><img src="filter.svg" class="button-icon"></img></button>
+  <button class="searchbar-button" id="showDataFiltersButton" onclick="window.explorer.toggleFilters()"><img src="filter.svg" class="button-icon"></img></button>
   <!-- <div class="searchbar-divider"></div> -->
-  <button class="searchbar-button" id="showSettingsButton" onclick="explorer.toggleSettings()"><img src="settings.svg" class="button-icon"></img></button>
+  <button class="searchbar-button" id="showSettingsButton" onclick="window.explorer.toggleSettings()"><img src="settings.svg" class="button-icon"></img></button>
   <!-- <div class="searchbar-divider"></div> -->
   <input type="search" id="sensorSearchField" class="search-text" placeholder="search sensor feeds">
   <!-- <button class="searchbar-button" onclick="doSensorSearch()"><img src="loupe.svg" class="button-icon"></img></button> -->
@@ -612,51 +612,51 @@ input[type="search"] {
     <div id="plotsToolbar" class="plots-toolbar">
       <div class="toolbar-spacer" style="flex-grow: 1;"></div>
       <div class="plots-shadow-group">
-        <button class="plots-toolbar-button plots-toolbar-group-left" onclick="explorer.moveTimelineByFactorAnimated(-0.25)" style="padding-right: 0.25em;">
+        <button class="plots-toolbar-button plots-toolbar-group-left" onclick="window.explorer.moveTimelineByFactorAnimated(-0.25)" style="padding-right: 0.25em;">
           <img src="goleft.svg" class="button-icon"></img>
         </button>
         <div class="plots-toolbar-button plots-toolbar-group-center" style="padding-left: 0;padding-right: 0; flex-shrink: 1; flex-basis: 10em;">
           <input type="range" min="-100" max="100" value="0" class="plots-date-scrubber" id="plotsDateScrubber" />
         </div>
-        <button class="plots-toolbar-button plots-toolbar-group-right" onclick="explorer.moveTimelineByFactorAnimated(0.25)" style="padding-left: 0.25em;">
+        <button class="plots-toolbar-button plots-toolbar-group-right" onclick="window.explorer.moveTimelineByFactorAnimated(0.25)" style="padding-left: 0.25em;">
           <img src="goright.svg" class="button-icon"></img>
         </button>
         <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
-        <button class="plots-toolbar-button" onclick="explorer.moveTimelineTo(Date.now() * 0.001, 0.9)"><img src="gonow.svg" class="button-icon"></img></button>
+        <button class="plots-toolbar-button" onclick="window.explorer.moveTimelineTo(Date.now() * 0.001, 0.9)"><img src="gonow.svg" class="button-icon"></img></button>
       </div>
       <div class="toolbar-group-spacer"></div>
       <div class="plots-shadow-group">
-        <button class="plots-toolbar-button plots-toolbar-group-left" onclick="explorer.zoomTimelineByFactorAnimated(1.4142135624)" style="padding-right: 0.25em;">
+        <button class="plots-toolbar-button plots-toolbar-group-left" onclick="window.explorer.zoomTimelineByFactorAnimated(1.4142135624)" style="padding-right: 0.25em;">
           <img src="minus.svg" class="button-icon"></img>
         </button>
         <div class="plots-toolbar-button plots-toolbar-group-center" style="padding-left: 0;padding-right: 0;  flex-shrink: 1; flex-basis: 10em;">
           <input type="range" min="-100" max="100" value="0" class="plots-zoom-scrubber" id="plotsZoomScrubber" />
         </div>
-        <button class="plots-toolbar-button plots-toolbar-group-right" onclick="explorer.zoomTimelineByFactorAnimated(0.7071067812)" style="padding-left: 0.25em;">
+        <button class="plots-toolbar-button plots-toolbar-group-right" onclick="window.explorer.zoomTimelineByFactorAnimated(0.7071067812)" style="padding-left: 0.25em;">
           <img src="plus.svg" class="button-icon"></img>
         </button>
         <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
-        <button class="plots-toolbar-button plots-toolbar-group-left" onclick="explorer.zoomTimelineToSize(24*60*60)">day</button>
+        <button class="plots-toolbar-button plots-toolbar-group-left" onclick="window.explorer.zoomTimelineToSize(24*60*60)">day</button>
         <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
-        <button class="plots-toolbar-button plots-toolbar-group-center" onclick="explorer.zoomTimelineToSize(31*24*60*60)">month</button>
+        <button class="plots-toolbar-button plots-toolbar-group-center" onclick="window.explorer.zoomTimelineToSize(31*24*60*60)">month</button>
         <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
-        <button class="plots-toolbar-button plots-toolbar-group-right" onclick="explorer.zoomTimelineToSize(365*24*60*60)">year</button>
+        <button class="plots-toolbar-button plots-toolbar-group-right" onclick="window.explorer.zoomTimelineToSize(365*24*60*60)">year</button>
       </div>
       <div class="toolbar-group-spacer"></div>
       <div class="plots-shadow-group">
-        <button id="decreasePlotAreaHeightButton" class="plots-toolbar-button plots-toolbar-group-left" onclick="explorer.decreasePlotAreaHeight()"><img src="ylower.svg" class="button-icon"></img></button>
+        <button id="decreasePlotAreaHeightButton" class="plots-toolbar-button plots-toolbar-group-left" onclick="window.explorer.decreasePlotAreaHeight()"><img src="ylower.svg" class="button-icon"></img></button>
         <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
-        <button id="increasePlotAreaHeightButton" class="plots-toolbar-button plots-toolbar-group-right" onclick="explorer.increasePlotAreaHeight()"><img src="yraise.svg" class="button-icon"></img></button>
+        <button id="increasePlotAreaHeightButton" class="plots-toolbar-button plots-toolbar-group-right" onclick="window.explorer.increasePlotAreaHeight()"><img src="yraise.svg" class="button-icon"></img></button>
       </div>
         <!-- <div class="toolbar-spacer"></div> -->
       <div class="plots-shadow-group">
-        <button id="decreasePlotHeightButton" class="plots-toolbar-button plots-toolbar-group-left" onclick="explorer.decreasePlotHeight()"><img src="yshrink.svg" class="button-icon"></img></button>
+        <button id="decreasePlotHeightButton" class="plots-toolbar-button plots-toolbar-group-left" onclick="window.explorer.decreasePlotHeight()"><img src="yshrink.svg" class="button-icon"></img></button>
         <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
-        <button id="increasePlotHeightButton" class="plots-toolbar-button plots-toolbar-group-right" onclick="explorer.increasePlotHeight()"><img src="ygrow.svg" class="button-icon"></img></button>
+        <button id="increasePlotHeightButton" class="plots-toolbar-button plots-toolbar-group-right" onclick="window.explorer.increasePlotHeight()"><img src="ygrow.svg" class="button-icon"></img></button>
       </div>
       <div class="toolbar-group-spacer"></div>
       <div class="plots-shadow-group">
-        <button id="showDataDownloadsButton" class="plots-toolbar-button" onclick="explorer.toggleDataDownloads()"><img src="download.svg" class="button-icon"></img></button>
+        <button id="showDataDownloadsButton" class="plots-toolbar-button" onclick="window.explorer.toggleDataDownloads()"><img src="download.svg" class="button-icon"></img></button>
       </div>
     </div>
     <div id="plotOptions" class="plot-options-row">
@@ -677,7 +677,7 @@ input[type="search"] {
             <option disabled class="selector-separator"></option>
           </select>
    -->
-          <input type="text" name="timezoneInput" id="timezoneSelectorInput" list="timezoneDatalist" placeholder="Current Browser Timezone" autocomplete="off" onchange="explorer.downloadTimezoneChanged(event)" />
+          <input type="text" name="timezoneInput" id="timezoneSelectorInput" list="timezoneDatalist" placeholder="Current Browser Timezone" autocomplete="off" onchange="window.explorer.downloadTimezoneChanged(event)" />
           <datalist id="timezoneDatalist">
             <option value="Current Browser Timezone" />
             <option value="UTC" />
@@ -2448,6 +2448,9 @@ explorer.decreasePlotHeight = function() {
 // call initMap() as we fully loaded maps api to be able to extend the overlays in mapOverlay.js
 initMap()
 // initPlots()
+
+// set explorer to be an object on the window, so it can be accessed from onevent handlers in the html
+window.explorer = explorer
 
 </script>
    
