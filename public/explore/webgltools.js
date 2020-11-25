@@ -91,6 +91,25 @@ export const createTextTexture = function(gl, text, fontSizeRef) {
   return texture
 }
 
+export const resizeArrayBuffer = function(gl, buffer, numVertices, numElements, hint = gl.STATIC_DRAW) {
+    buffer = buffer || gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+    gl.bufferData(gl.ARRAY_BUFFER, numVertices*numElements*Float32Array.BYTES_PER_ELEMENT, gl.STATIC_DRAW)
+    return buffer
+}
+
+export const resizeArrayElementBuffer = function(gl, buffer, numElements, hint = gl.STATIC_DRAW) {
+    buffer = buffer || gl.createBuffer()
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer)
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, numElements*Uint32Array.BYTES_PER_ELEMENT, gl.STATIC_DRAW)
+    return buffer
+}
+
+export const bindArrayBuffer = function(gl, buffer, loc, numElements) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+    gl.enableVertexAttribArray(loc)
+    gl.vertexAttribPointer(loc, numElements, gl.FLOAT, false, 0, 0)
+}
 
 export class GLCanvasBase {
   constructor(div, isAutoResizeEnabled = true) {
