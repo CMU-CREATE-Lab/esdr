@@ -33,6 +33,8 @@
   --scrubber-button-color: var(--dark-baby-blue);
   --plot-extension-color: var(--light-sky-blue);
 
+  --ui-short-transition-duration: 0.3s;
+
 }
 
 html, body {
@@ -61,6 +63,18 @@ canvas {
 input[type="search"] {
   -webkit-appearance: textfield;
 }
+
+/*prevent buttons etc getting selected, but this somehow causes layout to go bonkers*/
+/*.noselect {   
+  -moz-user-select: none;   
+  -webkit-user-select: none;   
+  -webkit-text-size-adjust: none;   
+  -ms-user-select: none;   
+  user-select: none;  
+  cursor: default;
+} 
+*/
+
 
 .sidebar {
   /*font-size: large;*/
