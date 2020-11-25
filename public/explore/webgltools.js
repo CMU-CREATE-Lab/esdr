@@ -1,3 +1,5 @@
+
+
 class GLTextTexturer {
   constructor() {
     this.canvas = document.createElement("canvas")
@@ -28,10 +30,12 @@ class GLTextTexturer {
     ctx.textBaseline = "top"
     let textMetric = ctx.measureText(text)
 
-    this.baselineOffset = -textMetric.alphabeticBaseline + textMetric.actualBoundingBoxAscent
+    // draw with 1px margins so that when the texture is mapped onto bigger geometry, the edge pixels don't bleed
 
-    this.canvas.width = Math.ceil(textMetric.actualBoundingBoxRight) - Math.floor(textMetric.actualBoundingBoxLeft)
-    this.canvas.height = Math.ceil(textMetric.actualBoundingBoxDescent) + Math.ceil(textMetric.actualBoundingBoxAscent)
+    this.baselineOffset = 1 + -textMetric.alphabeticBaseline + textMetric.actualBoundingBoxAscent
+
+    this.canvas.width = 2 + Math.ceil(textMetric.actualBoundingBoxRight) - Math.floor(textMetric.actualBoundingBoxLeft)
+    this.canvas.height = 2 + Math.ceil(textMetric.actualBoundingBoxDescent) + Math.ceil(textMetric.actualBoundingBoxAscent)
 
     ctx.fillStyle = this.backgroundColor
     ctx.fillRect(0,0, this.canvas.width, this.canvas.height)
@@ -40,7 +44,7 @@ class GLTextTexturer {
     ctx.textBaseline = "top"
 
     ctx.fillStyle = this.color
-    ctx.fillText(text, textMetric.actualBoundingBoxLeft, textMetric.actualBoundingBoxAscent)
+    ctx.fillText(text, 1 + textMetric.actualBoundingBoxLeft, 1 + textMetric.actualBoundingBoxAscent)
   }
 
 }
