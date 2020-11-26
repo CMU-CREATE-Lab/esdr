@@ -248,8 +248,6 @@ export class GLCanvasBase {
     let clientBounds = this.div.getBoundingClientRect()
     this.canvas.width = clientBounds.width*pixelScale
     this.canvas.height = clientBounds.height*pixelScale
-
-    this.glDraw()
   }
 
 
