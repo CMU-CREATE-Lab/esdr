@@ -79,7 +79,7 @@ export const createTextureFromCanvas = function(gl, canvas) {
 
 
 export const computeFontSizingForReferenceElement = function(element) {
-    let style = window.getComputedStyle(element).fontSize
+    let style = window.getComputedStyle(element)
     let fontSize = style.fontSize
     let lineHeight = style.lineHeight
     return {fontSize: fontSize, lineHeight: lineHeight}
@@ -89,7 +89,7 @@ export const createTextTexture = function(gl, text, fontSizeRef) {
 
   let lineHeight = undefined
   if (fontSizeRef instanceof Element) {
-    let style = window.getComputedStyle(fontSizeRef).fontSize
+    let style = window.getComputedStyle(fontSizeRef)
     fontSizeRef = style.fontSize
     lineHeight = style.lineHeight
   }
