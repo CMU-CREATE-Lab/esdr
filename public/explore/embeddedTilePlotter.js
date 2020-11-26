@@ -69,6 +69,9 @@ class ETP {
 		this.NUM_FILLCOLOR_ELEMENTS		= 4
 		this.NUM_STROKECOLOR_ELEMENTS	= 4
 
+		this.plotWidth = 100.0
+		this.plotHeight = 20.0
+
 		this.glBuffers = {}
 
 		this.tiles = (new Array(this.NUM_TILES)).fill({})
@@ -772,7 +775,7 @@ class ETP {
     return hi;
 	}
 
-	minMaxValueInRange(range) {
+minMaxValueInRange(range) {
 		if (!this.indexTimes)
 			return {min: -1.0, max: 1.0}
 
@@ -840,13 +843,14 @@ class ETP {
 
 		let {min: miny, max: maxy} = this.minMaxValueInRange(this.plotRange)
 
-		let sparkWidth = 100.0
-		let sparkHeight = 20.0
+		// clip to zero if not considering negatives for auto-ranging
+		if (!this.isAutoRangingNegatives)
+			miny = Math.max(0.0, miny)
 
-		let xscale = sparkWidth/timeScale
-		let yscale = sparkHeight/maxy
-		let xshift = pxOffset.x - sparkWidth*timeRefOffset
-		let yshift = pxOffset.y
+		let xscale = this.plotWidth/timeScale
+		let yscale = this.plotHeight/(maxy-miny)
+		let xshift = pxOffset.x - this.plotWidth*timeRefOffset
+		let yshift = pxOffset.y + miny*yscale
 
 		const MV = [
 		  xscale,      0, 0, 0,
@@ -856,7 +860,7 @@ class ETP {
 		]
 
 		let sampleSpacing = 1.0 // Math.pow(2, this.tileLevel)
-		let markerScale = this.drawBars ? sparkWidth*sampleSpacing*1.0 / timeScale : 1.0
+		let markerScale = this.drawBars ? this.plotWidth*sampleSpacing*1.0 / timeScale : 1.0
 
 		// gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 		gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
