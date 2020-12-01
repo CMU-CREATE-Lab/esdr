@@ -1041,6 +1041,7 @@ class GLGrapher extends gltools.GLCanvasBase {
 
 
   onMouseDown(event) {
+    event.preventDefault()
     // console.log("mouse down", event)
     let loc = {x: event.screenX, y: event.screenY}
     this.mouseDownLocation = loc
@@ -1050,6 +1051,7 @@ class GLGrapher extends gltools.GLCanvasBase {
   }
 
   onMouseDragged(event) {
+    event.preventDefault()
     let loc = {x: event.screenX, y: event.screenY}
     let delta = {x: loc.x - this.mouseLastLocation.x, y: loc.y - this.mouseLastLocation.y}
 
@@ -1067,6 +1069,7 @@ class GLGrapher extends gltools.GLCanvasBase {
   }
 
   onMouseUp(event) {
+    event.preventDefault()
     // console.log("mouse up", event)
     this.mouseDownLocation = undefined
     document.removeEventListener("mouseup", this.onMouseUpListener)
