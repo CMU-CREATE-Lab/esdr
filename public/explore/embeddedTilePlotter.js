@@ -146,32 +146,6 @@ class ETP {
 	  return texture;
 	}
 
-	whiteTexture(gl) {
-	  const texture = gl.createTexture();
-	  gl.bindTexture(gl.TEXTURE_2D, texture);
-
-	  // Because images have to be downloaded over the internet
-	  // they might take a moment until they are ready.
-	  // Until then put a single pixel in the texture so we can
-	  // use it immediately. When the image has finished downloading
-	  // we'll update the texture with the contents of the image.
-	  const level = 0;
-	  const internalFormat = gl.RGBA;
-	  const width = 2;
-	  const height = 2;
-	  const border = 0;
-	  const srcFormat = gl.RGBA;
-	  const srcType = gl.UNSIGNED_BYTE;
-	  const pixel = new Uint8Array([255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255]); 
-	  gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
-	                width, height, border, srcFormat, srcType,
-	                pixel);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-
-	  return texture;
-	}
 
 	_initGl(gl) {
 
@@ -187,149 +161,11 @@ class ETP {
 
 		// load colormap
 		if (this.colorMapTexture === undefined)
-			this.colorMapTexture = this.whiteTexture(gl)
+			this.colorMapTexture = gltools.createWhiteTexture(gl)
 		else if (typeof this.colorMapTexture === "string")
 			this.colorMapTexture = this.loadTexture(gl, this.colorMapTexture)
 
-		const markerVertexShader = `
-
-	    attribute vec2 pxVertexPos;
-	    attribute vec2 pxVertexOffsetDirection;
-	    attribute float pxMarkerSizeIn;
-	    attribute float pxStrokeWidthIn;
-	    attribute float colorMapValueIn;
-	    attribute vec4 fillColorIn;
-	    attribute vec4 strokeColorIn;
-
-	    uniform mat4 modelViewMatrix;
-	    uniform mat4 projectionMatrix;
-	    uniform vec2 colorMapYRange;
-	  	uniform float markerScale;
-
-	    varying vec2 pxCenterOffset; 
-	    varying float pxMarkerSize;
-	    varying float pxStrokeWidth;
-	    varying vec4 fillColor;
-	    varying vec4 strokeColor;
-	    varying float colorMapValue;
-
-	    void main() {
-
-	    	vec2 screenSpacePos = (modelViewMatrix * vec4(pxVertexPos, 0.0, 1.0)).xy;
-
-
-	    	// offset vertex by direction and size of marker
-	    	// actual offset is 1px bigger than markerSize to leave room for AA
-	    	vec2 pxOffset = pxVertexOffsetDirection*(0.5*pxMarkerSizeIn*markerScale + pxStrokeWidthIn + 1.0);
-	    	screenSpacePos += pxOffset;
-
-	    	// outputs
-	    	pxCenterOffset = pxOffset;
-	      gl_Position = projectionMatrix * vec4(screenSpacePos, 0.0, 1.0);
-	      fillColor = fillColorIn;
-	      strokeColor = strokeColorIn;
-	      pxMarkerSize = pxMarkerSizeIn*markerScale;
-	      pxStrokeWidth = pxStrokeWidthIn;
-	      colorMapValue = (colorMapValueIn - colorMapYRange[0])/(colorMapYRange[1]-colorMapYRange[0]);
-	    }
-  	`
-		const lineVertexShader = `
-
-	    attribute vec2 pxVertexPos;
-	    attribute vec2 pxVertexOffsetDirection;
-	    attribute float pxMarkerSizeIn;
-	    attribute float pxStrokeWidthIn;
-	    attribute float colorMapValueIn;
-	    attribute vec4 fillColorIn;
-	    attribute vec4 strokeColorIn;
-
-	    uniform mat4 modelViewMatrix;
-	    uniform mat4 projectionMatrix;
-	    uniform vec2 colorMapYRange;
-	  	uniform float markerScale;
-
-	    varying vec2 pxCenterOffset; 
-	    varying float pxMarkerSize;
-	    varying float pxStrokeWidth;
-	    varying vec4 fillColor;
-	    varying vec4 strokeColor;
-	    varying float colorMapValue;
-
-	    void main() {
-
-	    	vec2 screenSpacePos = (modelViewMatrix * vec4(pxVertexPos, 0.0, 1.0)).xy;
-
-	    	// for line drawing, we have to account for non-uniform x/y scaling
-	    	vec2 xyScale = vec2(1.0/modelViewMatrix[0][0], 1.0/modelViewMatrix[1][1]);
-	    	float xyScaleLength = length(xyScale);
-	    	float preLength = length(pxVertexOffsetDirection);
-	    	vec2 vertexOffsetDirection = xyScale*pxVertexOffsetDirection;
-	    	float postLength = length(vertexOffsetDirection);
-	    	vertexOffsetDirection *= preLength/postLength;
-
-	    	// offset vertex by direction and size of marker
-	    	// actual offset is 1px bigger than markerSize to leave room for AA
-	    	vec2 pxOffset = vertexOffsetDirection*(0.5*pxMarkerSizeIn*markerScale + pxStrokeWidthIn + 1.0);
-	    	screenSpacePos += pxOffset;
-
-	    	// outputs
-	    	pxCenterOffset = pxOffset;
-	      gl_Position = projectionMatrix * vec4(screenSpacePos, 0.0, 1.0);
-	      fillColor = fillColorIn;
-	      strokeColor = strokeColorIn;
-	      pxMarkerSize = pxMarkerSizeIn*markerScale;
-	      pxStrokeWidth = pxStrokeWidthIn;
-	      colorMapValue = (colorMapValueIn - colorMapYRange[0])/(colorMapYRange[1]-colorMapYRange[0]);
-	    }
-  	`
-
-	  const markerFragmentShader = `
-	  	precision mediump float;
-
-	  	varying vec2 pxCenterOffset;
-	  	varying float pxMarkerSize;
-	  	varying float pxStrokeWidth;
-	  	varying vec4 fillColor;
-	  	varying vec4 strokeColor;
-	    varying float colorMapValue;
-
-	    uniform sampler2D colorMapSampler;
-
-	    void main() {
-	    	float r = length(pxCenterOffset);
-	    	float rd = (0.5*pxMarkerSize - r);
-	    	float fillCoverage = clamp(0.5 + 2.0*(rd - 0.5*pxStrokeWidth), 0.0, 1.0);
-	    	vec4 mappedColor = texture2D(colorMapSampler, vec2(colorMapValue, 0.5));
-	    	vec4 fill = mappedColor*vec4(fillColor.rgb, fillColor.a)*fillCoverage;
-	    	float strokeCoverage = clamp(0.5 - 2.0*(rd - 0.5*pxStrokeWidth), 0.0, 1.0)*clamp(0.5 + 2.0*(rd + 0.5*pxStrokeWidth), 0.0, 1.0);
-	    	vec4 stroke = mappedColor*strokeColor*strokeCoverage;
-	      gl_FragColor = fill + stroke;
-	      // gl_FragColor = mappedColor;
-	      // gl_FragColor = vec4(0.0,0.0,0.0,0.5);
-	    }
-  	`
-
-  	this.markerShader = gltools.initShaderProgram(
-  		gl, (this.drawPoints || this.drawBars) ? markerVertexShader : lineVertexShader, markerFragmentShader,
-  		{
-  			pxVertexPos: "pxVertexPos",
-  			pxVertexOffsetDirection: "pxVertexOffsetDirection",
-  			pxMarkerSize: "pxMarkerSizeIn",
-  			pxStrokeWidth: "pxStrokeWidthIn",
-  			colorMapValue: "colorMapValueIn",
-  			fillColor: "fillColorIn",
-  			strokeColor: "strokeColorIn",
-  		},
-  		{
-  			colorMapYRange: "colorMapYRange",
-  			colorMapSampler: "colorMapSampler",
-  			markerScale: "markerScale",
-  			modelViewMatrix: "modelViewMatrix",
-  			projectionMatrix: "projectionMatrix",
-  		},
-  	)
-
-
+  	this.markerShader = (this.drawPoints || this.drawBars) ? gltools.createMarkerShader(gl) : gltools.createLineShader(gl)
 
   	// let maxAttributes = gl.getParameter(gl.MAX_VERTEX_ATTRIBS)
   	// console.assert(maxAttributes >= 7)
@@ -364,7 +200,7 @@ class ETP {
 	bindGlBuffers(gl, shader) {
 		let buffers = this.glBuffers
 
-		gltools.bindArrayBuffer(gl, buffers.positionBuffer, shader.attribLocations.pxVertexPos, this.NUM_POSITION_ELEMENTS)
+		gltools.bindArrayBuffer(gl, buffers.positionBuffer, shader.attribLocations.vertexPos, this.NUM_POSITION_ELEMENTS)
 
 		gltools.bindArrayBuffer(gl, buffers.offsetBuffer, shader.attribLocations.pxVertexOffsetDirection, this.NUM_OFFSET_ELEMENTS)
 
@@ -539,6 +375,8 @@ class ETP {
 
 		}
 
+    let pixelScale = window.devicePixelRatio || 1.0
+
 		let buffers = this.glBuffers
 
 		let indices = new Array(this.tiles.length).fill([])
@@ -644,7 +482,7 @@ class ETP {
 				}
 
 
-				let strokeWidths = (new Array(tile.positions.length)).fill((new Array(4)).fill(0.5))
+				let strokeWidths = (new Array(tile.positions.length)).fill((new Array(4)).fill(1.0/pixelScale))
 
 				let fillColors = (new Array(tile.positions.length)).fill((new Array(4)).fill(this.fillColor).flat())
 				// make stroke and fill the same for proper blend even with zero stroke width
@@ -880,6 +718,7 @@ minMaxValueInRange(range) {
 		gl.uniformMatrix4fv(shader.uniformLocations.projectionMatrix, false, PM)
 		gl.uniform2fv(shader.uniformLocations.colorMapYRange, [this.colorMapYRange.min, this.colorMapYRange.max])
 		gl.uniform1f(shader.uniformLocations.markerScale, markerScale)
+		gl.uniform1f(shader.uniformLocations.pixelScale, window.devicePixelRatio || 1.0)
 
 		gl.activeTexture(gl.TEXTURE0);
 		gl.bindTexture(gl.TEXTURE_2D, this.colorMapTexture)

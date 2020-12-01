@@ -124,6 +124,32 @@ export const createTextTexture = function(gl, text, fontSizeRef) {
   return texture
 }
 
+export function createWhiteTexture(gl) {
+  const texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+
+  // Because images have to be downloaded over the internet
+  // they might take a moment until they are ready.
+  // Until then put a single pixel in the texture so we can
+  // use it immediately. When the image has finished downloading
+  // we'll update the texture with the contents of the image.
+  const level = 0;
+  const internalFormat = gl.RGBA;
+  const width = 2;
+  const height = 2;
+  const border = 0;
+  const srcFormat = gl.RGBA;
+  const srcType = gl.UNSIGNED_BYTE;
+  const pixel = new Uint8Array([255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255]); 
+  gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+                width, height, border, srcFormat, srcType,
+                pixel);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+
+  return texture;
+}
 
 export const resizeArrayBuffer = function(gl, buffer, numVertices, numElements, hint = gl.STATIC_DRAW) {
     buffer = buffer || gl.createBuffer()
@@ -142,9 +168,11 @@ export const resizeElementArrayBuffer = function(gl, buffer, numElements, hint =
 
 
 export const bindArrayBuffer = function(gl, buffer, loc, numElements) {
+  if (buffer) {
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
     gl.enableVertexAttribArray(loc)
     gl.vertexAttribPointer(loc, numElements, gl.FLOAT, false, 0, 0)
+  }
 }
 
 
@@ -201,6 +229,180 @@ export const initShaderProgram = function(gl, vsSource, fsSource, attributes, un
   return {shaderProgram: shaderProgram, attribLocations: attributes, uniformLocations: uniforms}
 }
 
+
+const markerVertexShader = `
+
+  attribute vec2 vertexPos;
+  attribute vec2 pxVertexOffsetDirection;
+  attribute float pxMarkerSizeIn;
+  attribute float pxStrokeWidthIn;
+  attribute vec2 texCoordIn;
+  attribute vec4 fillColorIn;
+  attribute vec4 strokeColorIn;
+
+  uniform mat4 modelViewMatrix;
+  uniform mat4 projectionMatrix;
+  uniform vec2 colorMapYRange;
+  uniform float markerScale;
+
+  varying vec2 pxCenterOffset; 
+  varying float pxMarkerSize;
+  varying float pxStrokeWidth;
+  varying vec4 fillColor;
+  varying vec4 strokeColor;
+  varying vec2 colorMapValue;
+
+  void main() {
+
+    vec2 screenSpacePos = (modelViewMatrix * vec4(vertexPos, 0.0, 1.0)).xy;
+
+
+    // offset vertex by direction and size of marker
+    // actual offset is 1px bigger than markerSize to leave room for AA
+    vec2 pxOffset = pxVertexOffsetDirection*(0.5*pxMarkerSizeIn*markerScale + pxStrokeWidthIn + 1.0);
+    screenSpacePos += pxOffset;
+
+    // outputs
+    pxCenterOffset = pxOffset;
+    gl_Position = projectionMatrix * vec4(screenSpacePos, 0.0, 1.0);
+    fillColor = fillColorIn;
+    strokeColor = strokeColorIn;
+    pxMarkerSize = pxMarkerSizeIn*markerScale;
+    pxStrokeWidth = pxStrokeWidthIn;
+    colorMapValue = (texCoordIn - colorMapYRange[0])/(colorMapYRange[1]-colorMapYRange[0]);
+  }
+`
+
+const lineVertexShader = `
+
+  attribute vec2 vertexPos;
+  attribute vec2 pxVertexOffsetDirection;
+  attribute float pxMarkerSizeIn;
+  attribute float pxStrokeWidthIn;
+  attribute vec2 texCoordIn;
+  attribute vec4 fillColorIn;
+  attribute vec4 strokeColorIn;
+
+  uniform mat4 modelViewMatrix;
+  uniform mat4 projectionMatrix;
+  uniform vec2 colorMapYRange;
+  uniform float markerScale;
+
+  varying vec2 pxCenterOffset; 
+  varying float pxMarkerSize;
+  varying float pxStrokeWidth;
+  varying vec4 fillColor;
+  varying vec4 strokeColor;
+  varying vec2 colorMapValue;
+
+  void main() {
+
+    vec2 screenSpacePos = (modelViewMatrix * vec4(vertexPos, 0.0, 1.0)).xy;
+
+    // for line drawing, we have to account for non-uniform x/y scaling
+    vec2 xyScale = vec2(1.0/modelViewMatrix[0][0], 1.0/modelViewMatrix[1][1]);
+    float xyScaleLength = length(xyScale);
+    float preLength = length(pxVertexOffsetDirection);
+    vec2 vertexOffsetDirection = xyScale*pxVertexOffsetDirection;
+    float postLength = length(vertexOffsetDirection);
+    vertexOffsetDirection *= preLength/postLength;
+
+    // offset vertex by direction and size of marker
+    // actual offset is 1px bigger than markerSize to leave room for AA
+    vec2 pxOffset = vertexOffsetDirection*(0.5*pxMarkerSizeIn*markerScale + pxStrokeWidthIn + 1.0);
+    screenSpacePos += pxOffset;
+
+    // outputs
+    pxCenterOffset = pxOffset;
+    gl_Position = projectionMatrix * vec4(screenSpacePos, 0.0, 1.0);
+    fillColor = fillColorIn;
+    strokeColor = strokeColorIn;
+    pxMarkerSize = pxMarkerSizeIn*markerScale;
+    pxStrokeWidth = pxStrokeWidthIn;
+    colorMapValue = (texCoordIn - colorMapYRange[0])/(colorMapYRange[1]-colorMapYRange[0]);
+  }
+`
+
+const markerFragmentShader = `
+  precision mediump float;
+
+  varying vec2 pxCenterOffset;
+  varying float pxMarkerSize;
+  varying float pxStrokeWidth;
+  varying vec4 fillColor;
+  varying vec4 strokeColor;
+  varying vec2 colorMapValue;
+
+  uniform sampler2D colorMapSampler;
+  uniform float pixelScale;
+
+  void main() {
+    float r = length(pxCenterOffset);
+    float rd = (r - 0.5*pxMarkerSize);
+    float fillCoverage = clamp(0.5 - pixelScale*(rd - 0.5*pxStrokeWidth), 0.0, 1.0);
+    float strokeCoverage = clamp(0.5 + pixelScale*(rd - 0.5*pxStrokeWidth), 0.0, 1.0)*clamp(0.5 - pixelScale*(rd + 0.5*pxStrokeWidth), 0.0, 1.0);
+    vec4 mappedColor = texture2D(colorMapSampler, colorMapValue);
+    vec4 fill = mappedColor*vec4(fillColor.rgb, fillColor.a)*fillCoverage;
+    vec4 stroke = mappedColor*strokeColor*strokeCoverage;
+    gl_FragColor = fill + stroke;
+    // gl_FragColor = mappedColor;
+    // gl_FragColor = mix(vec4(0.5,0.0,0.0,0.5), vec4(0.0,0.5,0.0,0.5), fillCoverage);
+  }
+`
+
+export function createLineShader(gl) {
+
+  let shader = initShaderProgram(
+    gl, lineVertexShader, markerFragmentShader,
+    {
+      vertexPos: "vertexPos",
+      pxVertexOffsetDirection: "pxVertexOffsetDirection",
+      pxMarkerSize: "pxMarkerSizeIn",
+      pxStrokeWidth: "pxStrokeWidthIn",
+      texCoord: "texCoordIn",
+      colorMapValue: "texCoordIn",
+      fillColor: "fillColorIn",
+      strokeColor: "strokeColorIn",
+    },
+    {
+      colorMapYRange: "colorMapYRange",
+      colorMapSampler: "colorMapSampler",
+      markerScale: "markerScale",
+      pixelScale: "pixelScale",
+      modelViewMatrix: "modelViewMatrix",
+      projectionMatrix: "projectionMatrix",
+    },
+  )
+
+  return shader
+}
+
+export function createMarkerShader(gl) {
+
+  let shader = initShaderProgram(
+    gl, markerVertexShader, markerFragmentShader,
+    {
+      vertexPos: "vertexPos",
+      pxVertexOffsetDirection: "pxVertexOffsetDirection",
+      pxMarkerSize: "pxMarkerSizeIn",
+      pxStrokeWidth: "pxStrokeWidthIn",
+      texCoord: "texCoordIn",
+      colorMapValue: "texCoordIn",
+      fillColor: "fillColorIn",
+      strokeColor: "strokeColorIn",
+    },
+    {
+      colorMapYRange: "colorMapYRange",
+      colorMapSampler: "colorMapSampler",
+      markerScale: "markerScale",
+      pixelScale: "pixelScale",
+      modelViewMatrix: "modelViewMatrix",
+      projectionMatrix: "projectionMatrix",
+    },
+  )
+
+  return shader
+}
 
 export class GLCanvasBase {
   constructor(div, isAutoResizeEnabled = true) {
