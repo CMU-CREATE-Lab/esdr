@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GL Text Testbed</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+<style>
+
+/*color definitions*/
+:root {
+  --light-sky-blue: #F1F8FF;  /* HSB 210 5% 100% */
+
+  --plot-extension-color: var(--light-sky-blue);
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow-y: hidden;
+}
+
+body {
+  font-family: sans-serif;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid rgba(0,0,0,0.2);
+}
+
+canvas {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+}
+
+input[type="search"] {
+  -webkit-appearance: textfield;
+}
+
+#main {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  box-sizing: border-box;
+  transition: margin-left .3s;
+  /*padding: 16px;*/
+  height: 100%;
+  overflow-y: hidden;
+}
+
+
+
+/* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
+@media screen and (max-height: 450px) {
+  /*.sidebar {padding-top: 15px;}*/
+  /*.sidebar a {font-size: 18px;}*/
+}
+</style>
+</head>
+<body>
+<div id="main">
+</div>
+
+<!-- <script type="module" src="./webgltools.js"></script> -->
+<script type="module">
+
+// import * as gltools from "./webgltools.js"
+import * as grapher from "./monolithicGrapher.js"
+import {ETP} from "./embeddedTilePlotter.js"
+
+
+
+function computeDataTileLevel(range) {
+  let width = range.max - range.min
+  return width > 0 ? Math.floor(Math.log2(width / 512)) : undefined
+}
+
+function computeDataTileOffset(time, level) {
+  let tileWidth = Math.pow(2, level + 9)
+  return Math.floor(time / tileWidth)
+}
+
+function computeDataTileStartTime(level, offset) {
+  // +9 because 2^9 = 512, the number of samples per tile
+  return Math.pow(2, level + 9) * offset
+}
+
+function fakeDataSource(level, offset, callback, frequency) {
+  let start = computeDataTileStartTime(level, offset)
+
+  let data = [...Array(512).keys()].map(i => {
+    let t = start + i*Math.pow(2, level)
+    let y = Math.sin(0.1*frequency*t)
+    return [t,y,0.0,1]
+  })
+
+  callback({data: data, level: level, offset: offset})
+
+}
+
+
+let monographer = new grapher.GLGrapher(document.getElementById("main"))
+
+let label1 = document.createElement("div")
+label1.textContent = "numero uno"
+
+let plot1 = new ETP((level, offset, callback) => fakeDataSource(level, offset, callback, 1.0))
+monographer.addPlot(1, plot1, label1)
+
+let label2 = document.createElement("div")
+label2.textContent = "numero due"
+
+let plot2 = new ETP((level, offset, callback) => fakeDataSource(level, offset, callback, 0.3))
+monographer.addPlot(2, plot2, label2)
+
+</script>
+   
+</body>
+</html> 
+

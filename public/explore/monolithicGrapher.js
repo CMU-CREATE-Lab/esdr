@@ -12,7 +12,7 @@ export {GLGrapher}
 
 	The main complication is that dates are irregular, eg. there are different length months and years, and care has to be taken to display the grid and ticks right.
 
-	Dates are typically displayed centered on a section in-between ticks, eg in the middle of a day, while times are shown at the corresponding tick locations.
+	Dates are typically displayed centered (boxed) on a section in-between ticks, eg in the middle of a day, while times are shown (pinned) at the corresponding tick locations.
 
 	It is desirable to show a full date at all times, as well as the smallest increment that makes sense:
 
@@ -27,13 +27,36 @@ export {GLGrapher}
 	  |     |     |     |   ...
 	------------------------...
 
-	The BodyTrack grapher sticks to this philosphy, showing 2 tiers even when zoomed out to decades and centuries, but switching to single tier labelling might be more useful once zoomed out far enough
+	The BodyTrack grapher sticks to this philosphy, showing 2 tiers even when zoomed out to decades and centuries, but switching to single tier labelling might be more useful once zoomed out far enough.
 
-	*** Time Grids
+  **** Which Scaling to Show?
+
+  Tick spacing is different for different demarkations of date / time. The basic units are
+    - year
+    - month
+      - week
+      - day
+    - hour
+    - minute
+    - second
+
+  For each of these, labelling and (tick) distribution are different
+    - year: yearly decimal -- 1 (2) (5) 10 ...
+    - month / week / day: daily -- 1 (7)
+    - hour: 1 (3) (6) 12
+    - minute / second: 1 5 (15) 30
+
+  Boxed labels can be shown as long as they fit into their respective boxes, but pinned labels need some spacing between them.
+
+  Scales shown need to be independent of previous states, so that a graph with the same time range, same sized box, and same styling always shows the same ticks and labels
+
+
+
+	**** Time Grid Uniformity
 
 	For time grids, we will disregard leap-seconds in general, and they can be uniform, therefore the time-invariant
 
-	*** Date Grids 
+	**** Date Grid Uniformity
 
 	For years, depending on the zoom level, leap days might or might not be visible. Months have even more pronounced differences. Therefore, we need to create a date grid matching the visible range
 
@@ -46,9 +69,11 @@ export {GLGrapher}
   Labels are textured. 
 
 
-  *** Event handling
+  *** Event Handling and Layout
 
-  In order to handle scrolling and events properly, we need to create invisible overlay divs that provide DOM-structured event processing in the expected manner
+  In order to handle scrolling and events properly, we need to create invisible overlay divs that provide DOM-structured event processing in the expected manner.
+
+  DIV elements are created for each plot area, and they are used to calculate where to draw in the WebGL backing canvas.
 
 */
 class DateAxis {
@@ -59,12 +84,18 @@ class DateAxis {
     this.NUM_POSITION_ELEMENTS    = 2
     this.NUM_TEXCOORD_ELEMENTS    = 2
     this.NUM_FILLCOLOR_ELEMENTS   = 4
+
     this.NUM_VERTICES_PER_LABEL = 4
     this.NUM_INDICES_PER_LABEL  = 6
 
+    this.NUM_VERTICES_PER_TICK = 4
+    this.NUM_INDICES_PER_TICK  = 6
+
     this.MAX_NUM_TICKS = 100
     this.MAX_NUM_LABELS	= 100
-    this.MIN_TICK_SPACING	= 10.0
+    this.MIN_PIXELS_PER_TICK  = 10.0
+    this.BOXED_LABEL_MARGIN_PX  = 10.0
+    this.MIN_PINNED_LABEL_SPACING_PCT  = 100.0
 
     this.glBuffers = {}
     this.labels = []
@@ -73,7 +104,71 @@ class DateAxis {
     this.labelTextures = new Map()
     this.centerTime = Date.now() / 1000.0
 
+
+    this.shortFineFormats = {
+      second: Intl.DateTimeFormat([], {hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit"}),
+      minute: Intl.DateTimeFormat([], {hour12: false, hour: "2-digit", minute: "2-digit"}),
+      hour:   Intl.DateTimeFormat([], {hour12: false, hour: "2-digit", minute: "2-digit"}),
+      day:    Intl.DateTimeFormat([], {day: "2-digit"}),
+      week:   Intl.DateTimeFormat([], {day: "2-digit"}),
+      month:  Intl.DateTimeFormat([], {month: "2-digit"}),
+      year:   Intl.DateTimeFormat([], {year: "2-digit"}),
+      decade: Intl.DateTimeFormat([], {year: "numeric"}),
+      century: Intl.DateTimeFormat([], {year: "numeric"}),
+      millenium: Intl.DateTimeFormat([], {year: "numeric"}),
+    }
+
+    this.shortCoarseFormats = {
+      day:    Intl.DateTimeFormat([], {year: "numeric", month: "2-digit", day: "2-digit"}),
+      week:   Intl.DateTimeFormat([], {year: "numeric", month: "2-digit", day: "2-digit"}),
+      month:  Intl.DateTimeFormat([], {year: "numeric", month: "2-digit"}),
+      year:   Intl.DateTimeFormat([], {year: "numeric"}),
+      decade: Intl.DateTimeFormat([], {year: "numeric"}),
+      century: Intl.DateTimeFormat([], {year: "numeric"}),
+      millenium: Intl.DateTimeFormat([], {year: "numeric"}),
+    }
+
 	}
+
+  getMaxNumLabelVertices() {
+    return this.MAX_NUM_LABELS*this.NUM_VERTICES_PER_LABEL
+  }
+
+  getMaxNumLabelIndices() {
+    return this.MAX_NUM_LABELS*this.NUM_INDICES_PER_LABEL
+  }
+
+  getMaxNumTickVertices() {
+    return this.MAX_NUM_TICKS*this.NUM_VERTICES_PER_TICK
+  }
+
+  getMaxNumTickIndices() {
+    return this.MAX_NUM_TICKS*this.NUM_INDICES_PER_TICK
+  }
+
+  getMaxNumVertices() {
+    return this.getMaxNumLabelVertices() + this.getMaxNumTickVertices()
+  }
+
+  getMaxNumIndices() {
+    return this.getMaxNumLabelIndices() + this.getMaxNumTickIndices()
+  }
+
+  getLabelVertexOffset() {
+    return 0
+  }
+
+  getLabelIndexOffset() {
+    return 0
+  }
+
+  getTickVertexOffset() {
+    return 0
+  }
+
+  getTickIndexOffset() {
+    return 0
+  }
 
   initGl(gl) {
 
@@ -88,9 +183,9 @@ class DateAxis {
     }
 
     // figure out our size 
-    let {x: {min: xmin, max: xmax}, y: {min: ymin, max: ymax}} = this.grapher.getDateAxisPixelBounds()
+    let grapherBounds = this.grapher.getDateAxisPixelBounds()
 
-    this._updateGlBuffers(gl, {min: xmin, max: xmax})
+    this._updateGlBuffers(gl, grapherBounds)
 
     // draw a label for every pixel
     let labels = []
@@ -128,7 +223,7 @@ class DateAxis {
   allocateGlBuffers(gl) {
     let buffers = this.glBuffers
 
-    let baseSize = this.MAX_NUM_LABELS*this.NUM_VERTICES_PER_LABEL
+    let baseSize = this.getMaxNumVertices()
 
     buffers.positionBuffer = gltools.resizeArrayBuffer(gl, buffers.positionBuffer, baseSize, this.NUM_POSITION_ELEMENTS)
 
@@ -136,7 +231,7 @@ class DateAxis {
 
     buffers.fillColorBuffer = gltools.resizeArrayBuffer(gl, buffers.fillColorBuffer, baseSize, this.NUM_FILLCOLOR_ELEMENTS)
 
-    buffers.indexBuffer = gltools.resizeElementArrayBuffer(gl, buffers.indexBuffer, this.MAX_NUM_LABELS*this.NUM_INDICES_PER_LABEL)
+    buffers.indexBuffer = gltools.resizeElementArrayBuffer(gl, buffers.indexBuffer, this.getMaxNumIndices())
 
   }
 
@@ -154,32 +249,26 @@ class DateAxis {
 
   }
 
-  getTimeRangeForWidth(pxWidth) {
-    let pxCenter = 0.5*pxWidth
-    let timeRange = {
-      min: (0 - pxCenter)*this.secondsPerPixelScale + this.centerTime, 
-      max: (pxWidth - pxCenter)*this.secondsPerPixelScale + this.centerTime
-    }
-
-    return timeRange
-  }
 
   _updateGlBuffers(gl, pixelRange) {
-    // for now, just draw a labels to fill the x axis
-    let buffers = this.glBuffers
-    let format = Intl.DateTimeFormat([], {hour12: false, weekday: "long", year: "numeric", month: "2-digit", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit"})
+    this._updateLabelGlBuffers(gl, pixelRange)
+  }
 
-    let pxCenter = 0.5*(pixelRange.min + pixelRange.max)
-    let timeRange = {
-      min: (pixelRange.min - pxCenter)*this.secondsPerPixelScale + this.centerTime, 
-      max: (pixelRange.max - pxCenter)*this.secondsPerPixelScale + this.centerTime
-    }
-    let timestamp = timeRange.min
-    let k = 0 // counter for label index
+
+  _createLabelsFor(gl, ticks, tickUnit, isBoxed, formats, pixelRange, timeRange, yCenterFrac, k) {
 
     let labels = []
-    while ((timestamp < timeRange.max) && (k < this.MAX_NUM_LABELS)) {
-      let labelString = format.format(timestamp*1000.0)
+
+    let axisHeight = pixelRange.y.max - pixelRange.y.min
+    let labelVertexOffset = this.getLabelVertexOffset()
+
+    for (let [i, t] of ticks.entries()) {
+      if (k >= this.MAX_NUM_LABELS)
+        break
+
+      let format = formats[tickUnit]
+
+      let labelString = format.format(t*1000.0)
       // console.log(labelString)
       // get cached texture or create it
       let labelTexture = this.labelTextures.get(labelString) 
@@ -192,13 +281,16 @@ class DateAxis {
       let h = labelTexture.height/labelTexture.scale
       let w = labelTexture.width/labelTexture.scale
 
-      let timeCoord = (timestamp - timeRange.min)/this.secondsPerPixelScale
+      let yOffset = pixelRange.y.min + yCenterFrac*axisHeight - (labelTexture.middle/labelTexture.scale - 0.0*labelTexture.fontSize)
+      // let yOffset = 0.5*axisHeight
+
+      let timeCoord = (t - timeRange.min)/this.secondsPerPixelScale
 
       let positions = [
-        [0 + timeCoord, 0],
-        [0 + timeCoord, h],
-        [w + timeCoord, 0],
-        [w + timeCoord, h],
+        [0 + timeCoord - 0.5*w, yOffset - 0],
+        [0 + timeCoord - 0.5*w, yOffset + h],
+        [w + timeCoord - 0.5*w, yOffset + 0],
+        [w + timeCoord - 0.5*w, yOffset + h],
       ]
       let texCoords = [
         [0,0],
@@ -213,45 +305,550 @@ class DateAxis {
         [1,1,1,1],
       ]
      
-      let indices = [ 0,1,2, 2,1,3].map(x => x + this.NUM_VERTICES_PER_LABEL*k)
+      let indices = [ 0,1,2, 2,1,3].map(x => x + this.NUM_VERTICES_PER_LABEL*k + labelVertexOffset)
 
       labels.push({
         labelTexture: labelTexture, 
-        timestamp: timestamp,
+        timestamp: t,
         positions: positions,
         texCoords: texCoords,
         colors: colors,
         indices: indices
       })
 
-
-      console.assert(w > 0)
-      timestamp += (w + this.MIN_TICK_SPACING)*this.secondsPerPixelScale
       k++
     }
 
-    // update gl buffers with computed vertices
-    let positions = labels.flatMap(label => label.positions)
-    let texCoords = labels.flatMap(label => label.texCoords)
-    let colors = labels.flatMap(label => label.colors)
-    let indices = labels.flatMap(label => label.indices)
+    return labels
+  }
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.positionBuffer)
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array(positions.flat()))
+  _updateLabelGlBuffers(gl, pixelRange) {
+    // for now, just draw a labels to fill the x axis
+    let buffers = this.glBuffers
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.texCoordBuffer)
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array(texCoords.flat()))
+    let axisHeight = pixelRange.y.max - pixelRange.y.min
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.fillColorBuffer)
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array(colors.flat()))
 
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indexBuffer)
-    gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER, 0, new Uint32Array(indices.flat()))
+    let timeRange = this.getTimeRangeForWidth(pixelRange.x.max - pixelRange.x.min)
+
+    let ticks = this.getTicksForTimeRange(timeRange, pixelRange.x.max - pixelRange.x.min)
+
+
+
+    let timestamp = timeRange.min
+    let k = 0 // counter for label index
+
+    // compute offsets because buffer objects are shared among ticks and label
+    let labelVertexOffset = this.getLabelVertexOffset()
+    let labelIndexOffset = this.getLabelIndexOffset()
+
+    let labels = this._createLabelsFor(gl, ticks.majorTicks, ticks.majorUnit, ticks.fineLabelBoxed, this.shortFineFormats, pixelRange, timeRange, 0.75, k)
+
+    k = labels.length
+
+    labels = labels.concat(this._createLabelsFor(gl, ticks.coarseTicks, ticks.coarseUnit, ticks.coarseLabelBoxed, this.shortCoarseFormats, pixelRange, timeRange, 0.25, k))
+    k = labels.length
+
+
+    // for (let [i, t] of ticks.majorTicks.entries()) {
+    //   if (k >= this.MAX_NUM_LABELS)
+    //     break
+
+    //   let format = this.shortFineFormats[ticks.majorUnit]
+
+    //   let labelString = format.format(t*1000.0)
+    //   // console.log(labelString)
+    //   // get cached texture or create it
+    //   let labelTexture = this.labelTextures.get(labelString) 
+
+    //   if (!labelTexture) {
+    //     labelTexture = gltools.createTextTexture(gl, labelString, this.grapher.div)
+    //     this.labelTextures.set(labelString, labelTexture)
+    //   }
+
+    //   let h = labelTexture.height/labelTexture.scale
+    //   let w = labelTexture.width/labelTexture.scale
+
+    //   let timeCoord = (t - timeRange.min)/this.secondsPerPixelScale
+
+    //   let positions = [
+    //     [0 + timeCoord - 0.5*w, 0.5*axisHeight + 0],
+    //     [0 + timeCoord - 0.5*w, 0.5*axisHeight + h],
+    //     [w + timeCoord - 0.5*w, 0.5*axisHeight + 0],
+    //     [w + timeCoord - 0.5*w, 0.5*axisHeight + h],
+    //   ]
+    //   let texCoords = [
+    //     [0,0],
+    //     [0,1],
+    //     [1,0],
+    //     [1,1],
+    //   ]
+    //   let colors = [
+    //     [0,1,1,1],
+    //     [1,0,1,1],
+    //     [1,1,0,1],
+    //     [1,1,1,1],
+    //   ]
+     
+    //   let indices = [ 0,1,2, 2,1,3].map(x => x + this.NUM_VERTICES_PER_LABEL*k + labelVertexOffset)
+
+    //   labels.push({
+    //     labelTexture: labelTexture, 
+    //     timestamp: t,
+    //     positions: positions,
+    //     texCoords: texCoords,
+    //     colors: colors,
+    //     indices: indices
+    //   })
+
+    //   k++
+    // }
+
+    // let format = Intl.DateTimeFormat([], {hour12: false, weekday: "long", year: "numeric", month: "2-digit", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit"})
+
+    // while ((timestamp < timeRange.max) && (k < this.MAX_NUM_LABELS)) {
+    //   let labelString = format.format(timestamp*1000.0)
+    //   // console.log(labelString)
+    //   // get cached texture or create it
+    //   let labelTexture = this.labelTextures.get(labelString) 
+
+    //   if (!labelTexture) {
+    //     labelTexture = gltools.createTextTexture(gl, labelString, this.grapher.div)
+    //     this.labelTextures.set(labelString, labelTexture)
+    //   }
+
+    //   let h = labelTexture.height/labelTexture.scale
+    //   let w = labelTexture.width/labelTexture.scale
+
+    //   let timeCoord = (timestamp - timeRange.min)/this.secondsPerPixelScale
+
+    //   let positions = [
+    //     [0 + timeCoord, 0],
+    //     [0 + timeCoord, h],
+    //     [w + timeCoord, 0],
+    //     [w + timeCoord, h],
+    //   ]
+    //   let texCoords = [
+    //     [0,0],
+    //     [0,1],
+    //     [1,0],
+    //     [1,1],
+    //   ]
+    //   let colors = [
+    //     [0,1,1,1],
+    //     [1,0,1,1],
+    //     [1,1,0,1],
+    //     [1,1,1,1],
+    //   ]
+     
+    //   let indices = [ 0,1,2, 2,1,3].map(x => x + this.NUM_VERTICES_PER_LABEL*k + labelVertexOffset)
+
+    //   labels.push({
+    //     labelTexture: labelTexture, 
+    //     timestamp: timestamp,
+    //     positions: positions,
+    //     texCoords: texCoords,
+    //     colors: colors,
+    //     indices: indices
+    //   })
+
+
+    //   console.assert(w > 0)
+    //   timestamp += (w + this.MIN_PIXELS_PER_TICK)*this.secondsPerPixelScale
+    //   k++
+    // }
+
+    {
+      // update gl buffers with computed vertices
+      let positions = labels.flatMap(label => label.positions)
+      let texCoords = labels.flatMap(label => label.texCoords)
+      let colors = labels.flatMap(label => label.colors)
+      let indices = labels.flatMap(label => label.indices)
+
+      let bufferOffset = labelVertexOffset*Float32Array.BYTES_PER_ELEMENT
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.positionBuffer)
+      gl.bufferSubData(gl.ARRAY_BUFFER, bufferOffset*this.NUM_POSITION_ELEMENTS, new Float32Array(positions.flat()))
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.texCoordBuffer)
+      gl.bufferSubData(gl.ARRAY_BUFFER, bufferOffset*this.NUM_TEXCOORD_ELEMENTS, new Float32Array(texCoords.flat()))
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.fillColorBuffer)
+      gl.bufferSubData(gl.ARRAY_BUFFER, bufferOffset*this.NUM_FILLCOLOR_ELEMENTS, new Float32Array(colors.flat()))
+
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indexBuffer)
+      gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER, labelIndexOffset*Uint32Array.BYTES_PER_ELEMENT, new Uint32Array(indices.flat()))
+    }
 
     this.labels = labels
   }
 
-}
+  getTimeRangeForWidth(pxWidth) {
+    let pxCenter = 0.5*pxWidth
+    let timeRange = {
+      min: (0 - pxCenter)*this.secondsPerPixelScale + this.centerTime, 
+      max: (pxWidth - pxCenter)*this.secondsPerPixelScale + this.centerTime
+    }
+
+    return timeRange
+  }
+
+  /**
+   * Return 0 <= i <= array.length such that !predicate(array[i - 1]) && predicate(array[i]).
+   * eg. return the index of the first element that matches the predicate
+   */
+  _binarySearchIndex(array, predicate) {
+    let lo = -1
+    let hi = array.length
+    while (1 + lo < hi) {
+      const mi = lo + ((hi - lo) >> 1)
+      if (predicate(array[mi])) {
+        hi = mi
+      } else {
+        lo = mi
+      }
+    }
+    return hi
+  }
+
+
+
+  computeMajorTicksFor(tickPossibilities, boxedUnits, timeRange, pxWidth) {
+    /*
+      the major ticks are the ones that get labels, and we must figure out if the labels provide enough space
+    */
+    let texter = new gltools.GLTextTexturer()
+    let fontSize = gltools.computeFontSizingForReferenceElement(this.overlayDiv).fontSize
+
+
+    let majorTicks = undefined
+    for (let [tickCount, tickUnit] of tickPossibilities) {
+      // for each tick spacing, check if we have enough space to draw labels
+      let labelsFit = true
+      let isBoxed = boxedUnits[tickUnit]
+
+      // ticks include end boxes if thi
+      let ticks = []
+      for (let t = this.nextTickOnOrAfter(timeRange.min, [tickCount, tickUnit]); t < timeRange.max; t = this.nextTickOnOrAfter(t + 1.0, [tickCount, tickUnit])) {
+        ticks.push(t)
+      }
+
+      // find shortest possible label sizes
+      let tickLabels = ticks.map(t => {
+
+        let labelFormat = this.shortFineFormats[tickUnit]
+        let labelText = labelFormat.format(t*1000.0)
+
+        let {textWidth: labelWidth} = texter.computeTextSize(labelText, fontSize)
+
+        return {width: labelWidth, offset: (t-timeRange.min)/this.secondsPerPixelScale}
+      })
+
+      // check if spacing works out
+      let labelsTooBig = tickLabels.some((firstLabel, i) => {
+        if (i+1 == tickLabels.length)
+          return false
+
+        let secondLabel = tickLabels[i+1]
+
+        if (isBoxed) {
+          let space = secondLabel.offset - firstLabel.offset - firstLabel.width
+          if (space < 2.0*this.BOXED_LABEL_MARGIN_PX)
+            return true
+        }
+        else {
+          let space = secondLabel.offset - firstLabel.offset - 0.5*(secondLabel.width + firstLabel.width)
+          // if we have less space than necessary, we're too big
+          if (space < this.MIN_PINNED_LABEL_SPACING_PCT*0.01*Math.max(secondLabel.width, firstLabel.width))
+            return true
+        }
+
+        return false
+      })
+
+      if (!labelsTooBig)
+        return {majorTicks: ticks, majorUnit: tickUnit}
+    }
+
+    // if we haven't found a fitting unit, return empty fields
+    return {}
+  }
+
+  /**
+    @param {Range} timeRange - time range for which to get the ticks
+  */
+  getTicksForTimeRange(timeRange, pxWidth) {
+    /*
+      Tick generation:
+
+      We have
+        FINE ticks
+          MINOR: just ticks
+          MAJOR: tick and label
+        COARSE ticks and labels
+    */
+
+    // find minor tick spacing based on this.secondsPerPixelScale
+    // but respect MAX_NUM_TICKS
+    let minSecondsPerTick = Math.max(
+      this.MIN_PIXELS_PER_TICK * this.secondsPerPixelScale,
+      pxWidth / this.MAX_NUM_TICKS * this.secondsPerPixelScale
+    )
+    let minorTickPossibilities = [
+      [1, "second"],
+      [5, "second"],
+      [15, "second"],
+      [30, "second"],
+      [1, "minute"],
+      [5, "minute"],
+      [15, "minute"],
+      [30, "minute"],
+      [1, "hour"],
+      [3, "hour"],
+      [6, "hour"],
+      [12, "hour"],
+      [1, "day"],
+      [1, "week"],
+      [1, "month"],
+      [3, "month"],
+      [6, "month"],
+      [1, "year"],
+      [5, "year"],
+      [1, "decade"],
+      [5, "decade"],
+      [1, "century"],
+      [5, "century"],
+      [1, "millenium"],
+    ]
+
+    let minorTickIndex = this._binarySearchIndex(minorTickPossibilities, ([count, unit]) => {
+      let dt = count*this.maxSecondsPerUnit(unit)
+      return dt >= minSecondsPerTick
+    })
+
+    let minorTick = minorTickPossibilities[minorTickIndex]
+
+    let minorTickTimeStamps = []
+
+    // now that we know the tick spacing, we need to find the actual times in timeRange
+    // as the ticks might be slightly irregular, we can only loop through the time range to find the right times
+    for (let t = this.nextTickOnOrAfter(timeRange.min, minorTick); t < timeRange.max; t = this.nextTickOnOrAfter(t + 1.0, minorTick)) {
+      minorTickTimeStamps.push(t)
+    }
+
+    // which units to show as boxed, eg. in the middle of intervals 
+    let boxedUnits = {
+      day: true,
+      month: true,
+      year: true,
+    }
+
+    let {majorTicks: majorTickTimestamps, majorUnit: majorUnit} = this.computeMajorTicksFor(minorTickPossibilities.slice(minorTickIndex), boxedUnits, timeRange, pxWidth)
+
+    // knowing the ticks to show, that gives us the units we need to show
+    // let fineUnit = minorTick[1]
+    let fineToCoarseUnitMap = {
+      second: "day",
+      minute: "day",
+      hour: "day",
+      day: "month",
+      week: "month",
+      month: "year",
+      year: "decade",
+      decade: "century",
+      century: "millenium",
+    }
+
+    let coarseUnit = fineToCoarseUnitMap[majorUnit]
+
+
+    let coarseTickTimeStamps = []
+    for (let t = this.nextTickOnOrAfter(timeRange.min, [1, coarseUnit]); t < timeRange.max; t = this.nextTickOnOrAfter(t + 1.0, [1, coarseUnit])) {
+      coarseTickTimeStamps.push(t)
+    }
+
+    // if no tick is in range, do center
+    if (coarseTickTimeStamps.length == 0) {
+      coarseTickTimeStamps.push(this.centerTime)
+    }
+
+
+    return {
+      minorTicks: minorTickTimeStamps,
+      majorTicks: majorTickTimestamps,
+      majorUnit: majorUnit,
+      coarseTicks: coarseTickTimeStamps,
+      coarseUnit: coarseUnit,
+      fineLabelBoxed: boxedUnits[majorUnit],
+      coarseLabelBoxed: boxedUnits[coarseUnit],
+    }
+  }
+
+
+
+  nextTickOnOrAfter(timestamp, [tickCount, tickUnit]) {
+    let tsDate = new Date(timestamp*1000.0)
+    let date = undefined
+
+    let tsYear = tsDate.getFullYear()
+    let tsMonth = tsDate.getMonth()
+    let tsDay = tsDate.getDate() // day of month
+    let tsHour = tsDate.getHours()
+    let tsMinute = tsDate.getMinutes()
+    let tsSecond = tsDate.getSeconds()
+
+    switch (tickUnit) {
+      case "millenium" : {
+        let tsModYear = tsYear % 1000*tickCount
+        let tickYear = tsYear - tsModYear
+
+        date = new Date(tickYear, 0)
+
+        // as on or after, we can't before the tsdate
+        if (date < tsDate)
+          date = new Date(tickYear + 1000*tickCount, 0)
+
+        break
+      }
+      case "century" : {
+        let tsModYear = tsYear % 100*tickCount
+        let tickYear = tsYear - tsModYear
+
+        date = new Date(tickYear, 0)
+
+        // as on or after, we can't before the tsdate
+        if (date < tsDate)
+          date = new Date(tickYear + 100*tickCount, 0)
+
+        break
+      }
+      case "decade" : {
+        let tsModYear = tsYear % 10*tickCount
+        let tickYear = tsYear - tsModYear
+
+        date = new Date(tickYear, 0)
+
+        // as on or after, we can't before the tsdate
+        if (date < tsDate)
+          date = new Date(tickYear + 10*tickCount, 0)
+
+        break
+      }
+      case "year" : {
+        let tsModYear = tsYear % tickCount
+        let tickYear = tsYear - tsModYear
+
+        date = new Date(tickYear, 0)
+
+        // as on or after, we can't before the tsdate
+        if (date < tsDate)
+          date = new Date(tickYear + 1*tickCount, 0)
+
+        break
+      }
+      case "month": {
+        let tsModMonth = tsMonth % tickCount
+
+        let tickMonth = tsMonth - tsModMonth
+
+        date = new Date(tsYear, tickMonth)
+
+        if (date < tsDate)
+          date = new Date(tsYear, tickMonth + 1*tickCount)
+
+        break
+      }
+      case "week": {
+        // BEWARE: week assumes tickCount == 1
+        let tsWeekDay = tsDate.getDay() // 0-6
+
+        let tickDay = tsDay - tsWeekDay
+
+        date = new Date(tsYear, tsMonth, tickDay)
+
+        if (date < tsDate)
+          date = new Date(tsYear, tsMonth, tickDay + 7*tickCount)
+
+        break
+      }
+      case "day": {
+        // BEWARE: day assumes tickCount == 1, as I don't know how it could used to create a regular grid for multiples of one day because of the irregular nature of months and years
+
+        date = new Date(tsYear, tsMonth, tsDay)
+
+        if (date < tsDate)
+          date = new Date(tsYear, tsMonth, tsDay + tickCount)
+
+        break
+      }
+      case "hour": {
+        let tsModHour = tsHour % tickCount
+        let tickHour = tsHour - tsModHour
+
+        date = new Date(tsYear, tsMonth, tsDay, tickHour)
+
+        if (date < tsDate)
+          date = new Date(tsYear, tsMonth, tsDay, tickHour + tickCount)
+
+        break
+      }
+      case "minute": {
+        let tsModMinute = tsMinute % tickCount
+        let tickMinute = tsMinute - tsModMinute
+
+        date = new Date(tsYear, tsMonth, tsDay, tsHour, tickMinute)
+
+        if (date < tsDate)
+          date = new Date(tsYear, tsMonth, tsDay, tsHour, tickMinute + tickCount)
+
+        break
+      }
+      case "second": {
+        let tsModSecond = tsSecond % tickCount
+        let tickSecond = tsSecond - tsModSecond
+
+        date = new Date(tsYear, tsMonth, tsDay, tsHour, tsMinute, tickSecond)
+
+        if (date < tsDate)
+          date = new Date(tsYear, tsMonth, tsDay, tsHour, tsMinute, tickSecond + tickCount)
+
+        break
+      }
+    }
+
+    return date*0.001
+  }
+
+  maxSecondsPerUnit(timeUnit) {
+    switch(timeUnit) {
+      case "second":
+        return 1.0
+      case "minute":
+        return 60.0
+      case "hour":
+        return 60.0*60.0
+      case "day":
+        return 24.0*60.0*60.0
+      case "week":
+        return 7.0*24.0*60.0*60.0
+      case "month":
+        return 31.0*24.0*60.0*60.0
+      case "year":
+        return 365.0*24.0*60.0*60.0
+      case "decade":
+        return 10.0*365.0*24.0*60.0*60.0
+      case "century":
+        return 100.0*365.0*24.0*60.0*60.0
+      case "millenium":
+        return 1000.0*365.0*24.0*60.0*60.0
+      default:
+        console.error("Unknown time unit", timeUnit)
+        return NaN
+    }
+  }
+
+
+} // class DateAxis
 
 class GLGrapher extends gltools.GLCanvasBase {
   constructor(div) {
@@ -337,7 +934,7 @@ class GLGrapher extends gltools.GLCanvasBase {
     this.setDateAxisHeight("2em")
 
 
-    this.dateAxis = new DateAxis(this)
+    this.dateAxis = new DateAxis(this, this.dateAxisDiv)
     this.plots = new Map()
 
 
@@ -434,12 +1031,11 @@ class GLGrapher extends gltools.GLCanvasBase {
 
 
   getDateAxisPixelBounds() {
-    let pixelScale = window.devicePixelRatio || 1.0
 
-    let xpixels = this.canvas.width/pixelScale
-    let ypixels = this.canvas.height/pixelScale
-
-    return {x: {min: -0.5*xpixels, max: 0.5*xpixels}, y: {min: -0.5*ypixels, max: 0.5*ypixels}}
+    return {
+      x: {min: this.dateAxisDiv.offsetLeft, max: this.dateAxisDiv.offsetLeft + this.dateAxisDiv.offsetWidth},
+      y: {min: this.dateAxisDiv.offsetTop, max: this.dateAxisDiv.offsetTop + this.dateAxisDiv.offsetHeight}
+    }
   }
 
   generateLineVertices() {
@@ -518,7 +1114,7 @@ class GLGrapher extends gltools.GLCanvasBase {
     let dy = event.deltaY
     let loc = {x: event.screenX, y: event.screenY}
 
-    console.log(dx,dy)
+    // console.log(dx,dy)
 
     // do either vertical or horizontal scroll, not both at once to avoid weirdness
     if (Math.abs(dy) > Math.abs(dx)) {

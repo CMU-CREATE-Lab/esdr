@@ -1,6 +1,6 @@
 
 
-class GLTextTexturer {
+export class GLTextTexturer {
   constructor() {
     this.canvas = document.createElement("canvas")
     this.ctx = this.canvas.getContext('2d')
@@ -27,12 +27,13 @@ class GLTextTexturer {
 
     let font = `calc(${pixelScale} * ${fontSize}) ${this.fontFamily}`
     ctx.font = font
-    ctx.textBaseline = "top"
+    ctx.textBaseline = "middle"
     let textMetric = ctx.measureText(text)
 
     // draw with 1px margins so that when the texture is mapped onto bigger geometry, the edge pixels don't bleed
 
     this.baselineOffset = 1 + -textMetric.alphabeticBaseline + textMetric.actualBoundingBoxAscent
+    this.middleOffset = 1 + textMetric.actualBoundingBoxAscent
 
     this.canvas.width = 2 + Math.ceil(textMetric.actualBoundingBoxRight) - Math.floor(textMetric.actualBoundingBoxLeft)
     this.canvas.height = 2 + Math.ceil(textMetric.actualBoundingBoxDescent) + Math.ceil(textMetric.actualBoundingBoxAscent)
@@ -41,13 +42,30 @@ class GLTextTexturer {
     ctx.fillRect(0,0, this.canvas.width, this.canvas.height)
 
     ctx.font = font
-    ctx.textBaseline = "top"
+    ctx.textBaseline = "middle"
 
     ctx.fillStyle = this.color
     ctx.fillText(text, 1 + textMetric.actualBoundingBoxLeft, 1 + textMetric.actualBoundingBoxAscent)
   }
 
+  /**
+    @return text width and height in CSS pixels
+  */
+  computeTextSize(text, fontSize = "100%") {
+    let ctx = this.ctx
+    let font = `calc(${fontSize}) ${this.fontFamily}`
+    ctx.font = font
+    ctx.textBaseline = "top"
+    let textMetric = ctx.measureText(text)
+
+    let textWidth = Math.ceil(textMetric.actualBoundingBoxRight) - Math.floor(textMetric.actualBoundingBoxLeft)
+    let textHeight = Math.ceil(textMetric.actualBoundingBoxDescent) + Math.ceil(textMetric.actualBoundingBoxAscent)
+
+    return {textWidth: textWidth, textHeight: textHeight}
+  }
+
 }
+
 
 /**
   Create an OpenGL texture from the contents of the canvas
@@ -80,8 +98,8 @@ export const createTextureFromCanvas = function(gl, canvas) {
 
 export const computeFontSizingForReferenceElement = function(element) {
     let style = window.getComputedStyle(element)
-    let fontSize = style.fontSize
-    let lineHeight = style.lineHeight
+    let fontSize = parseInt(style.fontSize.slice(0,style.fontSize.indexOf("px")))
+    let lineHeight = parseInt(style.lineHeight.slice(0,style.lineHeight.indexOf("px")))
     return {fontSize: fontSize, lineHeight: lineHeight}
 }
 
@@ -99,9 +117,10 @@ export const createTextTexture = function(gl, text, fontSizeRef) {
 
   let texture = createTextureFromCanvas(gl, texturer.canvas)
   texture.baseline = texturer.baselineOffset;
+  texture.middle = texturer.middleOffset;
   // provide line height and font size in texture object for reference in placing it
-  texture.fontSize = fontSizeRef
-  texture.lineHeight = lineHeight
+  texture.fontSize = parseInt(fontSizeRef.slice(0,fontSizeRef.indexOf("px")))
+  texture.lineHeight = parseInt(lineHeight.slice(0,lineHeight.indexOf("px")))
   return texture
 }
 
