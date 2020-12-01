@@ -604,7 +604,13 @@ class MapOverlay extends google.maps.OverlayView {
 		// gl.pointSize(40)
 		// gl.drawArrays(gl.POINTS, 0, vertices.length/2)
 
-		this.drawSparkLines(gl, PM)
+		const sparkPM = [
+			xscale, 		  0, 0, 0,
+			     0, -yscale, 0, 0,
+					 0, 		  0, 1, 0,
+			  -1.0, 	  1.0, 0, 1
+		]
+		this.drawSparkLines(gl, sparkPM)
 	}
 
 	glDraw(gl) {
@@ -1262,9 +1268,9 @@ _binarySearch(array, predicate) {
 			// FIXME: this is to canvas coords, which are scaled wrong, and upside down
 			let pixelScale = window.devicePixelRatio || 1.0
 			pxOffset.x *= 1.0/pixelScale
-			pxOffset.y = this.canvas.height - pxOffset.y
+			pxOffset.y = /*this.canvas.height - */pxOffset.y
 			pxOffset.y *= 1.0/pixelScale
-			pxOffset.y += plotter.plotHeight
+			// pxOffset.y += plotter.plotHeight
 
 			plotter.glDraw(gl, pxOffset, PM)
 		}

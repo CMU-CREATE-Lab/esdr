@@ -816,6 +816,16 @@ minMaxValueInRange(range) {
 
 	}
 
+	getVisibleValueRange() {
+		let valueRange = this.minMaxValueInRange(this.plotRange)
+
+		// clip to zero if not considering negatives for auto-ranging
+		if (!this.isAutoRangingNegatives)
+			valueRange.min = 0.0
+
+		return valueRange
+	}
+
 	glDraw(gl, pxOffset, PM) {
 		if (!this.gl) {
 			this._initGl(gl)
@@ -841,20 +851,18 @@ minMaxValueInRange(range) {
 		// let timeRefOffset = this.plotRange.max - this.timestampOffset
 		let timeRefOffset = (this.plotRange.max - this.timestampOffset)/timeScale
 
-		let {min: miny, max: maxy} = this.minMaxValueInRange(this.plotRange)
+		let {min: miny, max: maxy} = this.getVisibleValueRange()
 
-		// clip to zero if not considering negatives for auto-ranging
-		if (!this.isAutoRangingNegatives)
-			miny = 0.0
-
+		// assume that outer coord space is CSS (0,0) at top-left
+		// but graph is GL (0,0) at bottom left
 		let xscale = this.plotWidth/timeScale
 		let yscale = this.plotHeight/(maxy-miny)
 		let xshift = pxOffset.x - this.plotWidth*timeRefOffset
-		let yshift = pxOffset.y - maxy*yscale
+		let yshift = pxOffset.y - this.plotHeight + maxy*yscale
 
 		const MV = [
 		  xscale,      0, 0, 0,
-		       0, yscale, 0, 0,
+		       0, -yscale, 0, 0,
 				 	 0,      0, 1, 0,
 			xshift, yshift, 0, 1
 		]

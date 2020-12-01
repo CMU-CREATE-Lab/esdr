@@ -86,9 +86,6 @@ class PlotAxis {
 
     this.updateGlBuffers(gl, axisBounds)
 
-    // draw a label for every pixel
-    let labels = []
-
 
     let shader = this.grapher.labelShader
 
@@ -217,10 +214,223 @@ class YAxis extends PlotAxis {
 
     this.secondsPerPixelScale = 1.0
 
+    this.formats = {
+      k: {format: y => `${(y*0.001).toFixed(0)}`},
+      1: {format: y => `${(y).toFixed(0)}`},
+      d: {format: y => `${(y).toFixed(1)}`},
+      c: {format: y => `${(y).toFixed(2)}`},
+      m: {format: y => `${(y).toFixed(3)}`},
+    }
+  }
 
+  _createLabelsFor(gl, ticks, tickUnit, pixelRange, valueRange, k) {
+    let pxHeight = pixelRange.y.max - pixelRange.y.min
+    let perPixelScale = (valueRange.max - valueRange.min)/pxHeight
+    
+    let labelVertexOffset = this.getLabelVertexOffset()
+
+    let labels = []
+
+    let format = this.formats[tickUnit]
+
+    for (let [i, y] of ticks.entries()) {
+      if (k >= this.MAX_NUM_LABELS)
+        break
+
+      let labelString = format.format(y)
+
+      let labelTexture = this.labelTextures.get(labelString) 
+
+      if (!labelTexture) {
+        labelTexture = gltools.createTextTexture(gl, labelString, this.grapher.div)
+        this.labelTextures.set(labelString, labelTexture)
+      }
+
+      let h = labelTexture.height/labelTexture.scale
+      let w = labelTexture.width/labelTexture.scale
+
+      let xOffset = 0
+      let yOffset = 1.0*pxHeight - (y - valueRange.min)/perPixelScale - (labelTexture.middle/labelTexture.scale)
+
+      let positions = [
+        [0 + xOffset, yOffset - 0],
+        [0 + xOffset, yOffset + h],
+        [w + xOffset, yOffset + 0],
+        [w + xOffset, yOffset + h],
+      ]
+      let texCoords = [
+        [0,0],
+        [0,1],
+        [1,0],
+        [1,1],
+      ]
+      let colors = [
+        [0,1,1,1],
+        [1,0,1,1],
+        [1,1,0,1],
+        [1,1,1,1],
+      ]
+     
+      let indices = [ 0,1,2, 2,1,3].map(x => x + this.NUM_VERTICES_PER_LABEL*k + labelVertexOffset)
+
+      labels.push({
+        labelTexture: labelTexture, 
+        value: y,
+        positions: positions,
+        texCoords: texCoords,
+        colors: colors,
+        indices: indices
+      })
+
+      k++
+
+    }
+
+
+    return labels    
+  }
+
+  getTicksForValueRange(valueRange, pixelRange, lineHeight) {
+    let pxHeight = pixelRange.y.max - pixelRange.y.min
+    let perPixelScale = (valueRange.max - valueRange.min)/pxHeight
+
+    let minDeltaPerTick = Math.max(
+      this.MIN_PIXELS_PER_TICK * perPixelScale,
+      pxHeight / this.MAX_NUM_TICKS * perPixelScale
+    )
+
+    let tickPossibilities = [
+      [1, "m"],
+      [2, "m"],
+      [5, "m"],
+      [1, "c"],
+      [2, "c"],
+      [5, "c"],
+      [1, "d"],
+      [2, "d"],
+      [5, "d"],
+      [1, "1"],
+      [2, "1"],
+      [5, "1"],
+      [10, "1"],
+      [20, "1"],
+      [50, "1"],
+      [100, "1"],
+      [200, "1"],
+      [500, "1"],
+      [1, "k"],
+      [2, "k"],
+      [5, "k"],
+      [10, "k"],
+      [20, "k"],
+      [50, "k"],
+      [100, "k"],
+      [200, "k"],
+      [500, "k"],
+    ]
+
+    function unitStep(unit) {
+      switch(unit) {
+        case "k":
+          return 1000.0
+        case "1":
+          return 1.0
+        case "d":
+          return 0.1
+        case "c":
+          return 0.01
+        case "m":
+          return 0.001
+      }
+    }
+
+    let minorTickIndex = this._binarySearchIndex(tickPossibilities, ([count, unit]) => {
+      let dy = count*unitStep(unit)
+      return dy >= minDeltaPerTick
+    })
+
+    let minorTick = tickPossibilities[minorTickIndex]
+
+    let minorTickTimeStamps = []
+
+    // now that we know the tick spacing, we need to find the actual ticks in valueRange
+
+    for (let y = this.nextTickAfter(valueRange.min, minorTick); y < valueRange.max; y = this.nextTickAfter(y, minorTick)) {
+      minorTickTimeStamps.push(y)
+    }
+
+
+    let minMajorDeltaPerTick = Math.max(
+      lineHeight*(1.0 + this.MIN_PINNED_LABEL_SPACING_PCT*0.01)*perPixelScale, 
+      minDeltaPerTick)
+
+    let majorTickIndex = this._binarySearchIndex(tickPossibilities, ([count, unit]) => {
+      let dy = count*unitStep(unit)
+      return dy >= minMajorDeltaPerTick
+    })
+
+    let majorTick = tickPossibilities[majorTickIndex]
+
+    let majorTickTimeStamps = []
+
+    // now that we know the tick spacing, we need to find the actual ticks in valueRange
+
+    for (let y = this.nextTickAfter(valueRange.min, majorTick); y < valueRange.max; y = this.nextTickAfter(y, majorTick)) {
+      majorTickTimeStamps.push(y)
+    }
+
+    return {
+      majorTicks: majorTickTimeStamps,
+      majorUnit: majorTick[1],
+      minorTicks: minorTickTimeStamps,
+    }
   }
 
 
+
+  nextTickAfter(y, [tickCount, tickUnit]) {
+    let factor = 1.0
+    switch (tickUnit) {
+      case "k": {
+        factor = tickCount*1000.0
+        break
+      }
+      case "1": {
+        factor = tickCount*1.0
+        break
+      }
+      case "d": {
+        factor = tickCount*0.1
+        break
+      }
+      case "c": {
+        factor = tickCount*0.01
+        break
+      }
+      case "m": {
+        factor = tickCount*0.001
+        break
+      }
+    }
+
+    let yy = Math.floor(y/(factor))
+    let tickY = (yy+1)*factor
+    return tickY - y > 0.5*factor ? tickY : tickY + factor
+  }
+
+
+  createLabels(gl, pixelRange) {
+
+    let valueRange = this.plot.getVisibleValueRange()
+
+    let lineHeight = gltools.computeFontSizingForReferenceElement(this.overlayDiv).lineHeight
+
+    let ticks = this.getTicksForValueRange(valueRange, pixelRange, lineHeight)
+
+    let labels = this._createLabelsFor(gl, ticks.majorTicks, ticks.majorUnit, pixelRange, valueRange, 0)
+
+    return labels
+  }
 
 }
 
@@ -342,6 +552,8 @@ class DateAxis extends PlotAxis{
     let axisHeight = pixelRange.y.max - pixelRange.y.min
     let labelVertexOffset = this.getLabelVertexOffset()
 
+    let format = formats[tickUnit]
+
     // if these are boxed labels, we need to add entries at the end and beginning
     if (isBoxed) {
       ticks = [timeRange.min].concat(ticks)
@@ -358,7 +570,6 @@ class DateAxis extends PlotAxis{
 
       let space = isBoxed ? (ticks[i+1] - t)/this.secondsPerPixelScale - 2.0*this.BOXED_LABEL_MARGIN_PX : pixelRange.x.max - pixelRange.x.min
 
-      let format = formats[tickUnit]
 
       let labelString = format.format(t*1000.0)
       // console.log(labelString)
@@ -428,10 +639,6 @@ class DateAxis extends PlotAxis{
 
     let ticks = this.getTicksForTimeRange(timeRange, pixelRange.x.max - pixelRange.x.min)
 
-
-
-    let timestamp = timeRange.min
-
     let labels = this._createLabelsFor(gl, ticks.majorTicks, ticks.majorUnit, ticks.fineLabelBoxed, this.shortFineFormats, pixelRange, timeRange, 0.75, 0)
 
 
@@ -463,7 +670,6 @@ class DateAxis extends PlotAxis{
     let majorTicks = undefined
     for (let [tickCount, tickUnit] of tickPossibilities) {
       // for each tick spacing, check if we have enough space to draw labels
-      let labelsFit = true
       let isBoxed = boxedUnits[tickUnit]
 
       // ticks include end boxes if thi
@@ -839,7 +1045,7 @@ class GLGrapher extends gltools.GLCanvasBase {
     dateAxisCorner.style.background = "rgba(0,0,127,0.2)"
     dateAxisCorner.style.padding = "0px"
     dateAxisCorner.style.margin = "0px"
-    dateAxisCorner.style.width = "2em"
+    dateAxisCorner.style.width = "3em"
     // dateAxisDiv.style.position = "absolute"
     dateAxisCorner.style.flexShrink = 0
     dateAxisCorner.style.flexGrow = 0
@@ -866,7 +1072,7 @@ class GLGrapher extends gltools.GLCanvasBase {
     this.dateAxisCornerDiv = dateAxisCorner
     this.plotsDiv = plotsDiv
 
-    this.setDateAxisHeight("2em")
+    this.setDateAxisHeight("3em")
 
 
     this.dateAxis = new DateAxis(this, this.dateAxisDiv)
@@ -937,7 +1143,7 @@ class GLGrapher extends gltools.GLCanvasBase {
     plotAxis.style.background = "rgba(0,0,127,0.2)"
     plotAxis.style.padding = "0px"
     plotAxis.style.margin = "0px"
-    plotAxis.style.width = "2em"
+    plotAxis.style.width = "3em"
     // dateAxisDiv.style.position = "absolute"
     plotAxis.style.flexShrink = 0
     plotAxis.style.flexGrow = 0
@@ -945,7 +1151,9 @@ class GLGrapher extends gltools.GLCanvasBase {
 
     this.plotsDiv.appendChild(plotRow)
 
-    this.plots.set(key, {plot: plot, div: plotDiv, rowDiv: plotRow, yAxisDiv: plotAxis})
+    let yAxis = new YAxis(this, plotAxis, plot)
+
+    this.plots.set(key, {plot: plot, div: plotDiv, rowDiv: plotRow, yAxisDiv: plotAxis, yAxis: yAxis})
 
     plot.isAutoRangingNegatives = true
     plot.setPlotRange(this.dateAxis.getTimeRangeForWidth(this.dateAxisDiv.offsetWidth))
@@ -970,6 +1178,20 @@ class GLGrapher extends gltools.GLCanvasBase {
     return {
       x: {min: this.dateAxisDiv.offsetLeft, max: this.dateAxisDiv.offsetLeft + this.dateAxisDiv.offsetWidth},
       y: {min: this.dateAxisDiv.offsetTop, max: this.dateAxisDiv.offsetTop + this.dateAxisDiv.offsetHeight}
+    }
+  }
+
+  getYAxisPixelBounds(plotInfo) {
+
+    return {
+      x: {
+        min: plotInfo.yAxisDiv.offsetLeft, 
+        max: plotInfo.yAxisDiv.offsetLeft + plotInfo.yAxisDiv.offsetWidth
+      },
+      y: {
+        min: plotInfo.yAxisDiv.offsetTop, 
+        max: plotInfo.yAxisDiv.offsetTop + plotInfo.yAxisDiv.offsetHeight
+      }
     }
   }
 
@@ -1312,6 +1534,39 @@ class GLGrapher extends gltools.GLCanvasBase {
 
       plotInfo.plot.glDraw(gl, offset, plotPM)
     }
+
+    for (let [key, plotInfo] of this.plots) {
+      if (!plotInfo.yAxis)
+        continue
+
+      let axisDiv = plotInfo.yAxisDiv
+      // let plotRowDiv = plotInfo.rowDiv
+
+      let axisShift = {
+        x: -1.0 + (axisDiv.offsetLeft - this.plotsDiv.scrollLeft)*xscale,
+        y: 1.0 - (axisDiv.offsetTop - this.plotsDiv.scrollTop)*yscale
+      }
+      const axisPM = [
+             xscale,           0, 0, 0,
+                  0,     -yscale, 0, 0,
+                  0,           0, 1, 0,
+        axisShift.x, axisShift.y, 0, 1
+      ]
+
+    // gl.disable(gl.SCISSOR_TEST)
+      let axisScissorX = this.plotsDiv.offsetLeft - this.plotsDiv.scrollLeft
+      let axisScissorY = axisDiv.offsetTop - this.plotsDiv.scrollTop + axisDiv.offsetHeight
+      gl.scissor(
+        axisScissorX*pixelScale,
+        this.canvas.height - (axisScissorY)*pixelScale,
+        axisDiv.offsetWidth*pixelScale,
+        Math.max(0.0, Math.min(axisDiv.offsetHeight, axisScissorY - dateAxisBottom))*pixelScale
+      )
+
+      gl.disable(gl.SCISSOR_TEST)
+      plotInfo.yAxis.glDraw(gl, axisPM, this.getYAxisPixelBounds(plotInfo))
+    }
+
 
     gl.disable(gl.SCISSOR_TEST)
 
