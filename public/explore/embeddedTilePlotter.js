@@ -845,7 +845,7 @@ minMaxValueInRange(range) {
 
 		// clip to zero if not considering negatives for auto-ranging
 		if (!this.isAutoRangingNegatives)
-			miny = Math.max(0.0, miny)
+			miny = 0.0
 
 		let xscale = this.plotWidth/timeScale
 		let yscale = this.plotHeight/(maxy-miny)
