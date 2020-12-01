@@ -850,7 +850,7 @@ minMaxValueInRange(range) {
 		let xscale = this.plotWidth/timeScale
 		let yscale = this.plotHeight/(maxy-miny)
 		let xshift = pxOffset.x - this.plotWidth*timeRefOffset
-		let yshift = pxOffset.y + miny*yscale
+		let yshift = pxOffset.y - maxy*yscale
 
 		const MV = [
 		  xscale,      0, 0, 0,

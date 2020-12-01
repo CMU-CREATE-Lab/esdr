@@ -1264,6 +1264,7 @@ _binarySearch(array, predicate) {
 			pxOffset.x *= 1.0/pixelScale
 			pxOffset.y = this.canvas.height - pxOffset.y
 			pxOffset.y *= 1.0/pixelScale
+			pxOffset.y += plotter.plotHeight
 
 			plotter.glDraw(gl, pxOffset, PM)
 		}
