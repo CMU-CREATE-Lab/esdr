@@ -250,6 +250,8 @@ class ETP {
 	}
 
 	setPlotRange(range) {
+		console.assert(isFinite(range.min))
+		console.assert(isFinite(range.max))
 		let level = ESDR.computeDataTileLevel(range)
 		let startOffset = ESDR.computeDataTileOffset(range.min, level)
 		let endOffset = 1 + ESDR.computeDataTileOffset(range.max, level)
@@ -614,7 +616,7 @@ class ETP {
 	}
 
 minMaxValueInRange(range) {
-		if (!this.indexTimes)
+		if (!this.indexTimes || !range)
 			return {min: -1.0, max: 1.0}
 
 		let startIndex = this._binarySearch(this.indexTimes, t => t >= range.min)
@@ -631,10 +633,19 @@ minMaxValueInRange(range) {
 		let max = Math.max(...validValues)
 		let center = 0.5*(max+min)
 		let diff = Math.max(0.001, max-min)
-		return {
+
+		if (!isFinite(center))
+			center = 0.0
+
+		let valueRange = {
 			min: center - 0.5*diff,
 			max: center + 0.5*diff,
 		}
+
+		console.assert(isFinite(valueRange.min))
+		console.assert(isFinite(valueRange.max))
+
+		return valueRange
 	}
 
 	_drawMarkersInRange(gl, range) {
