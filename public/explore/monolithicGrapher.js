@@ -4,6 +4,227 @@ import * as gltools from "./webgltools.js"
 
 export {GLGrapher}
 
+class PlotAxis {
+  constructor(grapher, overlayDiv) {
+    this.grapher = grapher
+    this.overlayDiv = overlayDiv
+
+    this.NUM_POSITION_ELEMENTS    = 2
+    this.NUM_TEXCOORD_ELEMENTS    = 2
+    this.NUM_FILLCOLOR_ELEMENTS   = 4
+
+    this.NUM_VERTICES_PER_LABEL = 4
+    this.NUM_INDICES_PER_LABEL  = 6
+
+    this.NUM_VERTICES_PER_TICK = 4
+    this.NUM_INDICES_PER_TICK  = 6
+
+    this.MAX_NUM_TICKS = 100
+    this.MAX_NUM_LABELS = 100
+    this.MIN_PIXELS_PER_TICK  = 10.0
+    this.MIN_PINNED_LABEL_SPACING_PCT  = 100.0
+
+    this.glBuffers = {}
+    this.labels = []
+
+    this.labelTextures = new Map()
+  }
+
+  getMaxNumLabelVertices() {
+    return this.MAX_NUM_LABELS*this.NUM_VERTICES_PER_LABEL
+  }
+
+  getMaxNumLabelIndices() {
+    return this.MAX_NUM_LABELS*this.NUM_INDICES_PER_LABEL
+  }
+
+  getMaxNumTickVertices() {
+    return this.MAX_NUM_TICKS*this.NUM_VERTICES_PER_TICK
+  }
+
+  getMaxNumTickIndices() {
+    return this.MAX_NUM_TICKS*this.NUM_INDICES_PER_TICK
+  }
+
+  getMaxNumVertices() {
+    return this.getMaxNumLabelVertices() + this.getMaxNumTickVertices()
+  }
+
+  getMaxNumIndices() {
+    return this.getMaxNumLabelIndices() + this.getMaxNumTickIndices()
+  }
+
+  getLabelVertexOffset() {
+    return 0
+  }
+
+  getLabelIndexOffset() {
+    return 0
+  }
+
+  getTickVertexOffset() {
+    return 0
+  }
+
+  getTickIndexOffset() {
+    return 0
+  }
+
+  initGl(gl) {
+
+    this.allocateGlBuffers(gl)
+
+    return gl
+  }
+
+  glDraw(gl, PM, axisBounds) {
+    if (this.gl !== gl) {
+      this.gl = this.initGl(gl)
+    }
+
+    // figure out our size 
+
+    this.updateGlBuffers(gl, axisBounds)
+
+    // draw a label for every pixel
+    let labels = []
+
+
+    let shader = this.grapher.labelShader
+
+    const MV = [
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1
+    ]
+
+
+    gl.useProgram(shader.shaderProgram)
+    gl.uniformMatrix4fv(shader.uniformLocations.modelViewMatrix, false, MV)
+    gl.uniformMatrix4fv(shader.uniformLocations.projectionMatrix, false, PM)
+
+    this.bindGlBuffers(gl, shader)
+
+    for (let [i, label] of this.labels.entries()) {
+
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, label.labelTexture.texture)
+      gl.uniform1i(shader.uniformLocations.texture, 0)
+
+
+      gl.drawElements(gl.TRIANGLES, this.NUM_INDICES_PER_LABEL, gl.UNSIGNED_INT, this.NUM_INDICES_PER_LABEL*i*Uint32Array.BYTES_PER_ELEMENT)
+
+    }
+  }
+
+  allocateGlBuffers(gl) {
+    let buffers = this.glBuffers
+
+    let baseSize = this.getMaxNumVertices()
+
+    buffers.positionBuffer = gltools.resizeArrayBuffer(gl, buffers.positionBuffer, baseSize, this.NUM_POSITION_ELEMENTS)
+
+    buffers.texCoordBuffer = gltools.resizeArrayBuffer(gl, buffers.texCoordBuffer, baseSize, this.NUM_TEXCOORD_ELEMENTS)
+
+    buffers.fillColorBuffer = gltools.resizeArrayBuffer(gl, buffers.fillColorBuffer, baseSize, this.NUM_FILLCOLOR_ELEMENTS)
+
+    buffers.indexBuffer = gltools.resizeElementArrayBuffer(gl, buffers.indexBuffer, this.getMaxNumIndices())
+
+  }
+
+  bindGlBuffers(gl, shader) {
+    let buffers = this.glBuffers
+
+    gltools.bindArrayBuffer(gl, buffers.positionBuffer, shader.attribLocations.vertexPos, this.NUM_POSITION_ELEMENTS)
+
+    gltools.bindArrayBuffer(gl, buffers.texCoordBuffer, shader.attribLocations.texCoord, this.NUM_TEXCOORD_ELEMENTS)
+
+    gltools.bindArrayBuffer(gl, buffers.fillColorBuffer, shader.attribLocations.color, this.NUM_FILLCOLOR_ELEMENTS)
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indexBuffer)
+
+  }
+
+
+  updateGlBuffers(gl, pixelRange) {
+    this.updateLabelGlBuffers(gl, pixelRange)
+  }
+
+
+  updateLabelGlBuffers(gl, pixelRange) {
+    // for now, just draw a labels to fill the x axis
+
+    let labels = this.createLabels(gl, pixelRange)
+    this.labels = labels
+
+    {
+      let buffers = this.glBuffers
+
+      // compute offsets because buffer objects are shared among ticks and label
+      let labelVertexOffset = this.getLabelVertexOffset()
+      let labelIndexOffset = this.getLabelIndexOffset()
+
+      // update gl buffers with computed vertices
+      let positions = labels.flatMap(label => label.positions)
+      let texCoords = labels.flatMap(label => label.texCoords)
+      let colors = labels.flatMap(label => label.colors)
+      let indices = labels.flatMap(label => label.indices)
+
+      let bufferOffset = labelVertexOffset*Float32Array.BYTES_PER_ELEMENT
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.positionBuffer)
+      gl.bufferSubData(gl.ARRAY_BUFFER, bufferOffset*this.NUM_POSITION_ELEMENTS, new Float32Array(positions.flat()))
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.texCoordBuffer)
+      gl.bufferSubData(gl.ARRAY_BUFFER, bufferOffset*this.NUM_TEXCOORD_ELEMENTS, new Float32Array(texCoords.flat()))
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.fillColorBuffer)
+      gl.bufferSubData(gl.ARRAY_BUFFER, bufferOffset*this.NUM_FILLCOLOR_ELEMENTS, new Float32Array(colors.flat()))
+
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indexBuffer)
+      gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER, labelIndexOffset*Uint32Array.BYTES_PER_ELEMENT, new Uint32Array(indices.flat()))
+    }
+
+  }
+
+  /**
+   * Return 0 <= i <= array.length such that !predicate(array[i - 1]) && predicate(array[i]).
+   * eg. return the index of the first element that matches the predicate
+   */
+  _binarySearchIndex(array, predicate) {
+    let lo = -1
+    let hi = array.length
+    while (1 + lo < hi) {
+      const mi = lo + ((hi - lo) >> 1)
+      if (predicate(array[mi])) {
+        hi = mi
+      } else {
+        lo = mi
+      }
+    }
+    return hi
+  }
+
+}
+
+
+
+class YAxis extends PlotAxis {
+  constructor(grapher, overlayDiv, plot) {
+    super(grapher, overlayDiv)
+    this.plot = plot
+
+    this.secondsPerPixelScale = 1.0
+
+
+  }
+
+
+
+}
+
+
 /**
 
 	*** General Notes
@@ -76,32 +297,13 @@ export {GLGrapher}
   DIV elements are created for each plot area, and they are used to calculate where to draw in the WebGL backing canvas.
 
 */
-class DateAxis {
+class DateAxis extends PlotAxis{
 	constructor(grapher, overlayDiv) {
-		this.grapher = grapher
-    this.overlayDiv = overlayDiv
+    super(grapher, overlayDiv)
 
-    this.NUM_POSITION_ELEMENTS    = 2
-    this.NUM_TEXCOORD_ELEMENTS    = 2
-    this.NUM_FILLCOLOR_ELEMENTS   = 4
-
-    this.NUM_VERTICES_PER_LABEL = 4
-    this.NUM_INDICES_PER_LABEL  = 6
-
-    this.NUM_VERTICES_PER_TICK = 4
-    this.NUM_INDICES_PER_TICK  = 6
-
-    this.MAX_NUM_TICKS = 100
-    this.MAX_NUM_LABELS	= 100
-    this.MIN_PIXELS_PER_TICK  = 10.0
     this.BOXED_LABEL_MARGIN_PX  = 10.0
-    this.MIN_PINNED_LABEL_SPACING_PCT  = 100.0
-
-    this.glBuffers = {}
-    this.labels = []
 
     this.secondsPerPixelScale = 1.0
-    this.labelTextures = new Map()
     this.centerTime = Date.now() / 1000.0
 
 
@@ -129,130 +331,6 @@ class DateAxis {
     }
 
 	}
-
-  getMaxNumLabelVertices() {
-    return this.MAX_NUM_LABELS*this.NUM_VERTICES_PER_LABEL
-  }
-
-  getMaxNumLabelIndices() {
-    return this.MAX_NUM_LABELS*this.NUM_INDICES_PER_LABEL
-  }
-
-  getMaxNumTickVertices() {
-    return this.MAX_NUM_TICKS*this.NUM_VERTICES_PER_TICK
-  }
-
-  getMaxNumTickIndices() {
-    return this.MAX_NUM_TICKS*this.NUM_INDICES_PER_TICK
-  }
-
-  getMaxNumVertices() {
-    return this.getMaxNumLabelVertices() + this.getMaxNumTickVertices()
-  }
-
-  getMaxNumIndices() {
-    return this.getMaxNumLabelIndices() + this.getMaxNumTickIndices()
-  }
-
-  getLabelVertexOffset() {
-    return 0
-  }
-
-  getLabelIndexOffset() {
-    return 0
-  }
-
-  getTickVertexOffset() {
-    return 0
-  }
-
-  getTickIndexOffset() {
-    return 0
-  }
-
-  initGl(gl) {
-
-    this.allocateGlBuffers(gl)
-
-    return gl
-  }
-
-  glDraw(gl, PM) {
-    if (this.gl !== gl) {
-      this.gl = this.initGl(gl)
-    }
-
-    // figure out our size 
-    let grapherBounds = this.grapher.getDateAxisPixelBounds()
-
-    this._updateGlBuffers(gl, grapherBounds)
-
-    // draw a label for every pixel
-    let labels = []
-
-
-    let shader = this.grapher.labelShader
-
-    const MV = [
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 1, 0,
-      0, 0, 0, 1
-    ]
-
-
-    gl.useProgram(shader.shaderProgram)
-    gl.uniformMatrix4fv(shader.uniformLocations.modelViewMatrix, false, MV)
-    gl.uniformMatrix4fv(shader.uniformLocations.projectionMatrix, false, PM)
-
-    this.bindGlBuffers(gl, shader)
-
-    for (let [i, label] of this.labels.entries()) {
-
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, label.labelTexture.texture)
-      gl.uniform1i(shader.uniformLocations.texture, 0)
-
-
-      gl.drawElements(gl.TRIANGLES, this.NUM_INDICES_PER_LABEL, gl.UNSIGNED_INT, this.NUM_INDICES_PER_LABEL*i*Uint32Array.BYTES_PER_ELEMENT)
-
-    }
-  }
-
-
-  allocateGlBuffers(gl) {
-    let buffers = this.glBuffers
-
-    let baseSize = this.getMaxNumVertices()
-
-    buffers.positionBuffer = gltools.resizeArrayBuffer(gl, buffers.positionBuffer, baseSize, this.NUM_POSITION_ELEMENTS)
-
-    buffers.texCoordBuffer = gltools.resizeArrayBuffer(gl, buffers.texCoordBuffer, baseSize, this.NUM_TEXCOORD_ELEMENTS)
-
-    buffers.fillColorBuffer = gltools.resizeArrayBuffer(gl, buffers.fillColorBuffer, baseSize, this.NUM_FILLCOLOR_ELEMENTS)
-
-    buffers.indexBuffer = gltools.resizeElementArrayBuffer(gl, buffers.indexBuffer, this.getMaxNumIndices())
-
-  }
-
-
-  bindGlBuffers(gl, shader) {
-    let buffers = this.glBuffers
-
-    gltools.bindArrayBuffer(gl, buffers.positionBuffer, shader.attribLocations.vertexPos, this.NUM_POSITION_ELEMENTS)
-
-    gltools.bindArrayBuffer(gl, buffers.texCoordBuffer, shader.attribLocations.texCoord, this.NUM_TEXCOORD_ELEMENTS)
-
-    gltools.bindArrayBuffer(gl, buffers.fillColorBuffer, shader.attribLocations.color, this.NUM_FILLCOLOR_ELEMENTS)
-
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indexBuffer)
-
-  }
-
-
-  _updateGlBuffers(gl, pixelRange) {
-    this._updateLabelGlBuffers(gl, pixelRange)
-  }
 
   /**
     @param {number} k - total label counter
@@ -341,9 +419,7 @@ class DateAxis {
     return labels
   }
 
-  _updateLabelGlBuffers(gl, pixelRange) {
-    // for now, just draw a labels to fill the x axis
-    let buffers = this.glBuffers
+  createLabels(gl, pixelRange) {
 
     let axisHeight = pixelRange.y.max - pixelRange.y.min
 
@@ -356,40 +432,14 @@ class DateAxis {
 
     let timestamp = timeRange.min
 
-    // compute offsets because buffer objects are shared among ticks and label
-    let labelVertexOffset = this.getLabelVertexOffset()
-    let labelIndexOffset = this.getLabelIndexOffset()
-
     let labels = this._createLabelsFor(gl, ticks.majorTicks, ticks.majorUnit, ticks.fineLabelBoxed, this.shortFineFormats, pixelRange, timeRange, 0.75, 0)
 
 
     labels = labels.concat(this._createLabelsFor(gl, ticks.coarseTicks, ticks.coarseUnit, ticks.coarseLabelBoxed, this.shortCoarseFormats, pixelRange, timeRange, 0.25, labels.length))
 
-
-    {
-      // update gl buffers with computed vertices
-      let positions = labels.flatMap(label => label.positions)
-      let texCoords = labels.flatMap(label => label.texCoords)
-      let colors = labels.flatMap(label => label.colors)
-      let indices = labels.flatMap(label => label.indices)
-
-      let bufferOffset = labelVertexOffset*Float32Array.BYTES_PER_ELEMENT
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.positionBuffer)
-      gl.bufferSubData(gl.ARRAY_BUFFER, bufferOffset*this.NUM_POSITION_ELEMENTS, new Float32Array(positions.flat()))
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.texCoordBuffer)
-      gl.bufferSubData(gl.ARRAY_BUFFER, bufferOffset*this.NUM_TEXCOORD_ELEMENTS, new Float32Array(texCoords.flat()))
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.fillColorBuffer)
-      gl.bufferSubData(gl.ARRAY_BUFFER, bufferOffset*this.NUM_FILLCOLOR_ELEMENTS, new Float32Array(colors.flat()))
-
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indexBuffer)
-      gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER, labelIndexOffset*Uint32Array.BYTES_PER_ELEMENT, new Uint32Array(indices.flat()))
-    }
-
-    this.labels = labels
+    return labels
   }
+
 
   getTimeRangeForWidth(pxWidth) {
     let pxCenter = 0.5*pxWidth
@@ -400,25 +450,6 @@ class DateAxis {
 
     return timeRange
   }
-
-  /**
-   * Return 0 <= i <= array.length such that !predicate(array[i - 1]) && predicate(array[i]).
-   * eg. return the index of the first element that matches the predicate
-   */
-  _binarySearchIndex(array, predicate) {
-    let lo = -1
-    let hi = array.length
-    while (1 + lo < hi) {
-      const mi = lo + ((hi - lo) >> 1)
-      if (predicate(array[mi])) {
-        hi = mi
-      } else {
-        lo = mi
-      }
-    }
-    return hi
-  }
-
 
 
   computeMajorTicksFor(tickPossibilities, boxedUnits, timeRange, pxWidth) {
@@ -1233,7 +1264,7 @@ class GLGrapher extends gltools.GLCanvasBase {
       this.dateAxisDiv.offsetWidth*pixelScale,
       this.dateAxisDiv.offsetHeight*pixelScale
     )
-    this.dateAxis.glDraw(gl, datePM)
+    this.dateAxis.glDraw(gl, datePM, this.getDateAxisPixelBounds())
 
     const PM = [
       xscale,       0, 0, 0,
