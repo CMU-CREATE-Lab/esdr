@@ -254,7 +254,9 @@ class DateAxis {
     this._updateLabelGlBuffers(gl, pixelRange)
   }
 
-
+  /**
+    @param {number} k - total label counter
+  */
   _createLabelsFor(gl, ticks, tickUnit, isBoxed, formats, pixelRange, timeRange, yCenterFrac, k) {
 
     let labels = []
@@ -262,9 +264,21 @@ class DateAxis {
     let axisHeight = pixelRange.y.max - pixelRange.y.min
     let labelVertexOffset = this.getLabelVertexOffset()
 
+    // if these are boxed labels, we need to add entries at the end and beginning
+    if (isBoxed) {
+      ticks = [timeRange.min].concat(ticks)
+      ticks.push(timeRange.max)
+    }
+
     for (let [i, t] of ticks.entries()) {
       if (k >= this.MAX_NUM_LABELS)
         break
+      // don't bother with last tick if we're showing boxed values, as it would be out of view
+      if (isBoxed && (i+1 == ticks.length))
+        continue
+
+
+      let space = isBoxed ? (ticks[i+1] - t)/this.secondsPerPixelScale - 2.0*this.BOXED_LABEL_MARGIN_PX : pixelRange.x.max - pixelRange.x.min
 
       let format = formats[tickUnit]
 
@@ -281,16 +295,21 @@ class DateAxis {
       let h = labelTexture.height/labelTexture.scale
       let w = labelTexture.width/labelTexture.scale
 
+      // don't draw label if it'd overflow its space
+      if (space < w)
+        continue
+
+      let xOffset = isBoxed ? 0.5*(ticks[i+1] - t)/this.secondsPerPixelScale : 0
       let yOffset = pixelRange.y.min + yCenterFrac*axisHeight - (labelTexture.middle/labelTexture.scale - 0.0*labelTexture.fontSize)
       // let yOffset = 0.5*axisHeight
 
       let timeCoord = (t - timeRange.min)/this.secondsPerPixelScale
 
       let positions = [
-        [0 + timeCoord - 0.5*w, yOffset - 0],
-        [0 + timeCoord - 0.5*w, yOffset + h],
-        [w + timeCoord - 0.5*w, yOffset + 0],
-        [w + timeCoord - 0.5*w, yOffset + h],
+        [0 + timeCoord + xOffset - 0.5*w, yOffset - 0],
+        [0 + timeCoord + xOffset - 0.5*w, yOffset + h],
+        [w + timeCoord + xOffset - 0.5*w, yOffset + 0],
+        [w + timeCoord + xOffset - 0.5*w, yOffset + h],
       ]
       let texCoords = [
         [0,0],
@@ -336,127 +355,16 @@ class DateAxis {
 
 
     let timestamp = timeRange.min
-    let k = 0 // counter for label index
 
     // compute offsets because buffer objects are shared among ticks and label
     let labelVertexOffset = this.getLabelVertexOffset()
     let labelIndexOffset = this.getLabelIndexOffset()
 
-    let labels = this._createLabelsFor(gl, ticks.majorTicks, ticks.majorUnit, ticks.fineLabelBoxed, this.shortFineFormats, pixelRange, timeRange, 0.75, k)
-
-    k = labels.length
-
-    labels = labels.concat(this._createLabelsFor(gl, ticks.coarseTicks, ticks.coarseUnit, ticks.coarseLabelBoxed, this.shortCoarseFormats, pixelRange, timeRange, 0.25, k))
-    k = labels.length
+    let labels = this._createLabelsFor(gl, ticks.majorTicks, ticks.majorUnit, ticks.fineLabelBoxed, this.shortFineFormats, pixelRange, timeRange, 0.75, 0)
 
 
-    // for (let [i, t] of ticks.majorTicks.entries()) {
-    //   if (k >= this.MAX_NUM_LABELS)
-    //     break
+    labels = labels.concat(this._createLabelsFor(gl, ticks.coarseTicks, ticks.coarseUnit, ticks.coarseLabelBoxed, this.shortCoarseFormats, pixelRange, timeRange, 0.25, labels.length))
 
-    //   let format = this.shortFineFormats[ticks.majorUnit]
-
-    //   let labelString = format.format(t*1000.0)
-    //   // console.log(labelString)
-    //   // get cached texture or create it
-    //   let labelTexture = this.labelTextures.get(labelString) 
-
-    //   if (!labelTexture) {
-    //     labelTexture = gltools.createTextTexture(gl, labelString, this.grapher.div)
-    //     this.labelTextures.set(labelString, labelTexture)
-    //   }
-
-    //   let h = labelTexture.height/labelTexture.scale
-    //   let w = labelTexture.width/labelTexture.scale
-
-    //   let timeCoord = (t - timeRange.min)/this.secondsPerPixelScale
-
-    //   let positions = [
-    //     [0 + timeCoord - 0.5*w, 0.5*axisHeight + 0],
-    //     [0 + timeCoord - 0.5*w, 0.5*axisHeight + h],
-    //     [w + timeCoord - 0.5*w, 0.5*axisHeight + 0],
-    //     [w + timeCoord - 0.5*w, 0.5*axisHeight + h],
-    //   ]
-    //   let texCoords = [
-    //     [0,0],
-    //     [0,1],
-    //     [1,0],
-    //     [1,1],
-    //   ]
-    //   let colors = [
-    //     [0,1,1,1],
-    //     [1,0,1,1],
-    //     [1,1,0,1],
-    //     [1,1,1,1],
-    //   ]
-     
-    //   let indices = [ 0,1,2, 2,1,3].map(x => x + this.NUM_VERTICES_PER_LABEL*k + labelVertexOffset)
-
-    //   labels.push({
-    //     labelTexture: labelTexture, 
-    //     timestamp: t,
-    //     positions: positions,
-    //     texCoords: texCoords,
-    //     colors: colors,
-    //     indices: indices
-    //   })
-
-    //   k++
-    // }
-
-    // let format = Intl.DateTimeFormat([], {hour12: false, weekday: "long", year: "numeric", month: "2-digit", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit"})
-
-    // while ((timestamp < timeRange.max) && (k < this.MAX_NUM_LABELS)) {
-    //   let labelString = format.format(timestamp*1000.0)
-    //   // console.log(labelString)
-    //   // get cached texture or create it
-    //   let labelTexture = this.labelTextures.get(labelString) 
-
-    //   if (!labelTexture) {
-    //     labelTexture = gltools.createTextTexture(gl, labelString, this.grapher.div)
-    //     this.labelTextures.set(labelString, labelTexture)
-    //   }
-
-    //   let h = labelTexture.height/labelTexture.scale
-    //   let w = labelTexture.width/labelTexture.scale
-
-    //   let timeCoord = (timestamp - timeRange.min)/this.secondsPerPixelScale
-
-    //   let positions = [
-    //     [0 + timeCoord, 0],
-    //     [0 + timeCoord, h],
-    //     [w + timeCoord, 0],
-    //     [w + timeCoord, h],
-    //   ]
-    //   let texCoords = [
-    //     [0,0],
-    //     [0,1],
-    //     [1,0],
-    //     [1,1],
-    //   ]
-    //   let colors = [
-    //     [0,1,1,1],
-    //     [1,0,1,1],
-    //     [1,1,0,1],
-    //     [1,1,1,1],
-    //   ]
-     
-    //   let indices = [ 0,1,2, 2,1,3].map(x => x + this.NUM_VERTICES_PER_LABEL*k + labelVertexOffset)
-
-    //   labels.push({
-    //     labelTexture: labelTexture, 
-    //     timestamp: timestamp,
-    //     positions: positions,
-    //     texCoords: texCoords,
-    //     colors: colors,
-    //     indices: indices
-    //   })
-
-
-    //   console.assert(w > 0)
-    //   timestamp += (w + this.MIN_PIXELS_PER_TICK)*this.secondsPerPixelScale
-    //   k++
-    // }
 
     {
       // update gl buffers with computed vertices
@@ -567,7 +475,7 @@ class DateAxis {
       })
 
       if (!labelsTooBig)
-        return {majorTicks: ticks, majorUnit: tickUnit}
+        return {majorTicks: ticks, majorUnit: tickUnit, majorTickCount: tickCount}
     }
 
     // if we haven't found a fitting unit, return empty fields
@@ -643,7 +551,7 @@ class DateAxis {
       year: true,
     }
 
-    let {majorTicks: majorTickTimestamps, majorUnit: majorUnit} = this.computeMajorTicksFor(minorTickPossibilities.slice(minorTickIndex), boxedUnits, timeRange, pxWidth)
+    let {majorTicks: majorTickTimestamps, majorUnit: majorUnit, majorTickCount: majorTickCount} = this.computeMajorTicksFor(minorTickPossibilities.slice(minorTickIndex), boxedUnits, timeRange, pxWidth)
 
     // knowing the ticks to show, that gives us the units we need to show
     // let fineUnit = minorTick[1]
@@ -667,19 +575,15 @@ class DateAxis {
       coarseTickTimeStamps.push(t)
     }
 
-    // if no tick is in range, do center
-    if (coarseTickTimeStamps.length == 0) {
-      coarseTickTimeStamps.push(this.centerTime)
-    }
-
-
     return {
       minorTicks: minorTickTimeStamps,
       majorTicks: majorTickTimestamps,
       majorUnit: majorUnit,
       coarseTicks: coarseTickTimeStamps,
       coarseUnit: coarseUnit,
-      fineLabelBoxed: boxedUnits[majorUnit],
+      // labels shouldn't be boxed when they apply to more than one base unit
+      fineLabelBoxed: boxedUnits[majorUnit] && (majorTickCount == 1),
+      // coarse labels only do base units, so no problem there
       coarseLabelBoxed: boxedUnits[coarseUnit],
     }
   }
