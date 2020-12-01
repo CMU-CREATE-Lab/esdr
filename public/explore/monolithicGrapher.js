@@ -1627,18 +1627,31 @@ class GLGrapher extends gltools.GLCanvasBase {
     this.plots.forEach(plotInfo => plotInfo.plot.setPlotRange(timeRange))
   }
 
+  zoomAtTime(factor, time) {
+    let dt = time - this.dateAxis.centerTime
+    
+    this.dateAxis.centerTime = time - dt*factor
+    this.dateAxis.secondsPerPixelScale *= factor
+
+  }
+
   onMouseWheel(event) {
     // console.log("mouse wheel", event)
     let dx = event.deltaX
     let dy = event.deltaY
-    let loc = {x: event.screenX, y: event.screenY}
+    let loc = {x: event.clientX, y: event.clientY}
+
 
     // console.log(dx,dy)
 
     // do either vertical or horizontal scroll, not both at once to avoid weirdness
     if (Math.abs(dy) > Math.abs(dx)) {
       // vertical scroll
-      this.dateAxis.secondsPerPixelScale *= Math.pow(1.01,dy)
+      let pxWidth = this.dateAxis.overlayDiv.offsetWidth
+      let mouseTime = (loc.x - this.dateAxis.overlayDiv.offsetLeft - 0.5*pxWidth)*this.dateAxis.secondsPerPixelScale + this.dateAxis.centerTime
+
+      this.zoomAtTime(Math.pow(1.01,dy), mouseTime)
+      // this.dateAxis.secondsPerPixelScale *= Math.pow(1.01,dy)
     }
     else {
       // horizontal scroll
