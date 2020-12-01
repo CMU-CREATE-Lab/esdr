@@ -5,8 +5,8 @@ export class GLTextTexturer {
     this.canvas = document.createElement("canvas")
     this.ctx = this.canvas.getContext('2d')
 
-    this.backgroundColor = "rgb(0,255,0)"
-    this.color = "rgba(0,0,255,1.0)"
+    this.backgroundColor = "rgb(255,255,255)"
+    this.color = "rgba(0,0,0,1.0)"
     this.fontFamily = "sans-serif"
   }
 
