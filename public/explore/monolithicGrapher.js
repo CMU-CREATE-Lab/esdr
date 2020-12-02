@@ -1514,6 +1514,8 @@ class GLGrapher extends gltools.GLCanvasBase {
     plotRow.style.alignItems = "stretch"
     plotRow.style.flexShrink = 0
 
+    plotRow.addEventListener("wheel", (event) => this.onPlotMouseWheel(event))
+
     let plotDiv = document.createElement("div")
     // plotDiv.style.background = "rgba(0,0,255,0.2)"
     plotDiv.style.padding = "0px"
@@ -1635,15 +1637,6 @@ class GLGrapher extends gltools.GLCanvasBase {
   }
 
 
-  generateLineVertices() {
-  	let positions = 0
-
-  	let vertices = positions.map(pos => [pos, pos, pos, pos])
-  	let indexOffset = 0
-  	let indices = positions.map( (position, i) => [4*i + 0, 4*i + 1, 4*i + 2, 4*i + 2, 4*i + 1, 4*i + 3].map(k => k + indexOffset) )
-  }
-
-
   _initGl() {
     let gl = this.initGlBase()
 
@@ -1746,6 +1739,27 @@ class GLGrapher extends gltools.GLCanvasBase {
 
     this._dateAxisChanged()
 
+  }
+
+  onPlotMouseWheel(event) {
+    // scrolling on plots is only allowed horizontally
+    let dx = event.deltaX
+    let dy = event.deltaY
+
+    // do either vertical or horizontal scroll, not both at once to avoid weirdness
+    if (Math.abs(dy) < Math.abs(dx)) {
+      // horizontal scroll
+      this.dateAxis.centerTime += dx*this.dateAxis.secondsPerPixelScale
+
+      this._dateAxisChanged()
+
+      event.preventDefault()
+      event.stopPropagation()
+
+      this.updatePlotTimeRanges()
+
+      this.requestRedraw()
+    }
   }
 
   onMouseWheel(event) {
