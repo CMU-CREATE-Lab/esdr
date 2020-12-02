@@ -1499,7 +1499,11 @@ class GLGrapher extends gltools.GLCanvasBase {
     this.plots.forEach(plotInfo => plotInfo.yAxisDiv.style.width = width)
   }
 
-  addPlot(key, plot, labelElement) {
+  addDateAxisExtensionDiv(extensionDiv) {
+    this.dateAxisRowDiv.appendChild(extensionDiv)
+  }
+
+  addPlot(key, plot, labelElement, extensionElement) {
 
     let plotRow = document.createElement("div")
     // plotRow.style.background = "rgba(0,0,127,0.2)"
@@ -1530,6 +1534,7 @@ class GLGrapher extends gltools.GLCanvasBase {
       plotDiv.appendChild(labelElement)
     }
 
+
     let plotAxis = document.createElement("div")
     // plotAxis.style.background = "rgba(0,0,127,0.2)"
     plotAxis.style.padding = "0px"
@@ -1540,6 +1545,10 @@ class GLGrapher extends gltools.GLCanvasBase {
     plotAxis.style.flexShrink = 0
     plotAxis.style.flexGrow = 0
     plotRow.appendChild(plotAxis)
+
+    if (extensionElement) {
+      plotRow.appendChild(extensionElement)
+    }
 
     this.plotsDiv.appendChild(plotRow)
 

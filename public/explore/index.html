@@ -1379,6 +1379,10 @@ explorer.toggleDataDownloads = function() {
 
     document.querySelectorAll(".plot-extension").forEach((element) => element.style.width = widthString)
 
+    // update time range as we're changing size
+    explorer.grapher.updatePlotTimeRanges()
+    explorer.grapher.requestRedraw()
+
     if (time - startTime < transitionTime)
       window.requestAnimationFrame(transitionAnimation)
   }
@@ -1743,6 +1747,70 @@ function initPlots() {
   explorer.mapOverlay.setDataSource(esdr, {})
 
 
+
+  let plotExtensionDiv = document.createElement("div")
+  plotExtensionDiv.setAttribute("class", "plot-extension")
+  plotExtensionDiv.setAttribute("id", "plotCornerExtension")
+  plotExtensionDiv.style.padding = "0px"
+  plotExtensionDiv.style.boxSizing = "border-box"
+  // plotExtensionDiv.style.padding = "0.0em 0.25em"
+  plotExtensionDiv.style.width = "0px"
+  plotExtensionDiv.style.flexGrow = "0"
+  plotExtensionDiv.style.flexShrink = "0"
+  plotExtensionDiv.style.display = "inline-flex"
+  plotExtensionDiv.style.alignItems = "stretch"
+
+  let plotExtPaddingDiv = document.createElement("div")
+  plotExtPaddingDiv.style.padding = "0.0em 0.25em"
+  plotExtensionDiv.style.display = "inline-flex"
+  plotExtensionDiv.style.alignItems = "center"
+
+  let plotExtensionLabel = document.createElement("label")
+  plotExtensionLabel.setAttribute("for", "timezoneSelectorInput")
+  plotExtensionLabel.style.fontSize = "small"
+  plotExtensionLabel.textContent = "Download Time Format:"
+
+  let plotExtensionInput = document.createElement("input")
+  plotExtensionInput.setAttribute("type", "text")
+  plotExtensionInput.setAttribute("name", "timezoneInput")
+  plotExtensionInput.setAttribute("id", "timezoneSelectorInput")
+  plotExtensionInput.setAttribute("list", "timezoneDatalist")
+  plotExtensionInput.setAttribute("placeholder", "Current Browser Timezone")
+  plotExtensionInput.setAttribute("autocomplete", "off")
+  plotExtensionInput.addEventListener("change", event => exploer.downloadTimezoneChanged(event))
+
+  let timezoneDatalist = document.createElement("datalist")
+  timezoneDatalist.setAttribute("id", "timezoneDatalist")
+  let currentOption = document.createElement("option")
+  currentOption.setAttribute("value", "Current Browser Timezone")
+  let utcOption = document.createElement("option")
+  utcOption.setAttribute("value", "UTC")
+  let epochOption = document.createElement("option")
+  epochOption.setAttribute("value", "UNIX Epoch Timestamp")
+  timezoneDatalist.appendChild(currentOption)
+  timezoneDatalist.appendChild(utcOption)
+  timezoneDatalist.appendChild(epochOption)
+
+  plotExtPaddingDiv.appendChild(plotExtensionLabel)
+  plotExtPaddingDiv.appendChild(plotExtensionInput)
+  plotExtPaddingDiv.appendChild(timezoneDatalist)
+
+  plotExtensionDiv.appendChild(plotExtPaddingDiv)
+
+  explorer.grapher.addDateAxisExtensionDiv(plotExtensionDiv)
+
+  // timezones support
+  let timezones = moment.tz.names()
+
+  // let timezoneDatalist = document.getElementById("timezoneDatalist")
+  if (timezoneDatalist) {
+    timezones.forEach(tz => {
+      let opt = document.createElement("option")
+      opt.value = tz
+      timezoneDatalist.appendChild(opt)
+    })
+  }
+
   // add selected plots to plot manager
   for (let channelId of esdr.selectedChannelIds) {
     let feedId = parseInt(channelId.slice(0, channelId.indexOf(".")))
@@ -1753,18 +1821,6 @@ function initPlots() {
       let plot = explorer.mapOverlay.addSparklinePlot(feedId, channelName)
       plot.setPlotRange(explorer.grapher.getTimeRange())
     }
-  }
-
-  // timezones support
-  let timezones = moment.tz.names()
-
-  let timezoneDatalist = document.getElementById("timezoneDatalist")
-  if (timezoneDatalist) {
-    timezones.forEach(tz => {
-      let opt = document.createElement("option")
-      opt.value = tz
-      timezoneDatalist.appendChild(opt)
-    })
   }
 
 }
@@ -1827,8 +1883,10 @@ explorer.stopScrubbing = function() {
 
 explorer.updateDataDownloadLinks = function() {
   let tzElement = document.getElementById("timezoneSelectorInput")
-  if (!tzElement)
+  if (!tzElement) {
+    console.warn("timezoneSelectorInput element not found for updating download links")
     return
+  }
 
   let tz = tzElement.value
 
@@ -2073,14 +2131,6 @@ explorer.addPlot = function(feedId, channelName) {
 
 
 
-  let {texture: colorMapTexture, range: colorMapRange} = ESDR.sparklineColorMap(feedId, channelName)
-  let dataSource = esdr.dataSourceForChannel(feedId, channelName)
-
-  let plot = new ETP(dataSource, colorMapTexture, colorMapRange)
-  explorer.grapher.addPlot(plotId, plot, labelBlock)
-
-
-
   let extensionsBlock = document.createElement("div")
   extensionsBlock.setAttribute("id", `plot-extension-${plotId}`)
   extensionsBlock.setAttribute("class", "plot-extension")
@@ -2166,6 +2216,12 @@ explorer.addPlot = function(feedId, channelName) {
   }
 
   extensionsBlock.appendChild(extensionsBox)
+
+  let {texture: colorMapTexture, range: colorMapRange} = ESDR.sparklineColorMap(feedId, channelName)
+  let dataSource = esdr.dataSourceForChannel(feedId, channelName)
+
+  let plot = new ETP(dataSource, colorMapTexture, colorMapRange)
+  explorer.grapher.addPlot(plotId, plot, labelBlock, extensionsBlock)
 
 
   explorer.plots.set(channelId, plotId)
@@ -2316,12 +2372,13 @@ explorer.decreasePlotHeight = function() {
   updateUrlHash()
 }
 
+// set explorer to be an object on the window, so it can be accessed from onevent handlers in the html
+window.explorer = explorer
+
 // call initMap() as we fully loaded maps api to be able to extend the overlays in mapOverlay.js
 initMap()
 initPlots()
 
-// set explorer to be an object on the window, so it can be accessed from onevent handlers in the html
-window.explorer = explorer
 
 </script>
    
