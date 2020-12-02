@@ -2001,7 +2001,7 @@ class GLGrapher extends gltools.GLCanvasBase {
 
     this.requestRedraw()
 
-    console.log("mouse moved 4 highlighting", loc, mouseTime)
+    // console.log("mouse moved 4 highlighting", loc, mouseTime)
   }
 
 
@@ -2013,7 +2013,7 @@ class GLGrapher extends gltools.GLCanvasBase {
 
     this.requestRedraw()
 
-    console.log("mouse exited 4 highlighting")
+    // console.log("mouse exited 4 highlighting")
   }
 
 
