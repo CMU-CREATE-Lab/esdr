@@ -93,6 +93,9 @@ class MapOverlay extends google.maps.OverlayView {
 		let mapBounds = map.getBounds()
 		let mapCenter = map.getCenter()
 		let overlayProjection = this.getProjection()
+		// if we don't have a project, yet, there's nothing to draw
+		if (!overlayProjection)
+			return
 		// let sw = overlayProjection.fromLatLngToDivPixel(this.bounds.getSouthWest())
 		// let ne = overlayProjection.fromLatLngToDivPixel(this.bounds.getNorthEast())
 		let sw = overlayProjection.fromLatLngToDivPixel(mapBounds.getSouthWest())
@@ -1244,6 +1247,7 @@ _binarySearch(array, predicate) {
 		let {texture: colorMapTexture, range: colorMapRange} = ESDR.sparklineColorMap(feedId, channelName)
 
 		let plotter = new ETP(tileSource, colorMapTexture, colorMapRange)
+    plotter.dataUpdatedCallback = () => this.requestDraw()
 
 		this.sparkLines.set(`${feedId}.${channelName}`, plotter)
 

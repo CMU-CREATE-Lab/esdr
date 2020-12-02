@@ -75,6 +75,7 @@ class ETP {
 		this.glBuffers = {}
 
 		this.tiles = (new Array(this.NUM_TILES)).fill({})
+		this.dataUpdatedCallback = () => undefined
 
 		this.tileDataSource = tileDataSource
 		this.timestampOffsetDirty = true
@@ -123,6 +124,7 @@ class ETP {
 
 	  const image = new Image()
 
+	  let plotter = this
 	  image.onload = function() {
 	    gl.bindTexture(gl.TEXTURE_2D, texture)
 	    gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, image)
@@ -140,6 +142,8 @@ class ETP {
 				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 	    // }
+
+	    plotter.dataUpdatedCallback()
 	  }
 	  image.src = url
 
@@ -332,6 +336,7 @@ class ETP {
 			}
 		}
 
+		this.dataUpdatedCallback()
 	}
 
 	getPrevPositionToConnectToTile(tileIndex) {

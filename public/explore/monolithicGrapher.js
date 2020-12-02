@@ -292,6 +292,8 @@ class YAxis extends PlotAxis {
     super(grapher, overlayDiv)
     this.plot = plot
 
+    this.MIN_PINNED_LABEL_SPACING_PCT = 25.0
+
     this.secondsPerPixelScale = 1.0
 
     this.formats = {
@@ -308,10 +310,29 @@ class YAxis extends PlotAxis {
     let pxWidth = pixelRange.x.max - pixelRange.x.min
     let perPixelScale = (valueRange.max - valueRange.min)/pxHeight
     
+    let fontSize = gltools.computeFontSizingForReferenceElement(this.overlayDiv).fontSize
 
     let labels = []
 
     let format = this.formats[tickUnit]
+
+    let maxLabelWidth = 0.0
+
+    for (let [i, y] of ticks.entries()) {
+      if (k >= this.MAX_NUM_LABELS)
+        break
+
+      let labelString = format.format(y)
+
+      let labelTexture = this.labelTextures.get(labelString) 
+
+      if (!labelTexture) {
+        labelTexture = gltools.createTextTexture(gl, labelString, this.grapher.div)
+        this.labelTextures.set(labelString, labelTexture)
+      }
+
+      maxLabelWidth = Math.max(labelTexture.width/labelTexture.scale, maxLabelWidth)
+    }
 
     for (let [i, y] of ticks.entries()) {
       if (k >= this.MAX_NUM_LABELS)
@@ -329,14 +350,21 @@ class YAxis extends PlotAxis {
       let h = labelTexture.height/labelTexture.scale
       let w = labelTexture.width/labelTexture.scale
 
-      let xOffset = pxWidth - w
-      let yOffset = 1.0*pxHeight - (y - valueRange.min)/perPixelScale - (labelTexture.middle/labelTexture.scale)
+      let valueCoord = 1.0*pxHeight - (y - valueRange.min)/perPixelScale
+
+      let space = Math.min(pxHeight - valueCoord, valueCoord - 0) - 0.5*h
+
+      if (space < 0.0)
+        continue
+
+      let xOffset = 0.5*fontSize + maxLabelWidth - w
+      let yOffset = valueCoord - (labelTexture.middle/labelTexture.scale)
 
       let positions = [
-        [0 + xOffset, yOffset - 0],
-        [0 + xOffset, yOffset + h],
-        [w + xOffset, yOffset + 0],
-        [w + xOffset, yOffset + h],
+        [0 + Math.round(xOffset), Math.round(yOffset) - 0],
+        [0 + Math.round(xOffset), Math.round(yOffset) + h],
+        [w + Math.round(xOffset), Math.round(yOffset) + 0],
+        [w + Math.round(xOffset), Math.round(yOffset) + h],
       ]
       let texCoords = [
         [0,0],
@@ -602,6 +630,8 @@ class YAxis extends PlotAxis {
              0,       0, 1, 0,
         xshift,  yshift, 0, 1
       ]
+      gl.vertexAttrib4f(shader.attribLocations.fillColor, 0.0, 0.0, 0.0, 0.18)
+      gl.vertexAttrib4f(shader.attribLocations.strokeColor, 0.0, 0.0, 0.0, 0.18)
       gl.uniformMatrix4fv(shader.uniformLocations.modelViewMatrix, false, MV)
       gl.uniform1f(shader.uniformLocations.markerScale, 0.5)
       gl.drawElements(gl.TRIANGLES, this.NUM_INDICES_PER_LABEL*this.ticks.majorTicks.length, gl.UNSIGNED_INT, (this.NUM_INDICES_PER_LABEL*this.ticks.minorTicks.length)*Uint32Array.BYTES_PER_ELEMENT)
@@ -621,6 +651,8 @@ class YAxis extends PlotAxis {
              0,       0, 1, 0,
         xshift,  yshift, 0, 1
       ]
+      gl.vertexAttrib4f(shader.attribLocations.fillColor, 0.0, 0.0, 0.0, 1.0)
+      gl.vertexAttrib4f(shader.attribLocations.strokeColor, 0.0, 0.0, 0.0, 1.0)
       gl.uniformMatrix4fv(shader.uniformLocations.modelViewMatrix, false, MV)
       gl.uniform1f(shader.uniformLocations.markerScale, 1.0)
       gl.drawElements(gl.TRIANGLES, this.NUM_INDICES_PER_LABEL*this.ticks.majorTicks.length, gl.UNSIGNED_INT, (this.NUM_INDICES_PER_LABEL*this.ticks.minorTicks.length)*Uint32Array.BYTES_PER_ELEMENT)
@@ -720,7 +752,7 @@ class DateAxis extends PlotAxis{
       hour:   Intl.DateTimeFormat([], {hour12: false, hour: "2-digit", minute: "2-digit"}),
       day:    Intl.DateTimeFormat([], {day: "2-digit"}),
       week:   Intl.DateTimeFormat([], {day: "2-digit"}),
-      month:  Intl.DateTimeFormat([], {month: "2-digit"}),
+      month:  Intl.DateTimeFormat([], {month: "short"}),
       year:   Intl.DateTimeFormat([], {year: "2-digit"}),
       decade: Intl.DateTimeFormat([], {year: "numeric"}),
       century: Intl.DateTimeFormat([], {year: "numeric"}),
@@ -728,9 +760,9 @@ class DateAxis extends PlotAxis{
     }
 
     this.shortCoarseFormats = {
-      day:    Intl.DateTimeFormat([], {year: "numeric", month: "2-digit", day: "2-digit"}),
-      week:   Intl.DateTimeFormat([], {year: "numeric", month: "2-digit", day: "2-digit"}),
-      month:  Intl.DateTimeFormat([], {year: "numeric", month: "2-digit"}),
+      day:    Intl.DateTimeFormat([], {year: "numeric", month: "short", day: "2-digit"}),
+      week:   Intl.DateTimeFormat([], {year: "numeric", month: "short", day: "2-digit"}),
+      month:  Intl.DateTimeFormat([], {year: "numeric", month: "short"}),
       year:   Intl.DateTimeFormat([], {year: "numeric"}),
       decade: Intl.DateTimeFormat([], {year: "numeric"}),
       century: Intl.DateTimeFormat([], {year: "numeric"}),
@@ -764,7 +796,6 @@ class DateAxis extends PlotAxis{
         continue
 
 
-      let space = isBoxed ? (ticks[i+1] - t)/this.secondsPerPixelScale - 2.0*this.BOXED_LABEL_MARGIN_PX : pixelRange.x.max - pixelRange.x.min
 
 
       let labelString = format.format(t*1000.0)
@@ -780,21 +811,27 @@ class DateAxis extends PlotAxis{
       let h = labelTexture.height/labelTexture.scale
       let w = labelTexture.width/labelTexture.scale
 
-      // don't draw label if it'd overflow its space
-      if (space < w)
+      let timeCoord = (t - timeRange.min)/this.secondsPerPixelScale
+
+      let boxSpace = (ticks[i+1] - t)/this.secondsPerPixelScale - 2.0*this.BOXED_LABEL_MARGIN_PX - w
+      let pinSpace = 2.0*Math.min(pixelRange.x.max - timeCoord, timeCoord - pixelRange.x.min) - w
+
+      let space = isBoxed ? boxSpace : pinSpace
+
+     // don't draw label if it'd overflow its space
+      if (space < 0.0)
         continue
 
       let xOffset = isBoxed ? 0.5*(ticks[i+1] - t)/this.secondsPerPixelScale : 0
       let yOffset = pixelRange.y.min + yCenterFrac*axisHeight - (labelTexture.middle/labelTexture.scale - 0.0*labelTexture.fontSize)
       // let yOffset = 0.5*axisHeight
 
-      let timeCoord = (t - timeRange.min)/this.secondsPerPixelScale
 
       let positions = [
-        [0 + timeCoord + xOffset - 0.5*w, yOffset - 0],
-        [0 + timeCoord + xOffset - 0.5*w, yOffset + h],
-        [w + timeCoord + xOffset - 0.5*w, yOffset + 0],
-        [w + timeCoord + xOffset - 0.5*w, yOffset + h],
+        [0 + Math.round(timeCoord + xOffset - 0.5*w), Math.round(yOffset) - 0],
+        [0 + Math.round(timeCoord + xOffset - 0.5*w), Math.round(yOffset) + h],
+        [w + Math.round(timeCoord + xOffset - 0.5*w), Math.round(yOffset) + 0],
+        [w + Math.round(timeCoord + xOffset - 0.5*w), Math.round(yOffset) + h],
       ]
       let texCoords = [
         [0,0],
@@ -1277,6 +1314,9 @@ class DateAxis extends PlotAxis{
              0,       0, 1, 0,
         xshift,  yshift, 0, 1
       ]
+
+      gl.vertexAttrib4f(shader.attribLocations.fillColor, 0.0, 0.0, 0.0, 0.18)
+      gl.vertexAttrib4f(shader.attribLocations.strokeColor, 0.0, 0.0, 0.0, 0.18)
       gl.uniformMatrix4fv(shader.uniformLocations.modelViewMatrix, false, MV)
       gl.uniform1f(shader.uniformLocations.markerScale, 0.5)
       gl.drawElements(gl.TRIANGLES, this.NUM_INDICES_PER_TICK*this.ticks.majorTicks.length, gl.UNSIGNED_INT, (this.NUM_INDICES_PER_LABEL*this.ticks.minorTicks.length)*Uint32Array.BYTES_PER_ELEMENT)
@@ -1296,6 +1336,8 @@ class DateAxis extends PlotAxis{
              0,       0, 1, 0,
         xshift,  yshift, 0, 1
       ]
+      gl.vertexAttrib4f(shader.attribLocations.fillColor, 0.0, 0.0, 0.0, 1.0)
+      gl.vertexAttrib4f(shader.attribLocations.strokeColor, 0.0, 0.0, 0.0, 1.0)
       gl.uniformMatrix4fv(shader.uniformLocations.modelViewMatrix, false, MV)
       gl.uniform1f(shader.uniformLocations.markerScale, 1.0)
       gl.drawElements(gl.TRIANGLES, this.NUM_INDICES_PER_TICK*this.ticks.majorTicks.length, gl.UNSIGNED_INT, (this.NUM_INDICES_PER_LABEL*this.ticks.minorTicks.length)*Uint32Array.BYTES_PER_ELEMENT)
@@ -1339,11 +1381,8 @@ class GLGrapher extends gltools.GLCanvasBase {
     this.dateAxisListeners = []
 
     // create overlay divs
+    // the main overlay is absolutely positioned and its size must be set explicitly
     let overlayDiv = document.createElement("div")
-    // overlayDiv.style.top = "0px"
-    // overlayDiv.style.left = "0px"
-    // overlayDiv.style.bottom = "0px"
-    // overlayDiv.style.right = "0px"
     overlayDiv.style.width = `${div.offsetWidth}px`
     overlayDiv.style.height = `${div.offsetHeight}px`
     overlayDiv.style.position = "absolute"
@@ -1359,9 +1398,8 @@ class GLGrapher extends gltools.GLCanvasBase {
     // dateAxisRow.style.background = "rgba(127,0,0,0.2)"
     dateAxisRow.style.padding = "0px"
     dateAxisRow.style.margin = "0px"
-    // dateAxisRow.style.width = "100%"
-    // dateAxisRow.style.position = "absolute"
-    // dateAxisRow.style.zIndex = 1
+    dateAxisRow.style.boxSizing = "border-box"
+    dateAxisRow.style.borderBottom = "1px solid black"
     dateAxisRow.style.display = "flex"
     dateAxisRow.style.flexDirection = "row"
     dateAxisRow.style.alignItems = "stretch"
@@ -1384,8 +1422,9 @@ class GLGrapher extends gltools.GLCanvasBase {
     // dateAxisCorner.style.background = "rgba(0,0,127,0.2)"
     dateAxisCorner.style.padding = "0px"
     dateAxisCorner.style.margin = "0px"
-    dateAxisCorner.style.width = "3em"
-    // dateAxisDiv.style.position = "absolute"
+    dateAxisCorner.style.width = "4em"
+    dateAxisCorner.style.boxSizing = "border-box"
+    dateAxisCorner.style.borderLeft = "1px solid black"
     dateAxisCorner.style.flexShrink = 0
     dateAxisCorner.style.flexGrow = 0
     dateAxisRow.appendChild(dateAxisCorner)
@@ -1469,6 +1508,8 @@ class GLGrapher extends gltools.GLCanvasBase {
     plotRow.style.width = "100%"
     plotRow.style.height = "5em"
     plotRow.style.display = "flex"
+    plotRow.style.boxSizing = "border-box"
+    plotRow.style.borderBottom = "1px solid black"
     plotRow.style.flexDirection = "row"
     plotRow.style.alignItems = "stretch"
     plotRow.style.flexShrink = 0
@@ -1491,8 +1532,9 @@ class GLGrapher extends gltools.GLCanvasBase {
     // plotAxis.style.background = "rgba(0,0,127,0.2)"
     plotAxis.style.padding = "0px"
     plotAxis.style.margin = "0px"
-    plotAxis.style.width = "3em"
-    // dateAxisDiv.style.position = "absolute"
+    plotAxis.style.width = "4em"
+    plotAxis.style.boxSizing = "border-box"
+    plotAxis.style.borderLeft = "1px solid black"
     plotAxis.style.flexShrink = 0
     plotAxis.style.flexGrow = 0
     plotRow.appendChild(plotAxis)
@@ -1505,6 +1547,9 @@ class GLGrapher extends gltools.GLCanvasBase {
 
     plot.isAutoRangingNegatives = true
     plot.setPlotRange(this.dateAxis.getTimeRangeForWidth(this.dateAxisDiv.offsetWidth))
+
+    let oldCallback = plot.dataUpdatedCallback
+    plot.dataUpdatedCallback = () => {oldCallback(); this.requestRedraw()}
 
     this.requestRedraw()
   }

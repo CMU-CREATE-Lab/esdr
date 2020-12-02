@@ -485,7 +485,7 @@ class ESDR {
 	}
 
 	static sparklineColorMap(feedId, channelName) {
-		if (channelName.indexOf("tVOC") == 0) {
+		if ((channelName.indexOf("tVOC") == 0) || (channelName.indexOf("tvoc") == 0)) {
 			return {texture: "colorscale-tVOC_0_7000_ppb.png", range: {min: 0.0, max: 7000.0}}
 		}
 		else if (channelName.indexOf("PM") == 0) {
