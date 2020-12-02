@@ -46,6 +46,9 @@ html, body {
 
 body {
   font-family: sans-serif;
+  display: flex;
+  align-items: stretch;
+  flex-direction: row;
 }
 
 hr {
@@ -79,15 +82,19 @@ input[type="search"] {
 .sidebar {
   /*font-size: large;*/
   box-sizing: border-box;
-
-  width: 0px;
-  position: fixed;
+  display: flex;
+  align-items: stretch;
+  flex-direction: column;
+  flex-shrink: 0;
+  flex-grow: 0;
+  /*width: 0px;*/
+  /*position: fixed;*/
   z-index: 2;
   /*use top and bottom instead of height attribute to make it fill the screen vertically*/
-  top: 0;
+/*  top: 0;
   bottom: 0;
   left: 0;
-  background-color: var(--sidebar-color);
+*/  background-color: var(--sidebar-color);
   overflow-x: hidden;
   /*overflow-y: scroll;*/
   box-shadow: 1px 0px 1px rgba(0,0,0, 0.1);
@@ -125,6 +132,22 @@ input[type="search"] {
   margin: 0.5em;
   z-index: 2;
   float: right;
+  /*display: table-row;*/
+  /*font-size: 20px;*/
+  background-color: var(--search-block-color);
+  color: black;
+  padding: 5px 5px;
+  /*border-width: 1px;*/
+  /*border: 0.5px solid #777;*/
+  border-radius: 3px;
+  box-shadow: 0px 1px 1px rgba(0,0,0,0.1);
+  font-family: sans-serif;
+}
+
+.inline-search {
+  margin: 0.5em;
+  flex-shrink: 0;
+  flex-grow: 0;
   /*display: table-row;*/
   /*font-size: 20px;*/
   background-color: var(--search-block-color);
@@ -183,6 +206,7 @@ input[type="search"] {
   border: 0px solid rgba(0,0,0,0.2);
   box-shadow: 0px 1px 2px rgba(0,0,0,0.15);
   font-size: large;
+  flex-grow: 1;
 }
 
 .search-groupbox-title {
@@ -201,7 +225,7 @@ input[type="search"] {
 }
 
 .search-groupbox {
-  height: 0px;
+  /*height: 0px;*/
   background-color: var(--search-groupbox-color);
   border-radius: 3px;
   /*padding: 0.25em;*/
@@ -522,6 +546,16 @@ input[type="search"] {
   /*object-fit: contain;*/
 }
 
+.unused-elements-storage {
+  width: 0px;
+  height: 0px;
+  overflow: hidden;
+  margin: 0px;
+  padding: 0px;
+  z-index: -100;
+  position: absolute;
+}
+
 #main {
   display: flex;
   flex-direction: column;
@@ -532,6 +566,8 @@ input[type="search"] {
   margin: 0px;
   height: 100%;
   overflow-y: hidden;
+  flex-shrink: 1;
+  flex-grow: 1;
 }
 
 
@@ -544,43 +580,45 @@ input[type="search"] {
 </style>
 </head>
 <body>
-
-<div id="searchSidebar" class="sidebar">
-    <div id="searchResultsList" class="search-results"></div>
-</div>
-
-<div id="searchBlock" class="floaty-search">
-  <div class="searchbar">
-  <!-- <button class="searchbar-button" onclick="toggleSidebar()">☰</button> -->
-  <button class="searchbar-button" id="showSearchResultsButton" onclick="window.explorer.toggleSidebar()"><img src="hamburger.svg" class="button-icon"></img></button>
+<div id="unusedElements" class="unused-elements-storage">
+    <button class="searchbar-button" id="showSearchResultsButton" onclick="window.explorer.toggleSidebar()"><img src="hamburger.svg" class="button-icon"></img></button>
   <!-- <div class="searchbar-divider"></div> -->
   <button class="searchbar-button" id="showDataFiltersButton" onclick="window.explorer.toggleFilters()"><img src="filter.svg" class="button-icon"></img></button>
   <!-- <div class="searchbar-divider"></div> -->
   <button class="searchbar-button" id="showSettingsButton" onclick="window.explorer.toggleSettings()"><img src="settings.svg" class="button-icon"></img></button>
-  <!-- <div class="searchbar-divider"></div> -->
-  <input type="search" id="sensorSearchField" class="search-text" placeholder="search sensor feeds">
-  <!-- <button class="searchbar-button" onclick="doSensorSearch()"><img src="loupe.svg" class="button-icon"></img></button> -->
-  <!-- <div class="searchbar-divider"></div> -->
-  <button class="searchbar-button" onclick="showHelp()">?</button>
-  </div>
-  <div id="filtersBlock" class="search-groupbox">
-    <div class="search-groupbox-title">Data Filters</div>
-    <div class="search-group-content">
-      <div><input type="checkbox" id="recentOnlyCheckbox" name="checkbox-recentOnly" title="only show sensors with new data from the last 30 days" class="in-the-middle" /><label for="recentOnlyCheckbox" class="in-the-middle"><span class="in-the-middle">Data in Last 30 Days</span></label></div>
-      <div><input type="checkbox" id="mapOnlyCheckbox" name="checkbox-mapOnly" title="only show sensors that are on the map area" class="in-the-middle" /><label for="mapOnlyCheckbox" class="in-the-middle"><span class="in-the-middle">On Map</span></label></div>
-    </div>
-  </div>
-  <div id="settingsBlock" class="search-groupbox">
-    <div class="search-groupbox-title">Settings</div>
-    <div class="search-group-content">
-      <div class="search-input-row"><input type="checkbox" id="showSparklinesCheckbox" name="checkbox-showSparklines" title="Show Sparklines" /><label for="showSparklinesCheckbox">Sparklines on Map</label></div>
-
-    </div>
-  </div>
-  <div id="progressBlock" class="search-progress-block">
-    <div id="searchProgressText"></div>
-  </div>
 </div>
+
+<div id="searchSidebar" class="sidebar">
+  <div id="searchBlock" class="inline-search">
+    <div class="searchbar">
+    <!-- <button class="searchbar-button" onclick="toggleSidebar()">☰</button> -->
+    <!-- <div class="searchbar-divider"></div> -->
+    <input type="search" id="sensorSearchField" class="search-text" placeholder="search sensor feeds">
+    <!-- <button class="searchbar-button" onclick="doSensorSearch()"><img src="loupe.svg" class="button-icon"></img></button> -->
+    <!-- <div class="searchbar-divider"></div> -->
+    <button class="searchbar-button" onclick="showHelp()">?</button>
+    </div>
+    <div id="filtersBlock" class="search-groupbox">
+      <div class="search-groupbox-title">Data Filters</div>
+      <div class="search-group-content">
+        <div><input type="checkbox" id="recentOnlyCheckbox" name="checkbox-recentOnly" title="only show sensors with new data from the last 30 days" class="in-the-middle" /><label for="recentOnlyCheckbox" class="in-the-middle"><span class="in-the-middle">Data in Last 30 Days</span></label></div>
+        <div><input type="checkbox" id="mapOnlyCheckbox" name="checkbox-mapOnly" title="only show sensors that are on the map area" class="in-the-middle" /><label for="mapOnlyCheckbox" class="in-the-middle"><span class="in-the-middle">On Map</span></label></div>
+      </div>
+    </div>
+    <div id="settingsBlock" class="search-groupbox">
+      <div class="search-groupbox-title">Settings</div>
+      <div class="search-group-content">
+        <div class="search-input-row"><input type="checkbox" id="showSparklinesCheckbox" name="checkbox-showSparklines" title="Show Sparklines" /><label for="showSparklinesCheckbox">Sparklines on Map</label></div>
+
+      </div>
+    </div>
+    <div id="progressBlock" class="search-progress-block">
+      <div id="searchProgressText"></div>
+    </div>
+  </div>
+    <div id="searchResultsList" class="search-results"></div>
+</div>
+
 
 
 
@@ -775,15 +813,15 @@ function initMap() {
   // parse the url hash part
   parseUrlParams()
   // execute params
-  if (explorer.showResults)
-    showSearchResults()
+  // if (explorer.showResults)
+  //   showSearchResults()
 
-  // FIXME: showSearchFilters() with a small delay, otherwise the margin computation gets confused. maybe this could be done with less hackery?
-  if (explorer.showFilters)
-    setTimeout(explorer.showSearchFilters, 300)
+  // // FIXME: showSearchFilters() with a small delay, otherwise the margin computation gets confused. maybe this could be done with less hackery?
+  // if (explorer.showFilters)
+  //   setTimeout(explorer.showSearchFilters, 300)
 
-  if (explorer.showSettings)
-    setTimeout(explorer.showSearchSettings, 600)
+  // if (explorer.showSettings)
+  //   setTimeout(explorer.showSearchSettings, 600)
 
   let mapdiv = document.getElementById('googlemap');
   gMap = new google.maps.Map(
@@ -1236,6 +1274,8 @@ function updateUrlHash() {
 
 
 function adjustSidebarTopPadding(adjustment) {
+  return
+  // TODO: not needed for inline searchbox (only when its floaty)
   let searchBlock = document.getElementById("searchBlock")
   let searchStyle = window.getComputedStyle(searchBlock)
   let sidebar = document.getElementById("searchSidebar")
