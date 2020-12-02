@@ -1817,7 +1817,7 @@ function initPlots() {
   plotExtensionInput.setAttribute("list", "timezoneDatalist")
   plotExtensionInput.setAttribute("placeholder", "Current Browser Timezone")
   plotExtensionInput.setAttribute("autocomplete", "off")
-  plotExtensionInput.addEventListener("change", event => exploer.downloadTimezoneChanged(event))
+  plotExtensionInput.addEventListener("change", event => explorer.downloadTimezoneChanged(event))
 
   let timezoneDatalist = document.createElement("datalist")
   timezoneDatalist.setAttribute("id", "timezoneDatalist")
@@ -1969,9 +1969,16 @@ explorer.updateDataDownloadLinks = function() {
 
   let tz = tzElement.value
 
+  if (tz.length == 0) {
+    tz = tzElement.getAttribute("placeholder")
+  }
+
   // get current timezone from browser
   if (tz == "Current Browser Timezone") {
     tz = moment.tz.guess(true)
+  }
+  else if (tz == "UNIX Epoch Timestamp") {
+    tz = ""
   }
 
   // if we don't have a timerange to work with, don't even bother
