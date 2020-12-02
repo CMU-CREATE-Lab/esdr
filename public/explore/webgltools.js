@@ -109,7 +109,7 @@ export const computeFontSizingForReferenceElement = function(element) {
     return {fontSize: fontSize, lineHeight: lineHeight}
 }
 
-export const createTextTexture = function(gl, text, fontSizeRef) {
+export const createTextTexture = function(gl, text, fontSizeRef, color) {
 
   let lineHeight = undefined
   if (fontSizeRef instanceof Element) {
@@ -119,6 +119,8 @@ export const createTextTexture = function(gl, text, fontSizeRef) {
   }
 
   let texturer = new GLTextTexturer()
+  if (color)
+    texturer.color = color
   texturer.drawText(text, fontSizeRef)
 
   let texture = createTextureFromCanvas(gl, texturer.canvas)

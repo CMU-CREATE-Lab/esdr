@@ -622,7 +622,7 @@ class ETP {
 
 	getValueAroundTime(requestedTime) {
 
-		if (!this.indexTimes || !this.indexTimes.length)
+		if (!requestedTime || !this.indexTimes || !this.indexTimes.length)
 			return undefined
 
 		let afterIndex = this._binarySearch(this.indexTimes, t => t > requestedTime)

@@ -33,7 +33,12 @@ class PlotAxis {
     this.labelGlBuffers = {}
     this.labels = []
 
-    this.labelTextures = new Map()
+    this.highlightTime = undefined
+    this.hideRegularLabelsOnHighlight = false
+  }
+
+  highlightValueAtTime(requestedTime) {
+    this.highlightTime = requestedTime
   }
 
   getMaxNumLabelVertices() {
@@ -44,15 +49,6 @@ class PlotAxis {
     return this.MAX_NUM_LABELS*this.NUM_INDICES_PER_LABEL
   }
 
-  getMaxNumTickVertices() {
-    return this.MAX_NUM_TICKS*this.NUM_VERTICES_PER_TICK
-  }
-
-  getMaxNumTickIndices() {
-    return this.MAX_NUM_TICKS*this.NUM_INDICES_PER_TICK
-  }
-
-
   initGl(gl) {
 
     this.allocateGlBuffers(gl)
@@ -61,6 +57,8 @@ class PlotAxis {
   }
 
   glDrawLabels(gl, PM, axisBounds) {
+
+
     let shader = this.grapher.labelShader
 
     const MV = [
@@ -77,8 +75,12 @@ class PlotAxis {
 
     this.bindLabelGlBuffers(gl, shader)
 
+    let hideRegulars = ((this.ticks.highlightTicks.length > 0) && this.hideRegularLabelsOnHighlight)
 
     for (let [i, label] of this.labels.entries()) {
+      // only draw last label if we have a highlighted value
+      if (hideRegulars && (i+1 < this.labels.length))
+        continue
 
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, label.labelTexture.texture)
@@ -301,6 +303,8 @@ class YAxis extends PlotAxis {
 
     this.MIN_PINNED_LABEL_SPACING_PCT = 25.0
 
+    this.hideRegularLabelsOnHighlight = true
+
     this.formats = {
       k: {format: y => `${(y*0.001).toFixed(0)}k`},
       1: {format: y => `${(y).toFixed(0)}`},
@@ -308,12 +312,6 @@ class YAxis extends PlotAxis {
       c: {format: y => `${(y).toFixed(2)}`},
       m: {format: y => `${(y).toFixed(3)}`},
     }
-
-    this.highlightTime = undefined
-  }
-
-  highlightValueAtTime(requestedTime) {
-    this.highlightTime = requestedTime
   }
 
   _createLabelsFor(gl, ticks, tickUnit, pixelRange, valueRange, k) {
@@ -335,11 +333,11 @@ class YAxis extends PlotAxis {
 
       let labelString = format.format(y)
 
-      let labelTexture = this.labelTextures.get(labelString) 
+      let labelTexture = this.grapher.labelTextures.get(labelString) 
 
       if (!labelTexture) {
         labelTexture = gltools.createTextTexture(gl, labelString, this.grapher.div)
-        this.labelTextures.set(labelString, labelTexture)
+        this.grapher.labelTextures.set(labelString, labelTexture)
       }
 
       maxLabelWidth = Math.max(labelTexture.width/labelTexture.scale, maxLabelWidth)
@@ -351,11 +349,11 @@ class YAxis extends PlotAxis {
 
       let labelString = format.format(y)
 
-      let labelTexture = this.labelTextures.get(labelString) 
+      let labelTexture = this.grapher.labelTextures.get(labelString) 
 
       if (!labelTexture) {
         labelTexture = gltools.createTextTexture(gl, labelString, this.grapher.div)
-        this.labelTextures.set(labelString, labelTexture)
+        this.grapher.labelTextures.set(labelString, labelTexture)
       }
 
       let h = labelTexture.height/labelTexture.scale
@@ -404,9 +402,80 @@ class YAxis extends PlotAxis {
       k++
 
     }
-
+    if ((this.ticks.highlightTicks.length > 0))
+      labels.push(this.createHighlightLabel(gl, this.ticks.highlightTicks[0], pixelRange, k))
 
     return labels    
+  }
+
+  highlightLabelFormat(y) {
+    if (y >= 1000000.0)
+      return `${(y/1000.0).toFixed(2)}M`
+    else if (y >= 100000.0)
+      return `${(y/1000.0).toFixed(0)}k`
+    else if (y >= 10000.0)
+      return `${(y/1000.0).toFixed(1)}k`
+    else if (y >= 1000.0)
+      return `${(y/1000.0).toFixed(2)}k`
+    else if (y >= 100.0)
+      return `${(y).toFixed(1)}`
+    else if (y >= 10.0)
+      return `${(y).toFixed(2)}`
+    else if (y >= 1.0)
+      return `${(y).toFixed(3)}`
+    else
+      return `${(y).toFixed(3)}`
+  }
+
+  createHighlightLabel(gl, y, pixelRange, k) {
+    let pxHeight = pixelRange.y.max - pixelRange.y.min
+    let pxWidth = pixelRange.x.max - pixelRange.x.min
+
+    let labelString = this.highlightLabelFormat(y)
+
+    let labelTexture = this.grapher.labelTextures.get(labelString + "-red") 
+
+    if (!labelTexture) {
+      labelTexture = gltools.createTextTexture(gl, labelString, this.grapher.div, "red")
+      this.grapher.labelTextures.set(labelString + "-red", labelTexture)
+    }
+
+    let h = labelTexture.height/labelTexture.scale
+    let w = labelTexture.width/labelTexture.scale
+
+    // draw highlight label centered
+    let xOffset = 0.5*pxWidth -0.5*w
+    let yOffset = 0.5*pxHeight - (labelTexture.middle/labelTexture.scale)
+
+    let positions = [
+      [0 + Math.round(xOffset), Math.round(yOffset) - 0],
+      [0 + Math.round(xOffset), Math.round(yOffset) + h],
+      [w + Math.round(xOffset), Math.round(yOffset) + 0],
+      [w + Math.round(xOffset), Math.round(yOffset) + h],
+    ]
+    let texCoords = [
+      [0,0],
+      [0,1],
+      [1,0],
+      [1,1],
+    ]
+    let colors = [
+      [0,1,1,1],
+      [1,0,1,1],
+      [1,1,0,1],
+      [1,1,1,1],
+    ]
+   
+    let indices = [ 0,1,2, 2,1,3].map(x => x + this.NUM_VERTICES_PER_LABEL*k)
+
+    return {
+      labelTexture: labelTexture, 
+      value: y,
+      positions: positions,
+      texCoords: texCoords,
+      colors: colors,
+      indices: indices
+    }
   }
 
   getTicksForValueRange(valueRange, pixelRange, lineHeight) {
@@ -498,10 +567,13 @@ class YAxis extends PlotAxis {
       majorTickTimeStamps.push(y)
     }
 
+    let highlightValue = this.plot.getValueAroundTime(this.highlightTime) 
+
     return {
       majorTicks: majorTickTimeStamps,
       majorUnit: majorTick[1],
       minorTicks: minorTickTimeStamps,
+      highlightTicks: isFinite(highlightValue) ? [highlightValue] : []
     }
   }
 
@@ -573,7 +645,7 @@ class YAxis extends PlotAxis {
     let majorTicks = this._createTicksFor(gl, this.ticks.majorTicks, 1.0, this.ticks.minorTicks.length)
     let coarseTicks = {positions: [], offsets: [], texCoords: [], indices: []}
 
-    let highlightTicks = isFinite(this.highlightTime) ? this._createTicksFor(gl, [this.highlightTime], 1.0, 0) : {positions: [], offsets: [], texCoords: [], indices: []}
+    let highlightTicks = this._createTicksFor(gl, this.ticks.highlightTicks, 1.0, this.ticks.minorTicks.length + this.ticks.majorTicks.length)
 
     return {minorTicks, majorTicks, coarseTicks, highlightTicks}
   }
@@ -669,6 +741,32 @@ class YAxis extends PlotAxis {
       gl.uniformMatrix4fv(shader.uniformLocations.modelViewMatrix, false, MV)
       gl.uniform1f(shader.uniformLocations.markerScale, 1.0)
       gl.drawElements(gl.TRIANGLES, this.NUM_INDICES_PER_LABEL*this.ticks.majorTicks.length, gl.UNSIGNED_INT, (this.NUM_INDICES_PER_LABEL*this.ticks.minorTicks.length)*Uint32Array.BYTES_PER_ELEMENT)
+    }
+    // draw highlight tick
+    if (this.ticks.highlightTicks.length) {
+      // assume that outer coord space is CSS (0,0) at top-left
+      // but graph is GL (0,0) at bottom left
+      let xscale = axisBounds.x.min
+      let yscale = pxHeight/(this.valueRange.max - this.valueRange.min)
+      let xshift = 0
+      let yshift = this.overlayDiv.offsetHeight + this.valueRange.min*yscale
+
+      const MV = [
+        xscale,       0, 0, 0,
+             0, -yscale, 0, 0,
+             0,       0, 1, 0,
+        xshift,  yshift, 0, 1
+      ]
+      gl.vertexAttrib4f(shader.attribLocations.fillColor, 1.0, 0.0, 0.0, 1.0)
+      gl.vertexAttrib4f(shader.attribLocations.strokeColor, 1.0, 0.0, 0.0, 1.0)
+      gl.uniformMatrix4fv(shader.uniformLocations.modelViewMatrix, false, MV)
+      gl.uniform1f(shader.uniformLocations.markerScale, 1.0)
+      gl.drawElements(
+        gl.TRIANGLES, 
+        this.NUM_INDICES_PER_LABEL*(this.ticks.highlightTicks.length), 
+        gl.UNSIGNED_INT, 
+        (this.ticks.minorTicks.length + this.ticks.majorTicks.length)*this.NUM_INDICES_PER_LABEL*Uint32Array.BYTES_PER_ELEMENT
+      )
     }
 
   }
@@ -814,11 +912,11 @@ class DateAxis extends PlotAxis{
       let labelString = format.format(t*1000.0)
       // console.log(labelString)
       // get cached texture or create it
-      let labelTexture = this.labelTextures.get(labelString) 
+      let labelTexture = this.grapher.labelTextures.get(labelString) 
 
       if (!labelTexture) {
         labelTexture = gltools.createTextTexture(gl, labelString, this.grapher.div)
-        this.labelTextures.set(labelString, labelTexture)
+        this.grapher.labelTextures.set(labelString, labelTexture)
       }
 
       let h = labelTexture.height/labelTexture.scale
@@ -1069,6 +1167,7 @@ class DateAxis extends PlotAxis{
       fineLabelBoxed: boxedUnits[majorUnit] && (majorTickCount == 1),
       // coarse labels only do base units, so no problem there
       coarseLabelBoxed: boxedUnits[coarseUnit],
+      highlightTicks: isFinite(this.highlightTime) ? [this.highlightTime] : []
     }
   }
 
@@ -1259,7 +1358,7 @@ class DateAxis extends PlotAxis{
     let majorTicks = this._createTicksFor(gl, this.ticks.majorTicks, 1.0, this.ticks.minorTicks.length)
     let coarseTicks = this._createTicksFor(gl, this.ticks.coarseTicks, 1.0, this.ticks.minorTicks.length + this.ticks.majorTicks.length)
 
-    let highlightTicks = {positions: [], offsets: [], texCoords: [], indices: []}
+    let highlightTicks =  this._createTicksFor(gl, this.ticks.highlightTicks, 1.0, this.ticks.minorTicks.length + this.ticks.majorTicks.length + this.ticks.coarseTicks.length)
 
     return {minorTicks, majorTicks, coarseTicks, highlightTicks}
   }
@@ -1358,7 +1457,7 @@ class DateAxis extends PlotAxis{
       gl.drawElements(gl.TRIANGLES, this.NUM_INDICES_PER_TICK*this.ticks.majorTicks.length, gl.UNSIGNED_INT, (this.NUM_INDICES_PER_LABEL*this.ticks.minorTicks.length)*Uint32Array.BYTES_PER_ELEMENT)
     }
     // draw COARSE ticks
-    {
+    if (this.ticks.coarseTicks.length) {
       // assume that outer coord space is CSS (0,0) at top-left
       // but graph is GL (0,0) at bottom left
       let xscale = 1.0/this.secondsPerPixelScale
@@ -1377,6 +1476,30 @@ class DateAxis extends PlotAxis{
       gl.uniform1f(shader.uniformLocations.markerScale, 0.5)
       gl.drawElements(gl.TRIANGLES, this.NUM_INDICES_PER_TICK*this.ticks.coarseTicks.length, gl.UNSIGNED_INT, (this.NUM_INDICES_PER_LABEL*(this.ticks.minorTicks.length+this.ticks.majorTicks.length))*Uint32Array.BYTES_PER_ELEMENT)
     }
+    if (this.ticks.highlightTicks.length) {
+      // assume that outer coord space is CSS (0,0) at top-left
+      // but graph is GL (0,0) at bottom left
+      let xscale = 1.0/this.secondsPerPixelScale
+      let yscale = plotBounds.y.max - axisBounds.y.max
+      let xshift = 0.5*pxWidth
+      let yshift = plotBounds.y.max
+
+      const MV = [
+        xscale,       0, 0, 0,
+             0, -yscale, 0, 0,
+             0,       0, 1, 0,
+        xshift,  yshift, 0, 1
+      ]
+
+      gl.vertexAttrib4f(shader.attribLocations.fillColor, 1.0, 0.0, 0.0, 1.0)
+      gl.vertexAttrib4f(shader.attribLocations.strokeColor, 1.0, 0.0, 0.0, 1.0)
+      gl.uniformMatrix4fv(shader.uniformLocations.modelViewMatrix, false, MV)
+      gl.uniform1f(shader.uniformLocations.markerScale, 1.0)
+      gl.drawElements(gl.TRIANGLES,
+        this.NUM_INDICES_PER_TICK*this.ticks.highlightTicks.length, 
+        gl.UNSIGNED_INT, 
+        (this.ticks.minorTicks.length + this.ticks.majorTicks.length + this.ticks.coarseTicks.length)*this.NUM_INDICES_PER_LABEL*Uint32Array.BYTES_PER_ELEMENT)
+    }
 
   }
 
@@ -1389,6 +1512,9 @@ class GLGrapher extends gltools.GLCanvasBase {
     this.MIN_SECONDS_PER_PIXEL_SCALE = 0.01
 
     this.dateAxisListeners = []
+
+    this.labelTextures = new Map()
+
 
     // create overlay divs
     // the main overlay is absolutely positioned and its size must be set explicitly
@@ -1482,6 +1608,15 @@ class GLGrapher extends gltools.GLCanvasBase {
     
     this.onMouseUpListener = (event) => this.onMouseUp(event)
     this.onMouseDraggedListener = (event) => this.onMouseDragged(event)
+
+
+
+    this.onHighlightMouseMovedListener = event => this.onHighlightMouseMoved(event)
+    this.dateAxisDiv.addEventListener("mousemove", this.onHighlightMouseMovedListener )
+    this.onHighlightMouseLeftListener = event => this.onHighlightMouseLeft(event)
+    this.dateAxisDiv.addEventListener("mouseleave", this.onHighlightMouseLeftListener )
+
+
 
     this.animationFrameHandler = (time) => {
       this.redrawRequestId = undefined
@@ -1851,6 +1986,36 @@ class GLGrapher extends gltools.GLCanvasBase {
 
     // console.log("mouse draggered", event)
   }
+
+  onHighlightMouseMoved(event) {
+    // event.preventDefault()
+    let loc = {x: event.offsetX, y: event.offsetY}
+
+    let pxWidth = this.dateAxis.overlayDiv.offsetWidth
+    let mouseTime = (loc.x - this.dateAxis.overlayDiv.offsetLeft - 0.5*pxWidth)*this.dateAxis.secondsPerPixelScale + this.dateAxis.centerTime
+
+    this.dateAxis.highlightValueAtTime(mouseTime)
+    this.plots.forEach(plotInfo => plotInfo.yAxis.highlightValueAtTime(mouseTime))
+
+    // this._dateAxisChanged()
+
+    this.requestRedraw()
+
+    console.log("mouse moved 4 highlighting", loc, mouseTime)
+  }
+
+
+  onHighlightMouseLeft(event) {
+
+    this.plots.forEach(plotInfo => plotInfo.yAxis.highlightValueAtTime(undefined))
+
+    // this._dateAxisChanged()
+
+    this.requestRedraw()
+
+    console.log("mouse exited 4 highlighting")
+  }
+
 
   onMouseUp(event) {
     event.preventDefault()
