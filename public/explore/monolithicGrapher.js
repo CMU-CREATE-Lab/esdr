@@ -1818,6 +1818,7 @@ class GLGrapher extends gltools.GLCanvasBase {
     this.dateAxis.centerTime -= delta.x*this.dateAxis.secondsPerPixelScale
 
     this.updatePlotTimeRanges()
+    this._dateAxisChanged()
 
     this.requestRedraw()
 
