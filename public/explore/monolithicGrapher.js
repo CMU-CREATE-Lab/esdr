@@ -29,6 +29,7 @@ class PlotAxis {
     this.MIN_PINNED_LABEL_SPACING_PCT  = 100.0
 
     this.tickGlBuffers = {}
+    this.numTicksAllocated = 0
     this.labelGlBuffers = {}
     this.labels = []
 
@@ -116,7 +117,11 @@ class PlotAxis {
   allocateTickGlBuffers(gl) {
     let buffers = this.tickGlBuffers
 
-    let baseSize = this.getMaxNumTickVertices()
+    // grow buffer as needed
+    if ((this.numTicks === undefined) || (this.numTicks <= this.numTicksAllocated))
+      return
+
+    let baseSize = this.numTicks*this.NUM_VERTICES_PER_TICK
 
     buffers.positionBuffer = gltools.resizeArrayBuffer(gl, buffers.positionBuffer, baseSize, this.NUM_POSITION_ELEMENTS)
 
@@ -128,7 +133,9 @@ class PlotAxis {
     buffers.texCoordBuffer = buffers.colorMapValueBuffer
 
 
-    buffers.indexBuffer = gltools.resizeElementArrayBuffer(gl, buffers.indexBuffer, this.getMaxNumTickIndices())
+    buffers.indexBuffer = gltools.resizeElementArrayBuffer(gl, buffers.indexBuffer, this.numTicks*this.NUM_INDICES_PER_TICK)
+
+    this.numTicksAllocated = this.numTicks
 
   }
 
@@ -150,7 +157,7 @@ class PlotAxis {
 
   allocateGlBuffers(gl) {
     this.allocateLabelGlBuffers(gl)
-    this.allocateTickGlBuffers(gl)
+    this.allocateTickGlBuffers(gl, this.numTicks)
 
   }
 
@@ -234,21 +241,21 @@ class PlotAxis {
     if (!this.createTicks)
       return
 
-    let {minorTicks, majorTicks, coarseTicks} = this.createTicks(gl, pixelRange)
+    let {minorTicks, majorTicks, coarseTicks, highlightTicks} = this.createTicks(gl, pixelRange)
+
+    // merge vertices into single array for all kinds of ticks
+
+    let positions = minorTicks.positions.concat(majorTicks.positions, coarseTicks.positions, highlightTicks.positions)
+    let offsets = minorTicks.offsets.concat(majorTicks.offsets, coarseTicks.offsets, highlightTicks.offsets)
+    let texCoords = minorTicks.texCoords.concat(majorTicks.texCoords, coarseTicks.texCoords, highlightTicks.texCoords)
+
+    let indices = minorTicks.indices.concat(majorTicks.indices, coarseTicks.indices, highlightTicks.indices)
+
+    // expand buffers
+    this.numTicks = positions.length
+    this.allocateTickGlBuffers(gl)
 
     let buffers = this.tickGlBuffers
-    let kmax = this.MAX_NUM_TICKS
-
-
-    // update gl buffers with computed vertices
-    let positions = minorTicks.positions.concat(majorTicks.positions, coarseTicks.positions).slice(0, kmax)
-    let offsets = minorTicks.offsets.concat(majorTicks.offsets, coarseTicks.offsets).slice(0, kmax)
-    let texCoords = minorTicks.texCoords.concat(majorTicks.texCoords, coarseTicks.texCoords).slice(0, kmax)
-
-    let indices = minorTicks.indices.concat(majorTicks.indices, coarseTicks.indices).slice(0, kmax)
-
-    // console.log("tick indices count", indices.flat().length)
-
     let bufferOffset = 0*Float32Array.BYTES_PER_ELEMENT
 
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers.positionBuffer)
@@ -301,6 +308,12 @@ class YAxis extends PlotAxis {
       c: {format: y => `${(y).toFixed(2)}`},
       m: {format: y => `${(y).toFixed(3)}`},
     }
+
+    this.highlightTime = undefined
+  }
+
+  highlightValueAtTime(requestedTime) {
+    this.highlightTime = requestedTime
   }
 
   _createLabelsFor(gl, ticks, tickUnit, pixelRange, valueRange, k) {
@@ -560,7 +573,9 @@ class YAxis extends PlotAxis {
     let majorTicks = this._createTicksFor(gl, this.ticks.majorTicks, 1.0, this.ticks.minorTicks.length)
     let coarseTicks = {positions: [], offsets: [], texCoords: [], indices: []}
 
-    return {minorTicks, majorTicks, coarseTicks}
+    let highlightTicks = isFinite(this.highlightTime) ? this._createTicksFor(gl, [this.highlightTime], 1.0, 0) : {positions: [], offsets: [], texCoords: [], indices: []}
+
+    return {minorTicks, majorTicks, coarseTicks, highlightTicks}
   }
 
   glDrawTicks(gl, PM, axisBounds, plotBounds) {
@@ -1244,7 +1259,9 @@ class DateAxis extends PlotAxis{
     let majorTicks = this._createTicksFor(gl, this.ticks.majorTicks, 1.0, this.ticks.minorTicks.length)
     let coarseTicks = this._createTicksFor(gl, this.ticks.coarseTicks, 1.0, this.ticks.minorTicks.length + this.ticks.majorTicks.length)
 
-    return {minorTicks, majorTicks, coarseTicks}
+    let highlightTicks = {positions: [], offsets: [], texCoords: [], indices: []}
+
+    return {minorTicks, majorTicks, coarseTicks, highlightTicks}
   }
 
   glDrawTicks(gl, PM, axisBounds, plotBounds) {
