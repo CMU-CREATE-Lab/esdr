@@ -100,6 +100,12 @@ export const computeFontSizingForReferenceElement = function(element) {
     let style = window.getComputedStyle(element)
     let fontSize = parseInt(style.fontSize.slice(0,style.fontSize.indexOf("px")))
     let lineHeight = parseInt(style.lineHeight.slice(0,style.lineHeight.indexOf("px")))
+    
+    if (!isFinite(style.lineHeight)) // this one's for Chrome, which does not return a px size for line height
+    {
+      lineHeight = Math.round(1.2*fontSize)
+    }
+
     return {fontSize: fontSize, lineHeight: lineHeight}
 }
 
