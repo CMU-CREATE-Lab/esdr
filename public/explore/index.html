@@ -608,7 +608,7 @@ input[type="search"] {
     <div id="settingsBlock" class="search-groupbox">
       <div class="search-groupbox-title">Settings</div>
       <div class="search-group-content">
-        <div class="search-input-row"><input type="checkbox" id="showSparklinesCheckbox" name="checkbox-showSparklines" title="Show Sparklines" /><label for="showSparklinesCheckbox">Sparklines on Map</label></div>
+        <div class="search-input-row"><input type="checkbox" id="showSparklinesCheckbox" name="checkbox-showSparklines" title="Show Sparklines" onclick="window.explorer.toggleSparklines()" /><label for="showSparklinesCheckbox">Sparklines on Map</label></div>
 
       </div>
     </div>
@@ -1863,7 +1863,46 @@ function initPlots() {
     }
   }
 
+  if (explorer.showSparklines) {
+    explorer.addAllSparklines()
+  }
+
 }
+
+
+explorer.addAllSparklines = function() {
+   for (let channelId of esdr.selectedChannelIds) {
+    let feedId = parseInt(channelId.slice(0, channelId.indexOf(".")))
+    let channelName = channelId.slice(channelId.indexOf(".")+1)
+
+    let plot = explorer.mapOverlay.addSparklinePlot(feedId, channelName)
+    plot.setPlotRange(explorer.grapher.getTimeRange())
+  }
+}
+
+
+explorer.removeAllSparklines = function() {
+   for (let channelId of esdr.selectedChannelIds) {
+    let feedId = parseInt(channelId.slice(0, channelId.indexOf(".")))
+    let channelName = channelId.slice(channelId.indexOf(".")+1)
+
+    explorer.mapOverlay.removeSparklinePlot(feedId, channelName)
+  }
+
+}
+
+
+explorer.toggleSparklines = function() {
+  if (!explorer.showSparklines) {
+    explorer.addAllSparklines()
+    explorer.showSparklines = true
+  }
+  else {
+    explorer.removeAllSparklines()
+    explorer.showSparklines = false
+  }
+}
+
 
 explorer.sparklineAnimationFrameHandler = function(timestamp) {
   explorer.mapOverlay.updateSparklineTimeRange(explorer.grapher.getTimeRange())

@@ -1233,11 +1233,14 @@ _binarySearch(array, predicate) {
 		for (let plotter of this.sparkLines.values()) {
 			plotter.setPlotRange(range)
 		}
+		this.requestDraw()
 	}
 
 
 	removeSparklinePlot(feedId, channelName) {
 		this.sparkLines.delete(`${feedId}.${channelName}`)
+
+		this.requestDraw()
 	}
 
 	addSparklinePlot(feedId, channelName) {
@@ -1250,6 +1253,8 @@ _binarySearch(array, predicate) {
     plotter.dataUpdatedCallback = () => this.requestDraw()
 
 		this.sparkLines.set(`${feedId}.${channelName}`, plotter)
+
+		this.requestDraw()
 
 		return plotter
 	}
