@@ -294,8 +294,6 @@ class YAxis extends PlotAxis {
 
     this.MIN_PINNED_LABEL_SPACING_PCT = 25.0
 
-    this.secondsPerPixelScale = 1.0
-
     this.formats = {
       k: {format: y => `${(y*0.001).toFixed(0)}k`},
       1: {format: y => `${(y).toFixed(0)}`},
@@ -828,10 +826,10 @@ class DateAxis extends PlotAxis{
 
 
       let positions = [
-        [0 + Math.round(timeCoord + xOffset - 0.5*w), Math.round(yOffset) - 0],
-        [0 + Math.round(timeCoord + xOffset - 0.5*w), Math.round(yOffset) + h],
-        [w + Math.round(timeCoord + xOffset - 0.5*w), Math.round(yOffset) + 0],
-        [w + Math.round(timeCoord + xOffset - 0.5*w), Math.round(yOffset) + h],
+        [0 + Math.floor(timeCoord + xOffset - 0.5*w) + 0.5, Math.round(yOffset) - 0],
+        [0 + Math.floor(timeCoord + xOffset - 0.5*w) + 0.5, Math.round(yOffset) + h],
+        [w + Math.floor(timeCoord + xOffset - 0.5*w) + 0.5, Math.round(yOffset) + 0],
+        [w + Math.floor(timeCoord + xOffset - 0.5*w) + 0.5, Math.round(yOffset) + h],
       ]
       let texCoords = [
         [0,0],
@@ -1371,12 +1369,7 @@ class GLGrapher extends gltools.GLCanvasBase {
   constructor(div) {
     super(div)
 
-
-    this.NUM_POSITION_ELEMENTS    = 2
-    this.NUM_TEXCOORD_ELEMENTS    = 2
-    this.NUM_FILLCOLOR_ELEMENTS   = 4
-    this.NUM_VERTICES   = 4
-    this.NUM_INDICES    = 6
+    this.MIN_SECONDS_PER_PIXEL_SCALE = 0.01
 
     this.dateAxisListeners = []
 
@@ -1721,9 +1714,10 @@ class GLGrapher extends gltools.GLCanvasBase {
   setTimeRange(startTime, endTime) {
     let dt = endTime - startTime
     let pxWidth = this.dateAxis.overlayDiv.offsetWidth
-    
+
+
     this.dateAxis.centerTime = 0.5*(startTime + endTime)
-    this.dateAxis.secondsPerPixelScale = dt/pxWidth
+    this.dateAxis.secondsPerPixelScale = Math.max(dt/pxWidth, this.MIN_SECONDS_PER_PIXEL_SCALE)
 
     this._dateAxisChanged()
 
@@ -1742,6 +1736,12 @@ class GLGrapher extends gltools.GLCanvasBase {
 
   zoomAtTime(factor, time) {
     let dt = time - this.dateAxis.centerTime
+
+    let newScale = this.dateAxis.secondsPerPixelScale * factor
+    if (newScale < this.MIN_SECONDS_PER_PIXEL_SCALE) {
+      newScale = this.MIN_SECONDS_PER_PIXEL_SCALE
+      factor = this.MIN_SECONDS_PER_PIXEL_SCALE/this.dateAxis.secondsPerPixelScale
+    }
     
     this.dateAxis.centerTime = time - dt*factor
     this.dateAxis.secondsPerPixelScale *= factor
