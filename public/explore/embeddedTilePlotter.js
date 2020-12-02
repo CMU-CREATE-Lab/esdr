@@ -54,6 +54,7 @@ class ETP {
 		this.drawPoints = false
 		this.drawLines = false
 		this.drawBars = true
+		this.drawOverlappingBars = true
 
 		this.NUM_SAMPLES_PER_TILE 		= 512
 		this.NUM_TILES								= 3
@@ -488,8 +489,9 @@ class ETP {
 					let sizes = (new Array(tile.positions.length)).fill((new Array(4)).fill(1.0))
 				}
 
+				let haveStroke = (this.drawBars && this.drawOverlappingBars)
 
-				let strokeWidths = (new Array(tile.positions.length)).fill((new Array(4)).fill(1.0/pixelScale))
+				let strokeWidths = (new Array(tile.positions.length)).fill((new Array(4)).fill(haveStroke*1.0/pixelScale))
 
 				let fillColors = (new Array(tile.positions.length)).fill((new Array(4)).fill(this.fillColor).flat())
 				// make stroke and fill the same for proper blend even with zero stroke width
@@ -745,8 +747,8 @@ class ETP {
 			xshift, yshift, 0, 1
 		]
 
-		let sampleSpacing = 1.0 // Math.pow(2, this.tileLevel)
-		let markerScale = this.drawBars ? this.plotWidth*sampleSpacing*1.0 / timeScale : 1.0
+		let sampleSpacing = (0.95 + 0.05*this.drawOverlappingBars)
+		let markerScale = this.drawBars ? this.plotWidth*sampleSpacing / timeScale : 1.0
 
 		// gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 		gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA)

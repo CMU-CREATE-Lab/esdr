@@ -127,6 +127,7 @@ let label2 = document.createElement("div")
 label2.textContent = "numero due"
 
 let plot2 = new ETP((level, offset, callback) => fakeDataSource(level, offset, callback, 0.3))
+plot2.drawOverlappingBars = false
 monographer.addPlot(2, plot2, label2)
 
 let label3 = document.createElement("div")

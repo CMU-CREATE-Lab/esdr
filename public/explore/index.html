@@ -2307,6 +2307,7 @@ explorer.addPlot = function(feedId, channelName) {
   let dataSource = esdr.dataSourceForChannel(feedId, channelName)
 
   let plot = new ETP(dataSource, colorMapTexture, colorMapRange)
+  plot.drawOverlappingBars = false
   explorer.grapher.addPlot(plotId, plot, labelBlock, extensionsBlock)
 
 
