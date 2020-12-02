@@ -274,33 +274,30 @@ input[type="search"] {
 
 .plots-container {
   height: 40%;
-  position: absolute;
+  /*position: absolute;*/
+  flex-shrink: 0;
+  flex-grow: 0;
   bottom: 0px;
   box-shadow: 0px -1px 1px rgba(0,0,0,0.1);
   overflow-y: hidden;
   overflow-x: hidden;
   display: flex;
+  align-items: stretch;
   flex-direction: column;
   transition: 0.3s;
   /*z-index: 1;*/
 }
 
-.plots-list {
-  /*height: calc(100%-2em);*/
-  /*box-shadow: 0px 0px 2px rgba(0,0,0,0.1);*/
+.grapher {
+  flex-shrink: 1;
   flex-grow: 1;
-/*  position: relative;
-  top: 0px;
-  bottom: 0px;
-*/  overflow-y: scroll;
-  overflow-x: hidden;
-  transition: 0.3s;
 }
 
 .plots-toolbar {
   box-shadow: 0px 1px 1px rgba(0,0,0,0.1);
   display: flex;
   flex-shrink: 0;
+  flex-grow: 0;
   align-items: center;
   font-size: large;
   background-color: var(--plot-toolbar-color);
@@ -387,12 +384,6 @@ input[type="search"] {
   box-shadow: 0px 1px 1px rgba(0,0,0,0.1), 0px 2px 2px rgba(255,255,255,0.1) inset, 0px -2px 2px rgba(0,0,0,0.05) inset;
 }
 
-.date-axis {
-  /*box-sizing: border-box;*/
-  height: calc(2em-0.0px);
-  width: calc(100%-2em);
-}
-
 .plot-options-row {
   display: flex;
   align-items: center;
@@ -402,18 +393,6 @@ input[type="search"] {
   overflow-x: hidden;
 }
 
-.plot-corner {
-  width: 2em;
-  height: calc(2em - 0.0px);
-  padding: 0px;
-  margin: 0px;
-  box-sizing: border-box;
-/*  border-bottom: 0.5px solid black;
-  border-left: 0.5px solid black;
-*/  /*background: #770;*/
-  flex-shrink: 0;
-  flex-grow: 0;
-}
 .plot-extension {
   width: 0px;
   /*height: 2em;*/
@@ -548,7 +527,8 @@ input[type="search"] {
   align-items: stretch;
   box-sizing: border-box;
   transition: margin-left .3s;
-  /*padding: 16px;*/
+  padding: 0px;
+  margin: 0px;
   height: 100%;
   overflow-y: hidden;
 }
@@ -607,7 +587,6 @@ input[type="search"] {
   <div id="googlemap" class="googlemap" style="height:60%"></div>
   <!-- <div id="mapOverlayStatic" class="map-overlay-static"></div> -->
   <!-- this insanity with the iframe here is because we use them to capture resize events of the plots pane, so that the grapher plots are correctly resized when the page layout changes -->
-  <iframe id="plotWidthIframe" style="height:0px; border:none;"></iframe>
   <div id="plots" class="plots-container" style="height:40%">
     <div id="plotsToolbar" class="plots-toolbar">
       <div class="toolbar-spacer" style="flex-grow: 1;"></div>
@@ -659,10 +638,10 @@ input[type="search"] {
         <button id="showDataDownloadsButton" class="plots-toolbar-button" onclick="window.explorer.toggleDataDownloads()"><img src="download.svg" class="button-icon"></img></button>
       </div>
     </div>
-    <div id="plotOptions" class="plot-options-row">
+<!--     <div id="plotOptions" class="plot-options-row">
       here be options
     </div>
-    <div class="plot-extension-box">
+ --><!--     <div class="plot-extension-box">
       <div id="date_axis" class="date-axis"></div>
       <div id="plotCorner" class="plot-corner">
         <div style="box-sizing: border-box; border-left: 0.5px solid black; border-bottom: 0.5px solid black; width: 100%; height: 100%;"></div>
@@ -670,13 +649,6 @@ input[type="search"] {
       <div id="plotCornerExtension" class="plot-extension">
         <div style="box-sizing: border-box; padding: 0.0em 0.25em; height: 2em; display: inline-flex; align-items: center; border-bottom: 0.5px solid black;">
           <label for="exportTimezoneSelector" style="font-size: small;">Download Time Format:</label>
-  <!--         <select id="exportTimezoneSelector">
-            <option value=local>Local Time</option>
-            <option value="utc">UTC</option>
-            <option value="epoch">Unix Epoch</option>
-            <option disabled class="selector-separator"></option>
-          </select>
-   -->
           <input type="text" name="timezoneInput" id="timezoneSelectorInput" list="timezoneDatalist" placeholder="Current Browser Timezone" autocomplete="off" onchange="window.explorer.downloadTimezoneChanged(event)" />
           <datalist id="timezoneDatalist">
             <option value="Current Browser Timezone" />
@@ -686,10 +658,14 @@ input[type="search"] {
         </div>
       </div>
     </div>
-    <div style="display: flex; flex-direction: row; flex-grow: 1; flex-shrink: 1; overflow-y: scroll">
+ -->    
+<!--     <div style="display: flex; flex-direction: row; flex-grow: 1; flex-shrink: 1; overflow-y: scroll">
       <iframe id="plotHeightIframe" style="height:100%; width:0px; border:none; float:left;"></iframe>
       <div id="plotList" class="plots-list"></div>
     </div>
+ -->    
+    <div id="plotGraphs" class="grapher"></div>
+
   </div>
 </div>
 
@@ -698,13 +674,13 @@ input[type="search"] {
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjVZHnH5L8ty50awHChDGdtJ5ZHqCFc-Y"></script>
 <!-- <script src="mapOverlay.js"></script> -->
 
-<script src="../lib/jquery/jquery-1.11.1.min.js" type="text/javascript"></script>
+<!-- <script src="../lib/jquery/jquery-1.11.1.min.js" type="text/javascript"></script>
 <script src="../lib/jquery-mousewheel/jquery.mousewheel.min.js"></script>
 <script src="../lib/superagent/superagent.js" type="text/javascript"></script>
 <script src="../lib/createlab-grapher/grapher.min.js"></script>
-<!-- <script src="../lib/bodytrack-grapher/org/bodytrack/grapher/grapher2.nocache.js" type="text/javascript"></script> -->
-<script src="../lib/plot-manager/org/bodytrack/grapher/PlotManager.js" type="text/javascript"></script>
-  
+ --><!-- <script src="../lib/bodytrack-grapher/org/bodytrack/grapher/grapher2.nocache.js" type="text/javascript"></script> -->
+<!-- <script src="../lib/plot-manager/org/bodytrack/grapher/PlotManager.js" type="text/javascript"></script>
+ -->  
   <!-- <script src="https://d3js.org/d3.v4.js"></script> -->
 
 <!-- timezone selection support -->
@@ -717,6 +693,7 @@ input[type="search"] {
 import {MapOverlay} from "./mapOverlay.js"
 import {ETP} from "./embeddedTilePlotter.js"
 import {ESDR} from "./esdrFeeds.js"
+import * as grapher from "./monolithicGrapher.js"
 
 
 let gMap // google map instance
@@ -1401,7 +1378,6 @@ explorer.toggleDataDownloads = function() {
 
     document.querySelectorAll(".plot-extension").forEach((element) => element.style.width = widthString)
 
-    explorer.resizePlotWidth()
     if (time - startTime < transitionTime)
       window.requestAnimationFrame(transitionAnimation)
   }
@@ -1684,10 +1660,7 @@ explorer.interactiveSelectChannelWithId = function(channelId, isSelected) {
   updateUrlHash()
 }
 
-
-
-// bodytrack grapher calls this when it's ready
-window.grapherLoad = function() {
+function initPlots() {
   let now = Date.now() / 1000;
   let aWeekAgo = now - 7 * 24 * 60 * 60;
 
@@ -1695,67 +1668,11 @@ window.grapherLoad = function() {
   let endTime = explorer.endTime || now
   let cursorTime = explorer.cursorTime || now
 
-  explorer.plotManager = new org.bodytrack.grapher.PlotManager("date_axis", startTime, endTime);
+  explorer.grapher = new grapher.GLGrapher(document.getElementById("plotGraphs"))
 
-  explorer.plotManager.getDateAxis().setCursorPosition(cursorTime);
-
-  // FIXME: remove border from axis that is added by CREATE grapher
-  let dateAxisElement = document.getElementById("date_axis")
-  dateAxisElement.style.border = "none"
-
-
-  explorer.scrubTimelineDate = function(timestamp) {
-    let oldTimestamp = explorer.scrubTimestamp
-    explorer.scrubTimestamp = timestamp
-
-    if (oldTimestamp) {
-      let dt = timestamp - oldTimestamp
-      let dateAxis = explorer.plotManager.getDateAxis()
-      let currentRange = dateAxis.getRange()
-      let dateDiff = currentRange.max - currentRange.min
-      let dateScrub = dateDiff*dt/1000.0*explorer.scrubSpeed/100.0
-      dateAxis.setRange(currentRange.min + dateScrub, currentRange.max + dateScrub)
-    }
-
-
-    if (explorer.scrubSpeed != 0)
-      window.requestAnimationFrame(explorer.scrubTimelineDate)
-  }
-  explorer.scrubTimelineDateWithSpeed = function(speed) {
-    // if speed was zero, this is a new scrub, so reset timestamp
-    if (explorer.scrubSpeed == 0)
-      explorer.scrubTimestamp = undefined
-    explorer.scrubSpeed = speed
-    window.requestAnimationFrame(explorer.scrubTimelineDate)
-  }
-  explorer.scrubTimelineZoom = function(timestamp) {
-    let oldTimestamp = explorer.scrubTimestamp
-    explorer.scrubTimestamp = timestamp
-
-    if (oldTimestamp) {
-      let dt = timestamp - oldTimestamp
-      let dateAxis = explorer.plotManager.getDateAxis()
-      let currentRange = dateAxis.getRange()
-      let dateDiff = currentRange.max - currentRange.min
-      let dateScrub = dateDiff*dt/1000.0*explorer.scrubSpeed/100.0
-      let targetSize = dateDiff - 2*dateScrub
-      explorer.zoomTimelineToSize(targetSize)
-    }
-
-
-    if (explorer.scrubSpeed != 0)
-      window.requestAnimationFrame(explorer.scrubTimelineZoom)
-  }
-  explorer.scrubTimelineZoomWithSpeed = function(speed) {
-    // if speed was zero, this is a new scrub, so reset timestamp
-    if (explorer.scrubSpeed == 0)
-      explorer.scrubTimestamp = undefined
-    explorer.scrubSpeed = speed
-    window.requestAnimationFrame(explorer.scrubTimelineZoom)
-  }
-  explorer.stopScrubbing = function() {
-    explorer.scrubSpeed = 0
-  }
+  explorer.grapher.setTimeRange(startTime, endTime)
+  // TODO: no cursor in GLGrapher 
+  // explorer.grapher.setCursorTime(cursorTime);
 
   let plotDateScrubber = document.getElementById("plotsDateScrubber")
   plotDateScrubber.addEventListener("mouseup", event => {
@@ -1808,19 +1725,17 @@ window.grapherLoad = function() {
     explorer.scrubTimelineZoomWithSpeed(event.target.valueAsNumber)
   })
 
-  explorer.plotManager.getDateAxis().addAxisChangeListener(dateAxisProperties => {
+
+  explorer.grapher.addDateAxisChangeListener((timeRange, cursor) => {
     // do a deferred update
     if (explorer.deferredTimelineUpdateTimer)
       clearTimeout(explorer.deferredTimelineUpdateTimer)
 
     if (explorer.showSparklines) {
-      window.requestAnimationFrame(timestamp => {
-        explorer.mapOverlay.updateSparklineTimeRange({min: dateAxisProperties.min, max: dateAxisProperties.max})
-        explorer.mapOverlay.draw()
-      })
+      window.requestAnimationFrame(explorer.sparklineAnimationFrameHandler)
     }
 
-    explorer.deferredTimelineUpdateTimer = setTimeout(explorer.deferredTimelineUpdateCallback, 300, dateAxisProperties.min, dateAxisProperties.max, dateAxisProperties.cursorPosition)
+    explorer.deferredTimelineUpdateTimer = setTimeout(explorer.deferredTimelineUpdateCallback, 300, timeRange.min, timeRange.max, cursor)
   })
 
   // setup datasource before adding sparklines, so that dataSource is in place
@@ -1834,36 +1749,87 @@ window.grapherLoad = function() {
     explorer.addPlot(feedId, channelName)
 
     if (explorer.showSparklines) {
-      explorer.mapOverlay.addSparklinePlot(feedId, channelName)
+      let plot = explorer.mapOverlay.addSparklinePlot(feedId, channelName)
+      plot.setPlotRange(explorer.grapher.getTimeRange())
     }
   }
-
-  // the iframe madness is for making sure the plots are resized right when the plot pane size changes
-
-  // call setWidth at least once
-  explorer.resizePlotWidth
-
-  let widthIFrame = document.getElementById("plotWidthIframe")
-  widthIFrame.contentWindow.addEventListener('resize', explorer.resizePlotWidth)
-
-  let heightIFrame = document.getElementById("plotHeightIframe")
-  widthIFrame.contentWindow.addEventListener('resize', function(event) {
-    // console.log(`plotHeightIframe resize`)
-  } )
 
   // timezones support
   let timezones = moment.tz.names()
 
   let timezoneDatalist = document.getElementById("timezoneDatalist")
-  timezones.forEach(tz => {
-    let opt = document.createElement("option")
-    opt.value = tz
-    timezoneDatalist.appendChild(opt)
-  })
+  if (timezoneDatalist) {
+    timezones.forEach(tz => {
+      let opt = document.createElement("option")
+      opt.value = tz
+      timezoneDatalist.appendChild(opt)
+    })
+  }
+
+}
+
+explorer.sparklineAnimationFrameHandler = function(timestamp) {
+  explorer.mapOverlay.updateSparklineTimeRange(explorer.grapher.getTimeRange())
+  explorer.mapOverlay.requestDraw()
+}
+
+explorer.scrubTimelineDate = function(timestamp) {
+  let oldTimestamp = explorer.scrubTimestamp
+  explorer.scrubTimestamp = timestamp
+
+  if (oldTimestamp) {
+    let dt = timestamp - oldTimestamp
+    let currentRange = explorer.grapher.getTimeRange()
+    let dateDiff = currentRange.max - currentRange.min
+    let dateScrub = dateDiff*dt/1000.0*explorer.scrubSpeed/100.0
+    explorer.grapher.setTimeRange(currentRange.min + dateScrub, currentRange.max + dateScrub)
+  }
+
+  if (explorer.scrubSpeed != 0)
+    window.requestAnimationFrame(explorer.scrubTimelineDate)
+}
+explorer.scrubTimelineDateWithSpeed = function(speed) {
+  // if speed was zero, this is a new scrub, so reset timestamp
+  if (explorer.scrubSpeed == 0)
+    explorer.scrubTimestamp = undefined
+  explorer.scrubSpeed = speed
+  window.requestAnimationFrame(explorer.scrubTimelineDate)
+}
+
+explorer.scrubTimelineZoom = function(timestamp) {
+  let oldTimestamp = explorer.scrubTimestamp
+  explorer.scrubTimestamp = timestamp
+
+  if (oldTimestamp) {
+    let dt = timestamp - oldTimestamp
+    let currentRange = explorer.grapher.getTimeRange()
+    let dateDiff = currentRange.max - currentRange.min
+    let dateScrub = dateDiff*dt/1000.0*explorer.scrubSpeed/100.0
+    let targetSize = dateDiff - 2*dateScrub
+    explorer.zoomTimelineToSize(targetSize)
+  }
+
+  if (explorer.scrubSpeed != 0)
+    window.requestAnimationFrame(explorer.scrubTimelineZoom)
+}
+
+explorer.scrubTimelineZoomWithSpeed = function(speed) {
+  // if speed was zero, this is a new scrub, so reset timestamp
+  if (explorer.scrubSpeed == 0)
+    explorer.scrubTimestamp = undefined
+  explorer.scrubSpeed = speed
+  window.requestAnimationFrame(explorer.scrubTimelineZoom)
+}
+explorer.stopScrubbing = function() {
+  explorer.scrubSpeed = 0
 }
 
 explorer.updateDataDownloadLinks = function() {
-  let tz = document.getElementById("timezoneSelectorInput").value
+  let tzElement = document.getElementById("timezoneSelectorInput")
+  if (!tzElement)
+    return
+
+  let tz = tzElement.value
 
   // get current timezone from browser
   if (tz == "Current Browser Timezone") {
@@ -1889,19 +1855,6 @@ explorer.downloadTimezoneChanged = function(event) {
   explorer.updateDataDownloadLinks()
 }
 
-explorer.resizePlotWidth = function() {
-  let widthIFrame = document.getElementById("plotWidthIframe")
-  let cornerElement = document.getElementById("plotCorner")
-  let extensionElement = document.getElementById("plotCornerExtension")
-
-  let plotWidth = widthIFrame.clientWidth - plotCorner.clientWidth - plotCornerExtension.clientWidth
-
-  // resize plot overlays
-  document.querySelectorAll(".plot-overlay").forEach((element) => element.style.width = plotWidth + 'px')
-
-
-  explorer.plotManager.setWidth(plotWidth)
-}
 
 function animateNormalizedParameter(dt, start, now) {
   let u = Math.min(Math.max((now - start)/dt, 0.0), 1.0)
@@ -1909,9 +1862,8 @@ function animateNormalizedParameter(dt, start, now) {
 }
 
 explorer.zoomTimelineToSize = function(zoomTargetSize) {
-  let dateAxis = explorer.plotManager.getDateAxis()
-  let currentRange = dateAxis.getRange()
-  let cursor = dateAxis.getCursorPosition()
+  let currentRange = explorer.grapher.getTimeRange()
+  let cursor = explorer.grapher.getTimeCursor()
 
   let zoomCenter = ((cursor >= currentRange.min) && (cursor <= currentRange.max)) ? cursor : 0.5*(currentRange.max + currentRange.min)
 
@@ -1919,28 +1871,26 @@ explorer.zoomTimelineToSize = function(zoomTargetSize) {
   let loDiff = zoomCenter - currentRange.min
   let hiDiff = currentRange.max - zoomCenter
   let zoomScale = zoomTargetSize/rangeDiff
-  dateAxis.setRange(zoomCenter - loDiff*zoomScale, zoomCenter + hiDiff*zoomScale)
+  explorer.grapher.setTimeRange(zoomCenter - loDiff*zoomScale, zoomCenter + hiDiff*zoomScale)
 
 }
 
 explorer.zoomTimelineByFactor = function(zoomScale) {
-  let dateAxis = explorer.plotManager.getDateAxis()
-  let currentRange = dateAxis.getRange()
-  let cursor = dateAxis.getCursorPosition()
+  let currentRange = explorer.grapher.getTimeRange()
+  let cursor = explorer.grapher.getTimeCursor()
 
   let zoomCenter = ((cursor >= currentRange.min) && (cursor <= currentRange.max)) ? cursor : 0.5*(currentRange.max + currentRange.min)
 
   let rangeDiff = currentRange.max - currentRange.min
   let loDiff = zoomCenter - currentRange.min
   let hiDiff = currentRange.max - zoomCenter
-  dateAxis.setRange(zoomCenter - loDiff*zoomScale, zoomCenter + hiDiff*zoomScale)
+  explorer.grapher.setTimeRange(zoomCenter - loDiff*zoomScale, zoomCenter + hiDiff*zoomScale)
 
 }
 
 
 explorer.zoomTimelineByFactorAnimated = function(zoomScale) {
-  let dateAxis = explorer.plotManager.getDateAxis()
-  let srcRange = dateAxis.getRange()
+  let srcRange = explorer.grapher.getTimeRange()
   // let cursor = dateAxis.getCursorPosition()
 
   // let zoomCenter = ((cursor >= currentRange.min) && (cursor <= currentRange.max)) ? cursor : 0.5*(currentRange.max + currentRange.min)
@@ -1965,16 +1915,17 @@ explorer.zoomTimelineByFactorAnimated = function(zoomScale) {
 
   let animationFun = function(timestamp) {
     let u = animateNormalizedParameter(transitionTime, startTime, timestamp)
-    let currentRange = dateAxis.getRange()
+    let currentRange = explorer.grapher.getTimeRange()
     let currentRangeSize = currentRange.max - currentRange.min
-    let cursor = dateAxis.getCursorPosition()
+    // FIXME: no cursor in GlGrapher
+    let cursor = explorer.grapher.getTimeCursor()
     let newRangeSize = explorer.timelineZoomAnimationSrcRangeSize*(1.0-u) + explorer.timelineZoomAnimationDstRangeSize*u
 
     let zoomCenter = ((cursor >= currentRange.min) && (cursor <= currentRange.max)) ? cursor : 0.5*(currentRange.max + currentRange.min)
 
     let loDiff = (zoomCenter - currentRange.min)/currentRangeSize
     let hiDiff = (currentRange.max - zoomCenter)/currentRangeSize
-    dateAxis.setRange(zoomCenter - loDiff*newRangeSize, zoomCenter + hiDiff*newRangeSize)
+    explorer.grapher.setTimeRange(zoomCenter - loDiff*newRangeSize, zoomCenter + hiDiff*newRangeSize)
 
     if (u < 1.0) {
       explorer.timelineZoomAnimationRequest = window.requestAnimationFrame(animationFun)
@@ -1992,17 +1943,15 @@ explorer.zoomTimelineByFactorAnimated = function(zoomScale) {
 }
 
 explorer.moveTimelineByFactor = function(moveFactor) {
-  let dateAxis = explorer.plotManager.getDateAxis()
-  let currentRange = dateAxis.getRange()
+  let currentRange = explorer.grapher.getTimeRange()
 
   let rangeDiff = currentRange.max - currentRange.min
-  dateAxis.setRange(currentRange.min - rangeDiff*moveFactor, currentRange.max - rangeDiff*moveFactor)
+  explorer.grapher.setTimeRange(currentRange.min - rangeDiff*moveFactor, currentRange.max - rangeDiff*moveFactor)
 
 }
 
 explorer.moveTimelineByFactorAnimated = function(moveFactor) {
-  let dateAxis = explorer.plotManager.getDateAxis()
-  let srcRange = dateAxis.getRange()
+  let srcRange = explorer.grapher.getTimeRange()
 
   let srcRangeMin = srcRange.min
   let srcRangeSize = srcRange.max - srcRange.min
@@ -2026,12 +1975,12 @@ explorer.moveTimelineByFactorAnimated = function(moveFactor) {
 
   let animationFun = function(timestamp) {
     let u = animateNormalizedParameter(transitionTime, startTime, timestamp)
-    let currentRange = dateAxis.getRange()
+    let currentRange = explorer.grapher.getTimeRange()
     let currentRangeSize = currentRange.max - currentRange.min
 
     let newRangeMin = explorer.timelineMoveAnimationSrcRangeStart*(1.0-u) + explorer.timelineMoveAnimationDstRangeStart*u
 
-    dateAxis.setRange(newRangeMin, newRangeMin + currentRangeSize)
+    explorer.grapher.setTimeRange(newRangeMin, newRangeMin + currentRangeSize)
 
     if (u < 1.0) {
       explorer.timelineMoveAnimationRequest = window.requestAnimationFrame(animationFun)
@@ -2048,13 +1997,12 @@ explorer.moveTimelineByFactorAnimated = function(moveFactor) {
 }
 
 explorer.moveTimelineTo = function(timestamp, positionInView) {
-  let dateAxis = explorer.plotManager.getDateAxis()
-  let currentRange = dateAxis.getRange()
+  let currentRange = explorer.grapher.getTimeRange()
 
   let rangeDiff = currentRange.max - currentRange.min
   let loDiff = rangeDiff*(positionInView)
   let hiDiff = rangeDiff*(1.0-positionInView)
-  dateAxis.setRange(timestamp - loDiff, timestamp + hiDiff)
+  explorer.grapher.setTimeRange(timestamp - loDiff, timestamp + hiDiff)
 
 }
 
@@ -2087,59 +2035,23 @@ explorer.addPlot = function(feedId, channelName) {
   let channelLabel = feed ? feed.channelLabels.get(channelName) : channelId
   let plotName = `plot-${plotId}`
   let plotContainerName = `plotContainer-${plotId}`
-  let yAxisName = `yaxis-${plotId}`
 
-  let plotBlock = document.createElement("div")
-  plotBlock.setAttribute("id", `plot-block-${plotId}`)
-  // plotBlock.style.height = "5em"
-  plotBlock.style.width = "100%"
-  plotBlock.style.position = "relative"
-  plotBlock.style.display = "flex"
-  plotBlock.style.flexDirection = "row"
-  plotBlock.style.alignItems = "stretch"
-  plotBlock.style.borderBottom = "0.5px solid black"
-
-
-  let plotContent = document.createElement("div")
-  plotContent.setAttribute("id", plotContainerName)
-  plotContent.style.height = "5em"
-
-  // invisible plot overlay to prevent scroll events from happening
-  let plotOverlay = document.createElement("div")
-  plotOverlay.setAttribute("class", "plot-overlay")
-  plotOverlay.setAttribute("id", `plotOverlay-${plotId}`)
-  plotOverlay.style.width = "calc(100% - 2em)"
-  plotOverlay.style.height = "100%"
-  plotOverlay.style.position = "absolute"
-  plotOverlay.style.zIndex = "1"
-
-  plotOverlay.addEventListener("mouseover", event => {
-    explorer.mapOverlay.highlightMarkers([feedId], true)
-  })
-
-  plotContent.appendChild(plotOverlay)
-
-  let yAxis = document.createElement("div")
-  yAxis.setAttribute("id", yAxisName)
-  yAxis.style.height = "5em"
-  yAxis.style.width = "2em"
-  yAxis.style.flexShrink = "0"
 
   let labelBlock = document.createElement("div")
   labelBlock.setAttribute("id", `plotLabelBlock-${plotId}`)
   labelBlock.style.padding = "0.1em"
   labelBlock.style.display = "flex"
   labelBlock.style.alignItems = "center"
-  labelBlock.style.position = "absolute"
-  labelBlock.style.top = "0px"
-  labelBlock.style.left = "0px"
+  // labelBlock.style.position = "absolute"
+  // labelBlock.style.top = "0px"
+  // labelBlock.style.left = "0px"
   labelBlock.style.backgroundColor = "rgba(255,255,255,0.8)"
   // labelBlock.style.height = "100%"
   // labelBlock.style.width = "100%"
   labelBlock.style.width = "max-content"
   labelBlock.style.fontFamily = "sans-serif"
   labelBlock.style.fontSize = "smaller"
-  labelBlock.style.zIndex = "2"
+  // labelBlock.style.zIndex = "2"
 // labelBlock.textContent = channelLabel
 
   let labelClose = document.createElement("img")
@@ -2155,10 +2067,23 @@ explorer.addPlot = function(feedId, channelName) {
 
   labelName.textContent = channelLabel
 
+  labelBlock.appendChild(labelClose)
+  labelBlock.appendChild(labelName)
+
+
+
+  let {texture: colorMapTexture, range: colorMapRange} = ESDR.sparklineColorMap(feedId, channelName)
+  let dataSource = esdr.dataSourceForChannel(feedId, channelName)
+
+  let plot = new ETP(dataSource, colorMapTexture, colorMapRange)
+  explorer.grapher.addPlot(plotId, plot, labelBlock)
+
+
+
   let extensionsBlock = document.createElement("div")
   extensionsBlock.setAttribute("id", `plot-extension-${plotId}`)
   extensionsBlock.setAttribute("class", "plot-extension")
-  extensionsBlock.style.width = document.getElementById("plotCornerExtension").style.width
+  // extensionsBlock.style.width = document.getElementById("plotCornerExtension").style.width
   // extensionsBlock.textContent = "here be downloads"
 
   let extensionsBox = document.createElement("div")
@@ -2242,34 +2167,11 @@ explorer.addPlot = function(feedId, channelName) {
   extensionsBlock.appendChild(extensionsBox)
 
 
-  labelBlock.appendChild(labelClose)
-  labelBlock.appendChild(labelName)
-
-  plotBlock.appendChild(plotContent)
-  plotBlock.appendChild(yAxis)
-  plotBlock.appendChild(labelBlock)
-  plotBlock.appendChild(extensionsBlock)
-
-
-
-  let plotList = document.getElementById("plotList")
-  plotList.appendChild(plotBlock)
-
   explorer.plots.set(channelId, plotId)
 
 
-  explorer.plotManager.addDataSeriesPlot(plotId, esdr.dataSourceForChannel(feedId, channelName), plotContainerName, yAxisName, 0, 100, explorer.lineStyle)
-
   explorer.setPlotToHeight(plotId, explorer.plotHeight*explorer.plotBaseSize())
 
-  // FIXME: remove border from plotContainer that is added by CREATE grapher
-  plotContent.style.border = "none"
-
-  let axisCanvas = document.getElementById("date_axis-x-axis-canvas")
-  axisCanvas.style.position = "relative"
-
-
-  explorer.plotManager.getPlotContainer(plotContainerName).setAutoScaleEnabled(true, true)
 
   // update download links in new plot (by being lazy and just updating them all)
   explorer.updateDataDownloadLinks()
@@ -2289,21 +2191,7 @@ explorer.removePlot = function(feedId, channelName) {
   if (!explorer.plots.has(channelId))
     return
 
-  let plotName = `plot-${plotId}`
-  let plotContainerName = `plotContainer-${plotId}`
-  let yAxisName = `yaxis-${plotId}`
-
-  let plot = explorer.plotManager.getPlot(plotId)
-
-
-  let plotContainer = explorer.plotManager.getPlotContainer(plotContainerName)
-  plotContainer.removeAllPlots()
-  explorer.plotManager.removePlotContainer(plotContainerName)
-
-  let plotBlock = document.getElementById(`plot-block-${plotId}`)
-  if (plotBlock)
-    plotBlock.remove()
-
+  explorer.grapher.removePlot(plotId)
 
   explorer.plots.delete(channelId)
 
@@ -2323,19 +2211,6 @@ explorer.highlightPlotsForFeeds = function(feedIds) {
   }
 }
 
-explorer.fitPlotYAxisToData = function(plotId) {
-  let plotManager = explorer.plotManager
-  let plotName = `plot-${plotId}`
-  let yAxisName = `yaxis-${plotId}`
-  let plot = plotManager.getPlot(plotId)
-  let yAxis = plotManager.getYAxis(yAxisName)
-
-  let stats = plot.getStatisticsWithinRange(plotManager.getDateAxis().getRange())
-
-  if (isFinite(stats.min) && isFinite(stats.max)) {
-    yAxis.setRange(stats.min, stats.max)
-  }
-}
 
 explorer.setPlotAreaHeight = function(heightPercent) {
   explorer.plotAreaHeightPercent = Math.min(Math.max(heightPercent, explorer.minPlotAreaHeightPercent), explorer.maxPlotAreaHeightPercent)
@@ -2363,22 +2238,17 @@ explorer.decreasePlotAreaHeight = function() {
 }
 
 explorer.setPlotToHeight = function(plotId, height) {
-  let plotContainerName = `plotContainer-${plotId}`
-  let plotContainerElement = document.getElementById(plotContainerName)
-  explorer.plotManager.getPlotContainer(plotContainerName).setHeight(height)
+  explorer.grapher.setPlotHeight(plotId, height)
 }
 
 explorer.setPlotsToHeight = function(height) {
   for (let [channelId, plotId] of explorer.plots) {
-    let plotContainerName = `plotContainer-${plotId}`
-    let plotContainerElement = document.getElementById(plotContainerName)
-
-    explorer.plotManager.getPlotContainer(plotContainerName).setHeight(height)
+    explorer.grapher.setPlotHeight(plotId, height)
   }
 }
 
 explorer.plotBaseSize = function() {
-  let plotsContainerElement = document.getElementById("plotList")
+  let plotsContainerElement = document.getElementById("plotGraphs")
   let lineSize = parseFloat(getComputedStyle(plotsContainerElement).fontSize);
   return lineSize
 }
@@ -2447,7 +2317,7 @@ explorer.decreasePlotHeight = function() {
 
 // call initMap() as we fully loaded maps api to be able to extend the overlays in mapOverlay.js
 initMap()
-// initPlots()
+initPlots()
 
 // set explorer to be an object on the window, so it can be accessed from onevent handlers in the html
 window.explorer = explorer

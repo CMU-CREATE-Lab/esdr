@@ -672,7 +672,8 @@ minMaxValueInRange(range) {
 		if (!this.isAutoRangingNegatives)
 			valueRange.min = 0.0
 
-		return valueRange
+		let delta = valueRange.max - valueRange.min
+		return {min: valueRange.min - 0.05*delta, max: valueRange.max + 0.05*delta}
 	}
 
 	glDraw(gl, pxOffset, PM) {

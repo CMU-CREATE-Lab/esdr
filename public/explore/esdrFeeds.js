@@ -484,6 +484,26 @@ class ESDR {
   	return baseUrl + browserParams.toString()
 	}
 
+	static sparklineColorMap(feedId, channelName) {
+		if (channelName.indexOf("tVOC") == 0) {
+			return {texture: "colorscale-tVOC_0_7000_ppb.png", range: {min: 0.0, max: 7000.0}}
+		}
+		else if (channelName.indexOf("PM") == 0) {
+			return {texture: "colorscale-PM25_0_300_ug.png", range: {min: 0.0, max: 300.0}}
+		}
+		else if (channelName.indexOf("SO2_PPM") == 0) {
+			return {texture: "colorscale-SO2_0_804_ppb.png", range: {min: 0.0, max: 0.804}}
+		}
+		else if (channelName.indexOf("SO2_PPB") == 0) {
+			return {texture: "colorscale-SO2_0_804_ppb.png", range: {min: 0.0, max: 804.0}}
+		}
+		else if (channelName.indexOf("SO2") == 0) {
+			return {texture: "colorscale-SO2_0_804_ppb.png", range: {min: 0.0, max: 804.0}}
+		}
+		else {
+			return {texture: undefined, range: undefined}
+		}
+	}
 
 
 } // class ESDR

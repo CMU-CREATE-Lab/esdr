@@ -22,6 +22,9 @@ html, body {
 
 body {
   font-family: sans-serif;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
 }
 
 hr {
@@ -41,6 +44,7 @@ input[type="search"] {
 }
 
 #main {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -49,6 +53,15 @@ input[type="search"] {
   /*padding: 16px;*/
   height: 100%;
   overflow-y: hidden;
+  flex-shrink: 1;
+  flex-grow: 1;
+}
+
+#left {
+  box-sizing: border-box;
+  width: 100px;
+  flex-shrink: 0;
+  flex-grow: 0;
 }
 
 
@@ -61,8 +74,8 @@ input[type="search"] {
 </style>
 </head>
 <body>
-<div id="main">
-</div>
+<div id="left"></div>
+<div id="main"></div>
 
 <!-- <script type="module" src="./webgltools.js"></script> -->
 <script type="module">

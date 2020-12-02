@@ -295,7 +295,7 @@ class YAxis extends PlotAxis {
     this.secondsPerPixelScale = 1.0
 
     this.formats = {
-      k: {format: y => `${(y*0.001).toFixed(0)}`},
+      k: {format: y => `${(y*0.001).toFixed(0)}k`},
       1: {format: y => `${(y).toFixed(0)}`},
       d: {format: y => `${(y).toFixed(1)}`},
       c: {format: y => `${(y).toFixed(2)}`},
@@ -1336,11 +1336,16 @@ class GLGrapher extends gltools.GLCanvasBase {
     this.NUM_VERTICES   = 4
     this.NUM_INDICES    = 6
 
+    this.dateAxisListeners = []
 
     // create overlay divs
     let overlayDiv = document.createElement("div")
-    overlayDiv.style.width = "100%"
-    overlayDiv.style.height = "100%"
+    // overlayDiv.style.top = "0px"
+    // overlayDiv.style.left = "0px"
+    // overlayDiv.style.bottom = "0px"
+    // overlayDiv.style.right = "0px"
+    overlayDiv.style.width = `${div.offsetWidth}px`
+    overlayDiv.style.height = `${div.offsetHeight}px`
     overlayDiv.style.position = "absolute"
     overlayDiv.style.zIndex = 1
     overlayDiv.style.overflowY = "hidden"
@@ -1429,9 +1434,18 @@ class GLGrapher extends gltools.GLCanvasBase {
     this.onMouseUpListener = (event) => this.onMouseUp(event)
     this.onMouseDraggedListener = (event) => this.onMouseDragged(event)
 
-    this.animationFrameHandler = (time) => this.glDraw()
+    this.animationFrameHandler = (time) => {
+      this.redrawRequestId = undefined
+      this.glDraw()
+    }
 
     this.updateCanvasSize()
+  }
+
+  requestRedraw() {
+    if (!this.redrawRequestId) {
+      this.redrawRequestId = window.requestAnimationFrame(this.animationFrameHandler)
+    }
   }
 
 
@@ -1453,7 +1467,7 @@ class GLGrapher extends gltools.GLCanvasBase {
     plotRow.style.padding = "0px"
     plotRow.style.margin = "0px"
     plotRow.style.width = "100%"
-    plotRow.style.height = "20em"
+    plotRow.style.height = "5em"
     plotRow.style.display = "flex"
     plotRow.style.flexDirection = "row"
     plotRow.style.alignItems = "stretch"
@@ -1492,12 +1506,37 @@ class GLGrapher extends gltools.GLCanvasBase {
     plot.isAutoRangingNegatives = true
     plot.setPlotRange(this.dateAxis.getTimeRangeForWidth(this.dateAxisDiv.offsetWidth))
 
-    window.requestAnimationFrame(this.animationFrameHandler)
+    this.requestRedraw()
+  }
+
+  removePlot(key) {
+    let plotInfo = this.plots.get(key)
+
+    // remove plot row from DOM
+    plotInfo.rowDiv.remove()
+
+    // remove plotInfo
+    this.plots.delete(key)
+
+    this.requestRedraw()
+  }
+
+  setPlotHeight(key, height) {
+    let plotInfo = this.plots.get(key)
+
+    if (typeof height !== "string")
+      height = `${height}px`
+
+    plotInfo.rowDiv.style.height = height
+
+    this.requestRedraw()
   }
 
   updateCanvasSize() {
     super.updateCanvasSize()
-    window.requestAnimationFrame(this.animationFrameHandler)
+    this.overlayDiv.style.width = `${this.div.offsetWidth}px`
+    this.overlayDiv.style.height = `${this.div.offsetHeight}px`
+    this.requestRedraw()
   }
 
   onScroll(event) {
@@ -1614,17 +1653,44 @@ class GLGrapher extends gltools.GLCanvasBase {
     this.markerShader = gltools.createMarkerShader(gl)
 
     this.whiteTexture = gltools.createWhiteTexture(gl)
+  }
 
+  addDateAxisChangeListener(listener) {
+    this.dateAxisListeners.push(listener)
+  }
 
-    this.glBuffers = {}
-
-    this.allocateGlBuffers(gl)
-
+  _dateAxisChanged() {
+    let timeRange = this.getTimeRange()
+    for (let listener of this.dateAxisListeners) {
+      listener(timeRange)
+    }
   }
 
   updatePlotTimeRanges() {
-    let timeRange = this.dateAxis.getTimeRangeForWidth(this.dateAxisDiv.offsetWidth)
+    let timeRange = this.getTimeRange()
     this.plots.forEach(plotInfo => plotInfo.plot.setPlotRange(timeRange))
+  }
+
+  setTimeRange(startTime, endTime) {
+    let dt = endTime - startTime
+    let pxWidth = this.dateAxis.overlayDiv.offsetWidth
+    
+    this.dateAxis.centerTime = 0.5*(startTime + endTime)
+    this.dateAxis.secondsPerPixelScale = dt/pxWidth
+
+    this._dateAxisChanged()
+
+    this.updatePlotTimeRanges()
+    this.requestRedraw()
+  }
+
+  getTimeRange() {
+    let timeRange = this.dateAxis.getTimeRangeForWidth(this.dateAxis.overlayDiv.offsetWidth)
+    return timeRange
+  }
+
+  getTimeCursor() {
+    return undefined
   }
 
   zoomAtTime(factor, time) {
@@ -1633,13 +1699,15 @@ class GLGrapher extends gltools.GLCanvasBase {
     this.dateAxis.centerTime = time - dt*factor
     this.dateAxis.secondsPerPixelScale *= factor
 
+    this._dateAxisChanged()
+
   }
 
   onMouseWheel(event) {
     // console.log("mouse wheel", event)
     let dx = event.deltaX
     let dy = event.deltaY
-    let loc = {x: event.clientX, y: event.clientY}
+    let loc = {x: event.offsetX, y: event.offsetY}
 
 
     // console.log(dx,dy)
@@ -1657,13 +1725,15 @@ class GLGrapher extends gltools.GLCanvasBase {
       // horizontal scroll
       this.dateAxis.centerTime += dx*this.dateAxis.secondsPerPixelScale
 
+      this._dateAxisChanged()
+
     }
     event.preventDefault()
     event.stopPropagation()
 
     this.updatePlotTimeRanges()
 
-    window.requestAnimationFrame(this.animationFrameHandler)
+    this.requestRedraw()
 
   }
 
@@ -1690,7 +1760,7 @@ class GLGrapher extends gltools.GLCanvasBase {
 
     this.updatePlotTimeRanges()
 
-    window.requestAnimationFrame(this.animationFrameHandler)
+    this.requestRedraw()
 
 
     // console.log("mouse draggered", event)
@@ -1702,100 +1772,6 @@ class GLGrapher extends gltools.GLCanvasBase {
     this.mouseDownLocation = undefined
     document.removeEventListener("mouseup", this.onMouseUpListener)
     document.removeEventListener("mousemove", this.onMouseDraggedListener)
-  }
-
-  allocateGlBuffers(gl) {
-    let buffers = this.glBuffers
-
-    buffers.positionBuffer = gltools.resizeArrayBuffer(gl, buffers.positionBuffer, this.NUM_VERTICES, this.NUM_POSITION_ELEMENTS)
-
-    buffers.texCoordBuffer = gltools.resizeArrayBuffer(gl, buffers.texCoordBuffer, this.NUM_VERTICES, this.NUM_TEXCOORD_ELEMENTS)
-
-    buffers.fillColorBuffer = gltools.resizeArrayBuffer(gl, buffers.fillColorBuffer, this.NUM_VERTICES, this.NUM_FILLCOLOR_ELEMENTS)
-
-    buffers.indexBuffer = gltools.resizeElementArrayBuffer(gl, buffers.indexBuffer, this.NUM_INDICES)
-
-  }
-
-  bindGlBuffers(gl, shader) {
-    let buffers = this.glBuffers
-
-    gltools.bindArrayBuffer(gl, buffers.positionBuffer, shader.attribLocations.vertexPos, this.NUM_POSITION_ELEMENTS)
-
-    gltools.bindArrayBuffer(gl, buffers.texCoordBuffer, shader.attribLocations.texCoord, this.NUM_TEXCOORD_ELEMENTS)
-
-    gltools.bindArrayBuffer(gl, buffers.fillColorBuffer, shader.attribLocations.color, this.NUM_FILLCOLOR_ELEMENTS)
-
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indexBuffer)
-
-  }
-
-  _updateGlBuffers(gl) {
-    let buffers = this.glBuffers
-
-    if (this.textTexture !== undefined)
-      gl.deleteTexture(this.textTexture.texture)
-
-  	// date formats from short to long
-  	let dateFormats = [
-  		{year: "numeric", month: "2-digit", day: "2-digit"},
-  		{weekday: "short", year: "numeric", month: "2-digit", day: "2-digit"},
-  		{weekday: "short", year: "numeric", month: "short", day: "2-digit"},
-  		{weekday: "long", year: "numeric", month: "long", day: "2-digit"},
-  	]
-
-  	let dayFormats = [
-  		{year: "numeric", month: "2-digit", day: "2-digit"},
-  		{weekday: "short", year: "numeric", month: "2-digit", day: "2-digit"},
-  		{weekday: "short", year: "numeric", month: "short", day: "2-digit"},
-  		{weekday: "long", year: "numeric", month: "long", day: "2-digit"},
-  	]
-
-  	let timeFormats = [
-  		{hour12: false, weekday: "long", year: "numeric", month: "2-digit", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit"}
-  	]
-
-  	let format = Intl.DateTimeFormat([], {hour12: false, weekday: "long", year: "numeric", month: "2-digit", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit"})
-  	let now = Date.now()
-
-    this.textTexture = gltools.createTextTexture(gl, format.format(now), this.div)
-
-    let h = this.textTexture.height/this.textTexture.scale
-    let w = this.textTexture.width/this.textTexture.scale
-
-    let positions = [
-      [0,h],
-      [0,0],
-      [w,h],
-      [w,0],
-    ]
-    let texCoords = [
-      [0,0],
-      [0,1],
-      [1,0],
-      [1,1],
-    ]
-    let colors = [
-      [0,1,1,1],
-      [1,0,1,1],
-      [1,1,0,1],
-      [1,1,1,1],
-    ]
-
-    let indices = [ 0,1,2, 2,1,3]
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.positionBuffer)
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array(positions.flat()))
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.texCoordBuffer)
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array(texCoords.flat()))
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.fillColorBuffer)
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array(colors.flat()))
-
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indexBuffer)
-    gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER, 0, new Uint32Array(indices.flat()))
-
   }
 
   glDraw() {
@@ -1813,16 +1789,6 @@ class GLGrapher extends gltools.GLCanvasBase {
     gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.enable(gl.BLEND)
     gl.disable(gl.DEPTH_TEST)
-
-
-
-    this._updateGlBuffers(gl)
-
-    let shader = this.labelShader
-
-    // if index buffer hasn't been set, yet, can't draw
-    if (!this.glBuffers.indexBuffer)
-      return
 
     let pixelScale = window.devicePixelRatio || 1.0
 
@@ -1941,27 +1907,6 @@ class GLGrapher extends gltools.GLCanvasBase {
 
 
     gl.disable(gl.SCISSOR_TEST)
-
-    const PM = [
-      xscale,       0, 0, 0,
-            0, yscale, 0, 0,
-            0,      0, 1, 0,
-          0.0,    0.0, 0, 1
-    ]
-
-    gl.useProgram(shader.shaderProgram)
-    gl.uniformMatrix4fv(shader.uniformLocations.modelViewMatrix, false, MV)
-    gl.uniformMatrix4fv(shader.uniformLocations.projectionMatrix, false, PM)
-
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.textTexture.texture)
-    gl.uniform1i(shader.uniformLocations.texture, 0)
-
-    this.bindGlBuffers(gl, shader)
-
-    // gl.drawElements(gl.TRIANGLES, this.NUM_INDICES, gl.UNSIGNED_INT, 0)
-
-
 
   }
 

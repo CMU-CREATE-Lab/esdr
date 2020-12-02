@@ -408,13 +408,18 @@ export class GLCanvasBase {
   constructor(div, isAutoResizeEnabled = true) {
 
     this.div = div
+    // div.style.width       = "100%"
+    div.style.left       = "0px"
+    div.style.right       = "0px"
     div.style.display       = "flex"
     div.style.flexDirection = "row"
     div.style.flexWrap      = "nowrap"
     div.style.alignItems    = "stretch"
+    div.style.overflowX = "hidden"
+    div.style.overflowY = "hidden"
 
     let heightIFrame = document.createElement("iframe")
-    heightIFrame.style.height = "100%"
+    // heightIFrame.style.height = "100%"
     heightIFrame.style.width = "0px"
     heightIFrame.style.border = "none"
     this.heightIFrame = heightIFrame
@@ -427,7 +432,7 @@ export class GLCanvasBase {
     this.vdiv.style.alignItems    = "stretch"
 
     let widthIFrame = document.createElement("iframe")
-    widthIFrame.style.width = "100%"
+    // widthIFrame.style.width = "100%"
     widthIFrame.style.height = "0px"
     widthIFrame.style.border = "none"
     this.widthIFrame = widthIFrame

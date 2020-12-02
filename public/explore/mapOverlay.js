@@ -22,6 +22,7 @@ The pipeline is
 */
 
 import {ETP} from "./embeddedTilePlotter.js"
+import {ESDR} from "./esdrFeeds.js"
 import * as gltools from "./webgltools.js"
 
 
@@ -38,6 +39,8 @@ class MapOverlay extends google.maps.OverlayView {
 
   	// data plotting
   	this.sparkLines = new Map()
+
+  	this.anonymousAnimationFrameHandler = timestamp => this.animationFrameHandler(timestamp)
 
 	}
 
@@ -71,6 +74,17 @@ class MapOverlay extends google.maps.OverlayView {
 			this.canvas.parentNode.removeChild(this.canvas)
 			delete this.canvas
 		}
+	}
+
+	requestDraw() {
+		if (!this.redrawRequestId) {
+			this.redrawRequestId = window.requestAnimationFrame(this.anonymousAnimationFrameHandler)
+		}
+	}
+
+	animationFrameHandler(time) {
+		this.redrawRequestId = undefined
+		this.draw()
 	}
 
 	draw() {
@@ -1218,26 +1232,6 @@ _binarySearch(array, predicate) {
 		}
 	}
 
-	sparklineColorMap(feedId, channelName) {
-		if (channelName.indexOf("tVOC") == 0) {
-			return {texture: "colorscale-tVOC_0_7000_ppb.png", range: {min: 0.0, max: 7000.0}}
-		}
-		else if (channelName.indexOf("PM") == 0) {
-			return {texture: "colorscale-PM25_0_300_ug.png", range: {min: 0.0, max: 300.0}}
-		}
-		else if (channelName.indexOf("SO2_PPM") == 0) {
-			return {texture: "colorscale-SO2_0_804_ppb.png", range: {min: 0.0, max: 0.804}}
-		}
-		else if (channelName.indexOf("SO2_PPB") == 0) {
-			return {texture: "colorscale-SO2_0_804_ppb.png", range: {min: 0.0, max: 804.0}}
-		}
-		else if (channelName.indexOf("SO2") == 0) {
-			return {texture: "colorscale-SO2_0_804_ppb.png", range: {min: 0.0, max: 804.0}}
-		}
-		else {
-			return {texture: undefined, range: undefined}
-		}
-	}
 
 	removeSparklinePlot(feedId, channelName) {
 		this.sparkLines.delete(`${feedId}.${channelName}`)
@@ -1247,7 +1241,7 @@ _binarySearch(array, predicate) {
 
 		let tileSource = this.feedDataSource.dataSourceForChannel(feedId, channelName)
 
-		let {texture: colorMapTexture, range: colorMapRange} = this.sparklineColorMap(feedId, channelName)
+		let {texture: colorMapTexture, range: colorMapRange} = ESDR.sparklineColorMap(feedId, channelName)
 
 		let plotter = new ETP(tileSource, colorMapTexture, colorMapRange)
 
