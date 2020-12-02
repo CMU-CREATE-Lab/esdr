@@ -620,7 +620,30 @@ class ETP {
     return hi;
 	}
 
-minMaxValueInRange(range) {
+	getValueAroundTime(requestedTime) {
+
+		if (!this.indexTimes || !this.indexTimes.length)
+			return undefined
+
+		let afterIndex = this._binarySearch(this.indexTimes, t => t > requestedTime)
+		let beforeIndex = Math.max(0, afterIndex - 1)
+
+		// limit after to last entry
+		afterIndex = Math.min(afterIndex, this.indexTimes.length - 1)
+
+		if (beforeIndex == afterIndex)
+			return this.indexValues[beforeIndex]
+
+		let beforeTime = this.indexTimes[beforeIndex]
+		let afterTime = this.indexTimes[afterIndex]
+
+		let u = (requestedTime - beforeTime)/(afterTime - beforeTime)
+
+		return this.indexValues[beforeIndex]*(1.0-u) + this.indexValues[afterIndex]*u
+
+	}
+
+	minMaxValueInRange(range) {
 		if (!this.indexTimes || !range)
 			return {min: -1.0, max: 1.0}
 
