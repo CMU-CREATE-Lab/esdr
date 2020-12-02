@@ -129,6 +129,13 @@ label2.textContent = "numero due"
 let plot2 = new ETP((level, offset, callback) => fakeDataSource(level, offset, callback, 0.3))
 monographer.addPlot(2, plot2, label2)
 
+let label3 = document.createElement("div")
+label3.textContent = "numero tres"
+
+let plot3 = new ETP((level, offset, callback) => fakeDataSource(level, offset, callback, 0.1))
+monographer.addPlot(3, plot3, label3)
+
+
 </script>
    
 </body>

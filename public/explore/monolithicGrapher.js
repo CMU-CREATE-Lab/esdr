@@ -1838,9 +1838,11 @@ class GLGrapher extends gltools.GLCanvasBase {
       let axisDiv = plotInfo.rowDiv
       // let plotRowDiv = plotInfo.rowDiv
 
+      let plotTop = axisDiv.offsetTop - this.plotsDiv.scrollTop
+
       let axisShift = {
         x: -1.0 + (axisDiv.offsetLeft - this.plotsDiv.scrollLeft)*xscale,
-        y: 1.0 - (axisDiv.offsetTop - this.plotsDiv.scrollTop)*yscale
+        y: 1.0 - (plotTop)*yscale
       }
       const axisPM = [
              xscale,           0, 0, 0,
@@ -1849,18 +1851,28 @@ class GLGrapher extends gltools.GLCanvasBase {
         axisShift.x, axisShift.y, 0, 1
       ]
 
-    // gl.disable(gl.SCISSOR_TEST)
-      let axisScissorX = this.plotsDiv.offsetLeft - this.plotsDiv.scrollLeft
-      let axisScissorY = axisDiv.offsetTop - this.plotsDiv.scrollTop + axisDiv.offsetHeight
-      gl.scissor(
-        axisScissorX*pixelScale,
-        this.canvas.height - (axisScissorY)*pixelScale,
-        axisDiv.offsetWidth*pixelScale,
-        Math.max(0.0, Math.min(axisDiv.offsetHeight, axisScissorY - dateAxisBottom))*pixelScale
-      )
+      let plotBounds  = this.getPlotPixelBounds(plotInfo)
+      let yAxisBounds = this.getYAxisPixelBounds(plotInfo)
 
-      // gl.disable(gl.SCISSOR_TEST)
-      plotInfo.yAxis.glDrawAxis(gl, axisPM, this.getYAxisPixelBounds(plotInfo), this.getPlotPixelBounds(plotInfo))
+      let plotHeight = plotBounds.y.max - plotBounds.y.min
+
+      let sLeft = plotBounds.x.min
+      let sBottom = this.div.offsetHeight - plotTop - plotHeight
+      let sWidth = (yAxisBounds.x.max - plotBounds.x.min)
+      let topOffset = Math.max(dateAxisBottom, plotTop)
+      let sTop = this.div.offsetHeight - topOffset
+      let sHeight = Math.max(0.0, sTop - sBottom)
+
+      gl.scissor(
+        sLeft*pixelScale,
+        sBottom*pixelScale,
+        sWidth*pixelScale,
+        sHeight*pixelScale
+      )
+      gl.enable(gl.SCISSOR_TEST)
+    // gl.disable(gl.SCISSOR_TEST)
+
+      plotInfo.yAxis.glDrawAxis(gl, axisPM, yAxisBounds, plotBounds)
     }
 
 
