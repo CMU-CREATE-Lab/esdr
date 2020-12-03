@@ -1735,13 +1735,16 @@ function initPlots() {
   let now = Date.now() / 1000;
   let aWeekAgo = now - 7 * 24 * 60 * 60;
 
-  let startTime = explorer.startTime || aWeekAgo
-  let endTime = explorer.endTime || now
-  let cursorTime = explorer.cursorTime || now
+  // initialize the timeline if the times haven't been set yet
+  explorer.startTime = explorer.startTime || aWeekAgo
+  explorer.endTime = explorer.endTime || now
+  explorer.cursorTime = explorer.cursorTime || now
+
+  // 
 
   explorer.grapher = new grapher.GLGrapher(document.getElementById("plotGraphs"))
 
-  explorer.grapher.setTimeRange(startTime, endTime)
+  explorer.grapher.setTimeRange(explorer.startTime, explorer.endTime)
   // TODO: no cursor in GLGrapher 
   // explorer.grapher.setCursorTime(cursorTime);
 
