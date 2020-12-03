@@ -2275,6 +2275,22 @@ class GLGrapher extends gltools.GLCanvasBase {
 
     gl.disable(gl.SCISSOR_TEST)
 
-  }
+    // manage label texture cache
+    let maxCachedLabels = 50 + this.plots.size*50
+    if (this.labelTextures.size > maxCachedLabels) {
+      // delete half of the textures, oldest first
+      let labelKeys = Array.from(this.labelTextures.keys())
+      let oldKeys = labelKeys.slice(0, maxCachedLabels/2)
+      let keepKeys = labelKeys.slice(maxCachedLabels/2)
 
-}
+      for (let key of oldKeys) {
+        gl.deleteTexture(this.labelTextures.get(key).texture)
+      }
+
+      this.labelTextures = new Map(keepKeys.map(key => [key, this.labelTextures.get(key)]))
+
+    }
+
+  } // glDraw()
+
+} // class GlGrapher
