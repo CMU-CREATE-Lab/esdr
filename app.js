@@ -99,6 +99,13 @@ Database.create(function(err, db) {
 
          app.use(favicon(path.join(__dirname, 'public/favicon.ico')));     // favicon serving
          app.use(compress());                // enables gzip compression
+
+         // Catch requests to /explore and redirect before doing anything else.  We need this here because the /explore
+         // stuff is under /public, so we need to intercept here before the static file serving rule below
+         app.use('/explore', function(req, res) {
+            res.render('explore', { title : "Redirecting to environmentaldata.org..." });
+         });
+
          app.use(express.static(path.join(__dirname, 'public')));          // static file serving
 
          // configure request logging, if enabled (do this AFTER the static file serving so we don't log those)
