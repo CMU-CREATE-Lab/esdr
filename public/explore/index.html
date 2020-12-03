@@ -2228,6 +2228,13 @@ explorer.addPlot = function(feedId, channelName) {
   // labelBlock.style.fontSize = "smaller"
   // labelBlock.style.zIndex = "2"
 // labelBlock.textContent = channelLabel
+  labelBlock.addEventListener("mouseover", event => {
+    explorer.mapOverlay.highlightMarkers([feedId], true)
+  })
+  labelBlock.addEventListener("mouseout", event => {
+    explorer.mapOverlay.highlightMarkers([], true)
+  })
+
 
   let labelClose = document.createElement("img")
   labelClose.setAttribute("class", "button-icon")
