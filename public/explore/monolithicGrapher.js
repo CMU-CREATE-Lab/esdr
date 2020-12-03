@@ -96,7 +96,7 @@ class PlotAxis {
 
 
 
-  glDrawAxis(gl, PM, axisBounds, plotBounds) {
+  glDrawAxisPrePlot(gl, PM, axisBounds, plotBounds) {
     if (this.gl !== gl) {
       this.gl = this.initGl(gl)
     }
@@ -104,6 +104,13 @@ class PlotAxis {
     this.updateGlBuffers(gl, axisBounds)
 
     this.glDrawTicks(gl, PM, axisBounds, plotBounds)
+  }
+
+  glDrawAxisPostPlot(gl, PM, axisBounds, plotBounds) {
+    if (this.gl !== gl) {
+      this.gl = this.initGl(gl)
+    }
+
     this.glDrawLabels(gl, PM, axisBounds)
   }
 
@@ -296,7 +303,7 @@ class YAxis extends PlotAxis {
 
     this.MIN_PINNED_LABEL_SPACING_PCT = 25.0
 
-    this.hideRegularLabelsOnHighlight = true
+    // this.hideRegularLabelsOnHighlight = true
 
     this.formats = {
       k: {format: y => `${(y*0.001).toFixed(0)}k`},
@@ -398,7 +405,7 @@ class YAxis extends PlotAxis {
 
     }
     if ((this.ticks.highlightTicks.length > 0))
-      labels.push(this.createHighlightLabel(gl, this.ticks.highlightTicks[0], pixelRange, k))
+      labels.push(this.createHighlightLabel(gl, this.ticks.highlightTicks[0], pixelRange, valueRange, k))
 
     return labels    
   }
@@ -422,9 +429,12 @@ class YAxis extends PlotAxis {
       return `${(y).toFixed(3)}`
   }
 
-  createHighlightLabel(gl, y, pixelRange, k) {
+  createHighlightLabel(gl, y, pixelRange, valueRange, k) {
     let pxHeight = pixelRange.y.max - pixelRange.y.min
     let pxWidth = pixelRange.x.max - pixelRange.x.min
+    let pxPlotWidth = this.grapher.dateAxisDiv.offsetWidth
+    let perPixelScale = (valueRange.max - valueRange.min)/pxHeight
+    let fontSize = gltools.computeFontSizingForReferenceElement(this.overlayDiv).fontSize
 
     let labelString = this.highlightLabelFormat(y)
 
@@ -438,17 +448,24 @@ class YAxis extends PlotAxis {
     let h = labelTexture.height/labelTexture.scale
     let w = labelTexture.width/labelTexture.scale
 
+    let valueCoord = 1.0*pxHeight - (y - valueRange.min)/perPixelScale
+    let timeCoord = - 0.5*pxPlotWidth + (this.highlightTime - this.grapher.dateAxis.centerTime)/this.grapher.dateAxis.secondsPerPixelScale
+
     // draw highlight label centered
-    let xOffset = 0.5*pxWidth
-    let yOffset = 0.5*pxHeight - (labelTexture.middle/labelTexture.scale)
+    // let xOffset = 0.5*pxWidth
+    // let yOffset = 0.5*pxHeight - (labelTexture.middle/labelTexture.scale)
+
+    // draw highlight label at coordinate
+    let xOffset = timeCoord - 0.25*fontSize
+    let yOffset = Math.min(Math.max(valueCoord - (labelTexture.middle/labelTexture.scale), 0.0), pxHeight-1.0*h)
 
     let ts = labelTexture.scale
 
     let positions = [
-      [0 + Math.round(xOffset*ts)/ts - 0.5*w, Math.round(yOffset*ts)/ts - 0],
-      [0 + Math.round(xOffset*ts)/ts - 0.5*w, Math.round(yOffset*ts)/ts + h],
-      [w + Math.round(xOffset*ts)/ts - 0.5*w, Math.round(yOffset*ts)/ts + 0],
-      [w + Math.round(xOffset*ts)/ts - 0.5*w, Math.round(yOffset*ts)/ts + h],
+      [0 + Math.round(xOffset*ts)/ts - 1.0*w, Math.round(yOffset*ts)/ts - 0],
+      [0 + Math.round(xOffset*ts)/ts - 1.0*w, Math.round(yOffset*ts)/ts + h],
+      [w + Math.round(xOffset*ts)/ts - 1.0*w, Math.round(yOffset*ts)/ts + 0],
+      [w + Math.round(xOffset*ts)/ts - 1.0*w, Math.round(yOffset*ts)/ts + h],
     ]
     let texCoords = [
       [0,0],
@@ -1672,6 +1689,7 @@ class GLGrapher extends gltools.GLCanvasBase {
     plotDiv.style.flexShrink = 1
     plotDiv.style.flexGrow = 1
 
+
     plotRow.appendChild(plotDiv)
 
     if (labelElement) {
@@ -1698,7 +1716,12 @@ class GLGrapher extends gltools.GLCanvasBase {
 
     let yAxis = new YAxis(this, plotAxis, plot)
 
-    this.plots.set(key, {plot: plot, div: plotDiv, rowDiv: plotRow, yAxisDiv: plotAxis, yAxis: yAxis})
+    let plotInfo = {plot: plot, div: plotDiv, rowDiv: plotRow, yAxisDiv: plotAxis, yAxis: yAxis}
+    this.plots.set(key, plotInfo)
+
+    plotDiv.addEventListener("mousemove", event => this.onPlotHighlightMouseMoved(event, plotInfo) )
+    plotDiv.addEventListener("mouseleave", event => this.onPlotHighlightMouseLeft(event, plotInfo) )
+
 
     plot.isAutoRangingNegatives = true
     plot.setPlotRange(this.dateAxis.getTimeRangeForWidth(this.dateAxisDiv.offsetWidth))
@@ -1987,6 +2010,10 @@ class GLGrapher extends gltools.GLCanvasBase {
   }
 
   onHighlightMouseMoved(event) {
+    // suppress mouse moved on date axis during a drag
+    if (this.mouseDownLocation !== undefined)
+      return
+
     // event.preventDefault()
     let loc = {x: event.offsetX, y: event.offsetY}
 
@@ -2015,6 +2042,38 @@ class GLGrapher extends gltools.GLCanvasBase {
     // console.log("mouse exited 4 highlighting")
   }
 
+  onPlotHighlightMouseMoved(event, plotInfo) {
+    // event.preventDefault()
+    let loc = {x: event.offsetX, y: event.offsetY}
+
+    let pxWidth = this.dateAxis.overlayDiv.offsetWidth
+    let mouseTime = (loc.x - this.dateAxis.overlayDiv.offsetLeft - 0.5*pxWidth)*this.dateAxis.secondsPerPixelScale + this.dateAxis.centerTime
+
+    this.plots.forEach(plotInfo => plotInfo.yAxis.highlightValueAtTime(undefined))
+
+    this.dateAxis.highlightValueAtTime(mouseTime)
+    
+    plotInfo.yAxis.highlightValueAtTime(mouseTime)
+
+    // this._dateAxisChanged()
+
+    this.requestRedraw()
+
+    // console.log("mouse moved 4 highlighting", loc, mouseTime)
+  }
+
+
+  onPlotHighlightMouseLeft(event, plotInfo) {
+
+    plotInfo.yAxis.highlightValueAtTime(undefined)
+    this.dateAxis.highlightValueAtTime(undefined)
+
+    // this._dateAxisChanged()
+
+    this.requestRedraw()
+
+    // console.log("mouse exited 4 highlighting")
+  }
 
   onMouseUp(event) {
     event.preventDefault()
@@ -2077,7 +2136,8 @@ class GLGrapher extends gltools.GLCanvasBase {
       this.dateAxisDiv.offsetWidth*pixelScale,
       this.dateAxisDiv.offsetHeight*pixelScale
     )
-    this.dateAxis.glDrawAxis(gl, datePM, this.getDateAxisPixelBounds(), this.getAllPlotPixelBounds())
+    this.dateAxis.glDrawAxisPrePlot(gl, datePM, this.getDateAxisPixelBounds(), this.getAllPlotPixelBounds())
+    this.dateAxis.glDrawAxisPostPlot(gl, datePM, this.getDateAxisPixelBounds(), this.getAllPlotPixelBounds())
 
     // draw Y-Axes
     for (let [key, plotInfo] of this.plots) {
@@ -2122,7 +2182,7 @@ class GLGrapher extends gltools.GLCanvasBase {
       gl.enable(gl.SCISSOR_TEST)
     // gl.disable(gl.SCISSOR_TEST)
 
-      plotInfo.yAxis.glDrawAxis(gl, axisPM, yAxisBounds, plotBounds)
+      plotInfo.yAxis.glDrawAxisPrePlot(gl, axisPM, yAxisBounds, plotBounds)
     }
 
 
@@ -2167,6 +2227,51 @@ class GLGrapher extends gltools.GLCanvasBase {
       plotInfo.plot.glDraw(gl, offset, plotPM)
     }
 
+    // draw Y-Axes
+    for (let [key, plotInfo] of this.plots) {
+      if (!plotInfo.yAxis)
+        continue
+
+      // axis MV based on the row div, so that we can draw grids reaching into the graph
+      let axisDiv = plotInfo.rowDiv
+      // let plotRowDiv = plotInfo.rowDiv
+
+      let plotTop = axisDiv.offsetTop - this.plotsDiv.scrollTop
+
+      let axisShift = {
+        x: -1.0 + (axisDiv.offsetLeft - this.plotsDiv.scrollLeft)*xscale,
+        y: 1.0 - (plotTop)*yscale
+      }
+      const axisPM = [
+             xscale,           0, 0, 0,
+                  0,     -yscale, 0, 0,
+                  0,           0, 1, 0,
+        axisShift.x, axisShift.y, 0, 1
+      ]
+
+      let plotBounds  = this.getPlotPixelBounds(plotInfo)
+      let yAxisBounds = this.getYAxisPixelBounds(plotInfo)
+
+      let plotHeight = plotBounds.y.max - plotBounds.y.min
+
+      let sLeft = plotBounds.x.min
+      let sBottom = this.div.offsetHeight - plotTop - plotHeight
+      let sWidth = (yAxisBounds.x.max - plotBounds.x.min)
+      let topOffset = Math.max(dateAxisBottom, plotTop)
+      let sTop = this.div.offsetHeight - topOffset
+      let sHeight = Math.max(0.0, sTop - sBottom)
+
+      gl.scissor(
+        sLeft*pixelScale,
+        sBottom*pixelScale,
+        sWidth*pixelScale,
+        sHeight*pixelScale
+      )
+      gl.enable(gl.SCISSOR_TEST)
+    // gl.disable(gl.SCISSOR_TEST)
+
+      plotInfo.yAxis.glDrawAxisPostPlot(gl, axisPM, yAxisBounds, plotBounds)
+    }
 
     gl.disable(gl.SCISSOR_TEST)
 
