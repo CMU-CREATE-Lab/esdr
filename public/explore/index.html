@@ -594,6 +594,10 @@ input[type="search"] {
   <button class="searchbar-button" id="showDataFiltersButton" onclick="window.explorer.toggleFilters()"><img src="filter.svg" class="button-icon"></img></button>
   <!-- <div class="searchbar-divider"></div> -->
   <button class="searchbar-button" id="showSettingsButton" onclick="window.explorer.toggleSettings()"><img src="settings.svg" class="button-icon"></img></button>
+    <div class="search-input-row advanced-setting"><input type="checkbox" id="colorGraphsCheckbox" name="checkbox-colorGraphs" title="Color Graphs" onclick="window.explorer.toggleColorGraphs(event)" /><label for="colorGraphsCheckbox">Color Graphs</label></div>
+    <div class="search-input-row advanced-setting"><input type="checkbox" id="lineGraphsCheckbox" name="checkbox-lineGraphs" title="Line Graphs" onclick="window.explorer.toggleLineGraphs(event)" /><label for="lineGraphsCheckbox">Line Graphs</label></div>
+    <div class="search-input-row advanced-setting"><input type="checkbox" id="pointGraphsCheckbox" name="checkbox-pointGraphs" title="Point Graphs" onclick="window.explorer.togglePointGraphs(event)" /><label for="pointGraphsCheckbox">Point Graphs</label></div>
+    <div class="search-input-row advanced-setting"><input type="checkbox" id="barGraphsCheckbox" name="checkbox-barGraphs" title="Bar Graphs" onclick="window.explorer.toggleBarGraphs(event)" /><label for="barGraphsCheckbox">Bar Graphs</label></div>
 </div>
 
 <div id="searchSidebar" class="sidebar">
@@ -615,9 +619,8 @@ input[type="search"] {
     </div>
     <div id="settingsBlock" class="search-groupbox">
       <div class="search-groupbox-title">Settings</div>
-      <div class="search-group-content">
+      <div class="search-group-content" id="settingsContent">
         <div class="search-input-row"><input type="checkbox" id="showSparklinesCheckbox" name="checkbox-showSparklines" title="Show Sparklines" onclick="window.explorer.toggleSparklines()" /><label for="showSparklinesCheckbox">Sparklines on Map</label></div>
-        <div class="search-input-row"><input type="checkbox" id="colorGraphsCheckbox" name="checkbox-colorGraphs" title="Show Sparklines" onclick="window.explorer.toggleColorGraphs(event)" /><label for="colorGraphsCheckbox">Color Graphs</label></div>
       </div>
     </div>
     <div id="progressBlock" class="search-progress-block">
@@ -1220,6 +1223,7 @@ function parseUrlParams() {
   }
   if (browserParams.has("showExperimentalSettings")) {
     explorer.showExperimentalSettings = browserParams.get("showExperimentalSettings") == "true"
+    explorer.showExperimentalSettingsUI()
   }
   if (browserParams.has("showResults")) {
     explorer.showResults = browserParams.get("showResults") == "true"
@@ -1304,7 +1308,13 @@ function updateUrlHash() {
   window.location.hash = `#${params.toString().replace(/%2C/gi,',')}`
 }
 
-
+explorer.showExperimentalSettingsUI = function() {
+  let settingsGroup = document.getElementById("settingsContent")
+  Array.from(document.querySelectorAll(".advanced-setting")).forEach(el => {
+    el.remove()
+    settingsGroup.appendChild(el)
+  })
+}
 
 
 function adjustSidebarTopPadding(adjustment) {
@@ -1317,6 +1327,8 @@ function adjustSidebarTopPadding(adjustment) {
   sidebar.style.paddingTop = `calc(${searchBlock.offsetHeight}px + ${searchStyle.marginTop} + ${searchStyle.marginBottom} + (${adjustment}))`
 
 }
+
+
 
 
 function showSearchResults() {
@@ -1986,6 +1998,69 @@ explorer.toggleColorGraphs = function (event) {
   explorer.grapher.requestRedraw()
 }
 
+explorer.recreatePlots = function() {
+  // remove all plots, make a copy of list first
+  let plots = new Map(explorer.plots)
+
+  for (let [channelId, {feedId: feedId, channelName: channelName}] of plots) {
+    explorer.removePlot(feedId, channelName)
+  }
+
+  for (let [channelId, {feedId: feedId, channelName: channelName}] of plots) {
+    explorer.addPlot(feedId, channelName)
+  }
+}
+
+explorer.toggleBarGraphs = function (event) {
+  if (!event) {
+    explorer.barGraphs = !explorer.barGraphs
+  }
+  else
+    explorer.barGraphs = event.target.checked
+
+  if (explorer.barGraphs) {
+      explorer.lineGraphs = false
+      explorer.pointGraphs = false
+      document.getElementById("lineGraphsCheckbox").checked = false
+      document.getElementById("pointGraphsCheckbox").checked = false
+  }
+
+  explorer.recreatePlots()
+}
+
+explorer.togglePointGraphs = function (event) {
+  if (!event) {
+    explorer.pointGraphs = !explorer.pointGraphs
+  }
+  else
+    explorer.pointGraphs = event.target.checked
+
+  if (explorer.pointGraphs) {
+      explorer.lineGraphs = false
+      explorer.barGraphs = false
+      document.getElementById("lineGraphsCheckbox").checked = false
+      document.getElementById("barGraphsCheckbox").checked = false
+  }
+
+  explorer.recreatePlots()
+}
+
+explorer.toggleLineGraphs = function (event) {
+  if (!event) {
+    explorer.lineGraphs = !explorer.lineGraphs
+  }
+  else
+    explorer.lineGraphs = event.target.checked
+
+  if (explorer.lineGraphs) {
+      explorer.barGraphs = false
+      explorer.pointGraphs = false
+      document.getElementById("barGraphsCheckbox").checked = false
+      document.getElementById("pointGraphsCheckbox").checked = false
+  }
+
+  explorer.recreatePlots()
+}
 
 explorer.sparklineAnimationFrameHandler = function(timestamp) {
   explorer.mapOverlay.updateSparklineTimeRange(explorer.grapher.getTimeRange())
@@ -2403,12 +2478,26 @@ explorer.addPlot = function(feedId, channelName) {
   let dataSource = esdr.dataSourceForChannel(feedId, channelName)
 
   let plot = new ETP(dataSource, colorMapTexture, colorMapRange)
-  plot.drawOverlappingBars = false
-  // plot.drawBars = false
-  // plot.drawPoints = false
-  // plot.drawLines = true
-  // plot.lineWidth = 1.0
-  // plot.pointSize = 3.0
+
+  if (explorer.barGraphs) {
+    plot.drawBars = true
+    plot.drawPoints = false
+    plot.drawLines = false
+    plot.drawOverlappingBars = false
+  } 
+  else if (explorer.lineGraphs) {
+    plot.drawBars = false
+    plot.drawPoints = false
+    plot.drawLines = true
+    plot.lineWidth = 1.0
+  }
+  else if (explorer.pointGraphs) {
+    plot.drawBars = false
+    plot.drawPoints = true
+    plot.drawLines = false
+    plot.pointSize = 3.0
+  }
+
   explorer.grapher.addPlot(plotId, plot, labelBlock, extensionsBlock)
 
 
