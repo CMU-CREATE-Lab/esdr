@@ -3,22 +3,14 @@ body {
   background-color: #c7d6e1; }
 
 .main_container {
-  background: #ffffff;
-  width: 1000px;
-  min-width: 800px;
-  margin: 50px auto;
-  padding-top: 20px;
-  padding-bottom: 50px; }
+  margin-top: 50px; }
+  @media all and (max-width: 576px) {
+    .main_container {
+      margin-top: 0; } }
 
 .main_container_with_navbar {
-  margin: 10px;
-  min-width: 800px;
-  width: auto;
+  background: #ffffff;
   padding-top: 0; }
-
-.content_container {
-  margin-left: 50px;
-  margin-right: 50px; }
 
 .page_title {
   font-size: 24px !important;
@@ -37,6 +29,12 @@ body {
 .form_messages {
   display: none;
   margin-bottom: 15px; }
+
+.logout_link {
+  color: rgba(0, 0, 0, 0.5) !important;
+  text-decoration: none !important; }
+  .logout_link:hover {
+    color: rgba(0, 0, 0, 0.7) !important; }
 
 .help-block {
   font-size: 8pt;

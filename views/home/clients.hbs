@@ -193,12 +193,12 @@
    }
 </script>
 
-<div class="main_container main_container_with_navbar panel panel-default">
-   {{> navbar}}
-   <div id="loading_panel" class="content_container panel-body">
+{{> navbar}}
+<div class="main_container_with_navbar">
+   <div id="loading_panel" class="card-body">
       <h4>Loading...</h4>
    </div>
-   <div id="content_panel" class="content_container panel-body" style="display:none">
+   <div id="content_panel" class="card-body" style="display:none">
 
       <div id="my_clients_panel" style="display:none">
          <h2>My OAuth2 Clients</h2>
@@ -296,8 +296,8 @@
 
                </div>
             </div>
-            <div class="pull-right">
-               <button type="reset" class="btn btn-default">Reset</button>
+            <div class="text-right">
+               <button type="reset" class="btn btn-secondary">Reset</button>
                <button type="submit" class="btn btn-primary">Create</button>
             </div>
          </form>

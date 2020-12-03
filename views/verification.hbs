@@ -86,8 +86,8 @@
       {{/unless}}
 
 </script>
-<div class="main_container panel panel-default">
-   <div class="content_container panel-body">
+<div class="container card main_container">
+   <div class="card-body">
       <h2>
          Account Verification
       </h2>
@@ -108,7 +108,7 @@
             <div class="form-group">
                <input type="email" class="form-control" id="verification_email" name="verification_email" placeholder="Email address"/>
             </div>
-            <div class="pull-right">
+            <div class="float-right">
                <button type="submit" class="btn btn-primary">{{#if resetPasswordToken}}Change Password{{else}}Submit{{/if}}</button>
             </div>
          </form>

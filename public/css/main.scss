@@ -11,24 +11,17 @@ body {
 }
 
 .main_container {
-   background: $CONTENT_BACKGROUND_COLOR;
-   width: $BODY_WIDTH;
-   min-width: $BODY_MIN_WIDTH;
-   margin: 50px auto;
-   padding-top: 20px;
-   padding-bottom: 50px
+   margin-top: 50px;
+   @media all and (max-width: 576px) {
+      & {
+         margin-top: 0;
+      }
+   }
 }
 
 .main_container_with_navbar {
-   margin: 10px;
-   min-width: $BODY_MIN_WIDTH;
-   width: auto;
+   background: $CONTENT_BACKGROUND_COLOR;
    padding-top: 0;
-}
-
-.content_container {
-   margin-left: $BODY_HORIZONTAL_MARGIN_WIDTH;
-   margin-right: $BODY_HORIZONTAL_MARGIN_WIDTH;
 }
 
 .page_title {
@@ -53,6 +46,15 @@ body {
 .form_messages {
    display: none;
    margin-bottom: 15px;
+}
+
+.logout_link {
+   color: rgba(0, 0, 0, .5) !important;
+   text-decoration: none !important;
+
+   &:hover {
+      color: rgba(0, 0, 0, .7) !important;
+   }
 }
 
 //----------------------------------------------------------------------------------------------------------------------
