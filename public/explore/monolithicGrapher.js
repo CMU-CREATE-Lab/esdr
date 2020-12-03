@@ -1525,7 +1525,8 @@ class GLGrapher extends gltools.GLCanvasBase {
   constructor(div) {
     super(div)
 
-    this.MIN_SECONDS_PER_PIXEL_SCALE = 0.01
+    this.MIN_SECONDS_PER_PIXEL_SCALE = 0.01 // 100 pixels per second
+    this.MAX_SECONDS_PER_PIXEL_SCALE = (0.5/12)*(365*24*60*60) // 0.5 months per pixel
 
     this.dateAxisListeners = []
 
@@ -1891,7 +1892,7 @@ class GLGrapher extends gltools.GLCanvasBase {
 
 
     this.dateAxis.centerTime = 0.5*(startTime + endTime)
-    this.dateAxis.secondsPerPixelScale = Math.max(dt/pxWidth, this.MIN_SECONDS_PER_PIXEL_SCALE)
+    this.dateAxis.secondsPerPixelScale = Math.min(Math.max(dt/pxWidth, this.MIN_SECONDS_PER_PIXEL_SCALE), this.MIN_SECONDS_PER_PIXEL_SCALE)
 
     this._dateAxisChanged()
 
@@ -1912,11 +1913,17 @@ class GLGrapher extends gltools.GLCanvasBase {
     let dt = time - this.dateAxis.centerTime
 
     let newScale = this.dateAxis.secondsPerPixelScale * factor
+
+    // limit zoom factor to reasonable values
     if (newScale < this.MIN_SECONDS_PER_PIXEL_SCALE) {
       newScale = this.MIN_SECONDS_PER_PIXEL_SCALE
       factor = this.MIN_SECONDS_PER_PIXEL_SCALE/this.dateAxis.secondsPerPixelScale
     }
-    
+    else if (newScale > this.MAX_SECONDS_PER_PIXEL_SCALE) {
+      newScale = this.MAX_SECONDS_PER_PIXEL_SCALE
+      factor = this.MAX_SECONDS_PER_PIXEL_SCALE/this.dateAxis.secondsPerPixelScale
+    }
+
     this.dateAxis.centerTime = time - dt*factor
     this.dateAxis.secondsPerPixelScale *= factor
 
