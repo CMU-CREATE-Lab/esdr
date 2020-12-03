@@ -445,10 +445,10 @@ class YAxis extends PlotAxis {
     let ts = labelTexture.scale
 
     let positions = [
-      [0 + Math.round(xOffset) - 0.5*w, Math.round(yOffset*ts+0.5)/ts - 0],
-      [0 + Math.round(xOffset) - 0.5*w, Math.round(yOffset*ts+0.5)/ts + h],
-      [w + Math.round(xOffset) - 0.5*w, Math.round(yOffset*ts+0.5)/ts + 0],
-      [w + Math.round(xOffset) - 0.5*w, Math.round(yOffset*ts+0.5)/ts + h],
+      [0 + Math.round(xOffset) - 0.5*w, Math.round(yOffset*ts)/ts - 0],
+      [0 + Math.round(xOffset) - 0.5*w, Math.round(yOffset*ts)/ts + h],
+      [w + Math.round(xOffset) - 0.5*w, Math.round(yOffset*ts)/ts + 0],
+      [w + Math.round(xOffset) - 0.5*w, Math.round(yOffset*ts)/ts + h],
     ]
     let texCoords = [
       [0,0],
