@@ -359,6 +359,7 @@ class MapOverlay extends google.maps.OverlayView {
 		if (!markers || !markers.feeds || (markers.feeds.length <= 0))
 			return
 
+		// FIXME: this function transforms geographic points to a mercator projection, as Intel GPUs seem to have a precision issue with the used log/tan functions, so the non-linear transformation had to be moved outside the shader
 		function geo2merc(geo) {
 			return [geo[0], (180.0/Math.PI)*Math.log(Math.tan(Math.PI*0.25 + geo[1]*(Math.PI/180.0*0.5)))]
 		}
