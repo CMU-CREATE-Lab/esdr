@@ -1892,7 +1892,7 @@ class GLGrapher extends gltools.GLCanvasBase {
 
 
     this.dateAxis.centerTime = 0.5*(startTime + endTime)
-    this.dateAxis.secondsPerPixelScale = Math.min(Math.max(dt/pxWidth, this.MIN_SECONDS_PER_PIXEL_SCALE), this.MIN_SECONDS_PER_PIXEL_SCALE)
+    this.dateAxis.secondsPerPixelScale = Math.min(Math.max(dt/pxWidth, this.MIN_SECONDS_PER_PIXEL_SCALE), this.MAX_SECONDS_PER_PIXEL_SCALE)
 
     this._dateAxisChanged()
 
