@@ -63,8 +63,13 @@ class ESDR {
 
 			let feedName = feed.name.toLowerCase()
 			let feedIdString = feedId.toString()
+
 			// match keywords to feed name substring or feedId exact match
-			let feedMatches = keywords.some( word => (feedName.indexOf(word) > -1) || (feedIdString == word) )
+			let isBooleanAndSearch = true
+
+			let feedWordMatch = word => (feedName.indexOf(word) > -1) || (feedIdString == word)
+
+			let feedMatches = isBooleanAndSearch ? keywords.every( feedWordMatch ) : keywords.some( feedWordMatch )
 
 			// if the feed matches the search, return a result with all channels
 			if (feedMatches)
@@ -72,7 +77,12 @@ class ESDR {
 				results.found.push({feedId: feedId, channels: feed.channelNames})
 				return results
 			}
-			let channelMatches = feed.channelNames ? feed.channelNames.filter(name => keywords.some(word => name.toLowerCase().indexOf(word) > -1)) : []
+
+			let channelLabels = Array.from((feed.channelLabels && feed.channelLabels.values()) || [])
+
+			let nameMatch = isBooleanAndSearch ? (name => keywords.every(word => name.toLowerCase().indexOf(word) > -1)) : (name => keywords.some(word => name.toLowerCase().indexOf(word) > -1))
+
+			let channelMatches = channelLabels.filter( nameMatch )
 
 			if (channelMatches.length > 0)
 			{
