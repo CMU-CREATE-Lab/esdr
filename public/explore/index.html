@@ -111,19 +111,6 @@ input[type="search"] {
 }
 
 
-.sidebar a {
-  /*padding: 8px 8px 8px 32px;*/
-  text-decoration: none;
-  font-size: large;
-  /*background-color: #818181;*/
-  display: block;
-  transition: 0.3s;
-}
-
-.sidebar a:hover {
-  color: #f1f1f1;
-}
-
 .floaty-search {
   position: fixed;
   /*align-items: middle;*/
@@ -596,7 +583,7 @@ input[type="search"] {
     <input type="search" id="sensorSearchField" class="search-text" placeholder="search sensor feeds">
     <!-- <button class="searchbar-button" onclick="doSensorSearch()"><img src="loupe.svg" class="button-icon"></img></button> -->
     <!-- <div class="searchbar-divider"></div> -->
-    <button class="searchbar-button" onclick="showHelp()">?</button>
+    <a class="searchbar-button" href='https://docs.google.com/document/d/18IFx6Tyv0EGenEpOrexnB1ajQEBYHsWWpN5wi7PPXC0/pub' target="_blank" style="display: block; vertical-align: middle; margin: 0px; padding: 0px; text-decoration: none; cursor: pointer;"><button class="searchbar-button">?</button></a>
     </div>
     <div id="filtersBlock" class="search-groupbox">
       <div class="search-groupbox-title">Data Filters</div>
