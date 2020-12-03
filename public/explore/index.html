@@ -149,6 +149,7 @@ input[type="search"] {
 }
 
 .searchbar {
+  margin-right: 0.2em;
   font-size: large;
   display: flex;
   align-items: center;
@@ -158,7 +159,7 @@ input[type="search"] {
 .searchbar-button {
   height: 1.5em;
   vertical-align: middle;
-  margin: 0em 0.1em;
+  margin: 0em 0.25em;
   padding: 0em 0.333em;
   font-size: inherit;
   /*background-color: inherit;*/
@@ -170,6 +171,25 @@ input[type="search"] {
   cursor: pointer;
   border-radius: 3px;
   box-shadow: 0px 1px 2px rgba(0,0,0,0.15);
+  text-align: center;
+}
+
+.searchbar-button:active {
+  background-color: var(--search-active-button-color);
+}
+
+.searchbar-linked-button {
+  height: 1.5em;
+  margin: 0em 0.1em;
+  padding: 0em 0.333em;
+  vertical-align: middle;
+  font-size: inherit;
+  background: none;
+  display: flex;
+  align-items: center;
+  border: none;
+  cursor: pointer;
+  border-radius: 3px;
   text-align: center;
 }
 
@@ -582,9 +602,9 @@ input[type="search"] {
     <!-- <button class="searchbar-button" onclick="toggleSidebar()">☰</button> -->
     <!-- <div class="searchbar-divider"></div> -->
     <input type="search" id="sensorSearchField" class="search-text" placeholder="search sensor feeds">
-    <!-- <button class="searchbar-button" onclick="doSensorSearch()"><img src="loupe.svg" class="button-icon"></img></button> -->
+    <button class="searchbar-button" onclick="window.explorer.doSensorSearch()"><img src="loupe.svg" class="button-icon"></img></button>
     <!-- <div class="searchbar-divider"></div> -->
-    <a class="searchbar-button" href='https://docs.google.com/document/d/18IFx6Tyv0EGenEpOrexnB1ajQEBYHsWWpN5wi7PPXC0/pub' target="_blank" style="display: block; vertical-align: middle; margin: 0px; padding: 0px; text-decoration: none; cursor: pointer;"><button class="searchbar-button">?</button></a>
+    <a class="searchbar-button" href='https://docs.google.com/document/d/18IFx6Tyv0EGenEpOrexnB1ajQEBYHsWWpN5wi7PPXC0/pub' target="_blank" style="display: block; vertical-align: middle; margin: 0px; padding: 0px; text-decoration: none; cursor: pointer;"><button class="searchbar-linked-button">?</button></a>
     </div>
     <div id="filtersBlock" class="search-groupbox">
       <div class="search-groupbox-title">Data Filters</div>
@@ -1066,6 +1086,21 @@ function initMap() {
   searchResultsList.addEventListener('scroll', () => {
     appendSearchResultsListIfNeeded()
   })
+}
+
+explorer.doSensorSearch = function() {
+  let searchInput = document.getElementById("sensorSearchField")
+  let searchText = searchInput.value
+  // console.log(searchText)
+  esdr.updateQuery({text: searchText})
+
+  // if a delayed update was pending, cancel it
+  if (explorer.searchUpdateTimer) {
+    clearTimeout(explorer.searchUpdateTimer)
+    explorer.searchUpdateTimer = undefined
+  }
+
+  updateUrlHash()
 }
 
 explorer.deferredMapBoundsUpdateCallback = function(map) {
