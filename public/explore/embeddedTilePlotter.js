@@ -81,14 +81,26 @@ class ETP {
 		this.tileDataSource = tileDataSource
 		this.timestampOffsetDirty = true
 
+		this.setColorMap(colorMapTexture, colorMapYRange)
+	}
+
+	setColorMap(colorMapTexture, colorMapYRange) {
 		if (colorMapTexture !== undefined)
 			this.fillColor = [1.0, 1.0, 1.0, 1.0] // white color when color mapped
 		else
-			this.fillColor = [1.0, 0.0, 0.0, 1.0] // red otherwise
+			this.fillColor = [0.0, 0.0, 0.0, 0.5] // black otherwise
+
+		if (this.colorMapTexture instanceof WebGLTexture) {
+			this.gl.deleteTexture(this.colorMapTexture)
+			this.colorMapTexture = undefined
+		}
 
 		this.colorMapTexture = colorMapTexture
 
 		this.colorMapYRange = colorMapYRange || {min: 0.0, max: 100.0}
+
+		// use this flag to mark needing to globally update buffers
+		this.colorsDirty = true
 	}
 
 	//
@@ -127,6 +139,10 @@ class ETP {
 
 	  let plotter = this
 	  image.onload = function() {
+	  	// check if texture object was deleted while we waited for loading
+	  	if (!gl.isTexture(texture))
+	  			return
+
 	    gl.bindTexture(gl.TEXTURE_2D, texture)
 	    gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, image)
 
@@ -164,11 +180,6 @@ class ETP {
 		// if WebGL context has been successfully setup, assign it to an ivar for later use
 		this.gl = gl
 
-		// load colormap
-		if (this.colorMapTexture === undefined)
-			this.colorMapTexture = gltools.createWhiteTexture(gl)
-		else if (typeof this.colorMapTexture === "string")
-			this.colorMapTexture = this.loadTexture(gl, this.colorMapTexture)
 
   	this.markerShader = (this.drawPoints || this.drawBars) ? gltools.createMarkerShader(gl) : gltools.createLineShader(gl)
 
@@ -369,6 +380,13 @@ class ETP {
 
 	_updateGlBuffers(gl) {
 
+		// load colormap
+		if (this.colorMapTexture === undefined)
+			this.colorMapTexture = gltools.createWhiteTexture(gl)
+		else if (typeof this.colorMapTexture === "string")
+			this.colorMapTexture = this.loadTexture(gl, this.colorMapTexture)
+
+
 		if (this.timestampOffsetDirty) {
 
 			let startTime = this.plotRange.min
@@ -381,6 +399,10 @@ class ETP {
 			this.tiles.forEach(tile => tile.isPositionDirty = true)
 			this.tiles.forEach(tile => tile.areAttributesDirty = true)
 
+		}
+
+		if (this.colorsDirty) {
+			this.tiles.forEach(tile => tile.areAttributesDirty = true)
 		}
 
     let pixelScale = window.devicePixelRatio || 1.0
@@ -589,6 +611,7 @@ class ETP {
 			tile.isPositionDirty = false
 		})
 		this.timestampOffsetDirty = false
+		this.colorsDirty = false
 
 		if (indicesDirty) {
 
