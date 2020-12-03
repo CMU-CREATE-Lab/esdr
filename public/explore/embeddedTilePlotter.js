@@ -643,7 +643,7 @@ class ETP {
     return hi;
 	}
 
-	getValueAroundTime(requestedTime) {
+	getValueAroundTime(requestedTime, isInterpolated) {
 
 		if (!requestedTime || !this.indexTimes || !this.indexTimes.length)
 			return undefined
@@ -662,8 +662,10 @@ class ETP {
 
 		let u = (requestedTime - beforeTime)/(afterTime - beforeTime)
 
-		return this.indexValues[beforeIndex]*(1.0-u) + this.indexValues[afterIndex]*u
-
+		if (isInterpolated)
+			return this.indexValues[beforeIndex]*(1.0-u) + this.indexValues[afterIndex]*u
+		else 
+			return u < 0.5 ? this.indexValues[beforeIndex] : this.indexValues[afterIndex]
 	}
 
 	minMaxValueInRange(range) {
