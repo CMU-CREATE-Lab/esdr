@@ -1881,6 +1881,81 @@ function initPlots() {
   plotExtensionDiv.style.display = "inline-flex"
   plotExtensionDiv.style.alignItems = "center"
 
+
+  let timezoneDatalist = explorer.addTimezoneSelectorTo(plotExtPaddingDiv)
+
+  plotExtensionDiv.appendChild(plotExtPaddingDiv)
+
+  explorer.grapher.addDateAxisExtensionDiv(plotExtensionDiv)
+
+  // timezones support
+  let timezones = moment.tz.names()
+
+  // let timezoneDatalist = document.getElementById("timezoneDatalist")
+  if (timezoneDatalist) {
+    timezones.forEach(tz => {
+      let opt = document.createElement("option")
+      opt.value = tz
+      opt.label = tz
+      timezoneDatalist.appendChild(opt)
+    })
+  }
+
+  // add selected plots to plot manager
+  for (let channelId of esdr.selectedChannelIds) {
+    let feedId = parseInt(channelId.slice(0, channelId.indexOf(".")))
+    let channelName = channelId.slice(channelId.indexOf(".")+1)
+    explorer.addPlot(feedId, channelName)
+
+    if (explorer.showSparklines) {
+      let plot = explorer.mapOverlay.addSparklinePlot(feedId, channelName)
+      plot.setPlotRange(explorer.grapher.getTimeRange())
+    }
+  }
+
+  if (explorer.showSparklines) {
+    explorer.addAllSparklines()
+  }
+
+}
+
+explorer.addTimezoneSelectorTo = function(containerElement) {
+  
+  let label = document.createElement("label")
+  label.setAttribute("for", "timezoneSelectorInput")
+  label.style.fontSize = "small"
+  label.textContent = "Download Time Format:"
+
+  let tzSelector = document.createElement("select")
+  tzSelector.setAttribute("name", "timezoneInput")
+  tzSelector.setAttribute("id", "timezoneSelectorInput")
+  tzSelector.setAttribute("autocomplete", "off")
+  // tzSelector.style.flexShrink = 0
+  // tzSelector.style.minWidth = "5em"
+  tzSelector.style.width = "auto"
+  tzSelector.addEventListener("change", event => explorer.downloadTimezoneChanged(event))
+
+  let currentOption = document.createElement("option")
+  currentOption.value = "Current Browser Timezone"
+  currentOption.label = "Current Browser Timezone"
+  let utcOption = document.createElement("option")
+  utcOption.value = "UTC"
+  utcOption.label = "UTC"
+  let epochOption = document.createElement("option")
+  epochOption.value = "UNIX Epoch Timestamp"
+  epochOption.label = "UNIX Epoch Timestamp"
+  tzSelector.appendChild(currentOption)
+  tzSelector.appendChild(utcOption)
+  tzSelector.appendChild(epochOption)
+
+  containerElement.appendChild(label)
+  containerElement.appendChild(tzSelector)
+
+  return tzSelector
+}
+
+explorer.addTimezoneComboBoxTo = function(containerElement) {
+  
   let plotExtensionLabel = document.createElement("label")
   plotExtensionLabel.setAttribute("for", "timezoneSelectorInput")
   plotExtensionLabel.style.fontSize = "small"
@@ -1907,44 +1982,12 @@ function initPlots() {
   timezoneDatalist.appendChild(utcOption)
   timezoneDatalist.appendChild(epochOption)
 
-  plotExtPaddingDiv.appendChild(plotExtensionLabel)
-  plotExtPaddingDiv.appendChild(plotExtensionInput)
-  plotExtPaddingDiv.appendChild(timezoneDatalist)
+  containerElement.appendChild(plotExtensionLabel)
+  containerElement.appendChild(plotExtensionInput)
+  containerElement.appendChild(timezoneDatalist)
 
-  plotExtensionDiv.appendChild(plotExtPaddingDiv)
-
-  explorer.grapher.addDateAxisExtensionDiv(plotExtensionDiv)
-
-  // timezones support
-  let timezones = moment.tz.names()
-
-  // let timezoneDatalist = document.getElementById("timezoneDatalist")
-  if (timezoneDatalist) {
-    timezones.forEach(tz => {
-      let opt = document.createElement("option")
-      opt.value = tz
-      timezoneDatalist.appendChild(opt)
-    })
-  }
-
-  // add selected plots to plot manager
-  for (let channelId of esdr.selectedChannelIds) {
-    let feedId = parseInt(channelId.slice(0, channelId.indexOf(".")))
-    let channelName = channelId.slice(channelId.indexOf(".")+1)
-    explorer.addPlot(feedId, channelName)
-
-    if (explorer.showSparklines) {
-      let plot = explorer.mapOverlay.addSparklinePlot(feedId, channelName)
-      plot.setPlotRange(explorer.grapher.getTimeRange())
-    }
-  }
-
-  if (explorer.showSparklines) {
-    explorer.addAllSparklines()
-  }
-
+  return timezoneDatalist
 }
-
 
 explorer.addAllSparklines = function() {
    for (let channelId of esdr.selectedChannelIds) {
