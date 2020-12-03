@@ -82,7 +82,8 @@ class ESDR {
 
 			let nameMatch = isBooleanAndSearch ? (name => keywords.every(word => name.toLowerCase().indexOf(word) > -1)) : (name => keywords.some(word => name.toLowerCase().indexOf(word) > -1))
 
-			let channelMatches = channelLabels.filter( nameMatch )
+			// FIXME: this is a dirty hack to fix the channel name regression
+			let channelMatches = channelLabels.filter( nameMatch ).map(label => label.slice(label.indexOf(".")+1))
 
 			if (channelMatches.length > 0)
 			{
