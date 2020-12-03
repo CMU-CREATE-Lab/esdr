@@ -1381,6 +1381,30 @@ explorer.toggleSettings = function() {
 
 }
 
+explorer.sizeVisibleDownloadButtonDivs = function() {
+  let optionsBlock = document.getElementById("plotOptions")
+  let groupBlock = document.getElementById("plotCornerExtension")
+  let widthIFrame = document.getElementById("plotWidthIframe")
+
+
+
+  if (groupBlock.style.width && groupBlock.style.width !== "0px") {
+
+   let maxWidth = Array.from(document.querySelectorAll(".plot-extension")).reduce((acc, element) => Math.max(acc, element.scrollWidth || 1.0), 0.0)
+
+    let widthString = maxWidth + 'px'
+    groupBlock.style.width = widthString
+
+    document.querySelectorAll(".plot-extension").forEach((element) => element.style.width = widthString)
+
+    // update time range as we're changing size
+    explorer.updateDataDownloadLinks()
+    explorer.grapher.updatePlotTimeRanges()
+    explorer.grapher.requestRedraw()
+
+  }
+}
+
 
 explorer.toggleDataDownloads = function() {
 
@@ -1401,8 +1425,6 @@ explorer.toggleDataDownloads = function() {
     explorer.showDataDownloads = true
     document.getElementById("showDataDownloadsButton").classList.add("active-toolbar-button")
 
-    // FIXME: update the download links, as it looks like the event-based updating is incomplete, as sometimes empty links show up just adding plots without interacting with the timeline 
-    explorer.updateDataDownloadLinks()
 
   }
   else {
@@ -1423,6 +1445,7 @@ explorer.toggleDataDownloads = function() {
     document.querySelectorAll(".plot-extension").forEach((element) => element.style.width = widthString)
 
     // update time range as we're changing size
+    explorer.updateDataDownloadLinks()
     explorer.grapher.updatePlotTimeRanges()
     explorer.grapher.requestRedraw()
 
@@ -2353,12 +2376,9 @@ explorer.addPlot = function(feedId, channelName) {
 
 
   // update download links in new plot (by being lazy and just updating them all)
-  explorer.updateDataDownloadLinks()
+  explorer.sizeVisibleDownloadButtonDivs()
 
-  // TODO: data point listener only gets mouse events, but we have to block mouse events from grapher, otherwise we can't scroll
-  // explorer.plotManager.getPlotContainer(plotContainerName).getPlot(plotId).addDataPointListener(function(value) {
-  //     console.log(`plot-${plotId} value = ${value}`)
-  // })
+  // TODO: data point listener only gets mouse events
 
 }
 
