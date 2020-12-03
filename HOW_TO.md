@@ -381,7 +381,7 @@ Or, for a single channel:
 
 ## Viewing Data
 
-See the `/etc/plot.html` file in this repository for an example of the grapher doing tile fetches to render the plot. Just double-click it to open it in your browser, then append `?feed=FEED_ID_OR_API_KEY` to the URL, replacing `FEED_ID_OR_API_KEY` with your feed's ID (if public) or its read-write API key (obtained above when you created the feed).
+See the `/public/plot/index.html` file in this repository for an example of the grapher doing tile fetches to render the plot. Just open it in your browser, then append `?feed=FEED_ID_OR_API_KEY` to the URL, replacing `FEED_ID_OR_API_KEY` with your feed's ID (if public) or API key (obtained above when you created the feed).
 
 A fancier version will eventually be rolled into ESDR, but this at least provides a simple way to view feed channels.
 
