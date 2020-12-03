@@ -2369,6 +2369,11 @@ explorer.addPlot = function(feedId, channelName) {
 
   let plot = new ETP(dataSource, colorMapTexture, colorMapRange)
   plot.drawOverlappingBars = false
+  // plot.drawBars = false
+  // plot.drawPoints = false
+  // plot.drawLines = true
+  // plot.lineWidth = 1.0
+  // plot.pointSize = 3.0
   explorer.grapher.addPlot(plotId, plot, labelBlock, extensionsBlock)
 
 

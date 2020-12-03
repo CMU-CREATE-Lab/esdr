@@ -56,11 +56,16 @@ class ETP {
 		this.drawBars = true
 		this.drawOverlappingBars = true
 
+		this.lineWidth = 1.0
+		this.pointSize = 1.0
+
 		this.NUM_SAMPLES_PER_TILE 		= 512
 		this.NUM_TILES								= 3
 
 		this.NUM_VERTICES_PER_SAMPLE 	= 4
-		this.NUM_INDICES_PER_SAMPLE 	= (this.drawPoints || this.drawBars) ? 6 : 4
+		this.NUM_INDICES_PER_POINT_SAMPLE = 6
+		this.NUM_INDICES_PER_LINE_SAMPLE 	= 4
+		this.NUM_INDICES_PER_BAR_SAMPLE 	=6
 
 		this.NUM_POSITION_ELEMENTS		= 2
 		this.NUM_OFFSET_ELEMENTS			= 2
@@ -190,6 +195,10 @@ class ETP {
 
 	}
 
+	getNumIndicesPerSample() {
+		return this.drawLines ? this.NUM_INDICES_PER_LINE_SAMPLE : (this.drawPoints ? this.NUM_INDICES_PER_POINT_SAMPLE : this.NUM_INDICES_PER_BAR_SAMPLE)
+	}
+
 	allocateGlBuffers(gl) {
 		let buffers = this.glBuffers
 
@@ -209,7 +218,8 @@ class ETP {
 
 		buffers.strokeColorBuffer = gltools.resizeArrayBuffer(gl, buffers.strokeColorBuffer, bufferBase, this.NUM_STROKECOLOR_ELEMENTS)
 
-		buffers.indexBuffer = gltools.resizeElementArrayBuffer(gl, buffers.indexBuffer, this.NUM_SAMPLES_PER_TILE*this.NUM_TILES*this.NUM_INDICES_PER_SAMPLE)
+
+		buffers.indexBuffer = gltools.resizeElementArrayBuffer(gl, buffers.indexBuffer, this.NUM_SAMPLES_PER_TILE*this.NUM_TILES*this.getNumIndicesPerSample())
 	}
 
 
@@ -507,8 +517,11 @@ class ETP {
 					let minspacings = xspacings1.map((s, i) => 2.0*Math.min(xspacings1[i], xspacings2[i]))
 					sizes =  minspacings.map(s => [s, s, s, s])
 				}
-				else {
-					let sizes = (new Array(tile.positions.length)).fill((new Array(4)).fill(1.0))
+				else if (this.drawLines) {
+					sizes = (new Array(tile.positions.length)).fill((new Array(4)).fill(this.lineWidth))
+				}
+				else if (this.drawPoints) {
+					sizes = (new Array(tile.positions.length)).fill((new Array(4)).fill(this.pointSize))
 				}
 
 				let strokeWidths = (new Array(tile.positions.length)).fill((new Array(4)).fill(1.0/pixelScale))
@@ -714,7 +727,7 @@ class ETP {
 
 		let numElements = endIndex - startIndex
 
-		gl.drawElements((this.drawPoints || this.drawBars) ? gl.TRIANGLES : gl.TRIANGLE_STRIP, numElements*this.NUM_INDICES_PER_SAMPLE, gl.UNSIGNED_INT, startIndex*this.NUM_INDICES_PER_SAMPLE*Uint32Array.BYTES_PER_ELEMENT)
+		gl.drawElements((this.drawPoints || this.drawBars) ? gl.TRIANGLES : gl.TRIANGLE_STRIP, numElements*this.getNumIndicesPerSample(), gl.UNSIGNED_INT, startIndex*this.getNumIndicesPerSample()*Uint32Array.BYTES_PER_ELEMENT)
 
 	}
 
