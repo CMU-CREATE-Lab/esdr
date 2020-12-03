@@ -201,7 +201,7 @@
    <div id="content_panel" class="content_container panel-body" style="display:none">
 
       <div id="my_clients_panel" style="display:none">
-         <h2>My Clients</h2>
+         <h2>My OAuth2 Clients</h2>
          <div class="table-responsive">
             <table class="table table-condensed">
                <thead>
@@ -217,14 +217,20 @@
          </div>
       </div>
 
-      <h2>Create a New Client</h2>
+      <h2>Create a New OAuth2 Client</h2>
       <div id="create_client_success_messages" class="form_messages alert alert-success"></div>
       <div id="create_client_prompt_button" style="display:none">
          <button type="submit" class="btn btn-primary" onclick="showCreateForm();">Create another client...</button>
       </div>
       <div id="create_client_form_panel">
          <div class="page_instructions">
-            Use this form to create an OAuth2 client. All fields except the URLs are required.
+            <p>
+               You'll need an OAuth2 client in order to create new entities (e.g. products, devices, feeds, etc) in
+               ESDR, and for accessing some forms of private data. You do not need one if you only want to access public
+               data. See the <a href="https://github.com/CMU-CREATE-Lab/esdr/blob/master/HOW_TO.md" target="howto">How
+               To</a> document for more information about OAuth2 and putting data into ESDR.
+            </p>
+            <p>Use this form to create an OAuth2 client. All fields except the URLs are required.</p>
          </div>
          <div id="create_client_error_messages" class="form_messages alert alert-danger"></div>
          <form role="form" id="create_client_form" class="form-horizontal" onsubmit="return submitCreateClientForm();">
