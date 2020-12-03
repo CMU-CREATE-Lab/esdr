@@ -1400,6 +1400,10 @@ explorer.toggleDataDownloads = function() {
     transitionStartWidth = 0
     explorer.showDataDownloads = true
     document.getElementById("showDataDownloadsButton").classList.add("active-toolbar-button")
+
+    // FIXME: update the download links, as it looks like the event-based updating is incomplete, as sometimes empty links show up just adding plots without interacting with the timeline 
+    explorer.updateDataDownloadLinks()
+
   }
   else {
     transitionTargetWidth = 0
@@ -2264,7 +2268,7 @@ explorer.addPlot = function(feedId, channelName) {
     let csvButtonGroup = document.createElement("a")
     csvButtonGroup.setAttribute("id", `plotlink_csv-${plotId}`)
     csvButtonGroup.setAttribute("class", "plots-shadow-group")
-    csvButtonGroup.setAttribute("href", "https://foo.bar")
+    csvButtonGroup.setAttribute("href", "")
     csvButtonGroup.style.flexGrow = 0
 
     let csvDownloadButton = document.createElement("div")
