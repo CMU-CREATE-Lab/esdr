@@ -1617,7 +1617,7 @@ function searchResultsDivForFeed(feedId) {
   div.setAttribute("class", "search-result-feed-block")
 
   if (feed.latlng) {
-    label += ` (N ${feed.latlng.lat.toFixed(6)}, E ${feed.latlng.lng.toFixed(6)})`
+    label += `\n(N ${feed.latlng.lat.toFixed(6)}, E ${feed.latlng.lng.toFixed(6)})`
   }
 
   let labelElement = document.createElement("label")
