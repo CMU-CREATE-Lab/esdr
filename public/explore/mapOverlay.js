@@ -192,7 +192,9 @@ class MapOverlay extends google.maps.OverlayView {
 	    varying vec4 strokeColor;
 
 	    vec2 geoToMercator(vec2 geo) {
-				return vec2(geo.x, (180.0/pi)*log(tan(pi*0.25 + geo.y*(pi/180.0*0.5))));
+	    	// FIXME: had to move this computation outside of shader because of precision issues on Intel integrated graphics, but it would be nice to get it back in so that all coordinate transformations happen in the shader
+				// return vec2(geo.x, (180.0/pi)*log(tan(pi*0.25 + geo.y*(pi/180.0*0.5))));
+				return geo;
 	    }
 
 	    vec2 mercatorToMeterScale(vec2 mercator, float latitude) {
@@ -357,8 +359,11 @@ class MapOverlay extends google.maps.OverlayView {
 		if (!markers || !markers.feeds || (markers.feeds.length <= 0))
 			return
 
+		function geo2merc(geo) {
+			return [geo[0], (180.0/Math.PI)*Math.log(Math.tan(Math.PI*0.25 + geo[1]*(Math.PI/180.0*0.5)))]
+		}
 
-		let vertices = this.splatArrayForQuad(markers.positions)
+		let vertices = this.splatArrayForQuad(markers.positions.map(pos => geo2merc(pos)))
 
 		let offsets = this.repeatArray([
 			-1.0, 1.0,
@@ -563,6 +568,7 @@ class MapOverlay extends google.maps.OverlayView {
 		// during drag/zoom gotta add these shift values for things to line up right due to CSS voodoo
 		xshift -= 0.5*this.canvas.width/pixelScale + this.pixSouthWest.x
 		yshift -= 0.5*this.canvas.height/pixelScale - this.pixSouthWest.y
+
 		// console.log(`swlon ${this.mapSouthWest.lng()} swlat ${this.mapSouthWest.lat()}`)
 		// console.log(`xshift ${xshift} yshift ${yshift} zf ${this.zoomFactor}`)
 		let xscale = 2.0/this.canvas.width*pixelScale
