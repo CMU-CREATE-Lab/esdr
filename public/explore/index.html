@@ -580,11 +580,18 @@ input[type="search"] {
 
 
 
-/* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
-@media screen and (max-height: 450px) {
-  /*.sidebar {padding-top: 15px;}*/
-  /*.sidebar a {font-size: 18px;}*/
+@media screen and (max-width: 1000px) {
+  .hide-when-narrow {
+    display: none;
+  }
 }
+
+@media screen and (max-width: 800px) {
+  .hide-when-narrow2 {
+    display: none;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -644,7 +651,7 @@ input[type="search"] {
         <button class="plots-toolbar-button plots-toolbar-group-left" onclick="window.explorer.moveTimelineByFactorAnimated(-0.25)" style="padding-right: 0.25em;">
           <img src="goleft.svg" class="button-icon"></img>
         </button>
-        <div class="plots-toolbar-button plots-toolbar-group-center" style="padding-left: 0;padding-right: 0; flex-shrink: 1; flex-basis: 10em;">
+        <div class="plots-toolbar-button plots-toolbar-group-center hide-when-narrow2" style="padding-left: 0;padding-right: 0; flex-shrink: 1; flex-basis: 10em;">
           <input type="range" min="-100" max="100" value="0" class="plots-date-scrubber" id="plotsDateScrubber" />
         </div>
         <button class="plots-toolbar-button plots-toolbar-group-right" onclick="window.explorer.moveTimelineByFactorAnimated(0.25)" style="padding-left: 0.25em;">
@@ -658,18 +665,18 @@ input[type="search"] {
         <button class="plots-toolbar-button plots-toolbar-group-left" onclick="window.explorer.zoomTimelineByFactorAnimated(1.4142135624)" style="padding-right: 0.25em;">
           <img src="minus.svg" class="button-icon"></img>
         </button>
-        <div class="plots-toolbar-button plots-toolbar-group-center" style="padding-left: 0;padding-right: 0;  flex-shrink: 1; flex-basis: 10em;">
+        <div class="plots-toolbar-button plots-toolbar-group-center hide-when-narrow2" style="padding-left: 0;padding-right: 0;  flex-shrink: 1; flex-basis: 10em;">
           <input type="range" min="-100" max="100" value="0" class="plots-zoom-scrubber" id="plotsZoomScrubber" />
         </div>
         <button class="plots-toolbar-button plots-toolbar-group-right" onclick="window.explorer.zoomTimelineByFactorAnimated(0.7071067812)" style="padding-left: 0.25em;">
           <img src="plus.svg" class="button-icon"></img>
         </button>
-        <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
-        <button class="plots-toolbar-button plots-toolbar-group-left" onclick="window.explorer.zoomTimelineToSize(24*60*60)">day</button>
-        <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
-        <button class="plots-toolbar-button plots-toolbar-group-center" onclick="window.explorer.zoomTimelineToSize(31*24*60*60)">month</button>
-        <button class="plots-toolbar-button plots-toolbar-group-divider"><div class="plots-toolbar-group-divider-content"></div></button>
-        <button class="plots-toolbar-button plots-toolbar-group-right" onclick="window.explorer.zoomTimelineToSize(365*24*60*60)">year</button>
+        <button class="plots-toolbar-button plots-toolbar-group-divider hide-when-narrow"><div class="plots-toolbar-group-divider-content"></div></button>
+        <button class="plots-toolbar-button plots-toolbar-group-left hide-when-narrow" onclick="window.explorer.zoomTimelineToSize(24*60*60)">day</button>
+        <button class="plots-toolbar-button plots-toolbar-group-divider hide-when-narrow"><div class="plots-toolbar-group-divider-content"></div></button>
+        <button class="plots-toolbar-button plots-toolbar-group-center hide-when-narrow" onclick="window.explorer.zoomTimelineToSize(31*24*60*60)">month</button>
+        <button class="plots-toolbar-button plots-toolbar-group-divider hide-when-narrow"><div class="plots-toolbar-group-divider-content"></div></button>
+        <button class="plots-toolbar-button plots-toolbar-group-right hide-when-narrow" onclick="window.explorer.zoomTimelineToSize(365*24*60*60)">year</button>
       </div>
       <div class="toolbar-group-spacer"></div>
       <div class="plots-shadow-group">
