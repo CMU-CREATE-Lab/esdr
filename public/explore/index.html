@@ -609,7 +609,7 @@ input[type="search"] {
       <div class="search-groupbox-title">Settings</div>
       <div class="search-group-content">
         <div class="search-input-row"><input type="checkbox" id="showSparklinesCheckbox" name="checkbox-showSparklines" title="Show Sparklines" onclick="window.explorer.toggleSparklines()" /><label for="showSparklinesCheckbox">Sparklines on Map</label></div>
-
+        <div class="search-input-row"><input type="checkbox" id="colorGraphsCheckbox" name="checkbox-colorGraphs" title="Show Sparklines" onclick="window.explorer.toggleColorGraphs(event)" /><label for="colorGraphsCheckbox">Color Graphs</label></div>
       </div>
     </div>
     <div id="progressBlock" class="search-progress-block">
@@ -747,6 +747,7 @@ let explorer = {
   showFilters: true,
   showResults: true,
   showSettings: true,
+  showExperimentalSettings: false,
   showSparklines: true,
   plotAreaHeightPercent: 40,
   minPlotAreaHeightPercent: 20,
@@ -1194,6 +1195,9 @@ function parseUrlParams() {
   if (browserParams.has("showSettings")) {
     explorer.showSettings = browserParams.get("showSettings") == "true"
   }
+  if (browserParams.has("showExperimentalSettings")) {
+    explorer.showExperimentalSettings = browserParams.get("showExperimentalSettings") == "true"
+  }
   if (browserParams.has("showResults")) {
     explorer.showResults = browserParams.get("showResults") == "true"
   }
@@ -1238,12 +1242,19 @@ function createUrlParams() {
   if (explorer.showSettings) {
     browserParams.set("showSettings", explorer.showSettings ? "true" : "false")
   }
+  if (explorer.showExperimentalSettings) {
+    browserParams.set("showExperimentalSettings", explorer.showExperimentalSettings ? "true" : "false")
+  }
   if (explorer.showResults) {
     browserParams.set("showResults", explorer.showResults ? "true" : "false")
   }
   if (explorer.showSparklines) {
     browserParams.set("showSparklines", explorer.showSparklines ? "true" : "false")
   }
+    if (explorer.colorGraphs) {
+    browserParams.set("colorGraphs", explorer.colorGraphs ? "true" : "false")
+  }
+
   if (explorer.center) {
     browserParams.set("center", `${explorer.center.lat()},${explorer.center.lng()}`)
   }
@@ -1491,7 +1502,7 @@ explorer.esdrFeedsReceived = function(feedIds, progress) {
 
   // update plot labels
   let feedSet = new Set(feedIds)
-  for (let [channelId, plotId] of explorer.plots) {
+  for (let [channelId, {plotId: plotId}] of explorer.plots) {
     let feedId = parseInt(channelId.slice(0, channelId.indexOf(".")))
     if (feedSet.has(feedId)) {
       let label = document.getElementById(`plotLabel-${plotId}`)
@@ -1903,6 +1914,25 @@ explorer.toggleSparklines = function() {
   }
 }
 
+explorer.toggleColorGraphs = function (event) {
+  if (!event) {
+    explorer.colorGraphs = !explorer.colorGraphs
+  }
+  else
+    explorer.colorGraphs = event.target.checked
+
+  for (let [channelId, {plot: plot, feedId: feedId, channelName: channelName}] of explorer.plots) {
+    if (!explorer.colorGraphs) {
+      plot.setColorMap(undefined, undefined)
+    }
+    else {
+      let {texture: colorMapTexture, range: colorMapRange} = ESDR.sparklineColorMap(feedId, channelName)
+      plot.setColorMap(colorMapTexture, colorMapRange)
+    }
+  }
+  explorer.grapher.requestRedraw()
+}
+
 
 explorer.sparklineAnimationFrameHandler = function(timestamp) {
   explorer.mapOverlay.updateSparklineTimeRange(explorer.grapher.getTimeRange())
@@ -1986,7 +2016,7 @@ explorer.updateDataDownloadLinks = function() {
     return
   }
 
-  for (let [channelId, plotId] of explorer.plots) {
+  for (let [channelId, {plotId: plotId}] of explorer.plots) {
     let feedId = parseInt(channelId.slice(0, channelId.indexOf(".")))
     let channelName = channelId.slice(channelId.indexOf(".")+1)
     let csvLink = esdr.getExportLink(feedId, channelName, explorer.startTime, explorer.endTime, "csv", tz.length > 0 ? tz : undefined)
@@ -2168,14 +2198,14 @@ explorer.addPlot = function(feedId, channelName) {
   let channelId = `${feedId}.${channelName}`
 
   if (explorer.plots.has(channelId)) {
-    console.warn(`plot for ${channelId} already exists at number ${explorer.plots.get(channelId)}.`)
+    console.warn(`plot for ${channelId} already exists at number ${explorer.plots.get(channelId).plotId}.`)
     return
   }
 
   let feed = esdr.feeds.get(feedId)
 
   // new plot number is next highest from current plots
-  let plotId = Array.from(explorer.plots.values()).reduce((acc, val) => Math.max(acc,val), 0) + 1
+  let plotId = Array.from(explorer.plots.values()).reduce((acc, val) => Math.max(acc,val.plotId), 0) + 1
 
   let channelLabel = feed ? feed.channelLabels.get(channelName) : channelId
   let plotName = `plot-${plotId}`
@@ -2304,6 +2334,12 @@ explorer.addPlot = function(feedId, channelName) {
   extensionsBlock.appendChild(extensionsBox)
 
   let {texture: colorMapTexture, range: colorMapRange} = ESDR.sparklineColorMap(feedId, channelName)
+
+  if (!explorer.colorGraphs) {
+    colorMapRange = undefined
+    colorMapTexture = undefined
+  }
+
   let dataSource = esdr.dataSourceForChannel(feedId, channelName)
 
   let plot = new ETP(dataSource, colorMapTexture, colorMapRange)
@@ -2311,7 +2347,7 @@ explorer.addPlot = function(feedId, channelName) {
   explorer.grapher.addPlot(plotId, plot, labelBlock, extensionsBlock)
 
 
-  explorer.plots.set(channelId, plotId)
+  explorer.plots.set(channelId, {plotId: plotId, plot: plot, feedId: feedId, channelName: channelName})
 
 
   explorer.setPlotToHeight(plotId, explorer.plotHeight*explorer.plotBaseSize())
@@ -2329,7 +2365,7 @@ explorer.addPlot = function(feedId, channelName) {
 
 explorer.removePlot = function(feedId, channelName) {
   let channelId = `${feedId}.${channelName}`
-  let plotId = explorer.plots.get(channelId)
+  let plotId = explorer.plots.get(channelId).plotId
 
   // if it didn't exist in the first place, don't bother
   if (!explorer.plots.has(channelId))
@@ -2343,7 +2379,7 @@ explorer.removePlot = function(feedId, channelName) {
 
 explorer.highlightPlotsForFeeds = function(feedIds) {
   let feedIdsSet = new Set(feedIds)
-  for (let [channelId, plotId] of explorer.plots) {
+  for (let [channelId, {plotId: plotId}] of explorer.plots) {
     let plotFeedId = parseInt(channelId.slice(0, channelId.indexOf(".")))
     let labelElement = document.getElementById(`plotLabelBlock-${plotId}`)
     if (feedIdsSet.has(plotFeedId)) {
@@ -2386,7 +2422,7 @@ explorer.setPlotToHeight = function(plotId, height) {
 }
 
 explorer.setPlotsToHeight = function(height) {
-  for (let [channelId, plotId] of explorer.plots) {
+  for (let [channelId, {plotId: plotId}] of explorer.plots) {
     explorer.grapher.setPlotHeight(plotId, height)
   }
 }
