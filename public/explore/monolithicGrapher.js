@@ -1671,7 +1671,8 @@ class GLGrapher extends gltools.GLCanvasBase {
     // plotRow.style.background = "rgba(0,0,127,0.2)"
     plotRow.style.padding = "0px"
     plotRow.style.margin = "0px"
-    plotRow.style.width = "100%"
+    plotRow.style.minWidth = "0px"
+    plotRow.style.width = "auto"
     plotRow.style.height = "5em"
     plotRow.style.display = "flex"
     plotRow.style.boxSizing = "border-box"
@@ -1687,8 +1688,10 @@ class GLGrapher extends gltools.GLCanvasBase {
     plotDiv.style.padding = "0px"
     plotDiv.style.margin = "0px"
     plotDiv.style.width = "100%"
-    plotDiv.style.flexShrink = 1
+    plotDiv.style.minWidth = "0px"
+    plotDiv.style.flexShrink = 2
     plotDiv.style.flexGrow = 1
+    plotDiv.style.overflowX = "visible"
 
 
     plotRow.appendChild(plotDiv)

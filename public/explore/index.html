@@ -1925,6 +1925,7 @@ explorer.addTimezoneSelectorTo = function(containerElement) {
   label.setAttribute("for", "timezoneSelectorInput")
   label.style.fontSize = "small"
   label.textContent = "Download Time Format:"
+  let br = document.createElement("br")
 
   let tzSelector = document.createElement("select")
   tzSelector.setAttribute("name", "timezoneInput")
@@ -1949,6 +1950,7 @@ explorer.addTimezoneSelectorTo = function(containerElement) {
   tzSelector.appendChild(epochOption)
 
   containerElement.appendChild(label)
+  containerElement.appendChild(br)
   containerElement.appendChild(tzSelector)
 
   return tzSelector
