@@ -620,7 +620,7 @@ input[type="search"] {
     <div id="settingsBlock" class="search-groupbox">
       <div class="search-groupbox-title">Settings</div>
       <div class="search-group-content" id="settingsContent">
-        <div class="search-input-row"><input type="checkbox" id="showSparklinesCheckbox" name="checkbox-showSparklines" title="Show Sparklines" onclick="window.explorer.toggleSparklines()" /><label for="showSparklinesCheckbox">Sparklines on Map</label></div>
+        <div class="search-input-row"><input type="checkbox" id="showSparklinesCheckbox" name="checkbox-showSparklines" title="Show Sparklines" onclick="window.explorer.toggleSparklines(event)" /><label for="showSparklinesCheckbox">Sparklines on Map</label></div>
       </div>
     </div>
     <div id="progressBlock" class="search-progress-block">
@@ -2011,14 +2011,18 @@ explorer.removeAllSparklines = function() {
 }
 
 
-explorer.toggleSparklines = function() {
-  if (!explorer.showSparklines) {
+explorer.toggleSparklines = function(event) {
+  if (!event) {
+    explorer.showSparklines = !explorer.showSparklines
+  }
+  else
+    explorer.showSparklines = event.target.checked
+
+  if (explorer.showSparklines) {
     explorer.addAllSparklines()
-    explorer.showSparklines = true
   }
   else {
     explorer.removeAllSparklines()
-    explorer.showSparklines = false
   }
 }
 
