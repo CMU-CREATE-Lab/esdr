@@ -365,10 +365,10 @@ class YAxis extends PlotAxis {
       let ts = labelTexture.scale
 
       let positions = [
-        [0 + Math.round(xOffset) - w, Math.round(yOffset*ts)/ts - 0],
-        [0 + Math.round(xOffset) - w, Math.round(yOffset*ts)/ts + h],
-        [w + Math.round(xOffset) - w, Math.round(yOffset*ts)/ts + 0],
-        [w + Math.round(xOffset) - w, Math.round(yOffset*ts)/ts + h],
+        [0 + Math.round(xOffset*ts)/ts - w, Math.round(yOffset*ts)/ts - 0],
+        [0 + Math.round(xOffset*ts)/ts - w, Math.round(yOffset*ts)/ts + h],
+        [w + Math.round(xOffset*ts)/ts - w, Math.round(yOffset*ts)/ts + 0],
+        [w + Math.round(xOffset*ts)/ts - w, Math.round(yOffset*ts)/ts + h],
       ]
       let texCoords = [
         [0,0],
@@ -445,10 +445,10 @@ class YAxis extends PlotAxis {
     let ts = labelTexture.scale
 
     let positions = [
-      [0 + Math.round(xOffset) - 0.5*w, Math.round(yOffset*ts)/ts - 0],
-      [0 + Math.round(xOffset) - 0.5*w, Math.round(yOffset*ts)/ts + h],
-      [w + Math.round(xOffset) - 0.5*w, Math.round(yOffset*ts)/ts + 0],
-      [w + Math.round(xOffset) - 0.5*w, Math.round(yOffset*ts)/ts + h],
+      [0 + Math.round(xOffset*ts)/ts - 0.5*w, Math.round(yOffset*ts)/ts - 0],
+      [0 + Math.round(xOffset*ts)/ts - 0.5*w, Math.round(yOffset*ts)/ts + h],
+      [w + Math.round(xOffset*ts)/ts - 0.5*w, Math.round(yOffset*ts)/ts + 0],
+      [w + Math.round(xOffset*ts)/ts - 0.5*w, Math.round(yOffset*ts)/ts + h],
     ]
     let texCoords = [
       [0,0],
@@ -663,8 +663,8 @@ class YAxis extends PlotAxis {
     gl.uniformMatrix4fv(shader.uniformLocations.projectionMatrix, false, PM)
     gl.uniform2fv(shader.uniformLocations.colorMapYRange, [0.0, 1.0])
     gl.uniform1f(shader.uniformLocations.markerScale, 1.0)
-    // gl.uniform1f(shader.uniformLocations.pixelScale, window.devicePixelRatio || 1.0)
-    gl.uniform1f(shader.uniformLocations.pixelScale, 999.0)
+    gl.uniform1f(shader.uniformLocations.pixelScale, window.devicePixelRatio || 1.0)
+    // gl.uniform1f(shader.uniformLocations.pixelScale, 999.0)
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.grapher.whiteTexture)
@@ -938,10 +938,10 @@ class DateAxis extends PlotAxis{
       let ts = labelTexture.scale
 
       let positions = [
-        [0 + Math.floor(timeCoord + xOffset) - 0.5*w, Math.floor(yOffset*ts)/ts - 0],
-        [0 + Math.floor(timeCoord + xOffset) - 0.5*w, Math.floor(yOffset*ts)/ts + h],
-        [w + Math.floor(timeCoord + xOffset) - 0.5*w, Math.floor(yOffset*ts)/ts + 0],
-        [w + Math.floor(timeCoord + xOffset) - 0.5*w, Math.floor(yOffset*ts)/ts + h],
+        [0 + Math.round((timeCoord + xOffset)*ts)/ts - 0.5*w, Math.round(yOffset*ts)/ts - 0],
+        [0 + Math.round((timeCoord + xOffset)*ts)/ts - 0.5*w, Math.round(yOffset*ts)/ts + h],
+        [w + Math.round((timeCoord + xOffset)*ts)/ts - 0.5*w, Math.round(yOffset*ts)/ts + 0],
+        [w + Math.round((timeCoord + xOffset)*ts)/ts - 0.5*w, Math.round(yOffset*ts)/ts + h],
       ]
       let texCoords = [
         [0,0],
@@ -1378,8 +1378,8 @@ class DateAxis extends PlotAxis{
     gl.uniformMatrix4fv(shader.uniformLocations.projectionMatrix, false, PM)
     gl.uniform2fv(shader.uniformLocations.colorMapYRange, [0.0, 1.0])
     gl.uniform1f(shader.uniformLocations.markerScale, 1.0)
-    // gl.uniform1f(shader.uniformLocations.pixelScale, window.devicePixelRatio || 1.0)
-    gl.uniform1f(shader.uniformLocations.pixelScale, 999.0)
+    gl.uniform1f(shader.uniformLocations.pixelScale, window.devicePixelRatio || 1.0)
+    // gl.uniform1f(shader.uniformLocations.pixelScale, 999.0)
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.grapher.whiteTexture)

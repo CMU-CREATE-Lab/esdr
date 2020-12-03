@@ -511,9 +511,7 @@ class ETP {
 					let sizes = (new Array(tile.positions.length)).fill((new Array(4)).fill(1.0))
 				}
 
-				let haveStroke = (this.drawBars && this.drawOverlappingBars)
-
-				let strokeWidths = (new Array(tile.positions.length)).fill((new Array(4)).fill(haveStroke*1.0/pixelScale))
+				let strokeWidths = (new Array(tile.positions.length)).fill((new Array(4)).fill(1.0/pixelScale))
 
 				let fillColors = (new Array(tile.positions.length)).fill((new Array(4)).fill(this.fillColor).flat())
 				// make stroke and fill the same for proper blend even with zero stroke width
