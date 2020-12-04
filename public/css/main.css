@@ -6,7 +6,7 @@ body {
   margin-top: 50px; }
   @media all and (max-width: 576px) {
     .main_container {
-      margin-top: 0; } }
+      margin-top: 15px; } }
 
 .main_container_with_navbar {
   background: #ffffff;
