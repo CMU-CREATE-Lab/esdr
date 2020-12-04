@@ -1491,6 +1491,7 @@ explorer.toggleDataDownloads = function() {
   let startTime = performance.now()
 
   let transitionAnimation = function(time) {
+    let timeRange = explorer.grapher.getTimeRange()
     let u = Math.min((time - startTime)/transitionTime, 1.0)
     let width = transitionStartWidth*(1.0-u) + transitionTargetWidth*(u)
     let widthString = width + 'px'
@@ -1498,10 +1499,9 @@ explorer.toggleDataDownloads = function() {
 
     document.querySelectorAll(".plot-extension").forEach((element) => element.style.width = widthString)
 
-    // update time range as we're changing size
     explorer.updateDataDownloadLinks()
-    explorer.grapher.updatePlotTimeRanges()
-    explorer.grapher.requestRedraw()
+    // set time range as we're changing size, which would normally keep magnification constant
+    explorer.grapher.setTimeRange(timeRange)
 
     if (time - startTime < transitionTime)
       window.requestAnimationFrame(transitionAnimation)
