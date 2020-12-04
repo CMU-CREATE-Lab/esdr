@@ -1521,6 +1521,17 @@ class DateAxis extends PlotAxis{
 
 } // class DateAxis
 
+
+/**
+  The GlGrapher is a monolithic grapher in the sense that it does all drawing in a single WebGL canvas, instead of separate canvas elements. This is done o be able to display a large number of plots simultaneously, as the number of available WebGL contexts per web page is limited, and using 2D canvasses has very low performance.
+
+  The grapher container does not have to be explicitly sized, but can be integrated in a dynamic layout, and will resize automatically. Resizing keeps timeline magnification constant.
+
+  UI interaction is handled through transparent overlay elements so that standard CSS layout can take care of positioning the plots and axes. 
+
+  TODO: "plot extensions" should be forced to the same width within grapher, but for now this has to be done externally if they are used
+  TODO: UI event handling / gesture recognition is very rudimentary
+*/
 class GLGrapher extends gltools.GLCanvasBase {
   constructor(div) {
     super(div)
@@ -1759,6 +1770,8 @@ class GLGrapher extends gltools.GLCanvasBase {
     this.requestRedraw()
   }
 
+  /**
+  */
   updateCanvasSize() {
     super.updateCanvasSize()
     this.overlayDiv.style.width = `${this.div.offsetWidth}px`
@@ -1889,7 +1902,17 @@ class GLGrapher extends gltools.GLCanvasBase {
     this.plots.forEach(plotInfo => plotInfo.plot.setPlotRange(timeRange))
   }
 
+  /**
+    This function takes either a start and an end time to set the timerange to, or a single time range.
+  */
   setTimeRange(startTime, endTime) {
+    // this is for allowing a single {min, max} instead of two params
+    if ((startTime.min !== undefined) && (startTime.max !== undefined)) {
+      endTime = startTime.max
+      startTime = startTime.min
+    }
+
+
     let dt = endTime - startTime
     let pxWidth = this.dateAxis.overlayDiv.offsetWidth
 
@@ -1912,7 +1935,10 @@ class GLGrapher extends gltools.GLCanvasBase {
     return undefined
   }
 
-  zoomAtTime(factor, time) {
+  zoomAtTime(factor, time = undefined) {
+    if (time === undefined)
+      time = this.dateAxis.centerTime
+
     let dt = time - this.dateAxis.centerTime
 
     let newScale = this.dateAxis.secondsPerPixelScale * factor
