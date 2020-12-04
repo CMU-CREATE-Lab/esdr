@@ -13,15 +13,15 @@
          if (verificationToken && verificationToken.length > 0) {
             superagent
                   .put("{{apiRootUrl}}/user-verification")
-                  .send({token : verificationToken})
+                  .send({ token : verificationToken })
                   .end(function(err, res) {
-                          if (res && res.body.data && res.body.data.isVerified) {
-                             handleVerificationSuccess();
-                          }
-                          else {
-                             handleVerificationFailure();
-                          }
-                       });
+                     if (res && res.body.data && res.body.data.isVerified) {
+                        handleVerificationSuccess();
+                     }
+                     else {
+                        handleVerificationFailure();
+                     }
+                  });
          }
          else {
             handleVerificationFailure();
@@ -51,31 +51,31 @@
             setFormEnabled(form, false);
             superagent
                   .post("{{apiRootUrl}}/user-verification")
-                  .send({email : email})
+                  .send({ email : email })
                   .end(function(err, res) {
-                          setFormEnabled(form, true);
-                          console.log(JSON.stringify(res.body, null, 3));
-                          if (res.status == 200) {
-                             form.hide();
-                             messages.add('Your account is already verified. You may <a href="/login">log in</a>.');
-                             messages.render(successMessagesElement);
-                          }
-                          else if (res.status == 201) {
-                             form.hide();
-                             messages.add("Please check your email for instructions on how to verify your account.");
-                             messages.render(successMessagesElement);
-                          }
-                          else {
-                             if (res.status == 422) {
-                                messages.add("Sorry, that doesn't appear to be a valid email address.");
-                             }
-                             else {
-                                messages.add("Sorry, we don't recognize that email address.");
-                             }
-                             emailElement.focus();
-                             messages.render(errorMessagesElement);
-                          }
-                       });
+                     setFormEnabled(form, true);
+                     console.log(JSON.stringify(res.body, null, 3));
+                     if (res.status === 200) {
+                        form.hide();
+                        messages.add('Your account is already verified. You may <a href="/login">log in</a>.');
+                        messages.render(successMessagesElement);
+                     }
+                     else if (res.status === 201) {
+                        form.hide();
+                        messages.add("Please check your email for instructions on how to verify your account.");
+                        messages.render(successMessagesElement);
+                     }
+                     else {
+                        if (res.status === 422) {
+                           messages.add("Sorry, that doesn't appear to be a valid email address.");
+                        }
+                        else {
+                           messages.add("Sorry, we don't recognize that email address.");
+                        }
+                        emailElement.focus();
+                        messages.render(errorMessagesElement);
+                     }
+                  });
          }
          else {
             messages.render(errorMessagesElement);
@@ -86,32 +86,34 @@
       {{/unless}}
 
 </script>
-<div class="container card main_container">
-   <div class="card-body">
-      <h2>
-         Account Verification
-      </h2>
-      {{#if verificationToken}}
-         <div id="verificationSuccess" class="page_instructions" style="display:none">
-            Thank you for verifying your account. You may now <a href="/login">log in</a>.
-         </div>
-         <div id="verificationFailure" class="page_instructions" style="display:none">
-            Sorry, we could not verify the account.
-         </div>
-      {{else}}
-         <div class="page_instructions">
-            Please enter your email address. We will send you an email with instructions on how to verify your account.
-         </div>
-         <div id="verification_error_messages" class="form_messages alert alert-danger"></div>
-         <div id="verification_success_messages" class="form_messages alert alert-success"></div>
-         <form role="form" id="verification_form" class="big_form" onsubmit="return submitVerificationForm();">
-            <div class="form-group">
-               <input type="email" class="form-control" id="verification_email" name="verification_email" placeholder="Email address"/>
+<div class="container">
+   <div class="card main_container">
+      <div class="card-body">
+         <h2>
+            Account Verification
+         </h2>
+         {{#if verificationToken}}
+            <div id="verificationSuccess" class="page_instructions" style="display:none">
+               Thank you for verifying your account. You may now <a href="/login">log in</a>.
             </div>
-            <div class="float-right">
-               <button type="submit" class="btn btn-primary">{{#if resetPasswordToken}}Change Password{{else}}Submit{{/if}}</button>
+            <div id="verificationFailure" class="page_instructions" style="display:none">
+               Sorry, we could not verify the account.
             </div>
-         </form>
-      {{/if}}
+         {{else}}
+            <div class="page_instructions">
+               Please enter your email address. We will send you an email with instructions on how to verify your account.
+            </div>
+            <div id="verification_error_messages" class="form_messages alert alert-danger"></div>
+            <div id="verification_success_messages" class="form_messages alert alert-success"></div>
+            <form role="form" id="verification_form" class="big_form" onsubmit="return submitVerificationForm();">
+               <div class="form-group">
+                  <input type="email" class="form-control" id="verification_email" name="verification_email" placeholder="Email address"/>
+               </div>
+               <div class="float-right">
+                  <button type="submit" class="btn btn-primary">{{#if resetPasswordToken}}Change Password{{else}}Submit{{/if}}</button>
+               </div>
+            </form>
+         {{/if}}
+      </div>
    </div>
 </div>

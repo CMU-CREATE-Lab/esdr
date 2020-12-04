@@ -1,121 +1,13 @@
-<script language="JavaScript" type="text/javascript">
-   $(document).ready(function() {
-      $("#signup_email").focus();
-   });
-   function submitSignUpForm(formElementId, emailElementId, passwordElementId, errorMessagesElementId, successMessagesElementId, additionalSuccessMessage) {
-      var messages = new org.cmucreatelab.esdr.Messages();
-      var form = $("#" + formElementId);
-      var errorMessagesElement = $("#" + errorMessagesElementId);
-      var successMessagesElement = $("#" + successMessagesElementId);
-      errorMessagesElement.empty().hide();
-      successMessagesElement.empty().hide();
-
-      var emailElement = $("#" + emailElementId);
-      var passwordElement = $("#" + passwordElementId);
-      var email = emailElement.val().trim();
-      var password = passwordElement.val();
-
-      var user = {
-         email : email,
-         password : password
-      };
-
-      // perform simple validation
-      if (user.password.length <= 0) {
-         messages.add("Password is required.");
-         passwordElement.focus();
-      }
-      if (user.email.length <= 0) {
-         messages.add("Email address is required.");
-         emailElement.focus();
-      }
-
-      additionalSuccessMessage = additionalSuccessMessage || "";
-
-      if (messages.isEmpty()) {
-         setFormEnabled(form, false);
-         superagent
-               .post("{{apiRootUrl}}/users")
-               .send(user)
-               .end(function(err, res) {
-                       setFormEnabled(form, true);
-                       if (res.status == 201) {
-                          form.hide();
-                          messages.add('Welcome! We have sent you email with instructions to activate your account. ' + additionalSuccessMessage);
-                          messages.render(successMessagesElement);
-                       }
-                       else {
-                          if (res.status == 409) {
-                             messages.add("Sorry, a user with that email address already exists.");
-                             emailElement.focus();
-                          }
-                          else if (res.status == 422) {
-                             if (res.body.data && res.body.data.length > 0) {
-                                var emailErrors = [];
-                                var passwordErrors = [];
-                                res.body.data.forEach(function(item) {
-                                   var field = item.instanceContext;
-                                   var constraintName = item.constraintName;
-                                   if (field == '#/email') {
-                                      if (constraintName == 'minLength') {
-                                         emailErrors.push("The email address must be at least " + item.constraintValue + " characters.");
-                                      }
-                                      if (constraintName == 'format') {
-                                         emailErrors.push("The email address must be a valid email address.");
-                                      }
-                                   }
-                                   else if (field == '#/password') {
-                                      if (constraintName == 'minLength') {
-                                         passwordErrors.push("The password must be at least " + item.constraintValue + " characters.");
-                                      }
-                                   }
-                                });
-                                emailErrors.map(messages.add);
-                                passwordErrors.map(messages.add);
-                                if (passwordErrors.length > 0) {
-                                   passwordElement.focus();
-                                }
-                                if (emailErrors.length > 0) {
-                                   emailElement.focus();
-                                }
-                             }
-                          }
-                          else {
-                             messages.add("Sorry, an unexpected error occurred while trying create your account.  Please contact us for help.");
-                          }
-                          messages.render(errorMessagesElement);
-                       }
-                    });
-      }
-      else {
-         messages.render(errorMessagesElement);
-      }
-
-      return false;
-   }
-
-</script>
-<div class="container card main_container">
-   <div class="card-body">
-      <h2>
-         Sign Up
-      </h2>
-      <div class="page_instructions">
-         Use this form to create an ESDR account.
+<div class="container">
+   <div class="card main_container">
+      <div class="card-body">
+         <h2>
+            Sign Up
+         </h2>
+         <div class="page_instructions">
+            Use this form to create an ESDR account. Already have an account? <a href="/login">Log in!</a>
+         </div>
+         {{> signup}}
       </div>
-      <div id="signup_error_messages" class="form_messages alert alert-danger"></div>
-      <div id="signup_success_messages" class="form_messages alert alert-success"></div>
-      <form id="signup_form" class="big_form" onsubmit="return submitSignUpForm('signup_form', 'signup_email', 'signup_password', 'signup_error_messages', 'signup_success_messages');">
-         <div class="form-group">
-            <input type="email" class="form-control" id="signup_email" name="signup_email" placeholder="Email address"/>
-         </div>
-         <div class="form-group">
-            <input type="password" class="form-control" id="signup_password" name="signup_password" placeholder="Password"/>
-         </div>
-         <div class="form-group">
-            <button type="submit" class="btn btn-primary float-right">Sign Up</button>
-            Already have an account? <a href="/login">Log in!</a>
-         </div>
-      </form>
    </div>
 </div>
