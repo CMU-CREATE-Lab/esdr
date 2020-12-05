@@ -474,7 +474,8 @@ export class GLCanvasBase {
   }
 
   /**
-    call to update canvas size to match div's size for 1:1 pixel mapping
+    Call to update canvas size to match div's size for 1:1 pixel mapping. This is called when the width/height iframes notice being resized.
+
   */
   updateCanvasSize() {
     let pixelScale = window.devicePixelRatio || 1.0
