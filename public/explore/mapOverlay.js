@@ -851,6 +851,17 @@ class MapOverlay extends google.maps.OverlayView {
 			// ((x - 0.5*canvasWidth)/pixelScale - pixsw.x)*geoWidth/pixWidth = longitude - geosw.lng()
 			return ((x*pixelScale - 0.5*canvasWidth)/pixelScale - pixsw.x)*geoWidth/pixWidth + geosw.lng()
 		}
+		this.longitudeToViewPixel = function(lng) {
+			// lng = ((x*pixelScale - 0.5*canvasWidth)/pixelScale - pixsw.x)*geoWidth/pixWidth + geosw.lng()
+			// (lng - geosw.lng()) = ((x*pixelScale - 0.5*canvasWidth)/pixelScale - pixsw.x)*geoWidth/pixWidth
+			// (lng - geosw.lng())/geoWidth*pixWidth = (x*pixelScale - 0.5*canvasWidth)/pixelScale - pixsw.x
+			// (lng - geosw.lng())/geoWidth*pixWidth + pixsw.x = (x*pixelScale - 0.5*canvasWidth)/pixelScale
+			// (lng - geosw.lng())/geoWidth*pixWidth*pixelScale + pixsw.x*pixelScale = x*pixelScale - 0.5*canvasWidth
+			// (lng - geosw.lng())/geoWidth*pixWidth*pixelScale + pixsw.x*pixelScale + 0.5*canvasWidth = x*pixelScale
+			// (lng - geosw.lng())/geoWidth*pixWidth*pixelScale + pixsw.x*pixelScale + 0.5*canvasWidth = x*pixelScale
+			// (lng - geosw.lng())/geoWidth*pixWidth + pixsw.x + 0.5*canvasWidth/pixelScale = x
+			return (lng - geosw.lng())/geoWidth*pixWidth + pixsw.x + 0.5*canvasWidth/pixelScale
+		}
 		this.longitudeToCanvasPixel = function(longitude) {
 			// geo == mercator for longitude
 			// original:
@@ -865,6 +876,15 @@ class MapOverlay extends google.maps.OverlayView {
 		// height in "projected" space
 		let geoHeight = this.latitudeToMercator(geone.lat()) - this.latitudeToMercator(geosw.lat())
 
+
+		this.addPixelDeltaToGeoPos = function(geo, pxDelta) {
+			let pxSrc = this.geoCoordsToViewPixel(geo)
+			let pxDst = {x: pxSrc.x + pxDelta.x, y: pxSrc.y + pxDelta.y}
+			let geoDst = this.viewPixelToGeoCoords(pxDst)
+			return geoDst
+		}
+
+
 		this.viewPixelToLatitude = function(y) {
 			// y = 0.5*canvasHeight + pixelScale*(pixsw.y + (this.latitudeToMercator(latitude) - this.latitudeToMercator(geosw.lat()))/geoHeight*pixHeight)
 			// y - 0.5*canvasHeight = pixelScale*(pixsw.y + (this.latitudeToMercator(latitude) - this.latitudeToMercator(geosw.lat()))/geoHeight*pixHeight)
@@ -875,6 +895,20 @@ class MapOverlay extends google.maps.OverlayView {
 			// this.mercatorToLatitude(((y - 0.5*canvasHeight)/pixelScale - pixsw.y)*geoHeight/pixHeight + this.latitudeToMercator(geosw.lat())) = latitude
 			return this.mercatorToLatitude(((y*pixelScale - 0.5*canvasHeight)/pixelScale - pixsw.y)*geoHeight/pixHeight + this.latitudeToMercator(geosw.lat()))
 		}
+
+		this.latitudeToViewPixel = function(lat) {
+			// lat = this.mercatorToLatitude(((y*pixelScale - 0.5*canvasHeight)/pixelScale - pixsw.y)*geoHeight/pixHeight + this.latitudeToMercator(geosw.lat()))
+			// this.latitudeToMercator(lat) = ((y*pixelScale - 0.5*canvasHeight)/pixelScale - pixsw.y)*geoHeight/pixHeight + this.latitudeToMercator(geosw.lat())
+			// this.latitudeToMercator(lat) - this.latitudeToMercator(geosw.lat()) = ((y*pixelScale - 0.5*canvasHeight)/pixelScale - pixsw.y)*geoHeight/pixHeight
+			// (this.latitudeToMercator(lat) - this.latitudeToMercator(geosw.lat()))/geoHeight*pixHeight = (y*pixelScale - 0.5*canvasHeight)/pixelScale - pixsw.y
+			// (this.latitudeToMercator(lat) - this.latitudeToMercator(geosw.lat()))/geoHeight*pixHeight + pixsw.y = (y*pixelScale - 0.5*canvasHeight)/pixelScale
+			// (this.latitudeToMercator(lat) - this.latitudeToMercator(geosw.lat()))/geoHeight*pixHeight*pixelScale + pixsw.y*pixelScale = y*pixelScale - 0.5*canvasHeight
+			// (this.latitudeToMercator(lat) - this.latitudeToMercator(geosw.lat()))/geoHeight*pixHeight*pixelScale + pixsw.y*pixelScale + 0.5*canvasHeight = y*pixelScale
+			// (this.latitudeToMercator(lat) - this.latitudeToMercator(geosw.lat()))/geoHeight*pixHeight + pixsw.y + 0.5*canvasHeight/pixelScale = y
+			return (this.latitudeToMercator(lat) - this.latitudeToMercator(geosw.lat()))/geoHeight*pixHeight + pixsw.y + 0.5*canvasHeight/pixelScale
+		}
+
+
 		this.latitudeToCanvasPixel = function(latitude) {
 			return 0.5*canvasHeight + pixelScale*(pixsw.y + (this.latitudeToMercator(latitude) - this.latitudeToMercator(geosw.lat()))/geoHeight*pixHeight)
 		}
@@ -1015,7 +1049,28 @@ _binarySearch(array, predicate) {
 		return feeds
 	}
 
-	highlightMarkersAt(eventPixel, isImmediate) {
+	highlightFeeds(feeds, isImmediate) {
+
+    // changed are only the xor between the two sets
+    let changedFeeds = this._xorSets(this.markers.highlightedFeeds, feeds)
+
+    this.markers.highlightedFeeds = new Set(feeds)
+    this.colorMarkers(changedFeeds)
+
+    this._doDeferredGlUpdate({feedColors: changedFeeds}, isImmediate)
+
+	}
+
+	highlightMarkersAtGeo(geo, isImmediate) {
+
+    let feeds = this.feedsCloseToGeo(geo, 10.0).filter(feedId => !this.markers.rejectedFeeds.has(feedId))
+
+    this.highlightFeeds(feeds, isImmediate)
+
+    return feeds
+	}
+
+	highlightMarkersAtPixel(eventPixel, isImmediate) {
 		if (!this.markers)
 			return []
 
@@ -1030,21 +1085,7 @@ _binarySearch(array, predicate) {
 
     let feeds = this.feedsCloseToPixel({x: x, y: y}, 10.0).filter(feedId => !this.markers.rejectedFeeds.has(feedId))
 
-    // console.log(`feeds ${feeds}`)
-
-    // changed are only the xor between the two sets
-    let changedFeeds = this._xorSets(this.markers.highlightedFeeds, feeds)
-
-    this.markers.highlightedFeeds = new Set(feeds)
-    this.colorMarkers(changedFeeds)
-
-    this._doDeferredGlUpdate({feedColors: changedFeeds}, isImmediate)
-
-  //   if (this.gl) {
-		// 	let feedIndices = changedFeeds.map(feedId => this.markers.sortedFeeds.index.get(feedId))
-		// 	this._updateMarkerColorBuffers(this.gl, feedIndices)
-		// 	this.glDraw(this.gl)
-		// }
+    this.highlightFeeds(feeds, isImmediate)
 
 		return feeds
 	}
@@ -1091,9 +1132,29 @@ _binarySearch(array, predicate) {
 		let geo = new google.maps.LatLng(this.viewPixelToLatitude(px.y), this.viewPixelToLongitude(px.x))
 		return geo
 	}
+	geoCoordsToViewPixel(geo) {
+		return {x: this.longitudeToViewPixel(geo.lng), y: this.latitudeToViewPixel(geo.lat)}
+	}
+
 
 	geoCoordsToCanvasPixel(geo) {
 		return {x: this.longitudeToCanvasPixel(geo.lng), y: this.latitudeToCanvasPixel(geo.lat)}
+	}
+
+	feedsCloseToGeo(geo, pxRadius) {
+		// if no data source, no feeds
+		if (!this.feedDataSource)
+			return []
+
+
+		let geosw = this.addPixelDeltaToGeoPos(geo, {x: -pxRadius, y: +pxRadius})
+		let geone = this.addPixelDeltaToGeoPos(geo, {x: +pxRadius, y: -pxRadius})
+
+		// console.log(`feedsCloseToPixelv ${geosw.lng()} to ${geone.lng()}, ${geosw.lat()} to ${geone.lat()}`)
+
+		let feedIds = this.feedDataSource.feedsInGeoBox(geosw, geone)
+
+		return feedIds
 	}
 
 	feedsCloseToPixel(pxPos, pxRadius) {
