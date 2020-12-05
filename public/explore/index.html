@@ -964,7 +964,9 @@ function initMap() {
   })
 
   google.maps.event.addListener(gMap, 'mousemove', function(event) {
-    let feedIds = explorer.mapOverlay.highlightMarkersAt(event.pixel, true)
+    let geo = {lat: event.latLng.lat(), lng: event.latLng.lng()}
+    let feedIds = explorer.mapOverlay.highlightMarkersAtGeo(geo, true)
+    // let feedIds = explorer.mapOverlay.highlightMarkersAtPixel(event.pixel, true)
     this.setOptions({
       draggableCursor: (feedIds.length > 0 ? 'default' :  null)
     });
@@ -977,7 +979,9 @@ function initMap() {
     if (!explorer.mapOverlay.markers)
       return
 
-    explorer.mapOverlay.highlightMarkersAt(event.pixel, true)
+    let geo = {lat: event.latLng.lat(), lng: event.latLng.lng()}
+
+    explorer.mapOverlay.highlightMarkersAtGeo(geo, true)
 
 
     let div = document.createElement("div")
