@@ -995,7 +995,7 @@ class DateAxis extends PlotAxis{
     let axisHeight = pixelRange.y.max - pixelRange.y.min
 
 
-    let timeRange = this.getTimeRangeForWidth(pixelRange.x.max - pixelRange.x.min)
+    let timeRange = this.getTimeRangeForPixels(pixelRange.x.min, pixelRange.x.max - pixelRange.x.min)
 
     let ticks = this.getTicksForTimeRange(timeRange, pixelRange.x.max - pixelRange.x.min)
     this.ticks = ticks
@@ -1009,11 +1009,11 @@ class DateAxis extends PlotAxis{
   }
 
 
-  getTimeRangeForWidth(pxWidth) {
-    let pxCenter = 0.5*pxWidth
+  getTimeRangeForPixels(offsetLeft, offsetWidth) {
+    let pxCenter = this.overlayDiv.offsetLeft + 0.5*this.overlayDiv.offsetWidth
     let timeRange = {
-      min: (0 - pxCenter)*this.secondsPerPixelScale + this.centerTime, 
-      max: (pxWidth - pxCenter)*this.secondsPerPixelScale + this.centerTime
+      min: (offsetLeft - pxCenter)*this.secondsPerPixelScale + this.centerTime, 
+      max: ((offsetLeft + offsetWidth) - pxCenter)*this.secondsPerPixelScale + this.centerTime
     }
 
     return timeRange
@@ -1739,7 +1739,7 @@ class GLGrapher extends gltools.GLCanvasBase {
 
 
     plot.isAutoRangingNegatives = true
-    plot.setPlotRange(this.dateAxis.getTimeRangeForWidth(this.dateAxisDiv.offsetWidth))
+    plot.setPlotRange(this.dateAxis.getTimeRangeForPixels(plotDiv.offsetLeft, plotDiv.offsetWidth))
 
     let oldCallback = plot.dataUpdatedCallback
     plot.dataUpdatedCallback = () => {oldCallback(); this.requestRedraw()}
@@ -1927,7 +1927,7 @@ class GLGrapher extends gltools.GLCanvasBase {
   }
 
   getTimeRange() {
-    let timeRange = this.dateAxis.getTimeRangeForWidth(this.dateAxis.overlayDiv.offsetWidth)
+    let timeRange = this.dateAxis.getTimeRangeForPixels(this.dateAxis.overlayDiv.offsetLeft, this.dateAxis.overlayDiv.offsetWidth)
     return timeRange
   }
 
