@@ -1019,6 +1019,10 @@ class DateAxis extends PlotAxis{
     return timeRange
   }
 
+  getTimeRangeForDiv(div) {
+    return this.getTimeRangeForPixels(div.offsetLeft, div.offsetWidth)
+  }
+
 
   computeMajorTicksFor(tickPossibilities, boxedUnits, timeRange, pxWidth) {
     /*
@@ -1739,7 +1743,7 @@ class GLGrapher extends gltools.GLCanvasBase {
 
 
     plot.isAutoRangingNegatives = true
-    plot.setPlotRange(this.dateAxis.getTimeRangeForPixels(plotDiv.offsetLeft, plotDiv.offsetWidth))
+    plot.setPlotRange(this.dateAxis.getTimeRangeForDiv(plotDiv))
 
     let oldCallback = plot.dataUpdatedCallback
     plot.dataUpdatedCallback = () => {oldCallback(); this.requestRedraw()}
@@ -1898,8 +1902,7 @@ class GLGrapher extends gltools.GLCanvasBase {
   }
 
   updatePlotTimeRanges() {
-    let timeRange = this.getTimeRange()
-    this.plots.forEach(plotInfo => plotInfo.plot.setPlotRange(timeRange))
+    this.plots.forEach(plotInfo => plotInfo.plot.setPlotRange(this.dateAxis.getTimeRangeForDiv(plotInfo.div)))
   }
 
   /**
@@ -1927,7 +1930,7 @@ class GLGrapher extends gltools.GLCanvasBase {
   }
 
   getTimeRange() {
-    let timeRange = this.dateAxis.getTimeRangeForPixels(this.dateAxis.overlayDiv.offsetLeft, this.dateAxis.overlayDiv.offsetWidth)
+    let timeRange = this.dateAxis.getTimeRangeForDiv(this.dateAxis.overlayDiv)
     return timeRange
   }
 
