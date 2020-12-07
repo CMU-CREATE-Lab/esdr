@@ -1682,6 +1682,19 @@ class GLGrapher extends gltools.GLCanvasBase {
 
   addPlot(key, plot, labelElement, extensionElement) {
 
+    /* 
+      Plot Row Layout
+      .-plot-row----------------------------------.
+      | .-plot-----------. .-axis-. .-extension-. |
+      | | [=iframe=====] | |      | |           | |
+      | | .-label-.      | |      | |           | |
+      | | |       |      | |      | |           | |
+      | | '-------'      | |      | |           | |
+      | |                | |      | |           | |
+      | '----------------' '------' '-----------' |
+      '-------------------------------------------'
+    */
+
     let plotRow = document.createElement("div")
     // plotRow.style.background = "rgba(0,0,127,0.2)"
     plotRow.style.padding = "0px"
@@ -1700,6 +1713,9 @@ class GLGrapher extends gltools.GLCanvasBase {
 
     let plotDiv = document.createElement("div")
     // plotDiv.style.background = "rgba(0,0,255,0.2)"
+    plotDiv.style.display = "flex"
+    plotDiv.style.flexDirection = "column"
+    plotDiv.style.alignItems = "stretch"
     plotDiv.style.padding = "0px"
     plotDiv.style.margin = "0px"
     plotDiv.style.width = "100%"
@@ -1708,6 +1724,13 @@ class GLGrapher extends gltools.GLCanvasBase {
     plotDiv.style.flexGrow = 1
     plotDiv.style.overflowX = "visible"
 
+    // iframe to get resize notifications of plot width
+    let widthIFrame = document.createElement("iframe")
+    // widthIFrame.style.width = "100%"
+    widthIFrame.style.height = "0px"
+    widthIFrame.style.border = "none"
+
+    plotDiv.appendChild(widthIFrame)
 
     plotRow.appendChild(plotDiv)
 
@@ -1735,11 +1758,15 @@ class GLGrapher extends gltools.GLCanvasBase {
 
     let yAxis = new YAxis(this, plotAxis, plot)
 
-    let plotInfo = {plot: plot, div: plotDiv, rowDiv: plotRow, yAxisDiv: plotAxis, yAxis: yAxis}
+    let plotInfo = {plot: plot, div: plotDiv, rowDiv: plotRow, yAxisDiv: plotAxis, yAxis: yAxis, widthIFrame: widthIFrame}
     this.plots.set(key, plotInfo)
 
     plotDiv.addEventListener("mousemove", event => this.onPlotHighlightMouseMoved(event, plotInfo) )
     plotDiv.addEventListener("mouseleave", event => this.onPlotHighlightMouseLeft(event, plotInfo) )
+    widthIFrame.contentWindow.addEventListener("resize", () => {
+      plot.setPlotRange(this.dateAxis.getTimeRangeForDiv(plotDiv))
+      this.requestRedraw()
+    })
 
 
     plot.isAutoRangingNegatives = true
