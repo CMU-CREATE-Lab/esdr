@@ -65,7 +65,7 @@ class ETP {
 		this.NUM_VERTICES_PER_SAMPLE 	= 4
 		this.NUM_INDICES_PER_POINT_SAMPLE = 6
 		this.NUM_INDICES_PER_LINE_SAMPLE 	= 4
-		this.NUM_INDICES_PER_BAR_SAMPLE 	=6
+		this.NUM_INDICES_PER_BAR_SAMPLE 	= 6
 
 		this.NUM_POSITION_ELEMENTS		= 2
 		this.NUM_OFFSET_ELEMENTS			= 2
@@ -202,7 +202,7 @@ class ETP {
 	allocateGlBuffers(gl) {
 		let buffers = this.glBuffers
 
-		let bufferBase = this.NUM_SAMPLES_PER_TILE*this.NUM_TILES*this.NUM_VERTICES_PER_SAMPLE*Float32Array.BYTES_PER_ELEMENT
+		let bufferBase = this.NUM_SAMPLES_PER_TILE*this.NUM_TILES*this.NUM_VERTICES_PER_SAMPLE
 
 		buffers.positionBuffer = gltools.resizeArrayBuffer(gl, buffers.positionBuffer, bufferBase, this.NUM_POSITION_ELEMENTS)
 
