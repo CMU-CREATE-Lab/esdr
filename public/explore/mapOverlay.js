@@ -25,6 +25,37 @@ import {ETP} from "./embeddedTilePlotter.js"
 import {ESDR} from "./esdrFeeds.js"
 import * as gltools from "./webgltools.js"
 
+class ImagePeeker {
+	constructor(url) {
+		let img = new Image()
+		this.image = img
+
+		this.image.onload = () => {
+			var canvas = document.createElement('canvas');
+			canvas.width = img.width;
+			canvas.height = img.height;
+			let ctx = canvas.getContext('2d')
+			ctx.drawImage(img, 0, 0, img.width, img.height);
+
+			this.canvas = canvas
+			this.ctx = ctx
+		}
+
+		this.image.src = url
+	}
+
+	colorMapLookup(value, range) {
+		if (!this.canvas || !isFinite(value))
+			return undefined
+
+		let u = Math.min(Math.max((value - range.min)/(range.max - range.min), 0.0), 1.0)
+		let x = u*this.canvas.width
+		let px = this.ctx.getImageData(x, 0, 1, 1).data
+
+		return [px[0]/255.0, px[1]/255.0, px[2]/255.0, px[3]/255.0]
+	}
+} // class ImagePeeker
+
 
 class MapOverlay extends google.maps.OverlayView {
 	constructor(map, mapDiv) {
@@ -39,6 +70,8 @@ class MapOverlay extends google.maps.OverlayView {
 
   	// data plotting
   	this.sparkLines = new Map()
+  	this.feedColorizers = new Map()
+  	this.colorizedFeedColors = new Map()
 
   	this.anonymousAnimationFrameHandler = timestamp => this.animationFrameHandler(timestamp)
 
@@ -477,6 +510,10 @@ class MapOverlay extends google.maps.OverlayView {
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
 		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(indices.flat()), gl.DYNAMIC_DRAW)
 
+	}
+
+	_getFeedIndexFromFeedId(feedId) {
+		return this.markers.sortedFeeds.index.get(feedId)
 	}
 
 	_deferredGlUpdateCallback(mapOverlay, gl) {
@@ -1311,6 +1348,7 @@ _binarySearch(array, predicate) {
 		this.requestDraw()
 	}
 
+
 	addSparklinePlot(feedId, channelName) {
 
 		let tileSource = this.feedDataSource.dataSourceForChannel(feedId, channelName)
@@ -1326,6 +1364,7 @@ _binarySearch(array, predicate) {
 
 		return plotter
 	}
+
 
 	drawSparkLines(gl, PM) {
 		for (let [channelId, plotter] of this.sparkLines) {
@@ -1346,6 +1385,49 @@ _binarySearch(array, predicate) {
 			plotter.glDraw(gl, pxOffset, PM)
 		}
 
+	}
+
+
+	setColorizerForFeed(feedId, channelName, colorizer) {
+
+		if (colorizer) {
+			// load colormap if we have one
+			let colorMap = ESDR.sparklineColorMap(feedId, channelName)
+
+			let imagePeeker = colorMap.texture ? new ImagePeeker(colorMap.texture) : undefined
+
+
+			colorizer.currentValueCallback = (time, value, count) => {
+				let feedIndex = this._getFeedIndexFromFeedId(feedId)
+
+				// console.log("colorizering", feedId, channelName, time, value)
+
+				// do nothing if feed isn't on map (yet)
+				if (feedIndex === undefined)
+					return
+
+				let color = (imagePeeker ? imagePeeker.colorMapLookup(value, colorMap.range) : undefined) || [0.0,0.0,0.0,1.0]
+
+				// console.log("  color", color)
+
+				this.colorizedFeedColors.set(feedId, color)
+
+				this.markers.fillColors[feedIndex] = color
+
+				this._doDeferredGlUpdate({feedColors: [feedId]}, true)
+
+				this.requestDraw()
+		  }
+
+		}	
+		else {
+			// if we're clearing the colorizer, do a color update
+			this.colorMarkers([feedId])
+			this._doDeferredGlUpdate({feedColors: [feedId]})
+		}
+
+
+	  this.feedColorizers.set(feedId, colorizer)
 	}
 
 } // class MapOverlay

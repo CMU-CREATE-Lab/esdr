@@ -96,6 +96,48 @@ export const createTextureFromCanvas = function(gl, canvas) {
 }
 
 
+export const createEmptyTexture = function(gl, width, height) {
+  let texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+
+  const level = 0
+  const internalFormat = gl.RGBA
+  const srcFormat = gl.RGBA
+  const srcType = gl.UNSIGNED_BYTE
+  const border = 0
+  const data = null
+  gl.texImage2D(
+    gl.TEXTURE_2D, level, internalFormat, width, height, border, srcFormat, srcType, data
+  )
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+
+  return {texture: texture, width: width, height: height, scale: 1.0}
+}
+
+
+export const resizeTexture = function(gl, texture, width, height) {
+  gl.bindTexture(gl.TEXTURE_2D, texture.texture);
+
+  const level = 0
+  const internalFormat = gl.RGBA
+  const srcFormat = gl.RGBA
+  const srcType = gl.UNSIGNED_BYTE
+  const border = 0
+  const data = null
+  gl.texImage2D(
+    gl.TEXTURE_2D, level, internalFormat, width, height, border, srcFormat, srcType, data
+  )
+
+  texture.width = width
+  texture.height = height
+
+  return texture
+}
+
+
 export const computeFontSizingForReferenceElement = function(element) {
     let style = window.getComputedStyle(element)
     let fontSize = parseInt(style.fontSize.slice(0,style.fontSize.indexOf("px")))

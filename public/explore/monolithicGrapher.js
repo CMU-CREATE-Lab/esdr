@@ -1543,7 +1543,8 @@ class GLGrapher extends gltools.GLCanvasBase {
     this.MIN_SECONDS_PER_PIXEL_SCALE = 0.01 // 100 pixels per second
     this.MAX_SECONDS_PER_PIXEL_SCALE = (0.5/12)*(365*24*60*60) // 0.5 months per pixel
 
-    this.dateAxisListeners = []
+    this.dateAxisRangeListeners = []
+    this.dateAxisCursorListeners = []
 
     this.labelTextures = new Map()
 
@@ -1917,14 +1918,24 @@ class GLGrapher extends gltools.GLCanvasBase {
     this.whiteTexture = gltools.createWhiteTexture(gl)
   }
 
-  addDateAxisChangeListener(listener) {
-    this.dateAxisListeners.push(listener)
+  addDateAxisRangeChangeListener(listener) {
+    this.dateAxisRangeListeners.push(listener)
   }
 
-  _dateAxisChanged() {
+  addDateAxisCursorChangeListener(listener) {
+    this.dateAxisCursorListeners.push(listener)
+  }
+
+
+  _dateAxisRangeChanged() {
     let timeRange = this.getTimeRange()
-    for (let listener of this.dateAxisListeners) {
+    for (let listener of this.dateAxisRangeListeners) {
       listener(timeRange)
+    }
+  }
+  _dateAxisCursorChanged() {
+    for (let listener of this.dateAxisCursorListeners) {
+      listener(this.dateAxis.highlightTime)
     }
   }
 
@@ -1950,7 +1961,7 @@ class GLGrapher extends gltools.GLCanvasBase {
     this.dateAxis.centerTime = 0.5*(startTime + endTime)
     this.dateAxis.secondsPerPixelScale = Math.min(Math.max(dt/pxWidth, this.MIN_SECONDS_PER_PIXEL_SCALE), this.MAX_SECONDS_PER_PIXEL_SCALE)
 
-    this._dateAxisChanged()
+    this._dateAxisRangeChanged()
 
     this.updatePlotTimeRanges()
     this.requestRedraw()
@@ -1986,7 +1997,7 @@ class GLGrapher extends gltools.GLCanvasBase {
     this.dateAxis.centerTime = time - dt*factor
     this.dateAxis.secondsPerPixelScale *= factor
 
-    this._dateAxisChanged()
+    this._dateAxisRangeChanged()
 
   }
 
@@ -2000,7 +2011,7 @@ class GLGrapher extends gltools.GLCanvasBase {
       // horizontal scroll
       this.dateAxis.centerTime += dx*this.dateAxis.secondsPerPixelScale
 
-      this._dateAxisChanged()
+      this._dateAxisRangeChanged()
 
       event.preventDefault()
       event.stopPropagation()
@@ -2033,7 +2044,7 @@ class GLGrapher extends gltools.GLCanvasBase {
       // horizontal scroll
       this.dateAxis.centerTime += dx*this.dateAxis.secondsPerPixelScale
 
-      this._dateAxisChanged()
+      this._dateAxisRangeChanged()
 
     }
     event.preventDefault()
@@ -2067,7 +2078,7 @@ class GLGrapher extends gltools.GLCanvasBase {
     this.dateAxis.centerTime -= delta.x*this.dateAxis.secondsPerPixelScale
 
     this.updatePlotTimeRanges()
-    this._dateAxisChanged()
+    this._dateAxisRangeChanged()
 
     this.requestRedraw()
 
@@ -2089,7 +2100,7 @@ class GLGrapher extends gltools.GLCanvasBase {
     this.dateAxis.highlightValueAtTime(mouseTime)
     this.plots.forEach(plotInfo => plotInfo.yAxis.highlightValueAtTime(mouseTime))
 
-    // this._dateAxisChanged()
+    this._dateAxisCursorChanged()
 
     this.requestRedraw()
 
@@ -2121,7 +2132,7 @@ class GLGrapher extends gltools.GLCanvasBase {
     
     plotInfo.yAxis.highlightValueAtTime(mouseTime)
 
-    // this._dateAxisChanged()
+    this._dateAxisCursorChanged()
 
     this.requestRedraw()
 
@@ -2134,7 +2145,7 @@ class GLGrapher extends gltools.GLCanvasBase {
     plotInfo.yAxis.highlightValueAtTime(undefined)
     this.dateAxis.highlightValueAtTime(undefined)
 
-    // this._dateAxisChanged()
+    this._dateAxisCursorChanged()
 
     this.requestRedraw()
 

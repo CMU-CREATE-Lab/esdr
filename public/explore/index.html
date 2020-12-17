@@ -601,6 +601,7 @@ input[type="search"] {
   <button class="searchbar-button" id="showDataFiltersButton" onclick="window.explorer.toggleFilters()"><img src="filter.svg" class="button-icon"></img></button>
   <!-- <div class="searchbar-divider"></div> -->
   <button class="searchbar-button" id="showSettingsButton" onclick="window.explorer.toggleSettings()"><img src="settings.svg" class="button-icon"></img></button>
+    <div class="search-input-row advanced-setting"><input type="checkbox" id="colorMapDotsCheckbox" name="checkbox-colorMapDots" title="Color Map Dots" onclick="window.explorer.toggleColorMapDots(event)" /><label for="colorMapDotsCheckbox">Color Map Dots</label></div>
     <div class="search-input-row advanced-setting"><input type="checkbox" id="colorGraphsCheckbox" name="checkbox-colorGraphs" title="Color Graphs" onclick="window.explorer.toggleColorGraphs(event)" /><label for="colorGraphsCheckbox">Color Graphs</label></div>
     <div class="search-input-row advanced-setting"><input type="checkbox" id="lineGraphsCheckbox" name="checkbox-lineGraphs" title="Line Graphs" onclick="window.explorer.toggleLineGraphs(event)" /><label for="lineGraphsCheckbox">Line Graphs</label></div>
     <div class="search-input-row advanced-setting"><input type="checkbox" id="pointGraphsCheckbox" name="checkbox-pointGraphs" title="Point Graphs" onclick="window.explorer.togglePointGraphs(event)" /><label for="pointGraphsCheckbox">Point Graphs</label></div>
@@ -749,7 +750,7 @@ input[type="search"] {
 
 import {MapOverlay} from "./mapOverlay.js"
 import {ETP} from "./embeddedTilePlotter.js"
-import {ESDR} from "./esdrFeeds.js"
+import {ESDR, TiledDataEvaluator} from "./esdrFeeds.js"
 import * as grapher from "./monolithicGrapher.js"
 
 
@@ -767,6 +768,8 @@ let explorer = {
   showSettings: true,
   showExperimentalSettings: false,
   showSparklines: false,
+  colorMapDots: true,
+  feedMarkerColorizers: new Map(),
   plotAreaHeightPercent: 40,
   minPlotAreaHeightPercent: 20,
   maxPlotAreaHeightPercent: 80,
@@ -1247,6 +1250,12 @@ function parseUrlParams() {
     let sparklinesCheckbox = document.getElementById("showSparklinesCheckbox")
     sparklinesCheckbox.checked = explorer.showSparklines
   }
+  // on-map sparklines
+  if (browserParams.has("colorMapDots")) {
+    explorer.colorMapDots = browserParams.get("colorMapDots") == "true"
+    let checkbox = document.getElementById("colorMapDotsCheckbox")
+    checkbox.checked = explorer.colorMapDots
+  }
 
 
 }
@@ -1319,6 +1328,16 @@ function updateUrlHash() {
   // as URLSearchParams escapes commas, finally replace the escaped commas with human readable commas again
   window.location.hash = `#${params.toString().replace(/%2C/gi,',')}`
 }
+
+explorer.hashChangeListener = function() {
+  // TODO: implement event handling on hash changes
+  // - does hash change when we set it via updateUrlHash()?
+  // - need to refactor initialization to use the proper methods for setting up the UI based on initial hash and later changes the same way
+  console.log("URL hash changed!")
+}
+
+window.addEventListener('hashchange', () => explorer.hashChangeListener)
+
 
 explorer.showExperimentalSettingsUI = function() {
   let settingsGroup = document.getElementById("settingsContent")
@@ -1762,6 +1781,15 @@ function searchResultsDivForChannel(feedId, channelName, elementIdPrefix) {
   return div
 }
 
+explorer.colorizeFeedOnMap = function(feedId, channelName) {
+  let colorizer = new TiledDataEvaluator(esdr.dataSourceForChannel(feedId, channelName))
+
+  explorer.mapOverlay.setColorizerForFeed(feedId, channelName, colorizer)
+
+  explorer.feedMarkerColorizers.set(feedId, colorizer)
+
+}
+
 explorer.interactiveSelectChannelWithId = function(channelId, isSelected) {
 
   let feedId = parseInt(channelId.slice(0, channelId.indexOf(".")))
@@ -1774,6 +1802,11 @@ explorer.interactiveSelectChannelWithId = function(channelId, isSelected) {
     explorer.addPlot(feedId, channelName)
     if (explorer.showSparklines)
       explorer.mapOverlay.addSparklinePlot(feedId, channelName)
+    if (explorer.colorMapDots) {
+      explorer.colorizeFeedOnMap(feedId, channelName)
+      window.requestAnimationFrame(explorer.mapDotsAnimationFrameHandler)
+    }
+
   }
   else {
     explorer.removePlot(feedId, channelName)
@@ -1859,17 +1892,42 @@ function initPlots() {
   })
 
 
-  explorer.grapher.addDateAxisChangeListener((timeRange, cursor) => {
-    // do a deferred update
-    if (explorer.deferredTimelineUpdateTimer)
-      clearTimeout(explorer.deferredTimelineUpdateTimer)
+  explorer.grapher.addDateAxisRangeChangeListener((timeRange) => {
+    // update these values immediately, but do deffered update to update url hash, etc
+    explorer.startTime = timeRange.min
+    explorer.endTime = timeRange.max
 
     if (explorer.showSparklines) {
       window.requestAnimationFrame(explorer.sparklineAnimationFrameHandler)
     }
 
-    explorer.deferredTimelineUpdateTimer = setTimeout(explorer.deferredTimelineUpdateCallback, 300, timeRange.min, timeRange.max, cursor)
+    if (explorer.colorMapDots) {
+      window.requestAnimationFrame(explorer.mapDotsAnimationFrameHandler)
+    }
+
+    // do a deferred update
+    if (explorer.deferredTimelineUpdateTimer)
+      clearTimeout(explorer.deferredTimelineUpdateTimer)
+
+    explorer.deferredTimelineUpdateTimer = setTimeout(explorer.deferredTimelineUpdateCallback, 300)
   })
+
+  explorer.grapher.addDateAxisCursorChangeListener((cursor) => {
+    // console.log("dateAxisCursorChangeListener", cursor)
+    explorer.cursorTime = cursor
+
+    // do a deferred update
+    if (explorer.deferredTimelineUpdateTimer)
+      clearTimeout(explorer.deferredTimelineUpdateTimer)
+
+    explorer.cursorTime = cursor
+    if (explorer.colorMapDots) {
+      window.requestAnimationFrame(explorer.mapDotsAnimationFrameHandler)
+    }
+
+    explorer.deferredTimelineUpdateTimer = setTimeout(explorer.deferredTimelineUpdateCallback, 300)
+  })
+
 
   // setup datasource before adding sparklines, so that dataSource is in place
   explorer.mapOverlay.setDataSource(esdr, {})
@@ -1919,17 +1977,21 @@ function initPlots() {
     let channelName = channelId.slice(channelId.indexOf(".")+1)
     explorer.addPlot(feedId, channelName)
 
-    if (explorer.showSparklines) {
-      let plot = explorer.mapOverlay.addSparklinePlot(feedId, channelName)
-      plot.setPlotRange(explorer.grapher.getTimeRange())
-    }
+    if (explorer.colorMapDots)
+      explorer.colorizeFeedOnMap(feedId, channelName)
+
   }
 
   if (explorer.showSparklines) {
     explorer.addAllSparklines()
   }
 
+  if (explorer.colorMapDots) {
+    window.requestAnimationFrame(explorer.mapDotsAnimationFrameHandler)
+  }
+
 }
+
 
 explorer.addTimezoneSelectorTo = function(containerElement) {
   
@@ -2011,6 +2073,9 @@ explorer.addAllSparklines = function() {
     let plot = explorer.mapOverlay.addSparklinePlot(feedId, channelName)
     plot.setPlotRange(explorer.grapher.getTimeRange())
   }
+
+  window.requestAnimationFrame(explorer.sparklineAnimationFrameHandler)
+
 }
 
 
@@ -2037,6 +2102,48 @@ explorer.toggleSparklines = function(event) {
   }
   else {
     explorer.removeAllSparklines()
+  }
+}
+
+explorer.addAllMapDots = function() {
+   for (let channelId of esdr.selectedChannelIds) {
+    let feedId = parseInt(channelId.slice(0, channelId.indexOf(".")))
+    let channelName = channelId.slice(channelId.indexOf(".")+1)
+
+    explorer.colorizeFeedOnMap(feedId, channelName)
+  }
+
+  window.requestAnimationFrame(explorer.mapDotsAnimationFrameHandler)
+
+}
+
+
+explorer.removeAllMapDots = function() {
+   for (let channelId of esdr.selectedChannelIds) {
+    let feedId = parseInt(channelId.slice(0, channelId.indexOf(".")))
+    let channelName = channelId.slice(channelId.indexOf(".")+1)
+
+    explorer.mapOverlay.setColorizerForFeed(feedId, channelName, undefined)
+
+    explorer.feedMarkerColorizers.delete(feedId)
+  }
+
+  window.requestAnimationFrame(explorer.mapDotsAnimationFrameHandler)
+}
+
+
+explorer.toggleColorMapDots = function(event) {
+  if (!event) {
+    explorer.colorMapDots = !explorer.colorMapDots
+  }
+  else
+    explorer.colorMapDots = event.target.checked
+
+  if (explorer.colorMapDots) {
+    explorer.addAllMapDots()
+  }
+  else {
+    explorer.removeAllMapDots()
   }
 }
 
@@ -2127,6 +2234,17 @@ explorer.sparklineAnimationFrameHandler = function(timestamp) {
   explorer.mapOverlay.updateSparklineTimeRange(explorer.grapher.getTimeRange())
   explorer.mapOverlay.requestDraw()
 }
+
+explorer.mapDotsAnimationFrameHandler = function(timestamp) {
+  explorer.feedMarkerColorizers.forEach(colorizer => {
+    colorizer.setCurrentRange({min: explorer.startTime, max: explorer.endTime})
+    colorizer.setCurrentTime(explorer.cursorTime)
+  })
+
+  // requestDraw is triggered automatically inside MapOverlay
+  // explorer.mapOverlay.requestDraw()
+}
+
 
 explorer.scrubTimelineDate = function(timestamp) {
   let oldTimestamp = explorer.scrubTimestamp
@@ -2371,11 +2489,8 @@ explorer.moveTimelineTo = function(timestamp, positionInView) {
 }
 
 
-explorer.deferredTimelineUpdateCallback = function(startTime, endTime, cursorTime) {
+explorer.deferredTimelineUpdateCallback = function() {
   // console.log(`deferredTimelineUpdateCallback(${startTime}, ${endTime}, ${cursorTime})`)
-  explorer.startTime = startTime
-  explorer.endTime = endTime
-  explorer.cursorTime = cursorTime
 
   explorer.deferredTimelineUpdateTimer = undefined
   updateUrlHash()

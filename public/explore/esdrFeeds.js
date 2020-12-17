@@ -278,7 +278,7 @@ class ESDR {
 	/**
 	 * Return 0 <= i <= array.length such that !predicate(array[i - 1]) && predicate(array[i]).
 	 */
-	_binarySearch(array, predicate) {
+	static binarySearch(array, predicate) {
     let lo = -1
     let hi = array.length
     while (1 + lo < hi) {
@@ -296,15 +296,15 @@ class ESDR {
 
 		// binsearch lng/lat to find range covered in box
 		let latArray = this.latitudeSortedFeeds || []
-		let latLo = this._binarySearch(latArray, e => e[0] >= sw.lat())
-		let latHi = this._binarySearch(latArray, e => e[0] > ne.lat())
+		let latLo = ESDR.binarySearch(latArray, e => e[0] >= sw.lat())
+		let latHi = ESDR.binarySearch(latArray, e => e[0] > ne.lat())
 
 		if (latLo >= latHi) // same indices indicate nothing found
 			return []
 
 		let lngArray = this.longitudeSortedFeeds || []
-		let lngLo = this._binarySearch(lngArray, e => e[0] >= sw.lng())
-		let lngHi = this._binarySearch(lngArray, e => e[0] > ne.lng())
+		let lngLo = ESDR.binarySearch(lngArray, e => e[0] >= sw.lng())
+		let lngHi = ESDR.binarySearch(lngArray, e => e[0] > ne.lng())
 
 		if (lngLo >= lngHi)
 			return []
@@ -388,16 +388,25 @@ class ESDR {
 		esdr.channelDataUpdateCallback(feedId, channelName)
 	}
 
+	/**
+		@return compute ESDR tile level so that graph shows at least one full tile in the given range
+	*/
 	static computeDataTileLevel(range) {
 		let width = range.max - range.min
 		return width > 0 ? Math.floor(Math.log2(width / 512)) : undefined
 	}
 
+	/**
+		@return compute ESDR tile offset for a given UNIX Epoch time and tile level
+	*/
 	static computeDataTileOffset(time, level) {
 		let tileWidth = Math.pow(2, level + 9)
 		return Math.floor(time / tileWidth)
 	}
 
+	/**
+		@return reverse calculation of Epoch Time at start of a tile from level and offset
+	*/
 	static computeDataTileStartTime(level, offset) {
 		// +9 because 2^9 = 512, the number of samples per tile
 		return Math.pow(2, level + 9) * offset
@@ -495,6 +504,10 @@ class ESDR {
   	return baseUrl + browserParams.toString()
 	}
 
+	/**
+		This function tries to find a color mapping for a given channel.
+		@return a color map with a color map texture image name and range for applying it
+	*/
 	static sparklineColorMap(feedId, channelName) {
 		if ((channelName.indexOf("tVOC") == 0) || (channelName.indexOf("tvoc") == 0)) {
 			return {texture: "colorscale-tVOC_0_7000_ppb.png", range: {min: 0.0, max: 7000.0}}
@@ -519,5 +532,305 @@ class ESDR {
 
 } // class ESDR
 
-export {ESDR}
+
+class TiledDataEvaluator {
+
+	constructor(dataSource) {
+		this.tileDataSource = dataSource
+
+
+		this.aggregator = {
+			accuracyLevel: 0, // level zero means aggregate from tile that covers the whole window
+			histogramLimits: [], // values delimiting histogram buckets, including end limits
+		}
+
+		this.currentLevel = undefined
+		this.currentTiles = new Map()
+
+		this.meanValueCallback = undefined // (range, mean, count) => {}
+		this.currentValueCallback = undefined // (time, value, count) => {}
+		this.histogramCallback = undefined // (range, mean, count) => {}
+		this.currentRange = {min: undefined, max: undefined}
+	}
+
+	_tileInCurrentRange(level, offset) {
+		return this.currentTiles.has(`${level}.${offset}`)
+	}
+
+	fetchTile({level, offset}) {
+		if (!this.tileDataSource) {
+			console.warn("attempting to fetch tile without data source in place, ignoring")
+			return
+		}
+
+		this.currentTiles.set(`${level}.${offset}`, "requested")
+
+		let plotter = this
+
+		this.tileDataSource(level, offset, (tileJson) => {
+			if (!plotter._tileInCurrentRange(level, offset)) {
+				// if data is returned for tiles that aren't in current range, ignore them
+				return
+			}
+
+			// filter rows of [time, mean, stdev, count] so that only count > 0 is kept
+			let tileData = tileJson.data.filter( sample => sample[3] > 0 )
+
+			// we actually have a new tile 
+			let tile = {
+				level: level,
+				offset: offset,
+				data: tileData,
+			}
+
+
+			// kick off processing
+			plotter._tileReceived(tile)
+		})
+	}
+
+	_haveIncompleteTiles() {
+		return Array.from(this.currentTiles.values()).some( obj => obj === "requested")
+	}
+
+	_tileReceived(jsonTile) {
+		console.log("tileReceived", jsonTile)
+		let tileSpec = `${jsonTile.level}.${jsonTile.offset}`
+		if (jsonTile.level != this.currentLevel) {
+			// reject tiles that are of the wrong level
+			return
+		}
+		if (!this.currentTiles.has(tileSpec)) {
+			// reject tiles that aren't what we're currently looking for
+			return
+		}
+
+		this.currentTiles.set(tileSpec, jsonTile)
+
+		// check if tiles are still in flight
+		if (this._haveIncompleteTiles()) {
+			// not done, yet, waiting for further tiles
+			// do nothing
+		}
+		else {
+			// compute value when all tiles have arrived
+			this._combineTileData()
+			this._computeValues()
+		}
+
+	}
+
+	tileRangeForTimeRange(levelFactor, range) {
+		let level = ESDR.computeDataTileLevel(range) + levelFactor
+		let startIndex = ESDR.computeDataTileOffset(range.min, level)
+		let lastIndex = ESDR.computeDataTileOffset(range.max, level)
+
+		let offsets = []
+		for (let i = startIndex; i <= lastIndex; ++i) {
+			offsets.push(i)
+		}
+		return {level: level, offsets: offsets}
+	}
+
+	setCurrentTime(currentTime, invalidateData) {
+
+		if (this.currentTime == currentTime)
+			return
+
+		if ((currentTime < this.currentRange.min) || (currentTime > this.currentRange.max)) {
+			console.warn("setCurrentTime exceeds current time range", currentTime, this.currentRange)
+		}
+
+		this.currentTime = currentTime
+
+		if (invalidateData && !this.currentSamples && this.currentValueCallback)
+			this.currentValueCallback(undefined, undefined, undefined)
+		
+		if (this.currentSamples && this.currentValueCallback)
+		{
+			this._computeCurrentValue()
+		}
+	}
+
+	_numericArraysEqual(lista, listb) {
+		if (!lista || !listb)
+			return false
+		if (lista.length != listb.length)
+			return false;
+		for (let i = 0; i < lista.length; ++i) {
+			if (lista[i] != listb[i])
+				return false
+		}
+		return true
+	}
+
+	setHistogramLimits(histogramLimits, invalidateData) {
+
+		if (this._numericArraysEqual(this.aggregator.histogramLimits, histogramLimits))
+			return
+
+		this.aggregator.histogramLimits = histogramLimits
+
+		if (invalidateData && !this.currentSamples && this.histogramCallback)
+			this.histogramCallback(undefined)
+		
+		if (this.currentSamples)
+		{
+			this._computeHistogram()
+		}
+	}
+
+	setCurrentRange(timeRange, invalidateData) {
+
+		if ((timeRange.min === this.currentRange.min) && (timeRange.max === this.currentRange.max)) {
+			// time range didn't change, do nothing
+			return
+		}
+
+
+		// first, figure out which tiles we need
+		let tileRange = this.tileRangeForTimeRange(this.aggregator.accuracyLevel, timeRange)
+
+		this.currentRange = timeRange
+
+		// next figure out which tiles we actually need to fetch
+		// this is an optimization so that we don't recompute things unnecessarily, even though the tile data source is expected to cache tiles already
+		let levelNeeded = tileRange.level
+		if (levelNeeded != this.currentLevel) {
+			// console.log("setCurrentRange need to fetch all tiles")
+			// we're fetching tiles from a different level, so just fetch all
+			if (invalidateData)
+				this._invalidateCallbackData()
+			this.currentLevel = levelNeeded
+			this.currentTiles = new Map()
+			this.currentSamples = undefined
+			tileRange.offsets.forEach( offset => this.fetchTile({level: levelNeeded, offset: offset}) )
+		}
+		else {
+			// if we're on the current level
+			// console.log("setCurrentRange might need to fetch some tiles")
+			if (invalidateData)
+				this._invalidateCallbackData()
+			let currentOffsets = new Set(Array.from(this.currentTiles.keys()).map( (tileSpec) => parseInt(tileSpec.slice(tileSpec.indexOf(".")+1)) ))
+			let neededOffsets = tileRange.offsets.filter(offset => !currentOffsets.has(offset))
+			if (neededOffsets.length > 0) {
+				this.currentSamples = undefined
+				neededOffsets.forEach( offset => this.fetchTile({level: levelNeeded, offset: offset}) )
+			}
+			else {
+				// console.log("got all the tiles")
+				// if we've already got all tiles needed, try to compute the value immediately (though it won't compute if some tiles are still in flight)
+				this._computeValues()
+			}
+		}
+	}
+
+	_invalidateCallbackData() {
+		if (this.meanValueCallback)
+			this.meanValueCallback(undefined, undefined, undefined)
+		if (this.currentValueCallback)
+			this.currentValueCallback(undefined, undefined, undefined)
+		if (this.histogramCallback)
+			this.histogramCallback(undefined)		
+	}
+
+	_combineTileData() {
+		// this function assumes this.currentTiles is complete (all tiles have been received)
+		let sortedTiles = Array.from(this.currentTiles.values()).sort( (a,b) => a.offset - b.offset )
+
+		// concat all tile data together
+		let samples = sortedTiles.reduce((acc, tile) => acc.concat(tile.data), [])
+
+		// compute an aggregate with pre-computed cumulative sums to be able to do the averaging in O(1) when computing the value later
+		let aggregate = samples.reduce( (acc, e) => {
+				let sum = acc.sum + e[1]
+				let count = acc.count + e[3]
+				acc.cumsum.push({value: sum, count: count})
+				return {
+					sum: sum, 
+					count: count, 
+					cumsum: acc.cumsum
+				}
+			}, 
+			{sum: 0.0, count: 0, cumsum: []}
+		)
+
+		this.currentAggregate = aggregate
+		this.currentSamples = samples
+	}
+
+	_computeMeanValue() {
+		// do nothing if no callback is set
+		if (!this.meanValueCallback)
+			return
+
+		let iLo = ESDR.binarySearch(this.currentSamples, e => e[0] >= this.currentRange.min)
+		let iHi = ESDR.binarySearch(this.currentSamples, e => e[0] > this.currentRange.max)
+
+		if (iLo == iHi) {
+			// undefined current value
+			this.meanValueCallback(this.currentRange, undefined, 0)
+		}
+		else {
+			let sum = this.currentAggregate.cumsum[iHi].value - this.currentAggregate.cumsum[iLo].value
+			let count = this.currentAggregate.cumsum[iHi].count - this.currentAggregate.cumsum[iLo].count
+			let mean = sum / count
+			this.meanValueCallback(this.currentRange, mean, count)
+		}
+	}
+
+	_computeCurrentValue() {
+		// do nothing if no callback is set
+		if (!this.currentValueCallback || !this.currentTime)
+			return
+
+		let iCurrent = ESDR.binarySearch(this.currentSamples, e => e[0] >= this.currentTime) - 1
+
+		if ((iCurrent >= this.currentSamples.length) || (iCurrent < 0)) {
+			// undefined current value
+			this.currentValueCallback(this.currentTime, undefined, 0)
+		}
+		else {
+			this.currentValueCallback(this.currentTime, this.currentSamples[iCurrent][1], this.currentSamples[iCurrent][3])
+		}
+	}
+
+	_computeHistogram() {
+		// do nothing if no callback is set
+		if (!this.histogramCallback)
+			return
+
+		let histogram = this.aggregator.histogramLimits.slice(0, -1).map(e => 0)
+
+		for (let s of this.currentSamples) {
+			let val = s[1]
+			let count = s[3]
+
+			let iLo = ESDR.binarySearch(this.aggregator.histogramLimits, lim => val >= lim)
+
+			if (iLo < histogram.length)
+				histogram[iLo] = histogram[iLo] + count
+		}
+
+		this.histogramCallback(histogram)
+
+	}
+
+	_computeValues() {
+		// nothing to compute until samples have been populated
+		if (!this.currentSamples)
+			return
+
+		this._computeCurrentValue()
+		this._computeMeanValue()
+		this._computeHistogram()
+	}
+
+} // class TiledDataEvaluator
+
+
+
+
+
+export {ESDR, TiledDataEvaluator}
 
