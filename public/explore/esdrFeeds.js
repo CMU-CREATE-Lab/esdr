@@ -594,7 +594,7 @@ class TiledDataEvaluator {
 	}
 
 	_tileReceived(jsonTile) {
-		console.log("tileReceived", jsonTile)
+		// console.log("tileReceived", jsonTile)
 		let tileSpec = `${jsonTile.level}.${jsonTile.offset}`
 		if (jsonTile.level != this.currentLevel) {
 			// reject tiles that are of the wrong level
