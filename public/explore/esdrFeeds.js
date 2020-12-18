@@ -633,6 +633,7 @@ class TiledDataEvaluator {
 	}
 
 	tileRangeForTimeRange(levelFactor, range) {
+		console.assert(isFinite(range.min), isFinite(range.max))
 		let level = ESDR.computeDataTileLevel(range) + levelFactor
 		let startIndex = ESDR.computeDataTileOffset(range.min, level)
 		let lastIndex = ESDR.computeDataTileOffset(range.max, level)
@@ -713,6 +714,7 @@ class TiledDataEvaluator {
 			// we're fetching tiles from a different level, so just fetch all
 			if (invalidateData)
 				this._invalidateCallbackData()
+			console.assert(isFinite(levelNeeded))
 			this.currentLevel = levelNeeded
 			this.currentTiles = new Map()
 			this.currentSamples = undefined
