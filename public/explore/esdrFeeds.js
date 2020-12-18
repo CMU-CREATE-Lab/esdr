@@ -3,8 +3,10 @@
 
 class ESDR {
 
-	constructor() {
+	constructor(geographicBounds) {
 		this.numParallelRequests = 1
+
+		this.geographicBounds = geographicBounds
 		this.feeds = new Map
 		this.feedIds = []
 		this.apiUrl = 'https://esdr.cmucreatelab.org/api/v1'
@@ -320,7 +322,17 @@ class ESDR {
 
 	getFeedsFromOffset(feedOffset, callback) {
 	  let request = new XMLHttpRequest();
-	  request.open('GET', `${this.apiUrl}/feeds?offset=${feedOffset}`, true);
+	  if (this.geographicBounds) {
+	  	// if a geographicBounds is set, only get feeds in that area to speed up getting a list of sensors and more importantly their coordinates
+	  	// this is for live data display in a fixed window, eg. plumeviz
+	  	// https://esdr.cmucreatelab.org/api/v1/feeds?whereAnd=productId=69,latitude%3E=39.420978,latitude%3C=40.756547,longitude%3E=-81.451293,longitude%3C=-79.677010
+
+	  	request.open('GET', `${this.apiUrl}/feeds?offset=${feedOffset}&whereAnd=latitude%3E=${this.geographicBounds.min.lat},latitude%3C=${this.geographicBounds.max.lat},longitude%3E=${this.geographicBounds.min.lng},longitude%3C=${this.geographicBounds.max.lng}`, true);
+
+	  } else {
+	  	request.open('GET', `${this.apiUrl}/feeds?offset=${feedOffset}`, true);
+
+	  }
 
 	  request.onload = function() {
 	    if (this.status >= 200 && this.status < 400) {
