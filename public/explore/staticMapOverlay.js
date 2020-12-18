@@ -532,107 +532,6 @@ class StaticMapOverlay extends gltools.GLCanvasBase {
 		this.glDrawMarkers(gl)
 	}
 
-	glDrawGeoGrid(gl) {
-		let map = this.getMap()
-		let mapBounds = map.getBounds()
-		let geosw = (mapBounds.getSouthWest())
-		let geone = (mapBounds.getNorthEast())
-		// let pixelScale = window.devicePixelRatio || 1.0
-
-		let vertices = []
-		let colors = []
-
-
-		for (let i = Math.ceil(geosw.lng); i < geone.lng; i++)
-		{
-			let xpix = this.longitudeToCanvasPixel(i)
-			vertices.push(xpix, 0.1*this.canvas.height)
-			vertices.push(xpix, 0.9*this.canvas.height)
-			let color = [0.5, 0, 1.0, 1.0]
-			if (i % 10 == 0)
-				color = [0.0, 1.0, 0.0, 1.0]
-			if (i == 0)
-				color = [0.0, 0, 0.0, 1.0]
-
-			colors.push(...color)
-			colors.push(...color)
-		}
-
-		for (let i = Math.ceil(geosw.lat); i < geone.lat; i++)
-		{
-			let ypix = this.latitudeToCanvasPixel(i)
-			vertices.push(0.1*this.canvas.width, ypix)
-			vertices.push(0.9*this.canvas.width, ypix)
-			let color = [0.5, 0, 1.0, 1.0]
-			if (i % 10 == 0)
-				color = [0.0, 1.0, 0.0, 1.0]
-			if (i == 0)
-				color = [0.0, 0, 0.0, 1.0]
-
-			colors.push(...color)
-			colors.push(...color)
-		}
-
-		// vertices = [
-		// 	 0.5,  0.5,
-		// 	 0.5, -0.5,
-		// 	-0.5,  0.5,
-		// 	-0.5, -0.5,
-		// ]
-
-		// crete vertex buffer on demand
-		const vertexBuffer = this.vertexBuffer || gl.createBuffer()
-		this.vertexBuffer = vertexBuffer
-		gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
-
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW)
-
-		const colorBuffer = this.colorBuffer || gl.createBuffer()
-		this.colorBuffer = colorBuffer
-		gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
-
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW)
-
-
-
-		// do the drawing
-
-		gl.lineWidth(1.0)
-
-		const PM = [
-			1, 0, 0, 0,
-			0, 1, 0, 0,
-			0, 0, 1, 0,
-			0, 0, 0, 1
-		]
-		// const MV = PM
-		// model view matrix that shifts Y to point up instead of down as is standard in GL
-		const MV = [
-			2.0/this.canvas.width, 											 0, 0, 0,
-			                    0, -2.0/this.canvas.height, 0, 0,
-													0, 									 	 	 0, 1, 0,
-											 -1.0, 									   1.0, 0, 1
-		]
-
-		let shader = this.simpleShader
-
-		gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
-		gl.vertexAttribPointer(shader.attribLocations.vertexPos, 2, gl.FLOAT, false, 0, 0)
-		gl.enableVertexAttribArray(shader.attribLocations.vertexPos)
-
-		gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
-		gl.vertexAttribPointer(shader.attribLocations.color, 4, gl.FLOAT, false, 0, 0)
-		gl.enableVertexAttribArray(shader.attribLocations.color)
-
-		gl.useProgram(shader.shaderProgram)
-		gl.uniformMatrix4fv(shader.uniformLocations.modelViewMatrix, false, MV)
-		gl.uniformMatrix4fv(shader.uniformLocations.projectionMatrix, false, PM)
-
-		// gl.drawArrays(gl.TRIANGLE_STRIP, 0, vertices.length/2)
-		gl.drawArrays(gl.LINES, 0, vertices.length/2)
-
-
-	}
 
 	metersPerDegreeAtLatitude(latitude) {
 		const earthRadius = 6378137.0
@@ -701,7 +600,7 @@ class StaticMapOverlay extends gltools.GLCanvasBase {
 			y: this.canvas.offsetHeight - boxYOffset
 		}
 		let boxne = {
-			x: this.canvas.offsetwidth - boxXOffset, 
+			x: this.canvas.offsetWidth - boxXOffset, 
 			y: boxYOffset
 		}
 
@@ -717,8 +616,8 @@ class StaticMapOverlay extends gltools.GLCanvasBase {
 		}
 
 
-		let pixsw = {x: 0.0, y: this.canvas.offsetHeight}
-		let pixne = {x: this.canvas.offsetWidth, y: 0.0}
+		let pixsw = {x: 0.0 - 0.5*this.canvas.offsetWidth, y: this.canvas.offsetHeight - 0.5*this.canvas.offsetHeight}
+		let pixne = {x: this.canvas.offsetWidth - 0.5*this.canvas.offsetWidth, y: this.canvas.offsetHeight - 0.5*this.canvas.offsetHeight}
 
 
 		let ctx = this.canvas.getContext("2d")
@@ -1065,7 +964,8 @@ _binarySearch(array, predicate) {
 			if (markers.highlightedFeeds.has(feedId))
 				return [0.0,0.2,0.2,0.2]
 			else if (markers.rejectedFeeds.has(feedId))
-				return [0.025,0.025,0.025,0.05]
+				return [0.0,0.0,0.0,0.0]
+				// return [0.025,0.025,0.025,0.05]
 			else
 				return [0.0,0.0,0.3,0.3]
 		})
@@ -1075,7 +975,8 @@ _binarySearch(array, predicate) {
 			if (markers.activeFeeds.has(feedId))
 				return [0.5,0.5,0.5,0.5]
 			else if (markers.rejectedFeeds.has(feedId))
-				return [0.05,0.05,0.05,0.1]
+				return [0.0,0.0,0.0,0.0]
+				// return [0.05,0.05,0.05,0.1]
 			else
 				return [0.0,0.0,0.5,0.5]
 		})
@@ -1128,7 +1029,7 @@ _binarySearch(array, predicate) {
 			fillColors: this.repeatArray([0.0,0.0,0.5,0.5], feeds.length),
 			strokeColors: this.repeatArray([0.0,0.0,0.5,0.5], feeds.length),
 			strokeWidths: this.repeatArray([1.0], feeds.length),
-			markerSizes: this.repeatArray([10.0], feeds.length),
+			markerSizes: this.repeatArray([15.0], feeds.length),
 			highlightedFeeds: highlightedFeeds,
 			rejectedFeeds: rejectedFeeds,
 			activeFeeds: activeFeeds,
