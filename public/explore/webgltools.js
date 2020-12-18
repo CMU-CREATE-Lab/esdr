@@ -488,6 +488,8 @@ export class GLCanvasBase {
     this.widthIFrame = widthIFrame
 
     this.canvas = document.createElement("canvas")
+    this.canvas.width = div.offsetWidth*(window.devicePixelRatio || 1.0)
+    this.canvas.height = div.offsetHeight*(window.devicePixelRatio || 1.0)
     this.canvas.style.width = "100%"
     this.canvas.style.height = "100%"
 
