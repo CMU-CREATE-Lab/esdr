@@ -1127,7 +1127,8 @@ _binarySearch(array, predicate) {
 
 				this.markers.fillColors[feedIndex] = color
 
-				this._doDeferredGlUpdate({feedColors: [feedId]}, true)
+				this.glBuffersDirty = true
+				this._doDeferredGlUpdate({feedColors: [feedId]})
 
 				this.requestDraw()
 		  }
