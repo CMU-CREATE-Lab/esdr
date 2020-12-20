@@ -52,7 +52,8 @@ class StaticMapOverlay extends gltools.GLCanvasBase {
   	// data plotting
   	this.sparkLines = new Map()
   	this.feedColorizers = new Map()
-  	this.colorizedFeedColors = new Map()
+  	this.colorizedFeedFillColors = new Map()
+  	this.colorizedFeedStrokeColors = new Map()
 
   	this.anonymousAnimationFrameHandler = timestamp => this.animationFrameHandler(timestamp)
 
@@ -1101,7 +1102,7 @@ _binarySearch(array, predicate) {
 	}
 
 
-	setColorizerForFeed(feedId, channelName, colorizer) {
+	setColorizerForFeed(feedId, channelName, colorizer, amplificationFactor = 1.0) {
 
 		if (colorizer) {
 			// load colormap if we have one
@@ -1119,13 +1120,18 @@ _binarySearch(array, predicate) {
 				if (feedIndex === undefined)
 					return
 
-				let color = (imagePeeker ? imagePeeker.colorMapLookup(value, colorMap.range) : undefined) || [0.0,0.0,0.0,1.0]
+				let color = imagePeeker ? imagePeeker.colorMapLookup(value*amplificationFactor, colorMap.range) : undefined
 
 				// console.log("  color", color)
 
-				this.colorizedFeedColors.set(feedId, color)
+				let fillColor = color || [0.0,0.0,0.0,0.0]
+				let strokeColor = color ? [1.0, 0.0, 0.0, 1.0] : [0.0,0.0,0.0,0.0]
 
-				this.markers.fillColors[feedIndex] = color
+				this.colorizedFeedFillColors.set(feedId, fillColor)
+				this.colorizedFeedStrokeColors.set(feedId, strokeColor)
+
+				this.markers.fillColors[feedIndex] = fillColor
+				this.markers.strokeColors[feedIndex] = strokeColor
 
 				this.glBuffersDirty = true
 				this._doDeferredGlUpdate({feedColors: [feedId]})
