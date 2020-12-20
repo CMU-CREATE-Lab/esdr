@@ -653,9 +653,9 @@ class TiledDataEvaluator {
 		if (this.currentTime == currentTime)
 			return
 
-		if ((currentTime < this.currentRange.min) || (currentTime > this.currentRange.max)) {
-			console.warn("setCurrentTime exceeds current time range", currentTime, this.currentRange)
-		}
+		// if ((currentTime < this.currentRange.min) || (currentTime > this.currentRange.max)) {
+		// 	console.warn("setCurrentTime exceeds current time range", currentTime, this.currentRange)
+		// }
 
 		this.currentTime = currentTime
 
