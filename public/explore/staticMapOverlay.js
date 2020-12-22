@@ -55,6 +55,17 @@ class StaticMapOverlay extends gltools.GLCanvasBase {
   	this.colorizedFeedFillColors = new Map()
   	this.colorizedFeedStrokeColors = new Map()
 
+  	this.colors = {
+  		highlightedFeedFillColor: [0.0,0.2,0.2,0.2],
+  		selectedFeedFillColor: 		[0.0,0.0,0.3,0.3],
+  		rejectedFeedFillColor: 		[0.025,0.025,0.025,0.5],
+  		defaultFeedFillColor: 		[0.0,0.0,0.3,0.3],
+  		activeFeedStrokeColor: 			[0.5,0.5,0.5,0.5],
+  		selectedFeedStrokeColor: 		[1.0, 0.0, 0.0, 1.0],
+  		rejectedFeedStrokeColor: 		[0.05,0.05,0.05,0.1],
+  		defaultFeedStrokeColor: 		[0.0,0.0,0.5,0.5],
+  	}
+
   	this.anonymousAnimationFrameHandler = timestamp => this.animationFrameHandler(timestamp)
 
   	this._initGl()
@@ -963,23 +974,23 @@ _binarySearch(array, predicate) {
 
 		let fillColors = changedFeedIds.map( (feedId) => {
 			if (markers.highlightedFeeds.has(feedId))
-				return [0.0,0.2,0.2,0.2]
+				return this.colors.highlightedFeedFillColor
 			else if (markers.rejectedFeeds.has(feedId))
-				return [0.0,0.0,0.0,0.0]
+				return this.colors.rejectedFeedFillColor
 				// return [0.025,0.025,0.025,0.05]
 			else
-				return [0.0,0.0,0.3,0.3]
+				return this.colors.defaultFeedFillColor
 		})
 		let strokeColors = changedFeedIds.map( (feedId) => {
 			if (markers.selectedFeeds.has(feedId))
-				return [1.0, 0.0, 0.0, 1.0]
+				return this.colors.selectedFeedStrokeColor
 			if (markers.activeFeeds.has(feedId))
-				return [0.5,0.5,0.5,0.5]
+				return this.colors.activeFeedStrokeColor
 			else if (markers.rejectedFeeds.has(feedId))
-				return [0.0,0.0,0.0,0.0]
+				return this.colors.rejectedFeedStrokeColor
 				// return [0.05,0.05,0.05,0.1]
 			else
-				return [0.0,0.0,0.5,0.5]
+				return this.colors.defaultFeedStrokeColor
 		})
 
 		let feedIndices = undefined
@@ -1027,8 +1038,8 @@ _binarySearch(array, predicate) {
 			},
 			feeds: feeds,
 			positions: positions,
-			fillColors: this.repeatArray([0.0,0.0,0.5,0.5], feeds.length),
-			strokeColors: this.repeatArray([0.0,0.0,0.5,0.5], feeds.length),
+			fillColors: this.repeatArray(this.colors.defaultFeedFillColor, feeds.length),
+			strokeColors: this.repeatArray(this.colors.defaultFeedStrokeColor, feeds.length),
 			strokeWidths: this.repeatArray([1.0], feeds.length),
 			markerSizes: this.repeatArray([15.0], feeds.length),
 			highlightedFeeds: highlightedFeeds,
@@ -1134,7 +1145,7 @@ _binarySearch(array, predicate) {
 				// console.log("  color", color)
 
 				let fillColor = color || [0.0,0.0,0.0,0.0]
-				let strokeColor = color ? [1.0, 0.0, 0.0, 1.0] : [0.0,0.0,0.0,0.0]
+				let strokeColor = color ? this.colors.activeFeedStrokeColor : [0.0,0.0,0.0,0.0]
 
 				this.colorizedFeedFillColors.set(feedId, fillColor)
 				this.colorizedFeedStrokeColors.set(feedId, strokeColor)
