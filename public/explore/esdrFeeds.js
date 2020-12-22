@@ -110,7 +110,7 @@ class ESDR {
 		let mapBoundsChanged = ESDR.areMapBoundsEqual(oldQuery.mapBounds, newQuery.mapBounds)
 		let mapOnlyChanged = oldQuery.mapOnly == newQuery.mapOnly
 		// map filter only changed if mapOnly changes, or mapOnly is now active and bounds change
-		let mapFilterChanged = (mapOnly && mapBoundsChanged) || mapOnlyChanged
+		let mapFilterChanged = (newQuery.mapOnly && mapBoundsChanged) || mapOnlyChanged
 
 		let recentOnlyChanged = oldQuery.recentOnly == newQuery.recentOnly
 		let searchTextChanged = oldQuery.text == newQuery.text
