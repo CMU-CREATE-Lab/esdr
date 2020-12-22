@@ -1102,13 +1102,22 @@ _binarySearch(array, predicate) {
 	}
 
 
-	setColorizerForFeed(feedId, channelName, colorizer, amplificationFactor = 1.0) {
+	setColorizerForFeed(feedId, channelName, colorizer, colorMapLookup = undefined, amplificationFactor = 1.0) {
 
 		if (colorizer) {
-			// load colormap if we have one
-			let colorMap = ESDR.sparklineColorMap(feedId, channelName)
+			// colorizer can be a color map, or a function object
 
-			let imagePeeker = colorMap.texture ? new ImagePeeker(colorMap.texture) : undefined
+			if (!colorMapLookup) {
+				// load colormap if we have one
+				let colorMap = ESDR.sparklineColorMap(feedId, channelName)
+
+				let imagePeeker = colorMap.texture ? new ImagePeeker(colorMap.texture) : undefined
+
+				if (imagePeeker)
+					colorMapLookup = (value) => imagePeeker.colorMapLookup(value*amplificationFactor, colorMap.range)
+				else
+					colorMapLookup = (value) => undefined
+			}
 
 
 			colorizer.currentValueCallback = (time, value, count) => {
@@ -1120,7 +1129,7 @@ _binarySearch(array, predicate) {
 				if (feedIndex === undefined)
 					return
 
-				let color = imagePeeker ? imagePeeker.colorMapLookup(value*amplificationFactor, colorMap.range) : undefined
+				let color = colorMapLookup(value)
 
 				// console.log("  color", color)
 
