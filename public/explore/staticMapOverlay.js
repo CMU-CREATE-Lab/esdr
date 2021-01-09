@@ -55,6 +55,8 @@ class StaticMapOverlay extends gltools.GLCanvasBase {
   	this.colorizedFeedFillColors = new Map()
   	this.colorizedFeedStrokeColors = new Map()
 
+  	this.markerScreenScale = undefined
+
   	this.colors = {
   		highlightedFeedFillColor: [0.0,0.2,0.2,0.2],
   		selectedFeedFillColor: 		[0.0,0.0,0.3,0.3],
@@ -103,6 +105,7 @@ class StaticMapOverlay extends gltools.GLCanvasBase {
 	    uniform float zoomFactor;
 	    uniform mat4 modelViewMatrix;
 	    uniform mat4 projectionMatrix;
+	    uniform float markerScale; // uniform to scale all markers
 
 	    varying vec2 pxCenterOffset; 
 	    varying float pxMarkerSize;
@@ -144,7 +147,7 @@ class StaticMapOverlay extends gltools.GLCanvasBase {
 	      gl_Position = projectionMatrix * vec4(screenSpacePos, 0.0, 1.0);
 	      fillColor = fillColorIn;
 	      strokeColor = strokeColorIn;
-	      pxMarkerSize = pxMarkerSizeIn;
+	      pxMarkerSize = pxMarkerSizeIn*markerScale;
 	      pxStrokeWidth = pxStrokeWidthIn;
 	    }
   	`
@@ -183,6 +186,7 @@ class StaticMapOverlay extends gltools.GLCanvasBase {
   		},
   		{
   			zoomFactor: "zoomFactor",
+  			markerScale: "markerScale",
   			modelViewMatrix: "modelViewMatrix",
   			projectionMatrix: "projectionMatrix",
   		},
@@ -484,6 +488,10 @@ class StaticMapOverlay extends gltools.GLCanvasBase {
 		gl.uniformMatrix4fv(shader.uniformLocations.modelViewMatrix, false, MV)
 		gl.uniformMatrix4fv(shader.uniformLocations.projectionMatrix, false, PM)
 		gl.uniform1f(shader.uniformLocations.zoomFactor, this.zoomFactor)
+
+		// viewport size based scaling
+		let markerScale = this.markerScreenScale ? Math.min(this.canvas.offsetWidth, this.canvas.offsetHeight) / this.markerScreenScale : 1.0
+		gl.uniform1f(shader.uniformLocations.markerScale, markerScale)
 
 		// if index buffer hasn't been set, yet, can't draw
 		if (!shader.indexBuffer)
@@ -1041,7 +1049,8 @@ _binarySearch(array, predicate) {
 			fillColors: this.repeatArray(this.colors.defaultFeedFillColor, feeds.length),
 			strokeColors: this.repeatArray(this.colors.defaultFeedStrokeColor, feeds.length),
 			strokeWidths: this.repeatArray([1.0], feeds.length),
-			markerSizes: this.repeatArray([15.0], feeds.length),
+			markerSizes: this.repeatArray([feedStates.markerSize || 15.0], feeds.length),
+			// markerSizes: this.repeatArray([15.0], feeds.length),
 			highlightedFeeds: highlightedFeeds,
 			rejectedFeeds: rejectedFeeds,
 			activeFeeds: activeFeeds,
