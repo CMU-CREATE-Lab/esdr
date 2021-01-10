@@ -140,7 +140,7 @@ class StaticMapOverlay extends gltools.GLCanvasBase {
 
 	    	// offset vertex by direction and size of marker
 	    	// actual offset is 1px bigger than markerSize to leave room for AA
-	    	vec2 pxOffset = pxVertexOffsetDirection*(0.5*pxMarkerSizeIn + pxStrokeWidthIn + 1.0);
+	    	vec2 pxOffset = pxVertexOffsetDirection*(0.5*pxMarkerSizeIn*markerScale + pxStrokeWidthIn + 1.0);
 	    	screenSpacePos += pxOffset;
 
 	    	// outputs
