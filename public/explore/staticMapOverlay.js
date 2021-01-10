@@ -52,6 +52,7 @@ class StaticMapOverlay extends gltools.GLCanvasBase {
   	// data plotting
   	this.sparkLines = new Map()
   	this.feedColorizers = new Map()
+  	this.feedSizers = new Map()
   	this.colorizedFeedFillColors = new Map()
   	this.colorizedFeedStrokeColors = new Map()
 
@@ -327,6 +328,32 @@ class StaticMapOverlay extends gltools.GLCanvasBase {
 		}
 	}
 
+	_updateMarkerSizeBuffers(gl, changedFeedIndices) {
+		let markers = this.markers
+		if (!markers || !markers.feeds)
+			return
+
+		// do a sub buffer update for changes with less than 1000 markers changed
+		// exact number can be tuned for performance, 1000 is just a guess
+		if (!changedFeedIndices || (changedFeedIndices.length > 1000)) {
+			let sizes = this.splatArrayForQuad(markers.sizes)
+
+			this.markerShader.sizeBuffer = gltools.resizeArrayBuffer(gl, this.markerShader.sizeBuffer, sizes.length, 1)
+			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(sizes.flat()), gl.DYNAMIC_DRAW)
+		}
+		else
+		{
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.markerShader.sizeBuffer)
+			for (let i of changedFeedIndices) {
+				let sizes = this.splatArrayForQuad(markers.markerSizes.slice(i,i+1)).flat()
+				let fsizes = new Float32Array(sizes)
+
+				gl.bufferSubData(gl.ARRAY_BUFFER, i*4*Float32Array.BYTES_PER_ELEMENT, fsizes)
+			}
+		}
+	}
+
+
 	_updateIndexBuffer(gl) {
 		if (!this.markers)
 			return
@@ -390,6 +417,11 @@ class StaticMapOverlay extends gltools.GLCanvasBase {
 					mapOverlay._updateMarkerColorBuffers(gl, feedIndices)
 					wasUpdated = true
 				}
+				if (update.feedSizes) {
+					let feedIndices = update.feedSizes.map(feedId => mapOverlay.markers.sortedFeeds.index.get(feedId))
+					mapOverlay._updateMarkerSizeBuffers(gl, feedIndices)
+					wasUpdated = true
+				}
 			}
 
 			mapOverlay._checkBufferLengths()
@@ -415,6 +447,14 @@ class StaticMapOverlay extends gltools.GLCanvasBase {
 		else if (updateContent.feedColors) {
 			this.deferredUpdateContent_.feedColors = updateContent.feedColors
 		}
+
+		if (updateContent.feedSizes && this.deferredUpdateContent_.feedSizes) {
+			this.deferredUpdateContent_.feedSizes = this.deferredUpdateContent_.feedSizes.concat(updateContent.feedSizes)
+		}
+		else if (updateContent.feedSizes) {
+			this.deferredUpdateContent_.feedSizes = updateContent.feedSizes
+		}
+
 
 		this.deferredUpdateContent_.allMarkers = this.deferredUpdateContent_.allMarkers || updateContent.allMarkers
 		this.deferredUpdateContent_.allIndices = this.deferredUpdateContent_.allIndices || updateContent.allIndices
@@ -1121,6 +1161,40 @@ _binarySearch(array, predicate) {
 
 	}
 
+	setSizerForFeed(feedId, channelName, sizer) {
+		if (sizer) {
+
+			sizer.evaluator.currentValueCallback = (time, value, count) => {
+				let feedIndex = this._getFeedIndexFromFeedId(feedId)
+
+				// console.log("colorizering", feedId, channelName, time, value)
+
+				// do nothing if feed isn't on map (yet)
+				if (feedIndex === undefined)
+					return
+
+				let size = sizer.sizeForValue(value)
+
+
+
+				this.markers.markerSizes[feedIndex] = size
+
+				this.glBuffersDirty = true
+				this._doDeferredGlUpdate({feedSizes: [feedId]})
+
+				this.requestDraw()
+		  }
+
+		}
+		else {
+			// if we're clearing the sizer, do nothing
+			// this.sizeMarkers([feedId])
+			// this._doDeferredGlUpdate({feedSizes: [feedId]})
+		}
+
+
+	  this.feedSizers.set(feedId, sizer)
+	}
 
 	setColorizerForFeed(feedId, channelName, colorizer, colorMapLookup = undefined, amplificationFactor = 1.0) {
 
