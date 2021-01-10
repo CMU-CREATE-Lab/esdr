@@ -1227,8 +1227,8 @@ _binarySearch(array, predicate) {
 
 				// console.log("  color", color)
 
-				let fillColor = color || [0.0,0.0,0.0,0.0]
-				let strokeColor = color ? this.colors.activeFeedStrokeColor : [0.0,0.0,0.0,0.0]
+				let fillColor = color ? [color[0]*0.95, color[1]*0.95, color[2]*0.95, color[3]] : [0.0,0.0,0.0,0.0]
+				let strokeColor = color ? [color[0]*1.05, color[1]*1.05, color[2]*1.05, color[3]] : [0.0,0.0,0.0,0.0]
 
 				this.colorizedFeedFillColors.set(feedId, fillColor)
 				this.colorizedFeedStrokeColors.set(feedId, strokeColor)
