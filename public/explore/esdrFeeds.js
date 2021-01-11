@@ -527,6 +527,9 @@ class ESDR {
 		else if (channelName.indexOf("PM2") == 0) {
 			return {texture: "img/colorscale-PM25_0_300_ug.png", range: {min: 0.0, max: 300.0}}
 		}
+		else if (channelName.indexOf("PM025") == 0) {
+			return {texture: "img/colorscale-PM25_0_300_ug.png", range: {min: 0.0, max: 300.0}}
+		}
 		else if (channelName.indexOf("SO2_PPM") == 0) {
 			return {texture: "img/colorscale-SO2_0_804_ppb.png", range: {min: 0.0, max: 0.804}}
 		}
