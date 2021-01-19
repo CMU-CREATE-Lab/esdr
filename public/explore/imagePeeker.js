@@ -23,7 +23,7 @@ class ImagePeeker {
 			return undefined
 
 		let u = Math.min(Math.max((value - range.min)/(range.max - range.min), 0.0), 1.0)
-		let x = u*this.canvas.width
+		let x = u*(this.canvas.width-1.0)
 		let px = this.ctx.getImageData(x, 0, 1, 1).data
 
 		return [px[0]/255.0, px[1]/255.0, px[2]/255.0, px[3]/255.0]
