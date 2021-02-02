@@ -249,9 +249,116 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                                }, req, res, next);
               });
 
-   // For exporting one or more channels from a feed
+   const parseExportOptions = function(req, res, next) {
+      // Pick out the timezone, if any.  I won't bother doing validation here other than verifying that it's
+      // a non-empty string since node-bodytrack-datastore does its own validation.
+      let timezone = isNonEmptyString(req.query.timezone) ? req.query.timezone : null;
+
+      // parse the min and max times
+      const parseTimeString = function(str) {
+         if (isString(str)) {
+            const val = parseFloat(str);
+            if (isFinite(val)) {
+               return val;
+            }
+         }
+         return null;
+      };
+      let minTime = parseTimeString(req.query.from);
+      let maxTime = parseTimeString(req.query.to);
+
+      // swap the times if minTime is greater than maxTime
+      if (minTime != null && maxTime != null && minTime > maxTime) {
+         const temp = minTime;
+         minTime = maxTime;
+         maxTime = temp;
+      }
+
+      // make sure the format is valid
+      let format = (req.query.format || 'csv');
+      let contentType;
+      if (isString(format)) {
+         format = format.toLowerCase().trim();
+         if (format === 'json') {
+            contentType = 'application/json';
+         }
+         else if (format === 'csv') {
+            contentType = 'text/plain';
+         }
+         else {
+            res.set("Content-Type", "application/json");
+            return res.jsendClientError("Invalid format, must be one of 'csv' or 'json'.", { format : format }, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 UNPROCESSABLE_ENTITY
+         }
+      }
+      else {
+         res.set("Content-Type", "application/json");
+         return res.jsendClientError("Invalid format, must be one of 'csv' or 'json'.", { format : format }, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 UNPROCESSABLE_ENTITY
+      }
+
+      // insert the options into the request, for use downstream
+      req.exportOptions = {
+         timezone : timezone,
+         minTime : minTime,
+         maxTime : maxTime,
+         format : format,
+         contentType : contentType
+      };
+
+      next();
+   };
+
+   const exportData = function(req, res, feedAndChannels, filenamePrefix = "export") {
+      let filename = filenamePrefix;
+      if (req['exportOptions'].minTime != null) {
+         filename += "_from_time_" + req['exportOptions'].minTime;
+      }
+      if (req['exportOptions'].maxTime != null) {
+         filename += "_to_" + (req['exportOptions'].minTime == null ? "time_" : "") + req['exportOptions'].maxTime;
+      }
+      filename += "." + req['exportOptions'].format;
+
+      FeedModel.exportData(feedAndChannels,
+                           req['exportOptions'],
+                           function(err, eventEmitter) {
+                              if (err) {
+                                 if (err.data && err.data.code === httpStatus.UNPROCESSABLE_ENTITY) {
+                                    return res.jsendPassThrough(err.data)
+                                 }
+
+                                 log.error("Failed to export feed: " + JSON.stringify(err, null, 3));
+                                 return res.jsendServerError("Failed to export feed", null);
+                              }
+
+                              // set the status code, the connection to close, content type, and specify the Content-disposition filename
+                              res
+                                    .status(httpStatus.OK)
+                                    .set("Connection", "close")
+                                    .set("Content-Type", req['exportOptions'].contentType)
+                                    .attachment(filename);
+
+                              // I don't really understand why, but we must have a
+                              // function (even an empty one!) listening on stderr,
+                              // or else sometimes I get no data on stdout.  As of
+                              // 2015-01-13, I've only seen this on multifeed
+                              // getTiles and not with export, but I guess it can't
+                              // hurt here.
+                              eventEmitter.stderr.on('data', function(data) {
+                                 // log.error(data);
+                              });
+
+                              eventEmitter.on('error', function(e) {
+                                 log.error("Error event from EventEmitter while exporting: " + JSON.stringify(e, null, 3));
+                              });
+
+                              // pipe the eventEmitter to the response
+                              return eventEmitter.stdout.pipe(res);
+                           });
+   };
+
+   // For exporting one or more channels from a single feed
    // /api/v1/feeds/{feedIdOrApiKey}/channels/{channels}/export?from={from}&to={to}
    router.get('/:feedIdOrApiKey/channels/:channels/export',
+              parseExportOptions,
               function(req, res, next) {
                  // scrub the channels, removing dupes, but preserving the requested order of the unique ones
                  const requestedChannels = (req.params.channels || '').split(',').map(trim);
@@ -264,110 +371,131 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                     return isNew;
                  });
 
-                 // Pick out the timezone, if any.  I won't bother doing validation here other than verifying that it's
-                 // a non-empty string since node-bodytrack-datastore does its own validation.
-                 const timezone = isNonEmptyString(req.query.timezone) ? req.query.timezone : null;
-
-                 // parse the min and max times
-                 const parseTimeString = function(str) {
-                    if (isString(str)) {
-                       const val = parseFloat(str);
-                       if (isFinite(val)) {
-                          return val;
-                       }
-                    }
-                    return null;
-                 };
-                 let minTime = parseTimeString(req.query.from);
-                 let maxTime = parseTimeString(req.query.to);
-
-                 // swap the times if minTime is greater than maxTime
-                 if (minTime != null && maxTime != null && minTime > maxTime) {
-                    const temp = minTime;
-                    minTime = maxTime;
-                    maxTime = temp;
-                 }
-
-                 // make sure the format is valid
-                 let format = (req.query.format || 'csv');
-                 let contentType;
-                 if (isString(format)) {
-                    format = format.toLowerCase().trim();
-                    if (format === 'json') {
-                       contentType = 'application/json';
-                    }
-                    else if (format === 'csv') {
-                       contentType = 'text/plain';
-                    }
-                    else {
-                       return res.jsendClientError("Invalid format, must be one of 'csv' or 'json'.", { format : format }, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 UNPROCESSABLE_ENTITY
-                    }
-                 }
-                 else {
-                    return res.jsendClientError("Invalid format, must be one of 'csv' or 'json'.", { format : format }, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 UNPROCESSABLE_ENTITY
-                 }
-
                  getFeedForReadingByIdOrApiKey(req.params['feedIdOrApiKey'],
                                                'id,userId,isPublic,apiKey,apiKeyReadOnly',
                                                function(feed) {
-                                                  // build the filename for the Content-disposition header
-                                                  let filename = "export_of_feed_" + feed.id;
-                                                  if (minTime != null) {
-                                                     filename += "_from_time_" + minTime;
-                                                  }
-                                                  if (maxTime != null) {
-                                                     filename += "_to_" + (minTime == null ? "time_" : "") + maxTime;
-                                                  }
-                                                  filename += "." + format;
+                                                  // build the filename prefix for the Content-disposition header
+                                                  const filenamePrefix = "export_of_feed_" + feed.id;
 
                                                   // export the data
-                                                  FeedModel.exportData([{
-                                                                          feed : feed,
-                                                                          channels : channels
-                                                                       }],
-                                                                       {
-                                                                          minTime : minTime,
-                                                                          maxTime : maxTime,
-                                                                          format : format,
-                                                                          timezone : timezone
-                                                                       },
-                                                                       function(err, eventEmitter) {
-                                                                          if (err) {
-                                                                             if (err.data && err.data.code === httpStatus.UNPROCESSABLE_ENTITY) {
-                                                                                return res.jsendPassThrough(err.data)
-                                                                             }
-
-                                                                             log.error("Failed to export feed: " + JSON.stringify(err, null, 3));
-                                                                             return res.jsendServerError("Failed to export feed", null);
-                                                                          }
-
-                                                                          // set the status code, the connection to close, content type, and specify the Content-disposition filename
-                                                                          res
-                                                                                .status(httpStatus.OK)
-                                                                                .set("Connection", "close")
-                                                                                .set("Content-Type", contentType)
-                                                                                .attachment(filename);
-
-                                                                          // I don't really understand why, but we must have a
-                                                                          // function (even an empty one!) listening on stderr,
-                                                                          // or else sometimes I get no data on stdout.  As of
-                                                                          // 2015-01-13, I've only seen this on multifeed
-                                                                          // getTiles and not with export, but I guess it can't
-                                                                          // hurt here.
-                                                                          eventEmitter.stderr.on('data', function(data) {
-                                                                             // log.error(data);
-                                                                          });
-
-                                                                          eventEmitter.on('error', function(e) {
-                                                                             log.error("Error event from EventEmitter while exporting: " + JSON.stringify(e, null, 3));
-                                                                          });
-
-                                                                          // pipe the eventEmitter to the response
-                                                                          return eventEmitter.stdout.pipe(res);
-                                                                       });
+                                                  exportData(req, res, [{
+                                                     feed : feed,
+                                                     channels : channels
+                                                  }], filenamePrefix);
                                                },
                                                req, res, next)
               });
+
+   // For exporting one or more channels from one or more public feeds.  Feeds and channels are specified in the URL as
+   // a comma-delimited list of one or more feedId.channel items:
+   //
+   //    /api/v1/feeds/export/feedId.channel,feedId.channel,feedId.channel
+   //
+   // Supports the same optional query string params as single-feed export
+   router.get('/export/:feedIdAndChannelList',
+              parseExportOptions,
+              function(req, res, next) {
+                 // scrub the feedId.channel items, removing dupes, but preserving the requested order of the unique ones
+                 const requestedFeedAndChannelItems = (req.params['feedIdAndChannelList'] || '').split(',').map(trim);
+                 const alreadyIncluded = new Set();
+                 const uniqueFeedAndChannelItems = requestedFeedAndChannelItems.filter(function(feedIdAndChannel) {
+                    const isNew = !alreadyIncluded.has(feedIdAndChannel);
+                    if (isNew) {
+                       alreadyIncluded.add(feedIdAndChannel);
+                    }
+                    return isNew;
+                 });
+
+                 // Now filter out invalid feedId.channel items, again preserving order. Validation here is pretty
+                 // simple...just checking for positive integer ID and making sure the channel name is a string. That's
+                 // good enough for here. We'll verify the feeds exist and are public below, and the datastore does its
+                 // own strict validation for device/channel names (see BodyTrackDatastore.isValidKey()).
+                 const feedChannelPairs = [];
+                 uniqueFeedAndChannelItems.forEach(function(feedIdAndChannel) {
+                    const [feedId, channel] = feedIdAndChannel.split('.');
+                    if (isPositiveIntString(feedId) && isString(channel)) {
+                       feedChannelPairs.push({ id : parseInt(feedId), channel : channel });
+                    }
+                 });
+
+                 // create a set of the requested feed IDs
+                 const feedIds = new Set(feedChannelPairs.map(o => o.id));
+
+                 log.debug("AFTER SCRUBDOWN");
+                 log.debug(feedIds);
+                 log.debug(feedChannelPairs);
+
+                 // If we have feed IDs remaining after the above scrubdown, then call FeedModel's findBySqlWhere() to
+                 // get all public feeds identified by the IDs in the feedIds set.
+                 if (feedIds.size > 0) {
+                    FeedModel.findBySqlWhere({
+                                                where : "((isPublic=1) AND (id IN (?)))",
+                                                values : [Array.from(feedIds)]
+                                             },
+                                             {
+                                                fields : ['id', 'userId', 'isPublic'],
+                                                orderBy : ['id']
+                                             },
+                                             false,   // false here to ensure the SQL doesn't include a LIMIT clause
+                                             function(err, publicFeeds) {
+                                                if (err) {
+                                                   const message = "Error while trying to find feeds";
+                                                   log.error(message + ": " + err);
+                                                   return res.jsendServerError(message);
+                                                }
+                                                else {
+                                                   if (publicFeeds && publicFeeds.length > 0) {
+                                                      // Now that we know which feed IDs are public, we need to filter
+                                                      // the feedChannelPairs again, stripping out any private ones.
+                                                      // Begin by turning the feeds returned from the DB into a map, for
+                                                      // fast lookups.
+                                                      const publicFeedsById = {};
+                                                      publicFeeds.forEach(function(feed) {
+                                                         publicFeedsById[feed.id] = feed;
+                                                      });
+
+                                                      // Now build the collection of feed+channel items to be exported
+                                                      // by filtering the feedChannelPairs for public feeds, and then
+                                                      // converting to the format expected by FeedModel's exportData()
+                                                      // method.
+                                                      const publicFeedChannelPairs = feedChannelPairs
+                                                            .filter(feedChannelPair => feedChannelPair.id in publicFeedsById)
+                                                            .map(function(feedChannelPair) {
+                                                               return {
+                                                                  feed : {
+                                                                     id : feedChannelPair.id,
+                                                                     userId : publicFeedsById[feedChannelPair.id].userId
+                                                                  },
+                                                                  channels : [feedChannelPair.channel]
+                                                               };
+                                                            });
+
+                                                      log.debug(JSON.stringify(publicFeedChannelPairs, null, 3));
+
+                                                      // build the filename prefix by including all feed IDs in numerical order
+                                                      let filenamePrefix = "export_of_feed";
+                                                      let publicFeedIds = Object.keys(publicFeedsById);
+                                                      if (publicFeedIds.length > 1) {
+                                                         filenamePrefix += 's';
+                                                      }
+                                                      filenamePrefix += '_' + publicFeedIds.join('_');
+
+                                                      log.debug("publicFeedIds=[" + Object.keys(publicFeedsById) + "]");
+                                                      log.debug("FILENAME PREFIX=[" + filenamePrefix + "]");
+                                                      // finally, export the data
+                                                      exportData(req, res, publicFeedChannelPairs, filenamePrefix);
+                                                   }
+                                                   else {
+                                                      return res.jsendClientError("Unknown or invalid feed(s)", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
+                                                   }
+                                                }
+                                             });
+                 }
+                 else {
+                    return res.jsendClientError("Unknown or invalid feed(s)", null, httpStatus.NOT_FOUND); // HTTP 404 Not Found
+                 }
+              }
+   );
 
    router.put('/:feedId/properties/:key',
               passport.authenticate('bearer', { session : false }),

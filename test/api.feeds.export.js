@@ -20,6 +20,7 @@ describe("REST API", function() {
    const device1 = requireNew('./fixtures/device1.json');
    const feed1 = requireNew('./fixtures/feed1.json');   // public,  user 1, product 1, device 1
    const feed2 = requireNew('./fixtures/feed2.json');   // private, user 1, product 1, device 1
+   const feed3 = requireNew('./fixtures/feed3.json');   // public, user 1, product 1, device 1
 
    const feedUpload1 = {
       request : requireNew('./fixtures/feed-upload1-request.json'),
@@ -72,10 +73,10 @@ describe("REST API", function() {
    };
 
    before(function(initDone) {
-      const doUpload = function(feed, feedUplaod, done) {
+      const doUpload = function(feed, feedUpload, done) {
          superagent
                .put(ESDR_FEEDS_API_URL + "/" + feed.apiKey)
-               .send(feedUplaod.request)
+               .send(feedUpload.request)
                .end(function(err, res) {
                   should.not.exist(err);
                   should.exist(res);
@@ -87,7 +88,7 @@ describe("REST API", function() {
                                                      status : 'success'
                                                   });
                   res.body.should.have.property('data');
-                  res.body.data.should.have.properties(feedUplaod.response.data);
+                  res.body.data.should.have.properties(feedUpload.response.data);
 
                   done();
                });
@@ -138,6 +139,13 @@ describe("REST API", function() {
                   setup.createFeed(feed2, done);
                },
                function(done) {
+                  feed3.userId = user1.id;
+                  feed3.deviceId = device1.id;
+                  feed3.productId = product1.id;
+                  feed3.channelSpecs = product1.defaultChannelSpecs;
+                  setup.createFeed(feed3, done);
+               },
+               function(done) {
                   doUpload(feed1, feedUpload1, done);
                },
                function(done) {
@@ -166,6 +174,9 @@ describe("REST API", function() {
                },
                function(done) {
                   doUpload(feed1, feedUpload10, done);
+               },
+               function(done) {
+                  doUpload(feed3, feedUpload1, done);
                }
             ],
             initDone
@@ -367,59 +378,59 @@ describe("REST API", function() {
    };
 
    describe("Feeds", function() {
-      describe("Export", function() {
-         const doExport = function(test, done) {
-            superagent
-                  .get(test.url)
-                  .set(typeof test.headers === 'undefined' ? {} : test.headers)
-                  .end(function(err, res) {
-                     should.not.exist(err);
-                     should.exist(res);
+      const doExport = function(test, done) {
+         superagent
+               .get(test.url)
+               .set(typeof test.headers === 'undefined' ? {} : test.headers)
+               .end(function(err, res) {
+                  should.not.exist(err);
+                  should.exist(res);
 
-                     if (test.willDebug) {
-                        console.log("URL=[" + test.url + "]");
-                        console.log(JSON.stringify(res.body, null, 3));
-                        console.log(JSON.stringify(res.text, null, 3));
-                     }
+                  if (test.willDebug) {
+                     console.log("URL=[" + test.url + "]");
+                     console.log(JSON.stringify(res.body, null, 3));
+                     console.log(JSON.stringify(res.text, null, 3));
+                  }
 
-                     if (typeof test.expectedFileName !== 'undefined') {
-                        res.headers.should.have.property('content-disposition', 'attachment; filename=\"' + test.expectedFileName + '\"');
-                     }
+                  if (typeof test.expectedFileName !== 'undefined') {
+                     res.headers.should.have.property('content-disposition', 'attachment; filename=\"' + test.expectedFileName + '\"');
+                  }
 
-                     res.should.have.property('status', test.expectedHttpStatus);
-                     if (!test.hasEmptyBody) {
+                  res.should.have.property('status', test.expectedHttpStatus);
+                  if (!test.hasEmptyBody) {
 
-                        res.should.have.property('body');
+                     res.should.have.property('body');
 
-                        res.body.should.have.properties({
-                                                           code : test.expectedHttpStatus,
-                                                           status : test.expectedStatusText
-                                                        });
+                     res.body.should.have.properties({
+                                                        code : test.expectedHttpStatus,
+                                                        status : test.expectedStatusText
+                                                     });
 
-                        if (typeof test.expectedResponseData !== 'undefined') {
-                           if (test.expectedResponseData == null) {
-                              res.body.should.have.property('data', null);
-                           }
-                           else {
-                              res.body.should.have.property('data');
-                              res.body.data.should.have.properties(test.expectedResponseData);
-                           }
-                        }
-                     }
-
-                     if (!test.willIgnoreText && typeof test.expectedResponseText !== 'undefined') {
-                        if (test.expectedResponseText == null) {
-                           res.text.should.equal(null);
+                     if (typeof test.expectedResponseData !== 'undefined') {
+                        if (test.expectedResponseData == null) {
+                           res.body.should.have.property('data', null);
                         }
                         else {
-                           res.text.should.equal(test.expectedResponseText);
+                           res.body.should.have.property('data');
+                           res.body.data.should.have.properties(test.expectedResponseData);
                         }
                      }
+                  }
 
-                     done();
-                  });
-         };
+                  if (!test.willIgnoreText && typeof test.expectedResponseText !== 'undefined') {
+                     if (test.expectedResponseText == null) {
+                        res.text.should.equal(null);
+                     }
+                     else {
+                        res.text.should.equal(test.expectedResponseText);
+                     }
+                  }
 
+                  done();
+               });
+      };
+
+      describe("Export (single feed)", function() {
          describe("No authentication", function() {
 
             it("Should be able to export a public feed without authentication (CSV)", function(done) {
@@ -1064,6 +1075,550 @@ describe("REST API", function() {
 
             });   // End Feed API Key in the URL
          });   // End API Key Authentication
-      });   // End Export
+      });   // End Export (single feed)
+
+      describe("Export (multiple feeds)", function() {
+
+         it("Should be able to export a single feed (CSV)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed1.id + ".battery_voltage," +
+                              feed1.id + ".conductivity," +
+                              feed1.id + ".temperature," +
+                              feed1.id + ".annotation",
+                        expectedFileName : 'export_of_feed_' + feed1.id + '.csv',
+                        expectedHttpStatus : httpStatus.OK,
+                        expectedStatusText : 'success',
+                        hasEmptyBody : true,
+                        expectedResponseText : feed1Export(feed1)
+                     }, done);
+         });
+
+         it("Should be able to export a single feed (JSON)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed1.id + ".battery_voltage," +
+                              feed1.id + ".conductivity," +
+                              feed1.id + ".temperature," +
+                              feed1.id + ".annotation" +
+                              "?format=json",
+                        expectedFileName : 'export_of_feed_' + feed1.id + '.json',
+                        expectedHttpStatus : httpStatus.OK,
+                        expectedStatusText : 'success',
+                        hasEmptyBody : true,
+                        expectedResponseText : feed1Export(feed1, true)
+                     }, done);
+         });
+
+         it("Data format specifier is case-insensitive (CSV)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed1.id + ".battery_voltage," +
+                              feed1.id + ".conductivity," +
+                              feed1.id + ".temperature," +
+                              feed1.id + ".annotation" +
+                              "?format=CSv",
+                        expectedFileName : 'export_of_feed_' + feed1.id + '.csv',
+                        expectedHttpStatus : httpStatus.OK,
+                        expectedStatusText : 'success',
+                        hasEmptyBody : true,
+                        expectedResponseText : feed1Export(feed1)
+                     }, done);
+         });
+
+         it("Data format specifier is case-insensitive (JSON)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed1.id + ".battery_voltage," +
+                              feed1.id + ".conductivity," +
+                              feed1.id + ".temperature," +
+                              feed1.id + ".annotation" +
+                              "?format=JsOn",
+                        expectedFileName : 'export_of_feed_' + feed1.id + '.json',
+                        expectedHttpStatus : httpStatus.OK,
+                        expectedStatusText : 'success',
+                        hasEmptyBody : true,
+                        expectedResponseText : feed1Export(feed1, true)
+                     }, done);
+         });
+
+         it("Should ignore redundant channels (CSV)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed1.id + ".battery_voltage," +
+                              feed1.id + ".conductivity," +
+                              feed1.id + ".battery_voltage," +
+                              feed1.id + ".temperature," +
+                              feed1.id + ".temperature," +
+                              feed1.id + ".temperature," +
+                              feed1.id + ".annotation" +
+                              "?format=csv",
+                        expectedFileName : 'export_of_feed_' + feed1.id + '.csv',
+                        expectedHttpStatus : httpStatus.OK,
+                        expectedStatusText : 'success',
+                        hasEmptyBody : true,
+                        expectedResponseText : feed1Export(feed1)
+                     }, done);
+         });
+
+         it("Should ignore redundant channels (JSON)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed1.id + ".battery_voltage," +
+                              feed1.id + ".conductivity," +
+                              feed1.id + ".battery_voltage," +
+                              feed1.id + ".temperature," +
+                              feed1.id + ".temperature," +
+                              feed1.id + ".temperature," +
+                              feed1.id + ".annotation" +
+                              "?format=json",
+                        expectedFileName : 'export_of_feed_' + feed1.id + '.json',
+                        expectedHttpStatus : httpStatus.OK,
+                        expectedStatusText : 'success',
+                        hasEmptyBody : true,
+                        expectedResponseText : feed1Export(feed1, true)
+                     }, done);
+         });
+
+         it("Should ignore invalid min and max times (CSV)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed1.id + ".battery_voltage," +
+                              feed1.id + ".conductivity," +
+                              feed1.id + ".battery_voltage," +
+                              feed1.id + ".temperature," +
+                              feed1.id + ".temperature," +
+                              feed1.id + ".temperature," +
+                              feed1.id + ".annotation" +
+                              "?format=csv&from=foo&to=bar",
+                        expectedFileName : 'export_of_feed_' + feed1.id + '.csv',
+                        expectedHttpStatus : httpStatus.OK,
+                        expectedStatusText : 'success',
+                        hasEmptyBody : true,
+                        expectedResponseText : feed1Export(feed1)
+                     }, done);
+         });
+
+         it("Should ignore invalid min and max times (JSON)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed1.id + ".battery_voltage," +
+                              feed1.id + ".conductivity," +
+                              feed1.id + ".battery_voltage," +
+                              feed1.id + ".temperature," +
+                              feed1.id + ".temperature," +
+                              feed1.id + ".temperature," +
+                              feed1.id + ".annotation" +
+                              "?format=json&from=foo&to=bar",
+                        expectedFileName : 'export_of_feed_' + feed1.id + '.json',
+                        expectedHttpStatus : httpStatus.OK,
+                        expectedStatusText : 'success',
+                        hasEmptyBody : true,
+                        expectedResponseText : feed1Export(feed1, true)
+                     }, done);
+         });
+
+         it("Should fail to export if timezone is invalid (CSV)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed1.id + ".battery_voltage," +
+                              feed1.id + ".conductivity," +
+                              feed1.id + ".battery_voltage," +
+                              feed1.id + ".temperature," +
+                              feed1.id + ".temperature," +
+                              feed1.id + ".temperature," +
+                              feed1.id + ".annotation" +
+                              "?format=csv&timezone=bogus",
+                        expectedHttpStatus : httpStatus.UNPROCESSABLE_ENTITY,
+                        expectedStatusText : 'error',
+                        expectedResponseData : { timezone : "Invalid timezone" },
+                        willIgnoreText : true
+                     }, done);
+         });
+
+         it("Should fail to export if timezone is invalid (JSON)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed1.id + ".battery_voltage," +
+                              feed1.id + ".conductivity," +
+                              feed1.id + ".battery_voltage," +
+                              feed1.id + ".temperature," +
+                              feed1.id + ".temperature," +
+                              feed1.id + ".temperature," +
+                              feed1.id + ".annotation" +
+                              "?format=json&timezone=bogus",
+                        expectedHttpStatus : httpStatus.UNPROCESSABLE_ENTITY,
+                        expectedStatusText : 'error',
+                        expectedResponseData : { timezone : "Invalid timezone" },
+                        willIgnoreText : true
+                     }, done);
+         });
+
+         it("Should be able to export multiple feeds (CSV)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed1.id + ".conductivity," +
+                              feed1.id + ".temperature," +
+                              feed3.id + ".temperature" +
+                              "?from=1380909922&to=1380969641&format=csv",
+                        expectedFileName : 'export_of_feeds_' + feed1.id + '_' + feed3.id + '_from_time_1380909922_to_1380969641.csv',
+                        expectedHttpStatus : httpStatus.OK,
+                        expectedStatusText : 'success',
+                        hasEmptyBody : true,
+                        expectedResponseText : 'EpochTime,' +
+                                               feed1.userId + '.feed_' + feed1.id + '.conductivity,' +
+                                               feed1.userId + '.feed_' + feed1.id + '.temperature,' +
+                                               feed3.userId + '.feed_' + feed3.id + '.temperature\n' +
+                                               '1380909922,587,20.3,20.3\n' +
+                                               '1380922452,571,19.5,19.5\n' +
+                                               '1380969641,495,21.8,21.8\n'
+                     }, done);
+         });
+
+         it("Should be able to export multiple feeds (JSON)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed1.id + ".conductivity," +
+                              feed1.id + ".temperature," +
+                              feed3.id + ".temperature" +
+                              "?from=1380909922&to=1380969641&format=json",
+                        expectedFileName : 'export_of_feeds_' + feed1.id + '_' + feed3.id + '_from_time_1380909922_to_1380969641.json',
+                        expectedHttpStatus : httpStatus.OK,
+                        expectedStatusText : 'success',
+                        hasEmptyBody : true,
+                        expectedResponseText : '{"channel_names":[' +
+                                               '"' + feed1.userId + '.feed_' + feed1.id + '.conductivity",' +
+                                               '"' + feed1.userId + '.feed_' + feed1.id + '.temperature",' +
+                                               '"' + feed3.userId + '.feed_' + feed3.id + '.temperature"],"data":[\n' +
+                                               '[1380909922,587,20.3,20.3],\n' +
+                                               '[1380922452,571,19.5,19.5],\n' +
+                                               '[1380969641,495,21.8,21.8]\n' +
+                                               ']}\n'
+                     }, done);
+         });
+
+         it("Should be able to export multiple feeds for America/New_York time zone (CSV)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed1.id + ".conductivity," +
+                              feed1.id + ".temperature," +
+                              feed3.id + ".temperature" +
+                              "?from=1380909922&to=1380969641&format=csv&timezone=America/New_York",
+                        expectedFileName : 'export_of_feeds_' + feed1.id + '_' + feed3.id + '_from_time_1380909922_to_1380969641.csv',
+                        expectedHttpStatus : httpStatus.OK,
+                        expectedStatusText : 'success',
+                        hasEmptyBody : true,
+                        expectedResponseText : 'Iso8601Time,' +
+                                               feed1.userId + '.feed_' + feed1.id + '.conductivity,' +
+                                               feed1.userId + '.feed_' + feed1.id + '.temperature,' +
+                                               feed3.userId + '.feed_' + feed3.id + '.temperature\n' +
+                                               '2013-10-04T14:05:22.000000-04:00,587,20.3,20.3\n' +
+                                               '2013-10-04T17:34:12.000000-04:00,571,19.5,19.5\n' +
+                                               '2013-10-05T06:40:41.000000-04:00,495,21.8,21.8\n'
+                     }, done);
+         });
+
+         it("Should be able to export multiple feeds for America/New_York time zone (JSON)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed1.id + ".conductivity," +
+                              feed1.id + ".temperature," +
+                              feed3.id + ".temperature" +
+                              "?from=1380909922&to=1380969641&format=json&timezone=America/New_York",
+                        expectedFileName : 'export_of_feeds_' + feed1.id + '_' + feed3.id + '_from_time_1380909922_to_1380969641.json',
+                        expectedHttpStatus : httpStatus.OK,
+                        expectedStatusText : 'success',
+                        hasEmptyBody : true,
+                        expectedResponseText : '{"channel_names":[' +
+                                               '"' + feed1.userId + '.feed_' + feed1.id + '.conductivity",' +
+                                               '"' + feed1.userId + '.feed_' + feed1.id + '.temperature",' +
+                                               '"' + feed3.userId + '.feed_' + feed3.id + '.temperature"],"data":[\n' +
+                                               '["2013-10-04T14:05:22.000000-04:00",587,20.3,20.3],\n' +
+                                               '["2013-10-04T17:34:12.000000-04:00",571,19.5,19.5],\n' +
+                                               '["2013-10-05T06:40:41.000000-04:00",495,21.8,21.8]\n' +
+                                               ']}\n'
+                     }, done);
+         });
+
+         it("Should be able to export multiple feeds for UTC time zone (CSV)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed1.id + ".conductivity," +
+                              feed1.id + ".temperature," +
+                              feed3.id + ".temperature" +
+                              "?from=1380909922&to=1380969641&format=csv&timezone=UTC",
+                        expectedFileName : 'export_of_feeds_' + feed1.id + '_' + feed3.id + '_from_time_1380909922_to_1380969641.csv',
+                        expectedHttpStatus : httpStatus.OK,
+                        expectedStatusText : 'success',
+                        hasEmptyBody : true,
+                        expectedResponseText : 'Iso8601Time,' +
+                                               feed1.userId + '.feed_' + feed1.id + '.conductivity,' +
+                                               feed1.userId + '.feed_' + feed1.id + '.temperature,' +
+                                               feed3.userId + '.feed_' + feed3.id + '.temperature\n' +
+                                               '2013-10-04T18:05:22.000000+00:00,587,20.3,20.3\n' +
+                                               '2013-10-04T21:34:12.000000+00:00,571,19.5,19.5\n' +
+                                               '2013-10-05T10:40:41.000000+00:00,495,21.8,21.8\n'
+                     }, done);
+         });
+
+         it("Should be able to export multiple feeds for UTC time zone (JSON)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed1.id + ".conductivity," +
+                              feed1.id + ".temperature," +
+                              feed3.id + ".temperature" +
+                              "?from=1380909922&to=1380969641&format=json&timezone=UTC",
+                        expectedFileName : 'export_of_feeds_' + feed1.id + '_' + feed3.id + '_from_time_1380909922_to_1380969641.json',
+                        expectedHttpStatus : httpStatus.OK,
+                        expectedStatusText : 'success',
+                        hasEmptyBody : true,
+                        expectedResponseText : '{"channel_names":[' +
+                                               '"' + feed1.userId + '.feed_' + feed1.id + '.conductivity",' +
+                                               '"' + feed1.userId + '.feed_' + feed1.id + '.temperature",' +
+                                               '"' + feed3.userId + '.feed_' + feed3.id + '.temperature"],"data":[\n' +
+                                               '["2013-10-04T18:05:22.000000+00:00",587,20.3,20.3],\n' +
+                                               '["2013-10-04T21:34:12.000000+00:00",571,19.5,19.5],\n' +
+                                               '["2013-10-05T10:40:41.000000+00:00",495,21.8,21.8]\n' +
+                                               ']}\n'
+                     }, done);
+         });
+
+         it("Should ignore redundant channels (CSV)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed1.id + ".conductivity," +
+                              feed1.id + ".temperature," +
+                              feed1.id + ".temperature," +
+                              feed3.id + ".temperature," +
+                              feed1.id + ".conductivity," +
+                              feed3.id + ".temperature" +
+                              "?from=1380909922&to=1380969641&format=csv",
+                        expectedFileName : 'export_of_feeds_' + feed1.id + '_' + feed3.id + '_from_time_1380909922_to_1380969641.csv',
+                        expectedHttpStatus : httpStatus.OK,
+                        expectedStatusText : 'success',
+                        hasEmptyBody : true,
+                        expectedResponseText : 'EpochTime,' +
+                                               feed1.userId + '.feed_' + feed1.id + '.conductivity,' +
+                                               feed1.userId + '.feed_' + feed1.id + '.temperature,' +
+                                               feed3.userId + '.feed_' + feed3.id + '.temperature\n' +
+                                               '1380909922,587,20.3,20.3\n' +
+                                               '1380922452,571,19.5,19.5\n' +
+                                               '1380969641,495,21.8,21.8\n'
+                     }, done);
+         });
+
+         it("Should ignore redundant channels (JSON)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed1.id + ".conductivity," +
+                              feed1.id + ".temperature," +
+                              feed1.id + ".temperature," +
+                              feed3.id + ".temperature," +
+                              feed1.id + ".conductivity," +
+                              feed3.id + ".temperature" +
+                              "?from=1380909922&to=1380969641&format=json",
+                        expectedFileName : 'export_of_feeds_' + feed1.id + '_' + feed3.id + '_from_time_1380909922_to_1380969641.json',
+                        expectedHttpStatus : httpStatus.OK,
+                        expectedStatusText : 'success',
+                        hasEmptyBody : true,
+                        expectedResponseText : '{"channel_names":[' +
+                                               '"' + feed1.userId + '.feed_' + feed1.id + '.conductivity",' +
+                                               '"' + feed1.userId + '.feed_' + feed1.id + '.temperature",' +
+                                               '"' + feed3.userId + '.feed_' + feed3.id + '.temperature"],"data":[\n' +
+                                               '[1380909922,587,20.3,20.3],\n' +
+                                               '[1380922452,571,19.5,19.5],\n' +
+                                               '[1380969641,495,21.8,21.8]\n' +
+                                               ']}\n'
+                     }, done);
+         });
+
+         it("Should ignore private feeds (CSV)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed1.id + ".conductivity," +
+                              feed1.id + ".temperature," +
+                              feed2.id + ".temperature," +
+                              feed3.id + ".temperature," +
+                              feed1.id + ".conductivity," +
+                              feed3.id + ".temperature" +
+                              "?from=1380909922&to=1380969641&format=csv",
+                        expectedFileName : 'export_of_feeds_' + feed1.id + '_' + feed3.id + '_from_time_1380909922_to_1380969641.csv',
+                        expectedHttpStatus : httpStatus.OK,
+                        expectedStatusText : 'success',
+                        hasEmptyBody : true,
+                        expectedResponseText : 'EpochTime,' +
+                                               feed1.userId + '.feed_' + feed1.id + '.conductivity,' +
+                                               feed1.userId + '.feed_' + feed1.id + '.temperature,' +
+                                               feed3.userId + '.feed_' + feed3.id + '.temperature\n' +
+                                               '1380909922,587,20.3,20.3\n' +
+                                               '1380922452,571,19.5,19.5\n' +
+                                               '1380969641,495,21.8,21.8\n'
+                     }, done);
+         });
+
+         it("Should ignore private feeds (JSON)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed1.id + ".conductivity," +
+                              feed1.id + ".temperature," +
+                              feed2.id + ".temperature," +
+                              feed3.id + ".temperature," +
+                              feed1.id + ".conductivity," +
+                              feed3.id + ".temperature" +
+                              "?from=1380909922&to=1380969641&format=json",
+                        expectedFileName : 'export_of_feeds_' + feed1.id + '_' + feed3.id + '_from_time_1380909922_to_1380969641.json',
+                        expectedHttpStatus : httpStatus.OK,
+                        expectedStatusText : 'success',
+                        hasEmptyBody : true,
+                        expectedResponseText : '{"channel_names":[' +
+                                               '"' + feed1.userId + '.feed_' + feed1.id + '.conductivity",' +
+                                               '"' + feed1.userId + '.feed_' + feed1.id + '.temperature",' +
+                                               '"' + feed3.userId + '.feed_' + feed3.id + '.temperature"],"data":[\n' +
+                                               '[1380909922,587,20.3,20.3],\n' +
+                                               '[1380922452,571,19.5,19.5],\n' +
+                                               '[1380969641,495,21.8,21.8]\n' +
+                                               ']}\n'
+                     }, done);
+         });
+
+         it("Should ignore bogus feeds and invalid feed+channel (CSV)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed1.id + ".conductivity," +
+                              feed1.id + ".temperature," +
+                              "0.temperature," +
+                              "0.foobar," +
+                              "bogus," +
+                              feed3.id + ".temperature," +
+                              feed1.id + ".conductivity," +
+                              feed3.id + ".temperature" +
+                              "?from=1380909922&to=1380969641&format=csv",
+                        expectedFileName : 'export_of_feeds_' + feed1.id + '_' + feed3.id + '_from_time_1380909922_to_1380969641.csv',
+                        expectedHttpStatus : httpStatus.OK,
+                        expectedStatusText : 'success',
+                        hasEmptyBody : true,
+                        expectedResponseText : 'EpochTime,' +
+                                               feed1.userId + '.feed_' + feed1.id + '.conductivity,' +
+                                               feed1.userId + '.feed_' + feed1.id + '.temperature,' +
+                                               feed3.userId + '.feed_' + feed3.id + '.temperature\n' +
+                                               '1380909922,587,20.3,20.3\n' +
+                                               '1380922452,571,19.5,19.5\n' +
+                                               '1380969641,495,21.8,21.8\n'
+                     }, done);
+         });
+
+         it("Should ignore bogus feeds and invalid feed+channel (JSON)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed1.id + ".conductivity," +
+                              feed1.id + ".temperature," +
+                              "0.temperature," +
+                              "0.foobar," +
+                              "bogus," +
+                              feed3.id + ".temperature," +
+                              feed1.id + ".conductivity," +
+                              feed3.id + ".temperature" +
+                              "?from=1380909922&to=1380969641&format=json",
+                        expectedFileName : 'export_of_feeds_' + feed1.id + '_' + feed3.id + '_from_time_1380909922_to_1380969641.json',
+                        expectedHttpStatus : httpStatus.OK,
+                        expectedStatusText : 'success',
+                        hasEmptyBody : true,
+                        expectedResponseText : '{"channel_names":[' +
+                                               '"' + feed1.userId + '.feed_' + feed1.id + '.conductivity",' +
+                                               '"' + feed1.userId + '.feed_' + feed1.id + '.temperature",' +
+                                               '"' + feed3.userId + '.feed_' + feed3.id + '.temperature"],"data":[\n' +
+                                               '[1380909922,587,20.3,20.3],\n' +
+                                               '[1380922452,571,19.5,19.5],\n' +
+                                               '[1380969641,495,21.8,21.8]\n' +
+                                               ']}\n'
+                     }, done);
+         });
+
+         it("Should return empty values for requests for bogus channels of valid public feeds (CSV)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed1.id + ".conductivity," +
+                              feed1.id + ".temperature," +
+                              "0.temperature," +
+                              "0.foobar," +
+                              "bogus," +
+                              feed3.id + ".temperature," +
+                              feed2.id + ".bogus," +           // this feed is private, so it'll get stripped entirely
+                              feed3.id + ".bogus," +           // this channel is bogus, but the feed is valid and public, so it'll return all empty values
+                              feed1.id + ".conductivity," +
+                              feed3.id + ".temperature" +
+                              "?from=1380909922&to=1380969641&format=csv",
+                        expectedFileName : 'export_of_feeds_' + feed1.id + '_' + feed3.id + '_from_time_1380909922_to_1380969641.csv',
+                        expectedHttpStatus : httpStatus.OK,
+                        expectedStatusText : 'success',
+                        hasEmptyBody : true,
+                        expectedResponseText : 'EpochTime,' +
+                                               feed1.userId + '.feed_' + feed1.id + '.conductivity,' +
+                                               feed1.userId + '.feed_' + feed1.id + '.temperature,' +
+                                               feed3.userId + '.feed_' + feed3.id + '.temperature,' +
+                                               feed3.userId + '.feed_' + feed3.id + '.bogus\n' +
+                                               '1380909922,587,20.3,20.3,\n' +
+                                               '1380922452,571,19.5,19.5,\n' +
+                                               '1380969641,495,21.8,21.8,\n'
+                     }, done);
+         });
+
+         it("Should return null values for requests for bogus channels of valid public feeds (JSON)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed1.id + ".conductivity," +
+                              feed1.id + ".temperature," +
+                              "0.temperature," +
+                              "0.foobar," +
+                              "bogus," +
+                              feed3.id + ".temperature," +
+                              feed2.id + ".bogus," +           // this feed is private, so it'll get stripped entirely
+                              feed3.id + ".bogus," +           // this channel is bogus, but the feed is valid and public, so it'll return all empty values
+                              feed1.id + ".conductivity," +
+                              feed3.id + ".temperature" +
+                              "?from=1380909922&to=1380969641&format=json",
+                        expectedFileName : 'export_of_feeds_' + feed1.id + '_' + feed3.id + '_from_time_1380909922_to_1380969641.json',
+                        expectedHttpStatus : httpStatus.OK,
+                        expectedStatusText : 'success',
+                        hasEmptyBody : true,
+                        expectedResponseText : '{"channel_names":[' +
+                                               '"' + feed1.userId + '.feed_' + feed1.id + '.conductivity",' +
+                                               '"' + feed1.userId + '.feed_' + feed1.id + '.temperature",' +
+                                               '"' + feed3.userId + '.feed_' + feed3.id + '.temperature",' +
+                                               '"' + feed3.userId + '.feed_' + feed3.id + '.bogus"],"data":[\n' +
+                                               '[1380909922,587,20.3,20.3,null],\n' +
+                                               '[1380922452,571,19.5,19.5,null],\n' +
+                                               '[1380969641,495,21.8,21.8,null]\n' +
+                                               ']}\n'
+                     }, done);
+         });
+
+         it("Requests consisting entirely of private feeds should result in a 404 (CSV)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed2.id + ".temperature," +
+                              feed2.id + ".conductivity" +
+                              "?format=csv",
+                        expectedHttpStatus : httpStatus.NOT_FOUND,
+                        expectedStatusText : 'error',
+                        expectedResponseData : null,
+                        willIgnoreText : true
+                     }, done);
+         });
+
+         it("Requests consisting entirely of private feeds should result in a 404 (JSON)", function(done) {
+            doExport({
+                        url : ESDR_FEEDS_API_URL + "/export/" +
+                              feed2.id + ".temperature," +
+                              feed2.id + ".conductivity" +
+                              "?format=json",
+                        expectedHttpStatus : httpStatus.NOT_FOUND,
+                        expectedStatusText : 'error',
+                        expectedResponseData : null,
+                        willIgnoreText : true
+                     }, done);
+         });
+
+      });   // End Export (single feed)
    });   // End Feeds
 });   // End REST API
