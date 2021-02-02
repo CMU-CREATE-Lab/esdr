@@ -387,15 +387,22 @@ A fancier version will eventually be rolled into ESDR, but this at least provide
 
 ## Export
 
-You can currently export one or more channels from a single feed to CSV (the default) or JSON.
+There are two API methods for exporting ESDR feed data: 
+
+* one for exporting one or more channels from a single feed, with support for exporting from a private feed
+* one for exporting one or more channels from one or more *public* feeds.
+
+Timestamps of exported data will be in UNIX epoch time if no timezone is specified.  If a timezone parameter is specified, timestamps will be ISO8601 format for the given timezone.  The value of the timezone parameter is case-sensitive and must be a name from the [IANA time zone database](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) (e.g. "UTC", "America/New_York", etc).
+
+### Exporting Data from a Single Feed
+
+Use this method when you want to export one or more channels from a single (public or private) feed to CSV (the default) or JSON.
 
 Here's the format:
 
     https://esdr.cmucreatelab.org/api/v1/feeds/FEED_ID_OR_API_KEY/channels/ONE_OR_MORE_CHANNELS_COMMA_DELIMITED/export?from=UNIX_TIME_SECS&to=UNIX_TIME_SECS&format=[csv|json]&timezone=IANA_TIMEZONE
 
 The "from", "to", "format", and "timezone" parameters are all optional.  
-
-Timestamps of exported data will be in UNIX epoch time if no timezone is specified.  If a timezone parameter is specified, timestamps will be ISO8601 format for the given timezone.  The value of the timezone parameter is case-sensitive and must be a name from the [IANA time zone database](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) (e.g. "UTC", "America/New_York", etc).
 
 Examples:
 
@@ -404,7 +411,25 @@ Examples:
     https://esdr.cmucreatelab.org/api/v1/feeds/1/channels/PM25B_UG_M3_daily_mean/export?from=1420088400&to=1451624399&format=json
     
     https://esdr.cmucreatelab.org/api/v1/feeds/1/channels/PM25B_UG_M3_daily_mean/export?from=1420088400&to=1451624399&format=csv&timezone=America/New_York
-    
+
+### Exporting Data from Multiple Feeds
+
+Use this method when you want to export data from multiple public feeds.  Support for exporting from multiple private feeds, or a mix or public and private may be added in the future.  Currently, any private feeds specified will be ignored.  If only private feeds are specified, the method returns an HTTP 404.
+
+Here's the format:
+
+    https://esdr.cmucreatelab.org/api/v1/feeds/export/feedId.channelName[,feedId.channelName,...]?from=UNIX_TIME_SECS&to=UNIX_TIME_SECS&format=[csv|json]&timezone=IANA_TIMEZONE
+
+As with the single-feed export API method, the "from", "to", "format", and "timezone" parameters are all optional.
+
+Examples:
+
+    https://esdr.cmucreatelab.org/api/v1/feeds/export/4231.PM2_5_daily_mean,4231.PM2_5_daily_max,4231.PM2_5_daily_median
+
+    https://esdr.cmucreatelab.org/api/v1/feeds/export/26.OUT_T_DEGC,28.SO2_PPM?from=1609563600&to=1609606800&format=json
+
+    https://esdr.cmucreatelab.org/api/v1/feeds/export/26.OUT_T_DEGC,28.SO2_PPM?from=1609563600&to=1609606800&format=csv&timezone=America/New_York
+
 ## Queries
 
 Querying over clients, products, devices, and feeds is fairly robust.  You can do where clauses joined by AND or OR (or both), order by (ASC or DESC), limit, offset, and specify which fields you want to select.  Where clauses also support comparison with =, <>, <, <=, >, >=, is null, and is not null.  Detailed examples will be coming soon.  Some simple examples:
