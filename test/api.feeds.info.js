@@ -160,7 +160,7 @@ describe("REST API", function() {
    });
 
    describe("Feeds", function() {
-      describe("Get Info", function() {
+      describe("Get Info (JSON)", function() {
          const executeTest = function(test) {
             it(test.description, function(done) {
                superagent
@@ -674,6 +674,583 @@ describe("REST API", function() {
 
          });   // End API Key Authentication
 
-      });   // End Get Info
+      });   // End Get Info (JSON)
+
+      describe("Get Info (CSV)", function() {
+         const executeTest = function(test) {
+            it(test.description, function(done) {
+               superagent
+                     .get(typeof test.url === 'function' ? test.url() : test.url)
+                     .set(typeof test.headers === 'undefined' ? {} : (typeof test.headers === 'function' ? test.headers() : test.headers))
+                     .end(function(err, res) {
+                        should.not.exist(err);
+                        should.exist(res);
+
+                        res.should.have.property('status', test.expectedHttpStatus);
+                        if (!test.hasEmptyResponseText) {
+                           res.should.have.property('text');
+
+                           if (test.willDebug) {
+                              console.log(JSON.stringify(res.text, null, 3));
+                           }
+
+                           if (typeof test.getExpectedDynamicResponseData === 'function') {
+                              const expectedResponseData = test.getExpectedDynamicResponseData();
+                              res.text.should.equal(expectedResponseData);
+                           }
+                        }
+
+                        if (!test.hasEmptyResponseBody) {
+                           res.should.have.property('body');
+
+                           if (test.willDebug) {
+                              console.log(JSON.stringify(res.body, null, 3));
+                           }
+
+                           res.body.should.have.properties({
+                                                              code : test.expectedHttpStatus,
+                                                              status : test.expectedStatusText
+                                                           });
+
+                           if (test.expectedResponseData == null) {
+                              res.body.should.have.property('data', null);
+                           }
+                           else {
+                              res.body.should.have.property('data');
+                              res.body.data.should.have.properties(test.expectedResponseData);
+                           }
+                        }
+
+                        done();
+                     });
+            });
+         };
+
+         describe("No authentication", function() {
+            [
+               {
+                  description : "Should be able to get info for a public feed without authentication",
+                  url : function() {
+                     return ESDR_FEEDS_API_URL + "/" + feed1.id + '/?format=csv&fields=id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude,channelSpecs,channelBounds';
+                  },
+                  hasEmptyResponseBody : true,
+                  hasEmptyResponseText : false,
+                  expectedHttpStatus : httpStatus.OK,
+                  getExpectedDynamicResponseData : function() {
+                     return "id,name,deviceId,productId,userId,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude\n" +
+                            [feed1.id,
+                             feed1.name,
+                             feed1.deviceId,
+                             feed1.productId,
+                             feed1.userId,
+                             feed1.apiKeyReadOnly,
+                             feed1.exposure,
+                             feed1.isPublic,
+                             feed1.isMobile,
+                             feed1.latitude,
+                             feed1.longitude,
+                            ].join(',') + "\n"
+                  },
+               },
+               {
+                  description : "Should fail to get info for a private feed without authentication",
+                  url : function() {
+                     return ESDR_FEEDS_API_URL + "/" + feed2.id + '/?format=csv';
+                  },
+                  hasEmptyResponseBody : false,
+                  hasEmptyResponseText : true,
+                  expectedHttpStatus : httpStatus.UNAUTHORIZED,
+                  expectedStatusText : 'error',
+                  expectedResponseData : null,
+               }
+            ].forEach(executeTest);
+         });   // End No authentication
+
+         describe("OAuth2 authentication", function() {
+            [
+               {
+                  description : "Should be able to get info for a public feed with valid authentication",
+                  url : function() {
+                     return ESDR_FEEDS_API_URL + "/" + feed1.id + '/?format=csv&fields=id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude,channelSpecs,channelBounds';
+                  },
+                  headers : function() {
+                     return createAuthorizationHeader(user1.accessToken);
+                  },
+                  hasEmptyResponseBody : true,
+                  hasEmptyResponseText : false,
+                  expectedHttpStatus : httpStatus.OK,
+                  getExpectedDynamicResponseData : function() {
+                     return "id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude\n" +
+                            [feed1.id,
+                             feed1.name,
+                             feed1.deviceId,
+                             feed1.productId,
+                             feed1.userId,
+                             feed1.apiKey,
+                             feed1.apiKeyReadOnly,
+                             feed1.exposure,
+                             feed1.isPublic,
+                             feed1.isMobile,
+                             feed1.latitude,
+                             feed1.longitude,
+                            ].join(',') + "\n"
+                  },
+               },
+               {
+                  description : "Should be able to get info for a public feed with valid authentication, but for the wrong user",
+                  url : function() {
+                     return ESDR_FEEDS_API_URL + "/" + feed1.id + '/?format=csv&fields=id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude,channelSpecs,channelBounds';
+                  },
+                  headers : function() {
+                     return createAuthorizationHeader(user2.accessToken);
+                  },
+                  hasEmptyResponseBody : true,
+                  hasEmptyResponseText : false,
+                  expectedHttpStatus : httpStatus.OK,
+                  getExpectedDynamicResponseData : function() {
+                     return "id,name,deviceId,productId,userId,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude\n" +
+                            [feed1.id,
+                             feed1.name,
+                             feed1.deviceId,
+                             feed1.productId,
+                             feed1.userId,
+                             feed1.apiKeyReadOnly,
+                             feed1.exposure,
+                             feed1.isPublic,
+                             feed1.isMobile,
+                             feed1.latitude,
+                             feed1.longitude,
+                            ].join(',') + "\n"
+                  }
+               },
+               {
+                  description : "Should be able to get info for a public feed with invalid authentication",
+                  url : function() {
+                     return ESDR_FEEDS_API_URL + "/" + feed1.id + '/?format=csv&fields=id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude,channelSpecs,channelBounds';
+                  },
+                  headers : function() {
+                     return createAuthorizationHeader("bogus");
+                  },
+                  hasEmptyResponseBody : true,
+                  hasEmptyResponseText : false,
+                  expectedHttpStatus : httpStatus.OK,
+                  getExpectedDynamicResponseData : function() {
+                     return "id,name,deviceId,productId,userId,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude\n" +
+                            [feed1.id,
+                             feed1.name,
+                             feed1.deviceId,
+                             feed1.productId,
+                             feed1.userId,
+                             feed1.apiKeyReadOnly,
+                             feed1.exposure,
+                             feed1.isPublic,
+                             feed1.isMobile,
+                             feed1.latitude,
+                             feed1.longitude,
+                            ].join(',') + "\n"
+                  },
+               },
+               {
+                  description : "Should be able to get info for a private feed with valid authentication",
+                  url : function() {
+                     return ESDR_FEEDS_API_URL + "/" + feed2.id + '/?format=csv&fields=id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude,channelSpecs,channelBounds';
+                  },
+                  headers : function() {
+                     return createAuthorizationHeader(user1.accessToken);
+                  },
+                  hasEmptyResponseBody : true,
+                  hasEmptyResponseText : false,
+                  expectedHttpStatus : httpStatus.OK,
+                  getExpectedDynamicResponseData : function() {
+                     return "id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude\n" +
+                            [feed2.id,
+                             feed2.name,
+                             feed2.deviceId,
+                             feed2.productId,
+                             feed2.userId,
+                             feed2.apiKey,
+                             feed2.apiKeyReadOnly,
+                             feed2.exposure,
+                             feed2.isPublic,
+                             feed2.isMobile,
+                             feed2.latitude,
+                             feed2.longitude,
+                            ].join(',') + "\n"
+                  },
+               },
+               {
+                  description : "Should fail to get info for a private feed with valid authentication, but for the wrong user",
+                  url : function() {
+                     return ESDR_FEEDS_API_URL + "/" + feed2.id + '/?format=csv&fields=id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude,channelSpecs,channelBounds';
+                  },
+                  headers : function() {
+                     return createAuthorizationHeader(user2.accessToken);
+                  },
+                  hasEmptyResponseBody : false,
+                  hasEmptyResponseText : true,
+                  expectedHttpStatus : httpStatus.FORBIDDEN,
+                  expectedStatusText : 'error',
+                  expectedResponseData : null
+               },
+               {
+                  description : "Should fail to get info for a private feed with invalid authentication",
+                  url : function() {
+                     return ESDR_FEEDS_API_URL + "/" + feed2.id + '/?format=csv&fields=id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude,channelSpecs,channelBounds';
+                  },
+                  headers : function() {
+                     return createAuthorizationHeader("bogus");
+                  },
+                  hasEmptyResponseBody : false,
+                  hasEmptyResponseText : true,
+                  expectedHttpStatus : httpStatus.FORBIDDEN,
+                  expectedStatusText : 'error',
+                  expectedResponseData : null
+               },
+               {
+                  description : "Should fail to get info for a feed with an invalid ID (valid ID plus extra non-numeric characters appended)",
+                  url : function() {
+                     return ESDR_FEEDS_API_URL + "/" + feed2.id + 'abc' + '/?format=csv&fields=id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude,channelSpecs,channelBounds';
+                  },
+                  headers : function() {
+                     return createAuthorizationHeader("bogus");
+                  },
+                  hasEmptyResponseBody : false,
+                  hasEmptyResponseText : true,
+                  expectedHttpStatus : httpStatus.NOT_FOUND,
+                  expectedStatusText : 'error',
+                  expectedResponseData : null
+               },
+            ].forEach(executeTest);
+         });   // End OAuth2 authentication
+
+         describe("API Key Authentication", function() {
+            describe("Feed API Key in the request header", function() {
+               [
+                  {
+                     description : "Should be able to get info for a public feed with valid read-write authentication",
+                     url : function() {
+                        return ESDR_FEEDS_API_URL + "/" + feed1.id + '/?format=csv&fields=id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude,channelSpecs,channelBounds';
+                     },
+                     headers : function() {
+                        return { FeedApiKey : feed1.apiKey }
+                     },
+                     hasEmptyResponseBody : true,
+                     hasEmptyResponseText : false,
+                     expectedHttpStatus : httpStatus.OK,
+                     getExpectedDynamicResponseData : function() {
+                        return "id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude\n" +
+                               [feed1.id,
+                                feed1.name,
+                                feed1.deviceId,
+                                feed1.productId,
+                                feed1.userId,
+                                feed1.apiKey,
+                                feed1.apiKeyReadOnly,
+                                feed1.exposure,
+                                feed1.isPublic,
+                                feed1.isMobile,
+                                feed1.latitude,
+                                feed1.longitude,
+                               ].join(',') + "\n"
+                     },
+                  },
+                  {
+                     description : "Should be able to get info for a public feed with valid read-only authentication",
+                     url : function() {
+                        return ESDR_FEEDS_API_URL + "/" + feed1.id + '/?format=csv&fields=id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude,channelSpecs,channelBounds';
+                     },
+                     headers : function() {
+                        return { FeedApiKey : feed1.apiKeyReadOnly }
+                     },
+                     hasEmptyResponseBody : true,
+                     hasEmptyResponseText : false,
+                     expectedHttpStatus : httpStatus.OK,
+                     getExpectedDynamicResponseData : function() {
+                        return "id,name,deviceId,productId,userId,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude\n" +
+                               [feed1.id,
+                                feed1.name,
+                                feed1.deviceId,
+                                feed1.productId,
+                                feed1.userId,
+                                feed1.apiKeyReadOnly,
+                                feed1.exposure,
+                                feed1.isPublic,
+                                feed1.isMobile,
+                                feed1.latitude,
+                                feed1.longitude,
+                               ].join(',') + "\n"
+                     },
+                  },
+                  {
+                     description : "Should be able to get info for a public feed with valid read-write authentication, but for the wrong feed",
+                     url : function() {
+                        return ESDR_FEEDS_API_URL + "/" + feed1.id + '/?format=csv&fields=id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude,channelSpecs,channelBounds';
+                     },
+                     headers : function() {
+                        return { FeedApiKey : feed2.apiKey }
+                     },
+                     hasEmptyResponseBody : true,
+                     hasEmptyResponseText : false,
+                     expectedHttpStatus : httpStatus.OK,
+                     getExpectedDynamicResponseData : function() {
+                        return "id,name,deviceId,productId,userId,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude\n" +
+                               [feed1.id,
+                                feed1.name,
+                                feed1.deviceId,
+                                feed1.productId,
+                                feed1.userId,
+                                feed1.apiKeyReadOnly,
+                                feed1.exposure,
+                                feed1.isPublic,
+                                feed1.isMobile,
+                                feed1.latitude,
+                                feed1.longitude,
+                               ].join(',') + "\n"
+                     },
+                  },
+                  {
+                     description : "Should be able to get info for a public feed with valid read-only authentication, but for the wrong feed",
+                     url : function() {
+                        return ESDR_FEEDS_API_URL + "/" + feed1.id + '/?format=csv&fields=id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude,channelSpecs,channelBounds';
+                     },
+                     headers : function() {
+                        return { FeedApiKey : feed2.apiKeyReadOnly }
+                     },
+                     hasEmptyResponseBody : true,
+                     hasEmptyResponseText : false,
+                     expectedHttpStatus : httpStatus.OK,
+                     getExpectedDynamicResponseData : function() {
+                        return "id,name,deviceId,productId,userId,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude\n" +
+                               [feed1.id,
+                                feed1.name,
+                                feed1.deviceId,
+                                feed1.productId,
+                                feed1.userId,
+                                feed1.apiKeyReadOnly,
+                                feed1.exposure,
+                                feed1.isPublic,
+                                feed1.isMobile,
+                                feed1.latitude,
+                                feed1.longitude,
+                               ].join(',') + "\n"
+                     },
+                  },
+                  {
+                     description : "Should be able to get info for a private feed with valid read-write authentication",
+                     url : function() {
+                        return ESDR_FEEDS_API_URL + "/" + feed2.id + '/?format=csv&fields=id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude,channelSpecs,channelBounds';
+                     },
+                     headers : function() {
+                        return { FeedApiKey : feed2.apiKey }
+                     },
+                     hasEmptyResponseBody : true,
+                     hasEmptyResponseText : false,
+                     expectedHttpStatus : httpStatus.OK,
+                     getExpectedDynamicResponseData : function() {
+                        return "id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude\n" +
+                               [feed2.id,
+                                feed2.name,
+                                feed2.deviceId,
+                                feed2.productId,
+                                feed2.userId,
+                                feed2.apiKey,
+                                feed2.apiKeyReadOnly,
+                                feed2.exposure,
+                                feed2.isPublic,
+                                feed2.isMobile,
+                                feed2.latitude,
+                                feed2.longitude,
+                               ].join(',') + "\n"
+                     },
+                  },
+                  {
+                     description : "Should be able to get info for a private feed with valid read-only authentication",
+                     url : function() {
+                        return ESDR_FEEDS_API_URL + "/" + feed2.id + '/?format=csv&fields=id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude,channelSpecs,channelBounds';
+                     },
+                     headers : function() {
+                        return { FeedApiKey : feed2.apiKeyReadOnly }
+                     },
+                     hasEmptyResponseBody : true,
+                     hasEmptyResponseText : false,
+                     expectedHttpStatus : httpStatus.OK,
+                     getExpectedDynamicResponseData : function() {
+                        return "id,name,deviceId,productId,userId,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude\n" +
+                               [feed2.id,
+                                feed2.name,
+                                feed2.deviceId,
+                                feed2.productId,
+                                feed2.userId,
+                                feed2.apiKeyReadOnly,
+                                feed2.exposure,
+                                feed2.isPublic,
+                                feed2.isMobile,
+                                feed2.latitude,
+                                feed2.longitude,
+                               ].join(',') + "\n"
+                     },
+                  },
+                  {
+                     description : "Should fail to get info for a private feed with invalid authentication",
+                     url : function() {
+                        return ESDR_FEEDS_API_URL + "/" + feed2.id + '/?format=csv&fields=id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude,channelSpecs,channelBounds';
+                     },
+                     headers : function() {
+                        return { FeedApiKey : "bogus" }
+                     },
+                     hasEmptyResponseBody : false,
+                     hasEmptyResponseText : true,
+                     expectedHttpStatus : httpStatus.FORBIDDEN,
+                     expectedStatusText : 'error',
+                     expectedResponseData : null
+                  },
+                  {
+                     description : "Should fail to get info for a private feed with valid read-write authentication, but for the wrong feed",
+                     url : function() {
+                        return ESDR_FEEDS_API_URL + "/" + feed2.id + '/?format=csv&fields=id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude,channelSpecs,channelBounds';
+                     },
+                     headers : function() {
+                        return { FeedApiKey : feed1.apiKey }
+                     },
+                     hasEmptyResponseBody : false,
+                     hasEmptyResponseText : true,
+                     expectedHttpStatus : httpStatus.FORBIDDEN,
+                     expectedStatusText : 'error',
+                     expectedResponseData : null
+                  },
+                  {
+                     description : "Should fail to get info for a private feed with valid read-only authentication, but for the wrong feed",
+                     url : function() {
+                        return ESDR_FEEDS_API_URL + "/" + feed2.id + '/?format=csv&fields=id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude,channelSpecs,channelBounds';
+                     },
+                     headers : function() {
+                        return { FeedApiKey : feed1.apiKeyReadOnly }
+                     },
+                     hasEmptyResponseBody : false,
+                     hasEmptyResponseText : true,
+                     expectedHttpStatus : httpStatus.FORBIDDEN,
+                     expectedStatusText : 'error',
+                     expectedResponseData : null
+                  },
+               ].forEach(executeTest);
+            });   // End Feed API Key in the request header
+
+            describe("Feed API Key in the URL", function() {
+               [
+                  {
+                     description : "Should be able to get info for a public feed with valid read-write authentication",
+                     url : function() {
+                        return ESDR_FEEDS_API_URL + "/" + feed1.apiKey + '/?format=csv&fields=id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude,channelSpecs,channelBounds';
+                     },
+                     hasEmptyResponseBody : true,
+                     hasEmptyResponseText : false,
+                     expectedHttpStatus : httpStatus.OK,
+                     getExpectedDynamicResponseData : function() {
+                        return "id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude\n" +
+                               [feed1.id,
+                                feed1.name,
+                                feed1.deviceId,
+                                feed1.productId,
+                                feed1.userId,
+                                feed1.apiKey,
+                                feed1.apiKeyReadOnly,
+                                feed1.exposure,
+                                feed1.isPublic,
+                                feed1.isMobile,
+                                feed1.latitude,
+                                feed1.longitude,
+                               ].join(',') + "\n"
+                     },
+                  },
+                  {
+                     description : "Should be able to get info for a public feed with valid read-only authentication",
+                     url : function() {
+                        return ESDR_FEEDS_API_URL + "/" + feed1.apiKeyReadOnly + '/?format=csv&fields=id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude,channelSpecs,channelBounds';
+                     },
+                     hasEmptyResponseBody : true,
+                     hasEmptyResponseText : false,
+                     expectedHttpStatus : httpStatus.OK,
+                     getExpectedDynamicResponseData : function() {
+                        return "id,name,deviceId,productId,userId,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude\n" +
+                               [feed1.id,
+                                feed1.name,
+                                feed1.deviceId,
+                                feed1.productId,
+                                feed1.userId,
+                                feed1.apiKeyReadOnly,
+                                feed1.exposure,
+                                feed1.isPublic,
+                                feed1.isMobile,
+                                feed1.latitude,
+                                feed1.longitude,
+                               ].join(',') + "\n"
+                     },
+                  },
+                  {
+                     description : "Should be able to get info for a private feed with valid read-write authentication",
+                     url : function() {
+                        return ESDR_FEEDS_API_URL + "/" + feed2.apiKey + '/?format=csv&fields=id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude,channelSpecs,channelBounds';
+                     },
+                     hasEmptyResponseBody : true,
+                     hasEmptyResponseText : false,
+                     expectedHttpStatus : httpStatus.OK,
+                     getExpectedDynamicResponseData : function() {
+                        return "id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude\n" +
+                               [feed2.id,
+                                feed2.name,
+                                feed2.deviceId,
+                                feed2.productId,
+                                feed2.userId,
+                                feed2.apiKey,
+                                feed2.apiKeyReadOnly,
+                                feed2.exposure,
+                                feed2.isPublic,
+                                feed2.isMobile,
+                                feed2.latitude,
+                                feed2.longitude,
+                               ].join(',') + "\n"
+                     },
+                  },
+                  {
+                     description : "Should be able to get info for a private feed with valid read-only authentication",
+                     url : function() {
+                        return ESDR_FEEDS_API_URL + "/" + feed2.apiKeyReadOnly + '/?format=csv&fields=id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude,channelSpecs,channelBounds';
+                     },
+                     hasEmptyResponseBody : true,
+                     hasEmptyResponseText : false,
+                     expectedHttpStatus : httpStatus.OK,
+                     getExpectedDynamicResponseData : function() {
+                        return "id,name,deviceId,productId,userId,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude\n" +
+                               [feed2.id,
+                                feed2.name,
+                                feed2.deviceId,
+                                feed2.productId,
+                                feed2.userId,
+                                feed2.apiKeyReadOnly,
+                                feed2.exposure,
+                                feed2.isPublic,
+                                feed2.isMobile,
+                                feed2.latitude,
+                                feed2.longitude,
+                               ].join(',') + "\n"
+                     },
+                  },
+                  {
+                     description : "Should fail to get info for a private feed with valid read-write authentication, but for the wrong feed",
+                     url : function() {
+                        return ESDR_FEEDS_API_URL + "/" + UNKNOWN_FEED_API_KEY + '/?format=csv&fields=id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude,channelSpecs,channelBounds';
+                     },
+                     hasEmptyResponseBody : false,
+                     hasEmptyResponseText : true,
+                     expectedHttpStatus : httpStatus.NOT_FOUND,
+                     expectedStatusText : 'error',
+                     expectedResponseData : null
+                  },
+               ].forEach(executeTest);
+            });   // End Feed API Key in the URL
+         });   // End API Key Authentication
+
+      });   // End Get Info (CSV)
+
    });   // End Feeds
 });   // End REST API

@@ -10,6 +10,16 @@ const isString = require('data-type-utils').isString;
 const isNonEmptyString = require('data-type-utils').isNonEmptyString;
 const isFeedApiKey = require('../../lib/typeUtils').isFeedApiKey;
 
+/** @type {Readonly<{CSV: {format: string, contentType: string}, JSON: {format: string, contentType: string}}>} */
+const OutputFormat = Object.freeze({
+                                      CSV : { format : 'csv', contentType : 'text/plain' },
+                                      JSON : { format : 'json', contentType : 'application/json' }
+                                   });
+
+const CSV_FIELD_DELIMITER = ',';
+const CSV_RECORD_DELIMITER = '\n';
+const CSV_DATE_FIELD_NAMES = ['created', 'modified', 'lastUpload'];
+
 module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
 
    // for searching for feeds, optionally matching specified criteria and sort order
@@ -92,13 +102,11 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                                      }
 
                                                      const getInfo = function(isAllowedToSelectReadWriteFeedApiKey) {
-                                                        // inflate the JSON fields into objects
-                                                        if ("channelSpecs" in filteredFeed) {
-                                                           filteredFeed.channelSpecs = JSON.parse(filteredFeed.channelSpecs);
-                                                        }
+                                                        let outputFormat = parseOutputFormat(req, OutputFormat.JSON.format);
 
-                                                        if ("channelBounds" in filteredFeed) {
-                                                           filteredFeed.channelBounds = JSON.parse(filteredFeed.channelBounds);
+                                                        if (outputFormat === null) {
+                                                           res.set("Content-Type", "application/json");
+                                                           return res.jsendClientError("Invalid format, must be one of 'csv' or 'json'.", { format : req.query.format }, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 UNPROCESSABLE_ENTITY
                                                         }
 
                                                         // delete the read-write feed API key if not allowed to see it
@@ -106,7 +114,49 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                                            delete filteredFeed.apiKey;
                                                         }
 
-                                                        return res.jsendSuccess(filteredFeed, httpStatus.OK); // HTTP 200 OK
+                                                        res.set("Content-Type", outputFormat.contentType);
+
+                                                        if (outputFormat === OutputFormat.CSV) {
+                                                           // Don't allow JSON fields when requesting CSV. Rationale: if
+                                                           // you know how to deal with JSON, you'd just request JSON.
+                                                           // Plus, I don't want to deal with commas.
+                                                           delete filteredFeed.channelSpecs;
+                                                           delete filteredFeed.channelBounds;
+
+                                                           // use ISO format for dates, if requested
+                                                           CSV_DATE_FIELD_NAMES.forEach(fieldName => {
+                                                              if (fieldName in filteredFeed) {
+                                                                 if (typeof filteredFeed[fieldName] !== 'undefined' && filteredFeed[fieldName] !== null) {
+                                                                    if (filteredFeed[fieldName] !== '0000-00-00 00:00:00') {
+                                                                       filteredFeed[fieldName] = filteredFeed[fieldName].toISOString();
+                                                                    }
+                                                                 }
+                                                                 else {
+                                                                    filteredFeed[fieldName] = '';
+                                                                 }
+                                                              }
+                                                           });
+
+                                                           const headerFields = Object.keys(filteredFeed);
+                                                           let csv = headerFields.join(CSV_FIELD_DELIMITER) + CSV_RECORD_DELIMITER;
+                                                           csv += headerFields.map(field => filteredFeed[field]).join(CSV_FIELD_DELIMITER) + CSV_RECORD_DELIMITER;
+
+                                                           return res
+                                                                 .set("Connection", "close")
+                                                                 .status(httpStatus.OK)
+                                                                 .send(csv);
+                                                        }
+                                                        else {
+                                                           // inflate the JSON fields into objects
+                                                           if ("channelSpecs" in filteredFeed) {
+                                                              filteredFeed.channelSpecs = JSON.parse(filteredFeed.channelSpecs);
+                                                           }
+
+                                                           if ("channelBounds" in filteredFeed) {
+                                                              filteredFeed.channelBounds = JSON.parse(filteredFeed.channelBounds);
+                                                           }
+                                                           return res.jsendSuccess(filteredFeed, httpStatus.OK); // HTTP 200 OK
+                                                        }
                                                      };
 
                                                      // The only way authInfo won't be defined is if the feed is public, and is
@@ -248,6 +298,27 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                                   });
                                                }, req, res, next);
               });
+
+   /**
+    * Reads the <code>format</code> query string parameter (if it exists) and verifies that it matches (case
+    * insensitive) one of the output formats defined in OutputFormat.  Defaults to <code>defaultFormat</code> if not
+    * specified in the query string.  If valid, returns an object containing <code>format</code> and
+    * <code>contentType</code> properties.  If invalid, returns null.
+    *
+    * @param req - the request
+    * @param {string} defaultFormat - the default output format (csv or json)
+    * @returns {null|{format: (string), contentType: string}}
+    */
+   const parseOutputFormat = function(req, defaultFormat) {
+      let requestedFormat = (req.query.format || defaultFormat);
+      if (isString(requestedFormat)) {
+         requestedFormat = requestedFormat.toUpperCase().trim();
+         if (requestedFormat in OutputFormat) {
+            return OutputFormat[requestedFormat];
+         }
+      }
+      return null;
+   }
 
    const parseExportOptions = function(req, res, next) {
       // Pick out the timezone, if any.  I won't bother doing validation here other than verifying that it's
