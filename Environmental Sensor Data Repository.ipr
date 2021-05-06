@@ -71,8 +71,7 @@
     <version value="1.0" />
   </component>
   <component name="JavaScriptLibraryMappings">
-    <file url="file://$PROJECT_DIR$" libraries="{EnvironmentalSensorDataRepository/node_modules}" />
-    <file url="PROJECT" libraries="{@types/bcrypt, @types/body-parser, @types/bootstrap, @types/compression, @types/cookie-parser, @types/express, @types/express-handlebars, @types/express-mysql-session, @types/express-serve-static-core, @types/express-session, @types/handlebars-helpers, @types/http-status, @types/mocha, @types/morgan, @types/mysql, @types/nconf, @types/nodemailer, @types/nodemailer-smtp-transport, @types/oauth2orize, @types/passport, @types/passport-http, @types/passport-http-bearer, @types/passport-local, @types/passport-oauth2-client-password, @types/qs, @types/rimraf, @types/serve-favicon, @types/string, @types/superagent, EnvironmentalSensorDataRepository/node_modules, Generated files, bootstrap, handlebars.js, jquery, nimble, should-DefinitelyTyped}" />
+    <file url="PROJECT" libraries="{@types/bcrypt, @types/body-parser, @types/bootstrap, @types/compression, @types/cookie-parser, @types/express, @types/express-handlebars, @types/express-mysql-session, @types/express-serve-static-core, @types/express-session, @types/handlebars-helpers, @types/http-status, @types/mocha, @types/morgan, @types/mysql, @types/nconf, @types/nodemailer, @types/nodemailer-smtp-transport, @types/oauth2orize, @types/passport, @types/passport-http, @types/passport-http-bearer, @types/passport-local, @types/passport-oauth2-client-password, @types/qs, @types/rimraf, @types/serve-favicon, @types/string, @types/superagent, Generated files, handlebars.js, jquery, nimble, should-DefinitelyTyped}" />
     <includedPredefinedLibrary name="Node.js Core" />
   </component>
   <component name="JavaScriptSettings">
@@ -81,8 +80,6 @@
   <component name="ProjectCodeStyleConfiguration">
     <option name="USE_PER_PROJECT_SETTINGS" value="true" />
     <code_scheme name="Project" version="173">
-      <option name="USE_SAME_INDENTS" value="true" />
-      <option name="IGNORE_SAME_INDENTS_FOR_LANGUAGES" value="true" />
       <option name="OTHER_INDENT_OPTIONS">
         <value>
           <option name="INDENT_SIZE" value="3" />
@@ -138,7 +135,6 @@
         <option name="XML_ATTRIBUTE_WRAP" value="0" />
         <option name="XML_TEXT_WRAP" value="0" />
         <option name="XML_KEEP_BLANK_LINES" value="1" />
-        <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
       </XML>
       <ADDITIONAL_INDENT_OPTIONS fileType="haml">
         <option name="INDENT_SIZE" value="2" />
@@ -843,7 +839,7 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
   </component>
-  <component name="dataSourceStorageLocal">
+  <component name="dataSourceStorageLocal" created-in="IU-211.7142.45">
     <data-source name="MySQL - esdr_dev@localhost" uuid="8407a622-3086-4350-85e3-af669192afda">
       <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" dbms="MYSQL" exact-version="0" />
       <schema-mapping />
