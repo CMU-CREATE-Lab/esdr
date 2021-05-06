@@ -760,6 +760,9 @@ module.exports = function(databaseHelper) {
                                  result.rows.forEach(function(feed) {
                                     delete feed.userId;
                                  });
+
+                                 // restore the queryParts.selectFields by filtering out the userId field
+                                 queryParts.selectFields = queryParts.selectFields.filter(f => f !== 'userId');
                               }
 
                               return callback(null, result, queryParts.selectFields);
