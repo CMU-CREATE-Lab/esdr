@@ -136,8 +136,89 @@ describe("REST API", function() {
    });
 
    describe("Feeds", function() {
-      describe("Find", function() {
+      describe("Find (JSON)", function() {
+         const executeTest = function(test) {
+            it(test.description, function(done) {
+               const processFindTestResult = function(err, res) {
+                  should.not.exist(err);
+                  should.exist(res);
 
+                  if (test.willDebug) {
+                     console.log(JSON.stringify(res.body, null, 3));
+                  }
+
+                  res.should.have.property('status', test.expectedHttpStatus || httpStatus.OK);
+                  if (!test.hasEmptyBody) {
+                     res.should.have.property('body');
+                     res.body.should.have.properties({
+                                                        code : test.expectedHttpStatus || httpStatus.OK,
+                                                        status : test.expectedStatusText || 'success'
+                                                     });
+
+                     if (!test.hasEmptyData) {
+                        res.body.should.have.property('data');
+                        const expectedResponseData = test.getExpectedResponseData();
+                        if (expectedResponseData == null) {
+                           res.body.should.have.property('data', null);
+                        }
+                        else {
+                           if ('rows' in expectedResponseData && 'totalCount' in expectedResponseData) {
+                              res.body.data.should.have.property('totalCount', expectedResponseData.totalCount);
+                              res.body.data.rows.forEach(function(item, index) {
+                                 item.should.have.properties(expectedResponseData.rows[index]);
+
+                                 if (test.additionalExpectedDataProperties) {
+                                    item.should.have.properties(test.additionalExpectedDataProperties);
+                                 }
+                                 if (test.expectedMissingProperties) {
+                                    test.expectedMissingProperties.forEach(function(prop) {
+                                       item.should.not.have.property(prop);
+                                    });
+                                 }
+                                 if (test.expectedMissingPropertiesByIndex) {
+                                    // see whether there are any expected missing properties for this particular index
+                                    const expectedMissingProperties = test.expectedMissingPropertiesByIndex[index];
+                                    if (expectedMissingProperties) {
+                                       expectedMissingProperties.forEach(function(prop) {
+                                          item.should.not.have.property(prop);
+                                       });
+                                    }
+                                 }
+                              });
+                           }
+                           else {
+                              res.body.data.should.have.properties(expectedResponseData);
+
+                              if (test.additionalExpectedDataProperties) {
+                                 res.body.data.should.have.properties(test.additionalExpectedDataProperties);
+                              }
+                              if (test.expectedMissingProperties) {
+                                 test.expectedMissingProperties.forEach(function(prop) {
+                                    res.body.data.should.not.have.property(prop);
+                                 });
+                              }
+                           }
+                        }
+                     }
+                  }
+
+                  done();
+               };
+
+               const url = typeof test.url === 'function' ? test.url() : test.url;
+               if (typeof test.accessToken === 'undefined') {
+                  superagent
+                        .get(url)
+                        .end(processFindTestResult);
+               }
+               else {
+                  superagent
+                        .get(url)
+                        .set(createAuthorizationHeader(test.accessToken))
+                        .end(processFindTestResult);
+               }
+            });
+         };
          [
             {
                description : "Should be able to find only public feeds with no authorization",
@@ -605,90 +686,395 @@ describe("REST API", function() {
                }
             }
 
-         ].forEach(function(test) {
+         ].forEach(executeTest);
+      });   // End Find (JSON)
+      describe("Find (CSV)", function() {
+         const executeTest = function(test) {
             it(test.description, function(done) {
-               const processFindTestResult = function(err, res) {
-                  should.not.exist(err);
-                  should.exist(res);
+               superagent
+                     .get(typeof test.url === 'function' ? test.url() : test.url)
+                     .set(typeof test.headers === 'undefined' ? {} : (typeof test.headers === 'function' ? test.headers() : test.headers))
+                     .end(function(err, res) {
+                        should.not.exist(err);
+                        should.exist(res);
 
-                  if (test.willDebug) {
-                     console.log(JSON.stringify(res.body, null, 3));
-                  }
+                        res.should.have.property('status', test.expectedHttpStatus);
+                        if (!test.hasEmptyResponseText) {
+                           res.should.have.property('text');
 
-                  res.should.have.property('status', test.expectedHttpStatus || httpStatus.OK);
-                  if (!test.hasEmptyBody) {
-                     res.should.have.property('body');
-                     res.body.should.have.properties({
-                                                        code : test.expectedHttpStatus || httpStatus.OK,
-                                                        status : test.expectedStatusText || 'success'
-                                                     });
+                           if (test.willDebug) {
+                              console.log(res.text);
+                           }
 
-                     if (!test.hasEmptyData) {
-                        res.body.should.have.property('data');
-                        const expectedResponseData = test.getExpectedResponseData();
-                        if (expectedResponseData == null) {
-                           res.body.should.have.property('data', null);
+                           if (typeof test.getExpectedDynamicResponseData === 'function') {
+                              const expectedResponseData = test.getExpectedDynamicResponseData();
+                              const records = expectedResponseData.records.map(r => r.join(',')).join("\n")
+                              const data = expectedResponseData.header + "\n" + records + "\n"
+                              if (test.willDebug) {
+                                 console.log(data);
+                              }
+                              res.text.should.equal(data);
+                           }
                         }
-                        else {
-                           if ('rows' in expectedResponseData && 'totalCount' in expectedResponseData) {
-                              res.body.data.should.have.property('totalCount', expectedResponseData.totalCount);
-                              res.body.data.rows.forEach(function(item, index) {
-                                 item.should.have.properties(expectedResponseData.rows[index]);
 
-                                 if (test.additionalExpectedDataProperties) {
-                                    item.should.have.properties(test.additionalExpectedDataProperties);
-                                 }
-                                 if (test.expectedMissingProperties) {
-                                    test.expectedMissingProperties.forEach(function(prop) {
-                                       item.should.not.have.property(prop);
-                                    });
-                                 }
-                                 if (test.expectedMissingPropertiesByIndex) {
-                                    // see whether there are any expected missing properties for this particular index
-                                    const expectedMissingProperties = test.expectedMissingPropertiesByIndex[index];
-                                    if (expectedMissingProperties) {
-                                       expectedMissingProperties.forEach(function(prop) {
-                                          item.should.not.have.property(prop);
-                                       });
-                                    }
-                                 }
-                              });
+                        if (!test.hasEmptyResponseBody) {
+                           res.should.have.property('body');
+
+                           if (test.willDebug) {
+                              console.log(JSON.stringify(res.body, null, 3));
+                           }
+
+                           res.body.should.have.properties({
+                                                              code : test.expectedHttpStatus,
+                                                              status : test.expectedStatusText
+                                                           });
+
+                           if (test.expectedResponseData == null) {
+                              res.body.should.have.property('data', null);
                            }
                            else {
-                              res.body.data.should.have.properties(expectedResponseData);
-
-                              if (test.additionalExpectedDataProperties) {
-                                 res.body.data.should.have.properties(test.additionalExpectedDataProperties);
-                              }
-                              if (test.expectedMissingProperties) {
-                                 test.expectedMissingProperties.forEach(function(prop) {
-                                    res.body.data.should.not.have.property(prop);
-                                 });
-                              }
+                              res.body.should.have.property('data');
+                              res.body.data.should.have.properties(test.expectedResponseData);
                            }
                         }
-                     }
-                  }
 
-                  done();
-               };
-
-               const url = typeof test.url === 'function' ? test.url() : test.url;
-               if (typeof test.accessToken === 'undefined') {
-                  superagent
-                        .get(url)
-                        .end(processFindTestResult);
-               }
-               else {
-                  superagent
-                        .get(url)
-                        .set(createAuthorizationHeader(test.accessToken))
-                        .end(processFindTestResult);
-               }
+                        done();
+                     });
             });
-         });
+         };
 
-      });   // End Find
-
+         [
+            {
+               description : "Should be able to find only public feeds with no authorization",
+               url : ESDR_FEEDS_API_URL + '?format=csv&fields=id,name,deviceId,productId,userId,apiKey,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude,lastUpload,minTimeSecs,maxTimeSecs',
+               hasEmptyResponseBody : true,
+               hasEmptyResponseText : false,
+               expectedHttpStatus : httpStatus.OK,
+               getExpectedDynamicResponseData : function() {
+                  return {
+                     header : "id,name,deviceId,productId,userId,apiKeyReadOnly,exposure,isPublic,isMobile,latitude,longitude,lastUpload,minTimeSecs,maxTimeSecs",
+                     records : [
+                        [feed1.id,
+                         feed1.name,
+                         feed1.deviceId,
+                         feed1.productId,
+                         feed1.userId,
+                         feed1.apiKeyReadOnly,
+                         feed1.exposure,
+                         feed1.isPublic,
+                         feed1.isMobile,
+                         feed1.latitude,
+                         feed1.longitude,
+                         '0000-00-00 00:00:00',
+                         '',
+                         '',
+                        ],
+                        [feed3.id,
+                         '"' + feed3.name + '"',   // name includes a comma, so it gets quoted
+                         feed3.deviceId,
+                         feed3.productId,
+                         feed3.userId,
+                         feed3.apiKeyReadOnly,
+                         feed3.exposure,
+                         feed3.isPublic,
+                         feed3.isMobile,
+                         feed3.latitude,
+                         feed3.longitude,
+                         '0000-00-00 00:00:00',
+                         '',
+                         '',
+                        ],
+                        [feed5.id,
+                         feed5.name,
+                         feed5.deviceId,
+                         feed5.productId,
+                         feed5.userId,
+                         feed5.apiKeyReadOnly,
+                         feed5.exposure,
+                         feed5.isPublic,
+                         feed5.isMobile,
+                         feed5.latitude,
+                         feed5.longitude,
+                         '0000-00-00 00:00:00',
+                         '',
+                         '',
+                        ],
+                     ]
+                  };
+               },
+            },
+            {
+               description : "Should be able to find only public feeds with invalid authorization",
+               url : ESDR_FEEDS_API_URL + '?format=csv&fields=id,apiKey,apiKeyReadOnly',
+               headers : function() {
+                  return createAuthorizationHeader("bogus");
+               },
+               hasEmptyResponseBody : true,
+               hasEmptyResponseText : false,
+               expectedHttpStatus : httpStatus.OK,
+               getExpectedDynamicResponseData : function() {
+                  return {
+                     header : "id,apiKeyReadOnly",
+                     records : [
+                        [feed1.id, feed1.apiKeyReadOnly,],
+                        [feed3.id, feed3.apiKeyReadOnly,],
+                        [feed5.id, feed5.apiKeyReadOnly,],
+                     ]
+                  };
+               },
+            },
+            {
+               description : "Should be able to find all public feeds for a particular product, without authorization",
+               url : function() {
+                  return ESDR_FEEDS_API_URL + "?format=csv&fields=id,apiKey,apiKeyReadOnly,productId&where=productId=" + product2.id
+               },
+               hasEmptyResponseBody : true,
+               hasEmptyResponseText : false,
+               expectedHttpStatus : httpStatus.OK,
+               getExpectedDynamicResponseData : function() {
+                  return {
+                     header : "id,apiKeyReadOnly,productId",
+                     records : [
+                        [
+                           feed3.id,
+                           feed3.apiKeyReadOnly,
+                           feed3.productId,
+                        ],
+                     ]
+                  };
+               },
+            },
+            {
+               description : "Should be able to find all public feeds for a particular device, without authorization",
+               url : function() {
+                  return ESDR_FEEDS_API_URL + "?format=csv&fields=id,apiKey,apiKeyReadOnly,deviceId&where=deviceId=" + device1.id
+               },
+               hasEmptyResponseBody : true,
+               hasEmptyResponseText : false,
+               expectedHttpStatus : httpStatus.OK,
+               getExpectedDynamicResponseData : function() {
+                  return {
+                     header : "id,apiKeyReadOnly,deviceId",
+                     records : [
+                        [
+                           feed1.id,
+                           feed1.apiKeyReadOnly,
+                           feed1.deviceId,
+                        ],
+                     ]
+                  };
+               },
+            },
+            {
+               description : "Should be able to find all public feeds, and all private feeds owned by the auth'd user",
+               url : function() {
+                  return ESDR_FEEDS_API_URL + "?format=csv&orderBy=id&fields=id,apiKey"
+               },
+               headers : function() {
+                  return createAuthorizationHeader(user1.accessToken);
+               },
+               hasEmptyResponseBody : true,
+               hasEmptyResponseText : false,
+               expectedHttpStatus : httpStatus.OK,
+               getExpectedDynamicResponseData : function() {
+                  return {
+                     header : "id,apiKey",
+                     records : [
+                        [feed1.id,
+                         feed1.apiKey,],
+                        [feed2.id,
+                         feed2.apiKey,],
+                        [feed3.id,
+                         feed3.apiKey,],
+                        [feed4.id,
+                         feed4.apiKey,],
+                        [feed5.id,
+                         '',],
+                        [feed7.id,
+                         feed7.apiKey,],
+                        [feed8.id,
+                         feed8.apiKey,],
+                     ]
+                  };
+               },
+            },
+            {
+               description : "Should be able to find all public feeds for a particular product, and all private feeds owned by the auth'd user",
+               url : function() {
+                  return ESDR_FEEDS_API_URL + "?format=csv&orderBy=id&fields=id,apiKey,apiKeyReadOnly&where=productId=" + product1.id
+               },
+               headers : function() {
+                  return createAuthorizationHeader(user2.accessToken);
+               },
+               hasEmptyResponseBody : true,
+               hasEmptyResponseText : false,
+               expectedHttpStatus : httpStatus.OK,
+               getExpectedDynamicResponseData : function() {
+                  return {
+                     header : "id,apiKey,apiKeyReadOnly",
+                     records : [
+                        [feed1.id,
+                         '',
+                         feed1.apiKeyReadOnly,
+                        ],
+                        [feed5.id,
+                         feed5.apiKey,
+                         feed5.apiKeyReadOnly,
+                        ],
+                        [feed6.id,
+                         feed6.apiKey,
+                         feed6.apiKeyReadOnly,
+                        ],
+                     ]
+                  };
+               },
+            },
+            {
+               description : "Should be able to find all public and private feeds for a particular device, with authorization by the user owning the private feeds",
+               url : function() {
+                  return ESDR_FEEDS_API_URL + "?format=csv&orderBy=id&fields=id,apiKey,apiKeyReadOnly&where=deviceId=" + device1.id
+               },
+               headers : function() {
+                  return createAuthorizationHeader(user1.accessToken);
+               },
+               hasEmptyResponseBody : true,
+               hasEmptyResponseText : false,
+               expectedHttpStatus : httpStatus.OK,
+               getExpectedDynamicResponseData : function() {
+                  return {
+                     header : "id,apiKey,apiKeyReadOnly",
+                     records : [
+                        [feed1.id,
+                         feed1.apiKey,
+                         feed1.apiKeyReadOnly,
+                        ],
+                        [feed2.id,
+                         feed2.apiKey,
+                         feed2.apiKeyReadOnly,
+                        ],
+                        [feed7.id,
+                         feed7.apiKey,
+                         feed7.apiKeyReadOnly,
+                        ],
+                        [feed8.id,
+                         feed8.apiKey,
+                         feed8.apiKeyReadOnly,
+                        ],
+                     ]
+                  };
+               },
+            },
+            {
+               description : "Should be able to find only public feeds for a particular device, with authorization by a user who doesn't own the device (or its feeds)",
+               url : function() {
+                  return ESDR_FEEDS_API_URL + "?format=csv&orderBy=id&fields=id,apiKey,apiKeyReadOnly&where=deviceId=" + device1.id
+               },
+               headers : function() {
+                  return createAuthorizationHeader(user2.accessToken);
+               },
+               hasEmptyResponseBody : true,
+               hasEmptyResponseText : false,
+               expectedHttpStatus : httpStatus.OK,
+               getExpectedDynamicResponseData : function() {
+                  return {
+                     header : "id,apiKey,apiKeyReadOnly",
+                     records : [
+                        [feed1.id,
+                         '',
+                         feed1.apiKeyReadOnly,
+                        ],
+                     ]
+                  };
+               },
+            },
+            {
+               description : "Should be able to apply limit and offset to found feeds",
+               url : function() {
+                  return ESDR_FEEDS_API_URL + "?format=csv&fields=id,apiKey,apiKeyReadOnly&offset=2&limit=2&orderBy=id"
+               },
+               hasEmptyResponseBody : true,
+               hasEmptyResponseText : false,
+               expectedHttpStatus : httpStatus.OK,
+               getExpectedDynamicResponseData : function() {
+                  return {
+                     header : "id,apiKeyReadOnly",
+                     records : [
+                        [feed5.id,
+                         feed5.apiKeyReadOnly,
+                        ],
+                     ]
+                  };
+               },
+            },
+            {
+               description : "Should be able to order feeds based on multiple criteria",
+               url : function() {
+                  return ESDR_FEEDS_API_URL + "?format=csv&fields=id,productId&orderBy=productId,-id"
+               },
+               headers : function() {
+                  return createAuthorizationHeader(user1.accessToken);
+               },
+               hasEmptyResponseBody : true,
+               hasEmptyResponseText : false,
+               expectedHttpStatus : httpStatus.OK,
+               getExpectedDynamicResponseData : function() {
+                  return {
+                     header : "id,productId",
+                     records : [
+                        [feed8.id,
+                         feed8.productId,],
+                        [feed7.id,
+                         feed7.productId,],
+                        [feed5.id,
+                         feed5.productId,],
+                        [feed2.id,
+                         feed2.productId,],
+                        [feed1.id,
+                         feed1.productId,],
+                        [feed4.id,
+                         feed4.productId,],
+                        [feed3.id,
+                         feed3.productId,],
+                     ]
+                  };
+               },
+            },
+            {
+               description : "Querying for private feeds should only return feeds owned by the authenticated user",
+               url : function() {
+                  return ESDR_FEEDS_API_URL + "?format=csv&fields=id&orderBy=id&where=isPublic=false"
+               },
+               headers : function() {
+                  return createAuthorizationHeader(user2.accessToken);
+               },
+               hasEmptyResponseBody : true,
+               hasEmptyResponseText : false,
+               expectedHttpStatus : httpStatus.OK,
+               getExpectedDynamicResponseData : function() {
+                  return {
+                     header : "id",
+                     records : [
+                        [feed6.id,],
+                     ]
+                  };
+               },
+            },
+            {
+               description : "Querying for private feeds should return nothing if unauthenticated",
+               url : function() {
+                  return ESDR_FEEDS_API_URL + "?format=csv&fields=id&orderBy=id&where=isPublic=false"
+               },
+               hasEmptyResponseBody : true,
+               hasEmptyResponseText : false,
+               expectedHttpStatus : httpStatus.OK,
+               getExpectedDynamicResponseData : function() {
+                  return {
+                     header : "id",
+                     records : []
+                  };
+               },
+            },
+         ].forEach(executeTest);
+      });   // End Find (CSV)
    });   // End Feeds
 });   // End REST API

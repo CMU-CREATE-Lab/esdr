@@ -20,6 +20,19 @@ const CSV_FIELD_DELIMITER = ',';
 const CSV_RECORD_DELIMITER = '\n';
 const CSV_DATE_FIELD_NAMES = ['created', 'modified', 'lastUpload'];
 
+function convertFeedDateFieldToIsoDateString(feed, dateFieldName) {
+   if (dateFieldName in feed) {
+      if (typeof feed[dateFieldName] !== 'undefined' && feed[dateFieldName] !== null) {
+         if (feed[dateFieldName] !== '0000-00-00 00:00:00') {
+            feed[dateFieldName] = feed[dateFieldName].toISOString();
+         }
+      }
+      else {
+         feed[dateFieldName] = '';
+      }
+   }
+}
+
 module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
 
    // for searching for feeds, optionally matching specified criteria and sort order
@@ -46,21 +59,82 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                          return res.jsendServerError("Failed to get feeds", null);
                                       }
 
-                                      const willInflateChannelSpecs = (selectedFields.indexOf('channelSpecs') >= 0);
-                                      const willInflateChannelBounds = (selectedFields.indexOf('channelBounds') >= 0);
+                                      const outputFormat = parseOutputFormat(req, OutputFormat.JSON.format);
 
-                                      if (willInflateChannelSpecs || willInflateChannelBounds) {
-                                         result.rows.forEach(function(feed) {
-                                            if (willInflateChannelSpecs) {
-                                               feed.channelSpecs = JSON.parse(feed.channelSpecs);
-                                            }
-                                            if (willInflateChannelBounds) {
-                                               feed.channelBounds = JSON.parse(feed.channelBounds);
-                                            }
-                                         });
+                                      if (outputFormat === null) {
+                                         res.set("Content-Type", "application/json");
+                                         return res.jsendClientError("Invalid format, must be one of 'csv' or 'json'.", { format : req.query.format }, httpStatus.UNPROCESSABLE_ENTITY);  // HTTP 422 UNPROCESSABLE_ENTITY
                                       }
 
-                                      return res.jsendSuccess(result);
+                                      res.set("Content-Type", outputFormat.contentType);
+
+                                      if (outputFormat === OutputFormat.CSV) {
+                                         // Build up a map of fields to return, filtering out any disallowed ones, and
+                                         // also create an array containing field names for the headers.  We don't allow
+                                         // JSON fields when requesting CSV because if you know how to deal with JSON,
+                                         // you'd just request JSON. Plus, I don't want to deal with commas.
+                                         const fieldsToReturn = {};
+                                         const headerFields = [];
+                                         selectedFields
+                                               .filter(f => f !== 'channelSpecs')
+                                               .filter(f => f !== 'channelBounds')
+                                               .forEach(f => {
+                                                           headerFields.push(f);
+                                                           fieldsToReturn[f] = true;
+                                                        }
+                                               );
+
+                                         // fix names, if requested, to deal with stupid commas
+                                         if ('name' in fieldsToReturn) {
+                                            // If the feed name was requested, and includes a comma, then
+                                            // surround it with quotes.  TODO: the name might include
+                                            // quotes, too, in which case I need to change all quotes
+                                            // within in name to "".  Ugh.
+                                            result.rows.forEach(function(feed) {
+                                               if (feed['name'].indexOf(CSV_FIELD_DELIMITER) >= 0) {
+                                                  feed['name'] = '"' + feed['name'] + '"';
+                                               }
+                                            });
+                                         }
+
+                                         // use ISO format for dates, if any dates were requested
+                                         CSV_DATE_FIELD_NAMES.forEach(dateFieldName => {
+                                            if (dateFieldName in fieldsToReturn) {
+                                               result.rows.forEach(function(feed) {
+                                                  convertFeedDateFieldToIsoDateString(feed, dateFieldName);
+                                               });
+                                            }
+                                         });
+
+                                         // create the CSV
+                                         let csv = headerFields.join(CSV_FIELD_DELIMITER) + CSV_RECORD_DELIMITER;
+                                         csv += result.rows
+                                                      .map(row => headerFields.map(field => row[field]).join(CSV_FIELD_DELIMITER))
+                                                      .join(CSV_RECORD_DELIMITER)
+                                                + CSV_RECORD_DELIMITER;
+
+                                         return res
+                                               .set("Connection", "close")
+                                               .status(httpStatus.OK)
+                                               .send(csv);
+                                      }
+                                      else {
+                                         // inflate all the channelSpecs fields, if it's a requested field
+                                         if ((selectedFields.indexOf('channelSpecs') >= 0)) {
+                                            result.rows.forEach(function(feed) {
+                                               feed.channelSpecs = JSON.parse(feed.channelSpecs);
+                                            });
+                                         }
+
+                                         // inflate all the channelBounds fields, if it's a requested field
+                                         if ((selectedFields.indexOf('channelBounds') >= 0)) {
+                                            result.rows.forEach(function(feed) {
+                                               feed.channelBounds = JSON.parse(feed.channelBounds);
+                                            });
+                                         }
+
+                                         return res.jsendSuccess(result); // HTTP 200 OK
+                                      }
                                    });
                  })(req, res, next);
               });
@@ -102,7 +176,7 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                                      }
 
                                                      const getInfo = function(isAllowedToSelectReadWriteFeedApiKey) {
-                                                        let outputFormat = parseOutputFormat(req, OutputFormat.JSON.format);
+                                                        const outputFormat = parseOutputFormat(req, OutputFormat.JSON.format);
 
                                                         if (outputFormat === null) {
                                                            res.set("Content-Type", "application/json");
@@ -123,19 +197,18 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                                            delete filteredFeed.channelSpecs;
                                                            delete filteredFeed.channelBounds;
 
-                                                           // use ISO format for dates, if requested
+                                                           // use ISO format for dates, if any dates were requested
                                                            CSV_DATE_FIELD_NAMES.forEach(fieldName => {
-                                                              if (fieldName in filteredFeed) {
-                                                                 if (typeof filteredFeed[fieldName] !== 'undefined' && filteredFeed[fieldName] !== null) {
-                                                                    if (filteredFeed[fieldName] !== '0000-00-00 00:00:00') {
-                                                                       filteredFeed[fieldName] = filteredFeed[fieldName].toISOString();
-                                                                    }
-                                                                 }
-                                                                 else {
-                                                                    filteredFeed[fieldName] = '';
-                                                                 }
-                                                              }
+                                                              convertFeedDateFieldToIsoDateString(filteredFeed, fieldName);
                                                            });
+
+                                                           // If the feed name was requested, and includes a comma, then
+                                                           // surround it with quotes.  TODO: the name might include
+                                                           // quotes, too, in which case I need to change all quotes
+                                                           // within in name to "".  Ugh.
+                                                           if ('name' in filteredFeed && filteredFeed['name'].indexOf(CSV_FIELD_DELIMITER) >= 0) {
+                                                              filteredFeed['name'] = '"' + filteredFeed['name'] + '"';
+                                                           }
 
                                                            const headerFields = Object.keys(filteredFeed);
                                                            let csv = headerFields.join(CSV_FIELD_DELIMITER) + CSV_RECORD_DELIMITER;
@@ -155,7 +228,7 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                                            if ("channelBounds" in filteredFeed) {
                                                               filteredFeed.channelBounds = JSON.parse(filteredFeed.channelBounds);
                                                            }
-                                                           return res.jsendSuccess(filteredFeed, httpStatus.OK); // HTTP 200 OK
+                                                           return res.jsendSuccess(filteredFeed); // HTTP 200 OK
                                                         }
                                                      };
 
