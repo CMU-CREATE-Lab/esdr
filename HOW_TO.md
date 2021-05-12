@@ -342,16 +342,150 @@ There are also strict rules for channel names.  A channel name must:
 
 As mentioned above, we use a feed's `channelSpecs` field to map pretty names and units to each of the channel names, for use in visualizations.
 
+## Queries
+
+Querying over clients, products, devices, and feeds is fairly robust.  You can do where clauses joined by AND or OR (or both), order by (ASC or DESC), limit, offset, and specify which fields you want to select.  Where clauses also support comparison with =, <>, <, <=, >, >=, is null, and is not null.  Simple examples:
+
+* List all public clients: [https://esdr.cmucreatelab.org/api/v1/clients](https://esdr.cmucreatelab.org/api/v1/clients)
+* List all products:  [https://esdr.cmucreatelab.org/api/v1/products](https://esdr.cmucreatelab.org/api/v1/products)
+* List all products, but retrieving only the `id` and `name`:  [https://esdr.cmucreatelab.org/api/v1/products?fields=id,name](https://esdr.cmucreatelab.org/api/v1/products?fields=id,name)
+* List all public feeds:  [https://esdr.cmucreatelab.org/api/v1/feeds](https://esdr.cmucreatelab.org/api/v1/feeds)
+* List all public feeds for the ACHD product (product ID 1), but retrieve only the `id`, `name`, `latitude`, `longitude`, and `lastUpload` fields:  [https://esdr.cmucreatelab.org/api/v1/feeds?where=productId=1&fields=id,name,latitude,longitude,lastUpload](https://esdr.cmucreatelab.org/api/v1/feeds?where=productId=1&fields=id,name,latitude,longitude,lastUpload)
+* List ACHD product feeds, retrieving only the `id`, `name` fields, and sorted by id in descending order:  [https://esdr.cmucreatelab.org/api/v1/feeds?where=productId=1&fields=id,name&orderBy=-id](https://esdr.cmucreatelab.org/api/v1/feeds?where=productId=1&fields=id,name&orderBy=-id)
+* List ACHD and RAMP feeds (products 1 and 68, respectively), ordered by `productId` in ascending order and then `feedId` in descending order: [https://esdr.cmucreatelab.org/api/v1/feeds?fields=id,name,productId&whereOr=productId=1,productId=68&orderBy=productId,-id](https://esdr.cmucreatelab.org/api/v1/feeds?fields=id,name,productId&whereOr=productId=1,productId=68&orderBy=productId,-id)
+* List the 10 most recently updated (i.e. received an upload) PurpleAir feeds, sorted by `lastUpload` in descending order: [https://esdr.cmucreatelab.org/api/v1/feeds?fields=id,name,lastUpload&where=productId=69&orderBy=-lastUpload&limit=10](https://esdr.cmucreatelab.org/api/v1/feeds?fields=id,name,lastUpload&where=productId=69&orderBy=-lastUpload&limit=10) 
+* List PurpleAir feeds located within a bounding box roughly around Allegheny County PA: [https://esdr.cmucreatelab.org/api/v1/feeds?fields=id,name,latitude,longitude&whereAnd=productId=69,latitude%3E=39.420978,latitude%3C=40.756547,longitude%3E=-81.451293,longitude%3C=-79.677010](https://esdr.cmucreatelab.org/api/v1/feeds?fields=id,name,latitude,longitude&whereAnd=productId=69,latitude%3E=39.420978,latitude%3C=40.756547,longitude%3E=-81.451293,longitude%3C=-79.677010)
+* List all outdoor ACHD, RAMP, PurpleAir, and Airviz monitors within a lat/long bounding box (the `whereJoin` query parameter specifies how to join the `whereAnd` and `whereOr` clauses): [https://esdr.cmucreatelab.org/api/v1/feeds?offset=0&whereAnd=latitude%3E=40.19740606389117,latitude%3C=40.65260973628207,longitude%3E=-80.21541759011052,longitude%3C=-79.61736838677,exposure=outdoor&whereOr=productId=1,productId=68,productId=69,productId=82&whereJoin=AND&fields=id,name](https://esdr.cmucreatelab.org/api/v1/feeds?offset=0&whereAnd=latitude%3E=40.19740606389117,latitude%3C=40.65260973628207,longitude%3E=-80.21541759011052,longitude%3C=-79.61736838677,exposure=outdoor&whereOr=productId=1,productId=68,productId=69,productId=82&whereJoin=AND&fields=id,name)
+
+NOTE: Searching over devices requires you to supply the OAuth2 access token in the request header.
+
 ## Get Info
 
-For any public feed, you can get info about the feed with:
+### Single Feed
+
+For any public feed, you can get (JSON) info about the feed with:
 
     curl https://esdr.cmucreatelab.org/api/v1/feeds/FEED_ID
+
+For example, this:
+
+    curl 'https://esdr.cmucreatelab.org/api/v1/feeds/26?fields=id,name,latitude,longitude,lastUpload'
+
+...will return something like this:
+
+```json
+{
+   "code" : 200,
+   "status" : "success",
+   "data" : {
+      "id" : 26,
+      "name" : "Lawrenceville ACHD",
+      "latitude" : 40.46542,
+      "longitude" : -79.960757,
+      "lastUpload" : "2021-05-11T19:36:19.000Z"
+   }
+}
+```
 
 If you want the read-write feed API Key, you need to provide the OAuth2 access token in the Authorization request header.
 
 You can also get info for a feed using the feed's read-write or read-only API key.  The URL is the same as above, but use the API key instead of the `FEED_ID`.
 
+If you want the info as CSV, append `format=csv` in the query string, e.g.:
+
+    curl 'https://esdr.cmucreatelab.org/api/v1/feeds/FEED_ID?format=csv'
+
+For example, this:
+
+    curl 'https://esdr.cmucreatelab.org/api/v1/feeds/26?fields=id,name,latitude,longitude,lastUpload,channelBounds,channelSpecs&format=csv'
+
+...will return something like this:
+
+```text
+id,name,latitude,longitude,lastUpload
+26,Lawrenceville ACHD,40.46542,-79.960757,2021-05-12T13:36:16.000Z
+```
+
+### Multiple Feeds
+
+ESDR's API also supports retrieving metadata for multiple feeds using the query language described above.  For example, this returns the `id`, `name`, `latitude`, `longitude`, and `lastUpload` fields of the first five ACHD feeds when sorted by name in alphabetical order:
+
+    curl 'https://esdr.cmucreatelab.org/api/v1/feeds?where=productId=1&fields=id,name,latitude,longitude,lastUpload&orderBy=name&limit=5'
+
+That will return something like this:
+
+```json
+{
+   "code" : 200,
+   "status" : "success",
+   "data" : {
+      "totalCount" : 22,
+      "rows" : [
+         {
+            "id" : 1,
+            "name" : "Avalon ACHD",
+            "latitude" : 40.499767,
+            "longitude" : -80.071337,
+            "lastUpload" : "2021-05-12T15:36:04.000Z"
+         },
+         {
+            "id" : 2,
+            "name" : "Avalon ACHD",
+            "latitude" : 40.499767,
+            "longitude" : -80.071337,
+            "lastUpload" : "0000-00-00 00:00:00"
+         },
+         {
+            "id" : 26086,
+            "name" : "Clairton ACHD",
+            "latitude" : 40.294341,
+            "longitude" : -79.885331,
+            "lastUpload" : "2019-12-19T13:36:13.000Z"
+         },
+         {
+            "id" : 22,
+            "name" : "Court House ACHD",
+            "latitude" : 40.438632,
+            "longitude" : -80.002543,
+            "lastUpload" : "2014-12-03T12:35:38.000Z"
+         },
+         {
+            "id" : 23,
+            "name" : "Flag Plaza ACHD",
+            "latitude" : 40.443367,
+            "longitude" : -79.990293,
+            "lastUpload" : "2021-05-12T15:36:07.000Z"
+         }
+      ],
+      "offset" : 0,
+      "limit" : 5
+   }
+}
+```
+
+Or, the same in CSV format:
+
+    curl 'https://esdr.cmucreatelab.org/api/v1/feeds?where=productId=1&fields=id,name,latitude,longitude,lastUpload&orderBy=name&limit=5&format=csv'
+
+...will return something like this:
+
+```text
+id,name,latitude,longitude,lastUpload
+1,Avalon ACHD,40.499767,-80.071337,2021-05-12T15:36:04.000Z
+2,Avalon ACHD,40.499767,-80.071337,0000-00-00 00:00:00
+26086,Clairton ACHD,40.294341,-79.885331,2019-12-19T13:36:13.000Z
+22,Court House ACHD,40.438632,-80.002543,2014-12-03T12:35:38.000Z
+23,Flag Plaza ACHD,40.443367,-79.990293,2021-05-12T15:36:07.000Z
+```
+
+### Notes About CSV format for Feed Metadata
+
+Important notes about retrieving feed metadata as CSV:
+
+* Feed names containing a comma will be quoted in the returned CSV.
+* Returned date fields will be in simplified extended ISO format (ISO 8601).
+* Field values which are `null` in JSON metadata are returned as an empty string in CSV.
+* The CSV format will never include the `channelSpecs` or `channelBounds` fields, regardless of whether you explicitly ask for it.  They're both JSON fields, so the rationale is that if you know how to deal with JSON, then you wouldn't be requesting feed metadata as CSV.
 
 ## Fetch Tiles
 
@@ -429,14 +563,3 @@ Examples:
     https://esdr.cmucreatelab.org/api/v1/feeds/export/26.OUT_T_DEGC,28.SO2_PPM?from=1609563600&to=1609606800&format=json
 
     https://esdr.cmucreatelab.org/api/v1/feeds/export/26.OUT_T_DEGC,28.SO2_PPM?from=1609563600&to=1609606800&format=csv&timezone=America/New_York
-
-## Queries
-
-Querying over clients, products, devices, and feeds is fairly robust.  You can do where clauses joined by AND or OR (or both), order by (ASC or DESC), limit, offset, and specify which fields you want to select.  Where clauses also support comparison with =, <>, <, <=, >, >=, is null, and is not null.  Detailed examples will be coming soon.  Some simple examples:
-
-* List all public clients: https://esdr.cmucreatelab.org/api/v1/clients
-* List all products:  https://esdr.cmucreatelab.org/api/v1/products
-* List all public feeds:  https://esdr.cmucreatelab.org/api/v1/feeds
-* Searching for specific feeds:  https://esdr.cmucreatelab.org/api/v1/feeds?fields=id,userId,productId,deviceId&whereOr=productId=2,productId>=3&orderBy=-id
-
-NOTE: Searching over devices requires you to supply the OAuth2 access token in the request header.
