@@ -27,7 +27,7 @@
     "express-session": "^1.17.1",
     "handlebars": "^4.7.7",
     "http-status": "^1.5.0",
-    "jsend-utils": "^3.0.1",
+    "jsend-utils": "^3.0.2",
     "log4js": "^6.3.0",
     "morgan": "^1.10.0",
     "mysql": "^2.18.1",
