@@ -1,0 +1,2 @@
+# Runs a backup of the ESDR MySQL database nightly at 4am
+0 4 * * * cbartley /datastore-backup/mysql/mysql-backup.sh esdr_prod esdr_backup_script > /datastore-backup/mysql/cron_output.log 2>&1
