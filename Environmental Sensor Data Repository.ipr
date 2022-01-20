@@ -36,9 +36,6 @@
   <component name="Encoding">
     <file url="PROJECT" charset="x-MacRoman" />
   </component>
-  <component name="EntryPointsManager">
-    <entry_points version="2.0" />
-  </component>
   <component name="InspectionProjectProfileManager">
     <profile version="1.0" is_locked="false">
       <option name="myName" value="Project Default" />
@@ -71,7 +68,8 @@
     <version value="1.0" />
   </component>
   <component name="JavaScriptLibraryMappings">
-    <file url="PROJECT" libraries="{@types/bcrypt, @types/body-parser, @types/bootstrap, @types/compression, @types/cookie-parser, @types/express, @types/express-handlebars, @types/express-mysql-session, @types/express-serve-static-core, @types/express-session, @types/handlebars-helpers, @types/http-status, @types/mocha, @types/morgan, @types/mysql, @types/nconf, @types/nodemailer, @types/nodemailer-smtp-transport, @types/oauth2orize, @types/passport, @types/passport-http, @types/passport-http-bearer, @types/passport-local, @types/passport-oauth2-client-password, @types/qs, @types/rimraf, @types/serve-favicon, @types/string, @types/superagent, Generated files, handlebars.js, jquery, nimble, should-DefinitelyTyped}" />
+    <file url="file://$PROJECT_DIR$" libraries="{EnvironmentalSensorDataRepository/node_modules}" />
+    <file url="PROJECT" libraries="{@types/bcrypt, @types/body-parser, @types/bootstrap, @types/compression, @types/cookie-parser, @types/express, @types/express-handlebars, @types/express-mysql-session, @types/express-serve-static-core, @types/express-session, @types/handlebars-helpers, @types/http-status, @types/mocha, @types/morgan, @types/mysql, @types/nconf, @types/nodemailer, @types/nodemailer-smtp-transport, @types/oauth2orize, @types/passport, @types/passport-http, @types/passport-http-bearer, @types/passport-local, @types/passport-oauth2-client-password, @types/qs, @types/rimraf, @types/serve-favicon, @types/string, @types/superagent, EnvironmentalSensorDataRepository/node_modules, Generated files, handlebars.js, jquery, nimble, should-DefinitelyTyped}" />
     <includedPredefinedLibrary name="Node.js Core" />
   </component>
   <component name="JavaScriptSettings">
@@ -389,6 +387,12 @@
         <indentOptions>
           <option name="INDENT_SIZE" value="3" />
           <option name="CONTINUATION_INDENT_SIZE" value="6" />
+          <option name="TAB_SIZE" value="3" />
+        </indentOptions>
+      </codeStyleSettings>
+      <codeStyleSettings language="Shell Script">
+        <indentOptions>
+          <option name="INDENT_SIZE" value="3" />
           <option name="TAB_SIZE" value="3" />
         </indentOptions>
       </codeStyleSettings>
@@ -788,7 +792,7 @@
     <output url="file://$PROJECT_DIR$/out" />
   </component>
   <component name="ProjectTasksOptions">
-    <TaskOptions isEnabled="true">
+    <TaskOptions isEnabled="false">
       <option name="arguments" value="$FileName$ $FileNameWithoutExtension$.css" />
       <option name="checkSyntaxErrors" value="false" />
       <option name="description" />
@@ -828,7 +832,28 @@
       <option name="workingDir" value="$ProjectFileDir$/public-templates" />
       <envs />
     </TaskOptions>
+    <TaskOptions isEnabled="true">
+      <option name="arguments" value="$FileName$ $FileNameWithoutExtension$.css" />
+      <option name="checkSyntaxErrors" value="false" />
+      <option name="description" />
+      <option name="exitCodeBehavior" value="NEVER" />
+      <option name="fileExtension" value="scss" />
+      <option name="immediateSync" value="true" />
+      <option name="name" value="Dart Sass" />
+      <option name="output" value="$FileNameWithoutExtension$.css" />
+      <option name="outputFilters">
+        <array />
+      </option>
+      <option name="outputFromStdout" value="false" />
+      <option name="program" value="$ProjectFileDir$/node_modules/sass/sass.js" />
+      <option name="runOnExternalChanges" value="true" />
+      <option name="scopeName" value="Project CSS Files" />
+      <option name="trackOnlyRoot" value="true" />
+      <option name="workingDir" value="$FileDir$" />
+      <envs />
+    </TaskOptions>
   </component>
+  <component name="PublishConfigData" serverName="ESDR (Production)" remoteFilesAllowedToDisappearOnAutoupload="false" />
   <component name="SqlDialectMappings">
     <file url="PROJECT" dialect="MySQL" />
   </component>
@@ -836,10 +861,26 @@
     <file url="file://$PROJECT_DIR$/models/DeviceProperties.js" scope="{&quot;node&quot;:{  &quot;@negative&quot;:&quot;1&quot;,  &quot;group&quot;:{   &quot;@kind&quot;:&quot;root&quot;,   &quot;node&quot;:{    &quot;name&quot;:{     &quot;@qname&quot;:&quot;8407a622-3086-4350-85e3-af669192afda&quot;    },    &quot;group&quot;:{     &quot;@kind&quot;:&quot;schema&quot;,     &quot;node&quot;:{      &quot;@negative&quot;:&quot;1&quot;     }    }   }  } }}" />
     <file url="PROJECT" scope="{&quot;node&quot;:{  &quot;@negative&quot;:&quot;1&quot;,  &quot;group&quot;:{   &quot;@kind&quot;:&quot;root&quot;,   &quot;node&quot;:{    &quot;@negative&quot;:&quot;1&quot;   }  } }}" />
   </component>
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig host="esdr.cmucreatelab.org" id="3b69bbdf-8066-4e20-a899-facfe405a8b5" keyPath="$USER_HOME$/.ssh/esdr_rsa" port="22" nameFormat="DESCRIPTIVE" username="cbartley" />
+    </configs>
+  </component>
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
   </component>
-  <component name="dataSourceStorageLocal" created-in="IU-211.7142.45">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="fc4d83f9-7bd1-4284-8de8-6fd4856500c6" name="ESDR (Production)">
+        <fileTransfer accessType="SFTP" host="esdr.cmucreatelab.org" port="22" sshConfigId="3b69bbdf-8066-4e20-a899-facfe405a8b5" sshConfig="cbartley@esdr.cmucreatelab.org:22 key" keyPair="true">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+  <component name="dataSourceStorageLocal" created-in="IU-213.6461.79">
     <data-source name="MySQL - esdr_dev@localhost" uuid="8407a622-3086-4350-85e3-af669192afda">
       <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" dbms="MYSQL" exact-version="0" />
       <schema-mapping />
