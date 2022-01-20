@@ -1,47 +1,63 @@
 body {
   color: #1c1c1e;
-  background-color: #c7d6e1; }
+  background-color: #c7d6e1;
+}
 
 .main_container {
-  margin-top: 50px; }
-  @media all and (max-width: 576px) {
-    .main_container {
-      margin-top: 15px; } }
+  margin-top: 50px;
+}
+@media all and (max-width: 576px) {
+  .main_container {
+    margin-top: 15px;
+  }
+}
 
 .main_container_with_navbar {
   background: #ffffff;
-  padding-top: 0; }
+  padding-top: 0;
+}
 
 .page_title {
   font-size: 24px !important;
-  margin-bottom: 20px; }
+  margin-bottom: 20px;
+}
 
 .page_instructions {
   margin-top: 30px;
-  margin-bottom: 20px; }
+  margin-bottom: 20px;
+}
 
-.big_form input[type="text"], .big_form input[type="email"], .big_form input[type="password"], .big_form input[type="url"] {
+.big_form input[type=text], .big_form input[type=email], .big_form input[type=password], .big_form input[type=url] {
   height: 50px;
   font-size: 20px;
   padding-left: 15px;
-  margin: 0 0 15px 0; }
+  margin: 0 0 15px 0;
+}
 
 .form_messages {
   display: none;
-  margin-bottom: 15px; }
+  margin-bottom: 15px;
+}
 
 .logout_link {
   color: rgba(0, 0, 0, 0.5) !important;
-  text-decoration: none !important; }
-  .logout_link:hover {
-    color: rgba(0, 0, 0, 0.7) !important; }
+  text-decoration: none !important;
+}
+.logout_link:hover {
+  color: rgba(0, 0, 0, 0.7) !important;
+}
 
 .help-block {
   font-size: 8pt;
-  margin-bottom: 0; }
+  margin-bottom: 0;
+}
 
 h4 {
-  margin-top: 20px; }
+  margin-top: 20px;
+}
 
 .navbar {
-  margin-bottom: 0; }
+  margin-bottom: 0;
+}
+
+/*# sourceMappingURL=main.css.map */
