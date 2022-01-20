@@ -14,4 +14,8 @@ router.get('/', function(req, res) {
    }
 });
 
+router.get('/browse', function(req, res) {
+   res.redirect('https://environmentaldata.org/');
+});
+
 module.exports = router;
