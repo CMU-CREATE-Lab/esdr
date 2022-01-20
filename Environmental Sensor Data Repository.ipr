@@ -863,12 +863,6 @@
       </webServer>
     </option>
   </component>
-  <component name="dataSourceStorageLocal" created-in="IU-213.6461.79">
-    <data-source name="MySQL - esdr_dev@localhost" uuid="8407a622-3086-4350-85e3-af669192afda">
-      <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" dbms="MYSQL" exact-version="0" />
-      <schema-mapping />
-    </data-source>
-  </component>
   <component name="libraryTable">
     <library name="Generated files" type="javaScript">
       <properties>
