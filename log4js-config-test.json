@@ -4,7 +4,7 @@
          "type" : "console",
          "layout" : {
             "type" : "pattern",
-            "pattern" : "%d{ABSOLUTE} [%[%p%]] %c - %m"
+            "pattern" : "%d{ABSOLUTETIME} [%[%p%]] %c - %m"
          }
       }
    },
