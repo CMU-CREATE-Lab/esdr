@@ -35,7 +35,6 @@
     "newrelic": "^8.8.0",
     "nimble": "0.0.2",
     "nodemailer": "^6.7.2",
-    "nodemailer-smtp-transport": "^2.7.4",
     "oauth2orize": "^1.11.1",
     "passport": "^0.5.2",
     "passport-http": "^0.3.0",
