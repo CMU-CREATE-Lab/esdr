@@ -4,6 +4,10 @@ ESDR is an open source data repository intended for storing and retrieving time 
 
 ESDR is pronounced like the female name, Esther.
 
+## Other Links
+
+https://github.com/CMU-CREATE-Lab/esdr-explorer
+
 ## Concepts and Terminology
 
 If you're familiar with Xively's API, you'll see a lot of parallels with ESDR.  Our intention is to use ESDR as the data repository not only for our own products and visualizations, but also for anyone else who wants a place to store data and have tools to easily visualize it.
