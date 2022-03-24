@@ -1,0 +1,15 @@
+[
+   {
+      "channel_names" : [
+         "i-am-valid",
+         " i am not!",
+         "hey.mom.look.i.am.valid",
+         "but..i..am..not",
+         ".another-invalid",
+         "and-one-more."
+      ],
+      "data" : [
+         [1441856362, 1, 2, 3, 4, 5, 6]
+      ]
+   }
+]

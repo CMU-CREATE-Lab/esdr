@@ -58,6 +58,26 @@ describe("REST API", function() {
       response : requireNew('./fixtures/feed-upload8-response.json')
    };
 
+   const invalidChannelName1 = {
+      request : requireNew('./fixtures/feed-upload-invalid-channel-name-1-request.json'),
+      response : requireNew('./fixtures/feed-upload-invalid-channel-name-1-response.json')
+   }
+
+   const invalidChannelName2 = {
+      request : requireNew('./fixtures/feed-upload-invalid-channel-name-2-request.json'),
+      response : requireNew('./fixtures/feed-upload-invalid-channel-name-2-response.json')
+   }
+
+   const invalidChannelName3 = {
+      request : requireNew('./fixtures/feed-upload-invalid-channel-name-3-request.json'),
+      response : requireNew('./fixtures/feed-upload-invalid-channel-name-3-response.json')
+   }
+
+   const invalidChannelName4 = {
+      request : requireNew('./fixtures/feed-upload-invalid-channel-name-4-request.json'),
+      response : requireNew('./fixtures/feed-upload-invalid-channel-name-4-response.json')
+   }
+
    before(function(initDone) {
       flow.series(
             [
@@ -312,6 +332,58 @@ describe("REST API", function() {
                   expectedHttpStatus : httpStatus.UNAUTHORIZED,
                   expectedStatusText : 'error',
                   hasEmptyBody : true
+               },
+               {
+                  description : "Should fail to upload to a feed if one or more channel names is invalid",
+                  url : ESDR_FEED_API_URL,
+                  headers : function() {
+                     return {
+                        FeedApiKey : feed1.apiKey
+                     }
+                  },
+                  dataToUpload : invalidChannelName1.request,
+                  expectedHttpStatus : httpStatus.UNPROCESSABLE_ENTITY,
+                  expectedStatusText : 'error',
+                  expectedResponseData : invalidChannelName1.response,
+               },
+               {
+                  description : "Should fail to upload to a feed if one or more channel names is invalid",
+                  url : ESDR_FEED_API_URL,
+                  headers : function() {
+                     return {
+                        FeedApiKey : feed1.apiKey
+                     }
+                  },
+                  dataToUpload : invalidChannelName2.request,
+                  expectedHttpStatus : httpStatus.UNPROCESSABLE_ENTITY,
+                  expectedStatusText : 'error',
+                  expectedResponseData : invalidChannelName2.response,
+               },
+               {
+                  description : "Should fail to upload to a feed if one or more channel names is invalid",
+                  url : ESDR_FEED_API_URL,
+                  headers : function() {
+                     return {
+                        FeedApiKey : feed1.apiKey
+                     }
+                  },
+                  dataToUpload : invalidChannelName3.request,
+                  expectedHttpStatus : httpStatus.UNPROCESSABLE_ENTITY,
+                  expectedStatusText : 'error',
+                  expectedResponseData : invalidChannelName3.response,
+               },
+               {
+                  description : "Should fail to upload to a feed if one or more channel names is invalid",
+                  url : ESDR_FEED_API_URL,
+                  headers : function() {
+                     return {
+                        FeedApiKey : feed1.apiKey
+                     }
+                  },
+                  dataToUpload : invalidChannelName4.request,
+                  expectedHttpStatus : httpStatus.UNPROCESSABLE_ENTITY,
+                  expectedStatusText : 'error',
+                  expectedResponseData : invalidChannelName4.response,
                }
             ].forEach(executeUploadTest);
          });   // End To /feed method

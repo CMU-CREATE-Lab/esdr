@@ -1,0 +1,41 @@
+[
+   {
+      "channel_names" : ["good-channel", "bad channel"],
+      "data" : [
+         [1441856364, 10, 20]
+      ]
+   },
+   {
+      "channel_names" : ["my*other*bad*channel*name", "ok_channel_name"],
+      "data" : [
+         [1441856365, 34, 40]
+      ]
+   },
+   {
+      "channel_names" : ["this_one_is_fine"],
+      "data" : [
+         [1441856366, 50]
+      ]
+   },
+   {
+      "channel_names" : ["this------is------weird------but------totally------fine", "424242"],
+      "data" : [
+         [1441856367, 60, 70]
+      ]
+   },
+   {
+      "channel_names" : [
+         ".",
+         "..",
+         "..hi",
+         "bye..",
+         "?",
+         "!",
+         "@",
+         " "
+      ],
+      "data" : [
+         [1441856368, 1, 2, 3, 4, 5, 6, 7, 8]
+      ]
+   }
+]

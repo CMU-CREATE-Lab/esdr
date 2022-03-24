@@ -1,0 +1,6 @@
+{
+   "channel_names" : ["this_IS_valid", "this+is+not", "also_valid", "neither[is]this"],
+   "data" : [
+      [1441856362, 42, 43, 44, 45]
+   ]
+}

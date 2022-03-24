@@ -1,0 +1,14 @@
+{
+   "data" : [
+      "bad channel",
+      "my*other*bad*channel*name",
+      ".",
+      "..",
+      "..hi",
+      "bye..",
+      "?",
+      "!",
+      "@",
+      " "
+   ]
+}
