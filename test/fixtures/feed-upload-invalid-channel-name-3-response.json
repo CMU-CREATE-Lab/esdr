@@ -1,5 +1,5 @@
 {
-   "data" : [
+   "invalidChannelNames" : [
       " i am not!",
       "but..i..am..not",
       ".another-invalid",

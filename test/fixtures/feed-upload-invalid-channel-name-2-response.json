@@ -1,1 +1,1 @@
-{ "data" : ["this+is+not", "neither[is]this"] }
+{ "invalidChannelNames" : ["this+is+not", "neither[is]this"] }

@@ -1,5 +1,5 @@
 {
-   "data" : [
+   "invalidChannelNames" : [
       "bad channel",
       "my*other*bad*channel*name",
       ".",
