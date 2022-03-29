@@ -43,7 +43,7 @@
     "passport-localapikey-update": "^0.6.0",
     "passport-oauth2-client-password": "^0.1.2",
     "qs": "^6.10.3",
-    "query2query": "^2.1.0",
+    "query2query": "^2.2.0",
     "run-mode": "^1.0.1",
     "sass": "^1.49.9",
     "serve-favicon": "^2.5.0",
