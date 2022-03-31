@@ -45,7 +45,7 @@
     "qs": "^6.10.3",
     "query2query": "^2.2.0",
     "run-mode": "^1.0.1",
-    "sass": "^1.49.9",
+    "sass": "^1.49.10",
     "serve-favicon": "^2.5.0",
     "superagent-ls": "^1.4.0"
   },
