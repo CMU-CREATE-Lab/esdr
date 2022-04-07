@@ -66,33 +66,43 @@ const CREATE_TABLE_QUERY = " CREATE TABLE IF NOT EXISTS `Feeds` ( " +
 const MAX_FOUND_FEEDS = 1000;
 const MIN_CHANNEL_SPECS_STRING_LENGTH = 2;
 
+const NAME_ATTRS = {
+   "type" : "string",
+   "minLength" : 1,
+   "maxLength" : 255
+};
+
+const EXPOSURE_ATTRS = {
+   "enum" : ['indoor', 'outdoor', 'virtual']
+};
+
+const LATITUDE_ATTRS = {
+   "type" : ["number", "null"],
+   "minimum" : -90,
+   "maximum" : 90
+};
+
+const LONGITUDE_ATTRS = {
+   "type" : ["number", "null"],
+   "minimum" : -180,
+   "maximum" : 180
+};
+
+const IS_PUBLIC_ATTRS = {
+   "type" : "boolean"
+};
+
 const JSON_SCHEMA = {
    "$async" : true,
    "title" : "Feed",
    "description" : "An ESDR feed",
    "type" : "object",
    "properties" : {
-      "name" : {
-         "type" : "string",
-         "minLength" : 1,
-         "maxLength" : 255
-      },
-      "exposure" : {
-         "enum" : ['indoor', 'outdoor', 'virtual']
-      },
-      "latitude" : {
-         "type" : "number",
-         "minimum" : -90,
-         "maximum" : 90
-      },
-      "longitude" : {
-         "type" : "number",
-         "minimum" : -180,
-         "maximum" : 180
-      },
-      "isPublic" : {
-         "type" : "boolean"
-      },
+      "name" : NAME_ATTRS,
+      "exposure" : EXPOSURE_ATTRS,
+      "latitude" : LATITUDE_ATTRS,
+      "longitude" : LONGITUDE_ATTRS,
+      "isPublic" : IS_PUBLIC_ATTRS,
       "isMobile" : {
          "type" : "boolean"
       },
@@ -104,8 +114,50 @@ const JSON_SCHEMA = {
    "required" : ["name", "exposure", "channelSpecs"]
 };
 
+const JSON_PATCH_DOCUMENT_SCHEMA = {
+   "$async" : true,
+   "title" : "JSON Patch Document",
+   "description" : "A set of JSON PATCH operations allowed by ESDR for patching feeds.",
+   "type" : "array",
+   "minItems" : 1,
+   "items" : {
+      "type" : "object",
+      "properties" : {
+         "op" : {
+            "enum" : ['replace']
+         },
+         "path" : {
+            "enum" : ['/name', '/latitude', '/longitude', '/isPublic', '/exposure']
+         },
+      },
+      "required" : ["op", "path", "value"]
+   }
+};
+
 const ajv = new Ajv({ allErrors : true });
 const ifFeedIsValid = ajv.compile(JSON_SCHEMA);
+const ifJsonPatchDocumentIsValid = ajv.compile(JSON_PATCH_DOCUMENT_SCHEMA);
+
+const createJsonSchema = function(path, valueAttrs) {
+   return {
+      "$async" : true,
+      "type" : "object",
+      "properties" : {
+         "path" : {
+            "enum" : [path]
+         },
+         "value" : valueAttrs
+      },
+      "required" : ["path", "value"]
+   };
+};
+const jsonPatchPathValueValidators = {
+   '/name' : ajv.compile(createJsonSchema('/name', NAME_ATTRS)),
+   '/latitude' : ajv.compile(createJsonSchema('/latitude', LATITUDE_ATTRS)),
+   '/longitude' : ajv.compile(createJsonSchema('/longitude', LONGITUDE_ATTRS)),
+   '/isPublic' : ajv.compile(createJsonSchema('/isPublic', IS_PUBLIC_ATTRS)),
+   '/exposure' : ajv.compile(createJsonSchema('/exposure', EXPOSURE_ATTRS)),
+};
 
 module.exports = function(databaseHelper) {
 
@@ -196,6 +248,110 @@ module.exports = function(databaseHelper) {
                      .catch(err => callback(new ValidationError(err)));
             }
       );
+   };
+
+   // This method assumes you've already determined that the feed exists and is allowed to be patched!  That is, you've
+   // done proper authentication/authorization and have determined that the user attempting to do the patch actually
+   // owns the feed.
+   this.patch = function(feedId, jsonPatchDocument, callback) {
+      ifJsonPatchDocumentIsValid(jsonPatchDocument)
+            .then(() => {
+               try { // The patch document is valid, so now iterate over the operations and roll them up into edits (in case
+                  // of duplicate operations on the same path, then our policy is last one wins).  I'm not clear on what
+                  // the "right" thing is to do if, say, a user submits a patch document with two operations like this:
+                  //
+                  // [
+                  //    {op: "replace", path: "/latitude", value: "bogus"},
+                  //    {op: "replace", path: "/latitude", value: 40.440624}
+                  // ]
+                  //
+                  // The first one is invalid since latitude must be a number, but by the "last one wins" rule, then do we
+                  // really care since it gets superceded by the following valid one?  I'm going to say that, no, we don't.
+                  // So, with that policy in mind, my approach is going to be to iterate over all operations, and put them
+                  // into a Map keyed on path.  Then, iterate over the items in the Map and validate before constructing
+                  // the SQL.
+                  const pathToNewValue = new Map();
+                  jsonPatchDocument.forEach(({ _, path, value }) => {
+                     pathToNewValue.set(path, value);
+                  });
+
+                  // iterate over the map entries and create a validation promise to validate the value depending on the path
+                  const validationPromises = [];
+                  for (const [path, value] of pathToNewValue.entries()) {
+                     validationPromises.push(new Promise((resolve, reject) => {
+                        jsonPatchPathValueValidators[path]({ path : path, value : value })
+                              .then(resolve)
+                              .catch(e => {
+                                 const o = {}
+                                 o[path] = e;
+                                 reject(o);
+                              })
+                     }));
+                  }
+
+                  // validate all in parallel, waiting for them all to settle and then round up the results
+                  Promise.allSettled(validationPromises)
+                        .then(results => {
+                           // find any validation errors and dump them into a map keyed on path (which we'll return to
+                           // the user)
+                           const validationErrorsByPath = {};
+                           for (const result of results) {
+                              if (result.status === 'rejected') {
+                                 for (const path of Object.keys(result.reason)) {
+                                    validationErrorsByPath[path] = result.reason[path];
+                                 }
+                              }
+                           }
+
+                           // See whether there were any validation errors and respond accordingly
+                           if (Object.keys(validationErrorsByPath).length > 0) {
+                              callback(new ValidationError(validationErrorsByPath));
+                           }
+                           else {
+                              // OK, all validation checks out, so attempt to update the database.  Start by building
+                              // the SQL command
+                              const setClauses = [];
+                              const values = [];
+
+                              for (const [path, value] of pathToNewValue.entries()) {
+                                 const fieldName = path.slice(1);    // chop off the leading slash
+                                 setClauses.push(fieldName + '=?')
+                                 values.push(value);
+                              }
+
+                              const sqlParts = ['UPDATE Feeds SET'];
+                              sqlParts.push(setClauses.join(', '));
+                              sqlParts.push('WHERE id=?');
+                              values.push(feedId);
+
+                              // join the sql parts into the SQL string
+                              const sql = sqlParts.join(' ');
+
+                              // execute the update command!
+                              databaseHelper.execute(sql, values, function(err) {
+                                 if (err) {
+                                    callback(err);
+                                 }
+                                 else {
+                                    callback(null, {
+                                       feedId : feedId,
+                                       patched : Object.fromEntries(pathToNewValue),
+                                    });
+                                 }
+                              });
+                           }
+                        })
+                        .catch(e => {
+                           log.error("Error in FeedModel.patch allSettled...this probably shouldn't happen: ", e);
+                           return callback(new JSendServerError("Internal Server Error"));
+                        })
+               }
+               catch (e) {
+                  log.error("Error while processing the patch: " + e);
+                  return callback(new JSendServerError("Internal Server Error"));
+               }
+            })
+            .catch(err => callback(new ValidationError(err)));
    };
 
    this.deleteFeed = function(feedId, userId, callback) {

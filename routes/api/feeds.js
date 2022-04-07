@@ -276,6 +276,33 @@ module.exports = function(FeedModel, FeedPropertiesModel, feedRouteHelper) {
                                                req, res, next);
               });
 
+   // patch a feed (MUST be authenticated with OAuth2 access token)
+   router.patch('/:feedId',
+                passport.authenticate('bearer', { session : false }),
+                function(req, res, next) {
+                   verifyFeedOwnership(req, res, function(clientId, feedId) {
+                      FeedModel.patch(feedId, req.body, function(err, result) {
+                         if (err) {
+                            if (err instanceof JSendError || (typeof err.data !== 'undefined' &&
+                                                              typeof err.data.code !== 'undefined' &&
+                                                              typeof err.data.status !== 'undefined')) {
+                               return res.jsendPassThrough(err.data);
+                            }
+                            else if (err instanceof ValidationError) {
+                               return res.jsendClientValidationError(err.message || "Validation failure", err.data);   // HTTP 422 Unprocessable Entity
+                            }
+                            else {
+                               const message = "Error while patching the feed";
+                               log.error(message + ": " + err);
+                               return res.jsendServerError(message);
+                            }
+                         }
+
+                         return res.jsendSuccess(result); // HTTP 200 OK
+                      });
+                   });
+                });
+
    // delete a feed (MUST be authenticated with OAuth2 access token)
    router.delete('/:feedId',
                  passport.authenticate('bearer', { session : false }),

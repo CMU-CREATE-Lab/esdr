@@ -407,7 +407,7 @@ describe("REST API", function() {
                         "dataPath" : ".latitude",
                         "schemaPath" : "#/properties/latitude/type",
                         "params" : {
-                           "type" : "number"
+                           "type" : "number,null"
                         }
                      },
                      {

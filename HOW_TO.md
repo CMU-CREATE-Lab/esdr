@@ -209,6 +209,77 @@ ESDR should respond with an HTTP 201, with content similar to:
 }
 ```
 
+## Edit a Feed
+
+ESDR supports HTTP PATCH for editing a feed, with the following restrictions:  
+
+* PATCH requests must be authorized with OAuth2.  Attempts to patch a feed using the feed API key will be rejected with an HTTP 401 Unauthorized.
+* ESDR accepts only JSON PATCH documents.
+* The only JSON patch operation currently supported is `replace`.  
+* The only fields within a feed that we currently allow to be patched are `name`, `isPublic`, `exposure`, `latitude`, and `longitude`.  Attempts to edit other fields will be rejected with an HTTP 422.  The JSON PATCH `path` parameters for these fields are: `/name`, `/isPublic`, `/exposure`, `/latitude`, and `/longitude`
+* Multiple `replace` operations within the same JSON PATCH document for the same path will be collapsed, with a "last one wins" policy.  See below for details.  
+* Field validation follows the same rules as for feed creation:
+  * `name` must be a string between 1 and 255 characters
+  * `isPublic` must be a boolean (`true` or `false` only...variants such as `0`, `1`, `"true"`, `"false"`, etc. will be rejected)
+  * `exposure` must be one of `indoor`, `outdoor`, or `virtual`
+  * `latitude` must be a number within the range [-90, 90], or `null`
+  * `longitude` must be a number within the range [-180, 180], or `null`
+
+### Last One Wins
+
+In the case of multiple operations on the same path withing a single JSON PATCH document, we employ a "last one wins" policy, with all other operations on that path completely ignored, even if invalid.
+
+For example, given the following JSON PATCH document:
+
+```json
+[
+   { "op" : "replace", "path" : "/name", "value" : "This is a valid name" },
+   { "op" : "replace", "path" : "/name", "value" : null },
+   { "op" : "replace", "path" : "/name", "value" : "The best feed ever" }
+]
+```
+
+...the feed would be edited to have a name of `The best feed ever`.  The first two replace operations are ignored, including even the second one which is invalid since feed names cannot be `null`.
+
+### Example
+
+Given a JSON file named `patch-data.json` containing the following:
+
+```json
+[
+   { "op" : "replace", "path" : "/name", "value" : "The best feed ever" },
+   { "op" : "replace", "path" : "/longitude", "value" : -120.340836 },
+   { "op" : "replace", "path" : "/latitude", "value" : 50.676109 },
+   { "op" : "replace", "path" : "/exposure", "value" : "outdoor" },
+   { "op" : "replace", "path" : "/isPublic", "value" : true }
+]
+```
+
+Do the following to execute a patch to a feed:
+
+```shell
+curl -X PATCH -H "Content-Type:application/json" -H "Authorization: Bearer ACCESS_TOKEN_HERE" https://esdr.cmucreatelab.org/api/v1/feeds/FEED_ID -d @patch-data.json
+```
+
+Example response upon success:
+
+```JSON
+{
+   "code" : 200,
+   "status" : "success",
+   "data" : {
+      "feedId" : 7,
+      "patched" : {
+         "/name" : "The best feed ever",
+         "/longitude" : -120.340836,
+         "/latitude" : 50.676109,
+         "/exposure" : "outdoor",
+         "/isPublic" : true
+      }
+   }
+}
+```
+
 ## Upload Data
 
 We're finally ready to upload data samples to the feed.  To do so, you'll need either the feed's API Key (obtained above) or the feed ID and your OAuth2 access token.  Create a file named `data.json` and insert the following:
