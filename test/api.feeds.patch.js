@@ -96,7 +96,7 @@ describe("REST API", function() {
    });
 
    describe("Feeds", function() {
-      describe("Patch", function() {
+      describe.only("Patch", function() {
 
          const checkResponse = async function(test, res) {
             if (test.willDebug) {
@@ -1704,7 +1704,131 @@ describe("REST API", function() {
             },
 
             {
-               description : "Should be able to patch a feed name",
+               description : "Should be able to patch a feed name (name includes double quote character)",
+               url : function() {
+                  return ESDR_FEEDS_API_URL + "/" + feed1.id;
+               },
+               config : function() {
+                  return {
+                     headers : { ...createAuthorizationHeader(user1.accessToken) }
+                  }
+               },
+               data : [
+                  { "op" : "replace", "path" : "/name", "value" : "my \"cool\" feed" },    // valid
+               ],
+               willDebug : false,
+               expectedHttpStatus : httpStatus.OK,
+               expectedStatusText : 'success',
+               expectedResponseData : function() {
+                  return {
+                     "feedId" : feed1.id,
+                     "patched" : {
+                        "/name" : "my \"cool\" feed",
+                     }
+                  }
+               },
+               additionalTests : async function() {
+                  // read the feed and verify the patch worked
+                  await axios.get(ESDR_FEEDS_API_URL + "/" + feed1.id + "?fields=name,exposure,isPublic,latitude,longitude")
+                        .then(res => {
+                           res.should.have.property('data');
+                           res.data.should.have.property('data');
+                           res.data.data.should.have.properties({
+                                                                   name : "my \"cool\" feed",
+                                                                   exposure : "indoor",
+                                                                   isPublic : 1,
+                                                                   latitude : 40.443403,
+                                                                   longitude : -79.94564
+                                                                });
+                        });
+               }
+            },
+            {
+               description : "Should be able to patch a feed name (name includes single quote character)",
+               url : function() {
+                  return ESDR_FEEDS_API_URL + "/" + feed1.id;
+               },
+               config : function() {
+                  return {
+                     headers : { ...createAuthorizationHeader(user1.accessToken) }
+                  }
+               },
+               data : [
+                  { "op" : "replace", "path" : "/name", "value" : "my 'great' feed" },    // valid
+               ],
+               willDebug : false,
+               expectedHttpStatus : httpStatus.OK,
+               expectedStatusText : 'success',
+               expectedResponseData : function() {
+                  return {
+                     "feedId" : feed1.id,
+                     "patched" : {
+                        "/name" : "my 'great' feed",
+                     }
+                  }
+               },
+               additionalTests : async function() {
+                  // read the feed and verify the patch worked
+                  await axios.get(ESDR_FEEDS_API_URL + "/" + feed1.id + "?fields=name,exposure,isPublic,latitude,longitude")
+                        .then(res => {
+                           res.should.have.property('data');
+                           res.data.should.have.property('data');
+                           res.data.data.should.have.properties({
+                                                                   name : "my 'great' feed",
+                                                                   exposure : "indoor",
+                                                                   isPublic : 1,
+                                                                   latitude : 40.443403,
+                                                                   longitude : -79.94564
+                                                                });
+                        });
+               }
+            },
+            {
+               description : "Should be able to patch a feed name (name includes special characters)",
+               url : function() {
+                  return ESDR_FEEDS_API_URL + "/" + feed1.id;
+               },
+               config : function() {
+                  return {
+                     headers : { ...createAuthorizationHeader(user1.accessToken) }
+                  }
+               },
+               data : [
+                  {
+                     "op" : "replace",
+                     "path" : "/name",
+                     "value" : "hello; DROP TABLE Feeds; my !@#$%^&*()_+=-[]{}|;':<>?,./`~ great feed' other stuff here"
+                  },    // valid
+               ],
+               willDebug : false,
+               expectedHttpStatus : httpStatus.OK,
+               expectedStatusText : 'success',
+               expectedResponseData : function() {
+                  return {
+                     "feedId" : feed1.id,
+                     "patched" : {
+                        "/name" : "hello; DROP TABLE Feeds; my !@#$%^&*()_+=-[]{}|;':<>?,./`~ great feed' other stuff here",
+                     }
+                  }
+               },
+               additionalTests : async function() {
+                  // read the feed and verify the patch worked
+                  await axios.get(ESDR_FEEDS_API_URL + "/" + feed1.id + "?fields=name,exposure,isPublic,latitude,longitude")
+                        .then(res => {
+                           res.should.have.property('data');
+                           res.data.should.have.property('data');
+                           res.data.data.should.have.properties({
+                                                                   name : "hello; DROP TABLE Feeds; my !@#$%^&*()_+=-[]{}|;':<>?,./`~ great feed' other stuff here",
+                                                                   exposure : "indoor",
+                                                                   isPublic : 1,
+                                                                   latitude : 40.443403,
+                                                                   longitude : -79.94564
+                                                                });
+                        });
+               }
+            },
+            {
+               description : "Should be able to patch a feed name (my cool feed)",
                url : function() {
                   return ESDR_FEEDS_API_URL + "/" + feed1.id;
                },
