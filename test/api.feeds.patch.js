@@ -22,6 +22,7 @@ describe("REST API", function() {
    const device2User2 = requireNew('./fixtures/device3.json');
    const feed1 = requireNew('./fixtures/feed1.json'); // indoor, public, "Newell Simon 3rd Floor Bathroom (feed1.json)"
    const feed2 = requireNew('./fixtures/feed4.json'); // outdoor, private, "Front Porch (feed4.json)"
+   const feed3 = requireNew('./fixtures/feed5.json'); // indoor, public, "Small Kitchen (feed5.json)"
 
    before(function(initDone) {
       flow.series(
@@ -81,6 +82,13 @@ describe("REST API", function() {
                   feed2.productId = product1.id;
                   feed2.channelSpecs = product1.defaultChannelSpecs;
                   setup.createFeed(feed2, done);
+               },
+               function(done) {
+                  feed3.userId = user2.id;
+                  feed3.deviceId = device2User2.id;
+                  feed3.productId = product1.id;
+                  feed3.channelSpecs = product1.defaultChannelSpecs;
+                  setup.createFeed(feed3, done);
                },
             ],
             initDone
@@ -228,6 +236,22 @@ describe("REST API", function() {
                config : function() {
                   return {
                      headers : { ...createAuthorizationHeader(user2.accessToken) }
+                  }
+               },
+               data : [],
+               expectedHttpStatus : httpStatus.FORBIDDEN,
+               expectedStatusText : 'error',
+               hasEmptyBody : true,
+               willDebug : false
+            },
+            {
+               description : "Patch should fail with incorrect authorization (user 1 cannot patch feed owned by user 2)",
+               url : function() {
+                  return ESDR_FEEDS_API_URL + "/" + feed3.id;
+               },
+               config : function() {
+                  return {
+                     headers : { ...createAuthorizationHeader(user1.accessToken) }
                   }
                },
                data : [],
@@ -1933,8 +1957,8 @@ describe("REST API", function() {
                   { "op" : "replace", "path" : "/name", "value" : [] },                // invalid
                   { "op" : "replace", "path" : "/name", "value" : "The best ever public feed" },   // valid
 
-                  { "op" : "replace", "path" : "/longitude", "value" : -79.995888 },   // valid
-                  { "op" : "replace", "path" : "/latitude", "value" : 40.440624 },     // valid
+                  { "op" : "replace", "path" : "/longitude", "value" : -79.222222 },   // valid
+                  { "op" : "replace", "path" : "/latitude", "value" : 40.111111 },     // valid
                ],
                willDebug : false,
                expectedHttpStatus : httpStatus.OK,
@@ -1946,8 +1970,8 @@ describe("REST API", function() {
                         "/name" : 'The best ever public feed',
                         "/exposure" : 'indoor',
                         "/isPublic" : true,
-                        "/latitude" : 40.440624,
-                        "/longitude" : -79.995888,
+                        "/latitude" : 40.111111,
+                        "/longitude" : -79.222222,
                      }
                   }
                },
@@ -1961,8 +1985,8 @@ describe("REST API", function() {
                                                                    name : "The best ever public feed",
                                                                    exposure : "indoor",
                                                                    isPublic : 1,
-                                                                   latitude : 40.440624,
-                                                                   longitude : -79.995888
+                                                                   latitude : 40.111111,
+                                                                   longitude : -79.222222
                                                                 });
                         });
                }
