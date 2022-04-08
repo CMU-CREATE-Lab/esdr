@@ -96,7 +96,7 @@ describe("REST API", function() {
    });
 
    describe("Feeds", function() {
-      describe.only("Patch", function() {
+      describe("Patch", function() {
 
          const checkResponse = async function(test, res) {
             if (test.willDebug) {
