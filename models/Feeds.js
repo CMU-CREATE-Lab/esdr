@@ -256,20 +256,22 @@ module.exports = function(databaseHelper) {
    this.patch = function(feedId, jsonPatchDocument, callback) {
       ifJsonPatchDocumentIsValid(jsonPatchDocument)
             .then(() => {
-               try { // The patch document is valid, so now iterate over the operations and roll them up into edits (in case
-                  // of duplicate operations on the same path, then our policy is last one wins).  I'm not clear on what
-                  // the "right" thing is to do if, say, a user submits a patch document with two operations like this:
+               try {
+                  // The patch document is valid, so now iterate over the operations and roll them up into edits (in
+                  // case of duplicate operations on the same path, then our policy is last one wins).  I'm not clear on
+                  // what the "right" thing is to do if, say, a user submits a patch document with two operations like
+                  // this:
                   //
                   // [
                   //    {op: "replace", path: "/latitude", value: "bogus"},
                   //    {op: "replace", path: "/latitude", value: 40.440624}
                   // ]
                   //
-                  // The first one is invalid since latitude must be a number, but by the "last one wins" rule, then do we
-                  // really care since it gets superceded by the following valid one?  I'm going to say that, no, we don't.
-                  // So, with that policy in mind, my approach is going to be to iterate over all operations, and put them
-                  // into a Map keyed on path.  Then, iterate over the items in the Map and validate before constructing
-                  // the SQL.
+                  // The first one is invalid since latitude must be a number, but by the "last one wins" rule, then do
+                  // we really care since it gets superceded by the following valid one?  I'm going to say that, no, we
+                  // don't. So, with that policy in mind, my approach is going to be to iterate over all operations, and
+                  // put them into a Map keyed on path.  Then, iterate over the items in the Map and validate before
+                  // constructing the SQL.
                   const pathToNewValue = new Map();
                   jsonPatchDocument.forEach(({ _, path, value }) => {
                      pathToNewValue.set(path, value);

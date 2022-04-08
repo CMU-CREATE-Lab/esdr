@@ -10,7 +10,6 @@ const createAuthorizationHeader = require('./fixture-helpers/test-utils').create
 const config = require('../config');
 
 const ESDR_API_ROOT_URL = config.get("esdr:apiRootUrl");
-const ESDR_DEVICES_API_URL = ESDR_API_ROOT_URL + "/devices";
 const ESDR_FEEDS_API_URL = ESDR_API_ROOT_URL + "/feeds";
 
 describe("REST API", function() {
@@ -125,9 +124,6 @@ describe("REST API", function() {
 
          const executeTest = function(test) {
             it(test.description, async function() {
-               const yes = true;
-               yes.should.be.true();
-
                const config = (typeof test.config === 'function' ? test.config() : null);
                await axios.patch(test.url(), test.data, config)
                      .then(async function(res) {
@@ -1976,22 +1972,3 @@ describe("REST API", function() {
       });   // End Patch
    });   // End Feeds
 });   // End REST API
-
-/*
-                   { "op" : "replace", "path" : "/exposure", "value" : "indoor" },    // valid
-                  { "op" : "replace", "path" : "/isPublic", "value" : false },    // valid
-                  { "op" : "replace", "path" : "/latitude", "value" : null },    // valid
-                  { "op" : "replace", "path" : "/longitude", "value" : null },    // valid
-
-
-                  { "op" : "replace", "path" : "/latitude", "value" : "" },            // invalid
-                  { "op" : "replace", "path" : "/latitude", "value" : "40.440624" },   // invalid
-                  { "op" : "replace", "path" : "/latitude", "value" : 40.440624 },     // valid
-                  { "op" : "replace", "path" : "/longitude", "value" : "" },           // invalid
-                  { "op" : "replace", "path" : "/longitude", "value" : "-79.995888" }, // invalid
-                  { "op" : "replace", "path" : "/longitude", "value" : -879.995888 },   // valid
-                  { "op" : "replace", "path" : "/isPublic", "value" : 42 },            // invalid
-                  { "op" : "replace", "path" : "/isPublic", "value" : "X" },          // valid
-                  { "op" : "replace", "path" : "/name", "value" : "" },          // valid
-
- */
