@@ -42,20 +42,42 @@ Please see the [HOW TO](https://github.com/CMU-CREATE-Lab/esdr/blob/master/HOW_T
        
     2. Follow the BodyTrack Datastore's build and install instructions.
 
-3. Install MySQL if necessary.  ESDR was tested with and assumes MySQL 5.6 (there are known issues with 5.5).
+3. Install MySQL if necessary.  ESDR was tested with and assumes MySQL 5.6/5.7/8.0 (there are known issues with 5.5).
 
 4. Do the following to create the development MySQL database and user:
 
+    The syntax differs depending upon the version of MySQL you are using.
+
+    If you are using MySQL 5.7:
+
         CREATE DATABASE IF NOT EXISTS esdr_dev;
         GRANT ALL PRIVILEGES ON esdr_dev.* To 'esdr_dev'@'localhost' IDENTIFIED BY 'password';
+        GRANT SELECT,INSERT,UPDATE,DELETE,CREATE ON esdr_dev.* TO 'esdr_dev'@'localhost';
+
+    If you are using MySQL 8+:
+
+        CREATE DATABASE IF NOT EXISTS esdr_dev;
+        CREATE USER 'esdr_dev'@'localhost' IDENTIFIED BY 'password';
+        GRANT ALL PRIVILEGES ON esdr_dev.* TO 'esdr_dev'@'localhost';
         GRANT SELECT,INSERT,UPDATE,DELETE,CREATE ON esdr_dev.* TO 'esdr_dev'@'localhost';
 
     If you choose to change the password, make sure it matches the password in `config-dev.json`.
 
 5. If you want to be able to run the tests, do the following to create the test database and user:
 
+    The syntax differs depending upon the version of MySQL you are using.
+
+    If you are using MySQL 5.7:
+
         CREATE DATABASE IF NOT EXISTS esdr_test;
         GRANT ALL PRIVILEGES ON esdr_test.* To 'esdr_test'@'localhost' IDENTIFIED BY 'password';
+        GRANT SELECT,INSERT,UPDATE,DELETE,CREATE ON esdr_test.* TO 'esdr_test'@'localhost';
+
+    If you are using MySQL 8+:
+
+        CREATE DATABASE IF NOT EXISTS esdr_test;
+        CREATE USER 'esdr_test'@'localhost' IDENTIFIED BY 'password';
+        GRANT ALL PRIVILEGES ON esdr_test.* TO 'esdr_test'@'localhost';
         GRANT SELECT,INSERT,UPDATE,DELETE,CREATE ON esdr_test.* TO 'esdr_test'@'localhost';
 
     If you choose to change the password, make sure it matches the password in `config-test.json`.
@@ -65,9 +87,20 @@ Please see the [HOW TO](https://github.com/CMU-CREATE-Lab/esdr/blob/master/HOW_T
     1. Create the `config-prod.json` and `mail-config-prod.json` files. Just copy from the other configs, but you need only include the parts that differ from `config.js`.
 
     2. Do the following to create the production database and user:
-                                    
+
+        The syntax differs depending upon the version of MySQL you are using.
+
+        If you are using MySQL 5.7:
+
             CREATE DATABASE IF NOT EXISTS esdr_prod;
             GRANT ALL PRIVILEGES ON esdr_prod.* To 'esdr_prod'@'localhost' IDENTIFIED BY 'USE_A_GOOD_PASSWORD_HERE';
+            GRANT SELECT,INSERT,UPDATE,DELETE,CREATE ON esdr_prod.* TO 'esdr_prod'@'localhost';
+
+        If you are using MySQL 8+:
+
+            CREATE DATABASE IF NOT EXISTS esdr_prod;
+            CREATE USER 'esdr_prod'@'localhost' IDENTIFIED BY 'USE_A_GOOD_PASSWORD_HERE';
+            GRANT ALL PRIVILEGES ON esdr_prod.* TO 'esdr_prod'@'localhost';
             GRANT SELECT,INSERT,UPDATE,DELETE,CREATE ON esdr_prod.* TO 'esdr_prod'@'localhost';
 
         Again, make sure the user and password you specify matches those in `config-prod.json`.
